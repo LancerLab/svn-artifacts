@@ -85,7 +85,7 @@ def run_choreo(choreo: Path, co_file: Path, timeout_s: int = 120) -> dict:
     flag merely enables the code-generation paths these kernels require.
     """
     result = subprocess.run(
-        [str(choreo), "--stats", "-es", "-t", "cute", str(co_file)],
+        [str(choreo), "--stats", "-es", "-fc", "-t", "cute", str(co_file)],
         capture_output=True, text=True, timeout=timeout_s,
         stdin=subprocess.DEVNULL,
     )

@@ -216,3 +216,23 @@ Then re-run `bash scripts/reproduce_all.sh` without `--skip-mlir`.
 
 See individual component licenses. The benchmark cases and evaluation scripts
 in this repository are provided for artifact evaluation purposes.
+
+## Reproduction Notes
+
+The paper numbers were collected on a specific hardware configuration. Reproduced
+numbers may vary slightly:
+
+- **Assessment count**: The current compiler may generate more assessments than
+  the paper reports (the compiler has been improved since paper submission).
+  The ADR (discharge ratio) should remain within 92-94%.
+
+- **CTO**: Compile-time overhead is sensitive to machine load, CPU cache state,
+  and measurement repetitions. With 3 reps, variance can mask the small (4.7%)
+  overhead. Use --rq4-reps 10 for more stable measurements.
+
+- **RAO**: Entry-level runtime overhead is consistently below 0.4% (typically
+  below 0.1% median). Small negative values indicate measurement noise.
+
+- **Compile failures**: Some cases (conv2d, matmul) may fail on machines without
+  certain CUDA capabilities. The -fc (fast-compile) flag maximizes compatibility.
+  Expect at least 305/310 cases to succeed.
