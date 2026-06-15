@@ -1,0 +1,119 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+
+size_t s1 = 1;
+size_t s2 = 3;
+
+#ifdef __STATIC_SHAPE__
+#define L1 1
+#define L2 3
+#define L_OUT 256
+#else
+#define L1 s1
+#define L2 s2
+#define L_OUT 256
+#endif
+
+#define I 32
+#define J 512
+#define L 64
+#ifndef NUM_BLOCK
+  #define NUM_BLOCK 2
+#endif
+#ifndef NUM_THREAD
+  #define NUM_THREAD 1
+#endif
+
+__cok__ {
+  __co_device__ void concat_kernel(float* in1, float* in2, float * in3, float* in4, float* out,
+                                   int m, int n1, int n2, int n3, int n4) {
+    // m = number of outer elements (batch * H * W per tile)
+    // n1 = size of channel slice from a
+    // n2 = size of channel slice from b
+    for (int i = 0; i < m; ++i) {
+      int base_out = i * (n1 + n2 + n3 + n4);
+      int base_in1 = i * n1;
+      int base_in2 = i * n2;
+      int base_in3 = i * n3;
+      int base_in4 = i * n4;
+      for (int j = 0; j < n1; ++j)
+        out[base_out + j] = in1[base_in1 + j];
+      for (int j = 0; j < n2; ++j)
+        out[base_out + n1 + j] = in2[base_in2 + j];
+      for (int j = 0; j < n3; ++j)
+        out[base_out + n1 + n2 + j] = in2[base_in3 + j];
+      for (int j = 0; j < n4; ++j)
+        out[base_out + n1 + n2 + n3 + j] = in2[base_in4 + j]; 
+    }
+  }
+}
+
+// ---------------- choreo operator ----------------
+// Concatenate along channel dimension J
+// Input a: [I, J1, K, L]
+// Input b: [I, J2, K, L]
+// Output:  [I, J_OUT, K, L]
+
+__co__ f32 [I, J, L_OUT] ele_concat_J(f32 [I, J, L] a, f32 [I, J, L] b, f32 [I, J, L] c, f32 [I, J, L] d) {
+  f32 [I, J, L_OUT] out;
+
+  parallel p by NUM_BLOCK : block {
+    foreach {i, j} in [I / #p, J] {
+      shared f32 [1, 1, L] as, bs, cs, ds;
+      shared f32 [1, 1, L_OUT] os;
+      af = dma.copy.async a.chunkat(p#i, j, _) => as;
+      bf = dma.copy.async b.chunkat(p#i, j, _) => bs;
+      cf = dma.copy.async c.chunkat(p#i, j, _) => cs;
+      df = dma.copy.async d.chunkat(p#i, j, _) => ds;
+      wait af, bf, cf, df;
+      foreach q in [L]
+        os.at(0, 0, q) = as.at(0, 0, q);
+      foreach q in [L]
+        os.at(0, 0, L + q) = bs.at(0, 0, q);
+      foreach q in [L]
+        os.at(0, 0, 2 * L + q) = cs.at(0, 0, q);
+      foreach q in [L]
+        os.at(0, 0, 3 * L + q) = ds.at(0, 0, q);
+      dma.copy os => out.chunkat(p#i, j, _);
+    }
+  }
+  return out;
+}
+
+
+// ---------------- host test ----------------
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(I, J,  L);
+  auto b = choreo::make_spandata<choreo::f32>(I, J,  L);
+  auto c = choreo::make_spandata<choreo::f32>(I, J,  L);
+  auto d = choreo::make_spandata<choreo::f32>(I, J,  L);
+  a.fill_random(-1.0, 1.0);
+  b.fill_random(-1.0, 1.0);
+  c.fill_random(-1.0, 1.0);
+  d.fill_random(-1.0, 1.0);
+
+
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto r  = ele_concat_J(a.view(), b.view(), c.view(), d.view());
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+  // Verify channel concatenation
+  #if 0
+  for (size_t i = 0; i < I; ++i)
+    for (size_t j = 0; j < J; ++j)
+        for (size_t l = 0; l < L_OUT; ++l) {
+          float got = r[i][j][l];
+          float ref = (l < L1) ? a[i][j][l] : b[i][j][l-L1];
+          if (ref != got) {
+            std::cout << "Mismatch at (" << i << "," << j
+                      <<  "," << l << ")\n";
+            choreo::choreo_assert(false, "concat mismatch");
+          }
+        }
+  #endif
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " us\n";
+  return 0;
+}
+

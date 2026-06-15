@@ -1,0 +1,53 @@
+#define I 32
+#define J 512
+#define K 768
+
+#define NUM_BLOCK 2
+// TODO: make it 12
+#define NUM_THREAD 8 
+
+__co__ auto ele_add(f32 [I, J, K] lhs, f32 [I, J, K] rhs) {
+  f32 [lhs.span] out;
+  parallel p by NUM_BLOCK : block {
+    foreach i in [I / #p] {
+      foreach j in [J] {
+        foreach k in [12] {
+          shared f32 [1, 1, 64] lhs_s, rhs_s, out_s;
+          lfs = dma.copy.async lhs.chunkat(p#i, j, k) => lhs_s;
+          rfs = dma.copy.async rhs.chunkat(p#i, j, k) => rhs_s;
+          wait lfs, rfs;
+          parallel q by 64
+            out_s.at(0, 0, q) = lhs_s.at(0, 0, q) + rhs_s.at(0, 0, q);
+          dma.copy out_s => out.chunkat(p#i, j, k);
+        }
+      }
+    }
+  }
+  return out;
+}
+
+
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(I, J, K);
+  auto b = choreo::make_spandata<choreo::f32>(I, J, K);
+  a.fill_random(-1.0, 1.0);
+  b.fill_random(-1.0, 1.0);
+
+  auto start = std::chrono::high_resolution_clock::now();
+  auto res = ele_add(a.view(), b.view());
+  auto end = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+  // verfication
+  for (size_t i = 0; i < res.shape()[0]; ++i)
+    for (size_t j = 0; j < res.shape()[1]; ++j)
+      for (size_t k = 0; k < res.shape()[2]; ++k) {
+        if (a[i][j][k] + b[i][j][k] != res[i][j][k]) {
+          std::cout << a[i][j][k] << " + " << b[i][j][k] << " != " << res[i][j][k] << "\n";
+          choreo::choreo_assert(a[i][j][k] + b[i][j][k] == res[i][j][k], "values are not equal.");
+        }
+      }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << duration.count() << " microseconds" << std::endl;
+}

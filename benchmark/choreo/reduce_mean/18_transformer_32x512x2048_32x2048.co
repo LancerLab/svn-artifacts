@@ -1,0 +1,79 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+#include <cmath>
+
+#define N 32
+#define S 512
+#define H 2048
+
+#ifndef NUM_BLOCK
+  #define NUM_BLOCK 2
+#endif
+#ifndef NUM_THREAD
+  #define NUM_THREAD 8
+#endif
+
+__cok__ {
+  // in: [m, n], out: [m]; reduce mean over n
+  __co_device__ void reduce_mean_kernel(float* in, float* out, int m, int n) {
+    for (int i = 0; i < m; ++i) {
+      float acc = 0.f;
+      int base = i * n;
+      for (int j = 0; j < n; ++j) acc += in[base + j];
+      out[i] = acc / n;
+    }
+  }
+}
+
+// Reduce over S (second dim):
+// Input  [N, S, H]
+// Output [N, H]
+__co__ f32 [N, H] ele_reduce_mean(f32 [N, S, H] inp) {
+  f32 [N, H] out;
+
+  parallel p by NUM_BLOCK : block {
+    foreach {i, h_tile} in [N / #p, 32] {
+      shared f32 [1, 64] out_s;
+      parallel q by 64 {
+        out_s.at(0, q) = 0.0f;
+        foreach s in [S]
+          out_s.at(0, q) = out_s.at(0, q) + inp.at(p#i, s, h_tile#q);
+        out_s.at(0, q) = out_s.at(0, q) / S;
+      }
+      dma.copy out_s => out.chunkat(p#i, h_tile);
+    }
+  }
+
+  return out;
+}
+
+// --------------------------- Host / main ---------------------------
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(N, S, H);
+  a.fill_random(-1.0, 1.0);
+
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto r  = ele_reduce_mean(a.view());
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+  // Verification: for each (n, h), average over S
+  for (size_t n = 0; n < N; ++n) {
+    for (size_t h = 0; h < H; ++h) {
+      double acc = 0.0;
+      for (size_t s = 0; s < S; ++s) acc += a[n][s][h];
+      float ref = static_cast<float>(acc / S);
+      if (std::fabs(ref - r[n][h]) > 1e-5f) {
+        std::cout << "Mismatch at (n=" << n << ", h=" << h
+                  << ") ref=" << ref << " got=" << r[n][h] << "\n";
+        choreo::choreo_assert(false, "reduce_mean mismatch (case18)");
+      }
+    }
+  }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " us\n";
+  return 0;
+}
+

@@ -1,0 +1,65 @@
+#define I 2
+#define J 1280
+#define K 3
+#define L 3
+
+#define NUM_BLOCK 2
+// TODO: make it 12
+#define NUM_THREAD 8 
+
+#ifdef __STATIC_SHAPE__
+#define N0 2
+#define N1 3
+#define N2 3
+#endif
+
+__co__ auto ele_add(f32 [N0, J, N1, N2] lhs, f32 [N0, J] rhs) {
+  f32 [lhs.span] out;
+  parallel p by NUM_BLOCK : block {
+    foreach n in [N0] {
+      foreach j in [J / #p] {
+        foreach k in [N1] {
+          shared f32 [1, 1, 1, N2] lhs_s, out_s;
+          shared f32 [1, 1] rhs_s;
+          lfs = dma.copy.async lhs.chunkat(n, p#j, k, _) => lhs_s;
+          rfs = dma.copy.async rhs.chunkat(n, p#j) => rhs_s;
+          wait lfs, rfs;
+          parallel q by N2
+            out_s.at(0, 0, 0, q) = lhs_s.at(0, 0, 0, q) + rhs_s.at(0, 0);
+          dma.copy out_s => out.chunkat(n, p#j, k, _);
+        }
+      }
+    }
+  }
+  return out;
+}
+
+
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(I, J, K, L);
+  auto b = choreo::make_spandata<choreo::f32>(I, J);
+  a.fill_random(-1.0, 1.0);
+  b.fill_random(-1.0, 1.0);
+
+  auto start = std::chrono::high_resolution_clock::now();
+  auto res = ele_add(a.view(), b.view());
+  auto end = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+
+  // verfication
+  for (size_t i = 0; i < res.shape()[0]; ++i)
+    for (size_t j = 0; j < res.shape()[1]; ++j)
+      for (size_t k = 0; k < res.shape()[2]; ++k) {
+        for (size_t l = 0; l < res.shape()[3]; ++l) {
+          if (a[i][j][k][l] + b[i][j] != res[i][j][k][l]) {
+            std::cout << "i: " << i << ", j: " << j << ", k: " << k << ", l: " << l << "\n";
+            std::cout << a[i][j][k][l] << " + " << b[i][j] << " != " << res[i][j][k][l] << "\n";
+            choreo::choreo_assert(a[i][j][k][l] + b[i][j] == res[i][j][k][l], "values are not equal.");
+          }
+        }
+      }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << duration.count() << " microseconds" << std::endl;
+}

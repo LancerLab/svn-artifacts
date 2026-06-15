@@ -1,0 +1,27 @@
+#include "choreo.h"
+#include "common.h"
+
+#ifdef __STATIC_SHAPE__
+#define height 80
+#define width 80
+#endif
+
+__co__ auto TRANSPOSE(f32 [64, 128, height, width] i) {
+  f32 [i.span(0), i.span(2), i.span(3), i.span(1)] o;
+  parallel p by 64 : block {
+    foreach {y, z, w} in [8, height, width] {
+      shared f32 [1, 16, 1, 1] is;
+      shared f32 [1, 1, 1, 16] os;
+      fs = dma.copy.async i.chunkat(p, y, z, w) => is;
+      wait fs;
+      parallel q by 16
+        os.at(0, 0, 0, q) = is.at(0, q, 0, 0);
+      dma.copy os => o.chunkat(p, z, w, y);
+    }
+  }
+  return o;
+}
+
+int main() {
+  test4("TRANSPOSE", TRANSPOSE, {64, 128, 80, 80}, {0, 2, 3, 1});
+}

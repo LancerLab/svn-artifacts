@@ -1,0 +1,100 @@
+#define I 32
+#define J 197
+#define K 3072
+
+#define NUM_BLOCK 2
+// TODO: make it 12
+#define NUM_THREAD 8 
+
+// #define __STATIC_SHAPE__
+#ifdef __STATIC_SHAPE__
+#endif
+
+__co__ auto layer_norm(f32 [I, J, K] lhs, f32 [K] scale, f32 [K] bias) {
+  f32 [lhs.span] out;
+  parallel p by NUM_BLOCK : block {
+    foreach n in [I / #p] {
+      shared f32 [1] s_mean;
+      s_mean.at(0) = 0.0f;
+      foreach {j, k} in [J, K]
+        s_mean.at(0) = s_mean.at(0) + lhs.at(p#n, j, k);
+      s_mean.at(0) = s_mean.at(0) / (lhs.span(1) * lhs.span(2));
+      shared f32 [1] s_var;
+      s_var.at(0) = 0.0f;
+      foreach {j, k} in [J, K] {
+        local f32 [1] df;
+        df.at(0) = lhs.at(p#n, j, k) - s_mean.at(0);
+        s_var.at(0) = s_var.at(0) + df.at(0) * df.at(0);
+      }
+      s_var.at(0) = s_var.at(0) / (lhs.span(1) * lhs.span(2));
+      shared f32 [1] s_std;
+      s_var.at(0) = s_var.at(0) + 0.00001;
+      s_std.at(0) = __sqrt(s_var.at(0));
+      foreach {j, k} in [J, K]
+        out.at(p#n, j, k) = scale.at(k) * (lhs.at(p#n, j, k) - s_mean.at(0)) / s_std.at(0) + bias.at(k);
+    }
+  }
+  return out;
+}
+
+
+
+int main() {
+  auto input = choreo::make_spandata<choreo::f32>(I, J, K);
+  auto scale = choreo::make_spandata<choreo::f32>(K);
+  auto bias = choreo::make_spandata<choreo::f32>(K);
+  input.fill_random(-1.0, 1.0);
+  scale.fill_random(-1.0, 1.0);
+  bias.fill_random(-1.0, 1.0);
+
+  auto start = std::chrono::high_resolution_clock::now();
+  auto res = layer_norm(input.view(), scale.view(), bias.view());
+  auto end = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+  // verfication
+  auto out = choreo::make_spandata<choreo::f32>(I, J, K);
+  for (int i = 0; i < I; ++i) {
+    // Calculate mean across ALL elements of this sample
+    float mean = 0.0f;
+
+    for (int c = 0; c < J; ++c)
+      for (int s = 0; s < K; ++s)
+        mean += input[i][c][s];
+
+    mean /= (J * K);
+
+    // Calculate variance
+    float variance = 0.0f;
+    for (int c = 0; c < J; ++c) {
+      for (int s = 0; s < K; ++s) {
+        float diff = input[i][c][s] - mean;
+        variance += diff * diff;
+      }
+    }
+    variance /= (J * K);
+    float std_div = std::sqrt(variance);
+
+    // Normalize and apply scale/shift
+    for (int c = 0; c < J; ++c) {
+      for (int s = 0; s < K; ++s) {
+        float normalized = (input[i][c][s] - mean) / std_div;
+        out[i][c][s] = scale[s] * normalized + bias[s];
+      }
+    }
+  }
+
+  for (size_t i = 0; i < res.shape()[0]; ++i)
+    for (size_t j = 0; j < res.shape()[1]; ++j)
+      for (size_t k = 0; k < res.shape()[2]; ++k) {
+        auto sm = out[i][j][k];
+        if (fabs(sm - res[i][j][k]) > 1e-3) {
+          std::cout << "i: " << i << ", j: " << j << ", k: " << k << "\n";
+          std::cout << sm << " != " << res[i][j][k] << "\n";
+          choreo::choreo_assert(sm == res[i][j][k], "values are not equal.");
+        }
+      }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << duration.count() << " microseconds" << std::endl;
+}

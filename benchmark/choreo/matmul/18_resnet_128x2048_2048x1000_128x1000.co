@@ -1,0 +1,23 @@
+#include "common.hpp"
+
+// case18: [128, 2048] + [2048, 1000] --> [128, 1000] (ResNet)
+__co__ auto matmul18(f32 [128, 2048] lhs, f32 [2048, 1000] rhs) {
+  f32 [lhs.span(0), rhs.span(1)] output;
+  parallel p by 4, q by 10 {
+    foreach {m_tile, n_tile} in [4, 10] {
+      local f32[lhs.span(0)/#m_tile/#p, rhs.span(1)/#n_tile/#q] l1_out {0.0f};
+      foreach {k_tile} in [16] {
+        l1_a = dma.copy lhs.chunkat(p#m_tile, k_tile) => shared;
+        l1_b = dma.transp<1,0> rhs.chunkat(k_tile, q#n_tile) => shared;
+        call k_matmul(l1_a.data, l1_b.data, l1_out, l1_a.span(0), l1_b.span(0), l1_a.span(1));
+      }
+      dma.copy l1_out => output.chunkat(p#m_tile, q#n_tile);
+    }
+  }
+  return output;
+}
+
+int main() {
+  TEST1(matmul18, 128, 1000, 2048);
+  return 0;
+}

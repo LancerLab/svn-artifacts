@@ -1,0 +1,28 @@
+#include "choreo.h"
+#include "common.h"
+
+#ifdef __STATIC_SHAPE__
+#define time_steps 1024
+#endif
+
+__co__ auto TRANSPOSE(f32 [64, time_steps, 256] i) {
+  f32 [i.span(1), i.span(0), i.span(2)] o;
+  parallel p by 64 : block {
+    foreach {y, z} in [128, 4] {
+      shared f32 [1, 8, 64] is;
+      shared f32 [8, 1, 64] os;
+      fs = dma.copy.async i.chunkat(p, y, z) => is;
+      wait fs;
+      foreach t in [8] {
+        parallel q by 64
+          os.at(t, 0, q) = is.at(0, t, q);
+      }
+      dma.copy os => o.chunkat(y, p, z);
+    }
+  }
+  return o;
+}
+
+int main() {
+  test3("TRANSPOSE", TRANSPOSE, {64, 1024, 256}, {1, 0, 2});
+}

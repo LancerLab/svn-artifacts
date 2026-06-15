@@ -1,0 +1,58 @@
+#include "choreo.h"
+#include "common.h"
+
+__co__ auto CONV2D(f32 [8, 128, 16, 16] i, f32 [256, 128, 3, 3] w, int stride, int padding, int dilation) {
+  N = i.span(0);
+  Cin = i.span(1);
+  H = i.span(2);
+  W = i.span(3);
+  Cout = w.span(0);
+  Kh = w.span(2);
+  Kw = w.span(3);
+  Ho = (H + 2 * padding - dilation * (Kh - 1) - 1) / stride + 1;
+  Wo = (W + 2 * padding - dilation * (Kw - 1) - 1) / stride + 1;
+  Hpad = H + 2 * padding;
+  Wpad = W + 2 * padding;
+
+  f32 [N, Cout, Ho, Wo] o;
+
+  M = Ho * Wo;
+  K = Cin * Kh * Kw;
+
+  parallel p by 2  {
+    shared f32 [M, K] A;
+    B = dma.copy w.span_as(Cout, K) => shared;
+    shared f32 [Ho*Wo, Cout] Y;
+
+    foreach n in [N / #p] {
+      // 1. im2col
+      i_s_padded = dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, {0, 0, 0, 0}, 0.0f> i.chunkat(p#n, _, _, _) => shared;
+      with {i, j} in [Hpad/2, Wpad/2] {
+        foreach i, j {
+          if (i >= Ho) break;
+          if (j >= Wo) break;
+          dma.copy i_s_padded.chunkat(_, _, i, j).subspan(_, _, Kh, Kw) => A.subspan(1, _).at(i*Wo + j, 0).span_as(1, Cin, Kh, Kw);
+        }
+      }
+      // 2. GEMM: C = A x B, result shape: M x Cout
+      parallel q by 8  {
+        foreach {_q} in [8] {
+          l1_A = dma.copy A.chunkat(q#_q, _) => local;
+          foreach {qq} in [32] {
+            local f32 [A.span(0)/#q/#_q, B.span(0)/#qq] l1_Y{0.0f};
+            l1_B = dma.copy B.chunkat(qq, _) => local;
+            call k_matmul(l1_A.data, l1_B.data, l1_Y, M/#q/#_q, Cout/#qq, K);
+            dma.copy l1_Y => Y.chunkat(q#_q, qq);
+          }
+        }
+      }
+      
+      dma.transp<0, 3, 1, 2> Y.span_as(1, Ho, Wo, Cout) => o.chunkat(p#n, _, _, _);
+    }
+  }
+  return o;
+}
+
+int main() {
+  test_dynamic("CONV2D", CONV2D, {8, 128, 16, 16}, {256, 128, 3, 3}, 2, 1, 1);
+}

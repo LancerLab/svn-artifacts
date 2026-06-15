@@ -1,0 +1,29 @@
+module {
+  func.func @f_5_dynamic_Bx2048_2048x1000_Bx1000(%lhs: tensor<?x2048xf32>, %rhs: tensor<2048x1000xf32>) -> tensor<?x1000xf32> {
+    %c0 = arith.constant 0 : index
+    %c1 = arith.constant 1 : index
+    %zero_f = arith.constant 0.0 : f32
+    %lhs_d0 = tensor.dim %lhs, %c0 : tensor<?x2048xf32>
+    %lhs_d1 = tensor.dim %lhs, %c1 : tensor<?x2048xf32>
+    %rhs_d0 = tensor.dim %rhs, %c0 : tensor<2048x1000xf32>
+    %rhs_d1 = tensor.dim %rhs, %c1 : tensor<2048x1000xf32>
+    %eq0 = arith.cmpi eq, %lhs_d1, %rhs_d0 : index
+    cf.assert %eq0, "lhs.dim(1)==rhs.dim(0)"
+    %out = tensor.empty(%lhs_d0) : tensor<?x1000xf32>
+    %t_res_i = scf.for %i = %c0 to %lhs_d0 step %c1 iter_args(%t_arg_i = %out) -> (tensor<?x1000xf32>) {
+    %t_res_j = scf.for %j = %c0 to %rhs_d1 step %c1 iter_args(%t_arg_j = %t_arg_i) -> (tensor<?x1000xf32>) {
+    %acc = scf.for %k = %c0 to %lhs_d1 step %c1 iter_args(%s = %zero_f) -> (f32) {
+    %a   = tensor.extract %lhs[%i, %k] : tensor<?x2048xf32>
+    %b   = tensor.extract %rhs[%k, %j] : tensor<2048x1000xf32>
+    %p   = arith.mulf %a, %b : f32
+    %ns  = arith.addf %s, %p : f32
+    scf.yield %ns : f32
+    }
+    %t_new = tensor.insert %acc into %t_arg_j[%i, %j] : tensor<?x1000xf32>
+    scf.yield %t_new : tensor<?x1000xf32>
+    }
+    scf.yield %t_res_j : tensor<?x1000xf32>
+    }
+    return %t_res_i : tensor<?x1000xf32>
+  }
+}

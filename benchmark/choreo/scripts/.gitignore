@@ -1,0 +1,4 @@
+# Benchmark results and logs
+*.log
+temp/
+results/runtime_sweep_*.tsv

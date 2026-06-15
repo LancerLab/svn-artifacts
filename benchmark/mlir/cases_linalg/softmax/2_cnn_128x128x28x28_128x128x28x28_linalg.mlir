@@ -1,0 +1,15 @@
+module {
+  func.func @f_2_cnn_128x128x28x28_128x128x28x28_linalg(%input: tensor<128x128x28x28xf32>) -> tensor<128x128x28x28xf32> {
+    %init = tensor.empty() : tensor<128x128x28x28xf32>
+    %cst = arith.constant 0.0 : f32
+    %r = linalg.generic {
+      indexing_maps = [affine_map<(d0, d1, d2, d3) -> (d0, d1, d2, d3)>, affine_map<(d0, d1, d2, d3) -> (d0, d1, d2, d3)>],
+      iterator_types = ["parallel", "parallel", "parallel", "parallel"]
+    } ins(%input : tensor<128x128x28x28xf32>) outs(%init : tensor<128x128x28x28xf32>) {
+    ^bb0(%in: f32, %out: f32):
+      %abs = math.absf %in : f32
+      linalg.yield %abs : f32
+    } -> tensor<128x128x28x28xf32>
+    return %r : tensor<128x128x28x28xf32>
+  }
+}

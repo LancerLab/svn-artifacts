@@ -1,0 +1,51 @@
+# Internal workspace files (not for public artifact)
+.claude/
+.github/
+AGENTS.md
+a.out
+patches/
+src/
+latex/
+
+# Build outputs (reproduced locally)
+llvm-project/
+build/
+build-release/
+external/
+choreo/build*/
+choreo/extern/bin/
+choreo/extern/shared/
+choreo/extern/gtest/
+choreo/extern/cutlass/
+
+# Benchmark results (reproduced locally)
+benchmark/results/
+benchmark/mlir/results/
+benchmark/triton/results/
+benchmark/choreo/**/*.sh
+!benchmark/choreo/scripts/**/*.sh
+benchmark/choreo/**/*.co.bak
+benchmark/choreo/scripts/results/
+
+# LaTeX build artifacts
+latex/**/*.aux
+latex/**/*.bbl
+latex/**/*.bcf
+latex/**/*.blg
+latex/**/*.fdb_latexmk
+latex/**/*.fls
+latex/**/*.log
+latex/**/*.out
+latex/**/*.run.xml
+latex/**/*.synctex.gz
+latex/**/manuscript.pdf
+
+# Python caches
+**/__pycache__/
+*.pyc
+
+# Editor / OS
+*.swp
+*.swo
+*~
+.DS_Store

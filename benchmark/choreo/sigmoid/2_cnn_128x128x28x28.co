@@ -1,0 +1,64 @@
+#define I 128
+#define J 128
+#define K 28
+#define L 28
+
+#define NUM_BLOCK 2
+// TODO: make it 12
+#define NUM_THREAD 8 
+
+__cok__ {
+  __co_device__ void sigmoid_kernel_2d(float* in, float* out, int m, int n) {
+    for (int i = 0; i < m; ++i) {
+      int base = i * n;
+      for (int j = 0; j < n; ++j) {
+        float v = in[base + j];
+        out[base + j] = 1.0f / (1.0f + expf(0.0f - v));
+      }
+    }
+  }
+}
+
+__co__ auto sigmoid(f32 [I, J, K, L] lhs) {
+  f32 [lhs.span] out;
+  parallel p by NUM_BLOCK : block {
+    foreach {i, j, k, l_tile} in [I / #p, J, K, 7] {
+      shared f32 [1, 1, 1, 4] lhs_s, out_s;
+      lfs = dma.copy.async lhs.chunkat(p#i, j, k, l_tile) => lhs_s;
+      wait lfs;
+      parallel q by 4 {
+        v = lhs_s.at(0, 0, 0, q);
+        v2 = v * v;
+        out_s.at(0, 0, 0, q) = 0.5f + v * (0.25f + v2 * (-1.0f / 48.0f + v2 * (1.0f / 480.0f - v2 * (17.0f / 80640.0f))));
+      }
+      dma.copy out_s => out.chunkat(p#i, j, k, l_tile);
+    }
+  }
+  return out;
+}
+
+
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(I, J, K, L);
+  a.fill_random(-1.0, 1.0);
+
+  auto start = std::chrono::high_resolution_clock::now();
+  auto res = sigmoid(a.view());
+  auto end = std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+
+  // verfication
+  for (size_t i = 0; i < res.shape()[0]; ++i)
+    for (size_t j = 0; j < res.shape()[1]; ++j)
+      for (size_t k = 0; k < res.shape()[2]; ++k)
+        for (size_t l = 0; l < res.shape()[3]; ++l) {
+          auto sm = 1.0f / (1.0f + expf(-a[i][j][k][l]));
+          if (fabs(sm - res[i][j][k][l]) > 0.001f) {
+            std::cout << sm << " != " << res[i][j][k][l] << "\n";
+            choreo::choreo_assert(sm == res[i][j][k][l], "values are not equal.");
+          }
+        }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << duration.count() << " microseconds" << std::endl;
+}

@@ -1,0 +1,87 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+#include <cmath>
+
+#define N 32
+#define S 512
+#define V 30522
+
+/* ---------------- Variable macros ----------------
+   If __STATIC_SHAPE__ is defined, freeze VOCAB_SIZE=30522.
+   Otherwise, V is provided externally (default 30522 in main).
+-------------------------------------------------- */
+// #define __STATIC_SHAPE__
+#ifdef __STATIC_SHAPE__
+  #define V0 V
+#endif
+/* ------------------------------------------------- */
+
+#ifndef NUM_BLOCK
+  #define NUM_BLOCK 2
+#endif
+#ifndef NUM_THREAD
+  #define NUM_THREAD 8
+#endif
+
+__cok__ {
+  // Reduce-mean over the second dimension (n).
+  // in:  [m, n]
+  // out: [m]
+  __co_device__ void reduce_mean_kernel(float* in, float* out, int m, int n) {
+    for (int i = 0; i < m; ++i) {
+      float acc = 0.f;
+      int base = i * n;
+      for (int j = 0; j < n; ++j) acc += in[base + j];
+      out[i] = acc / n;
+    }
+  }
+}
+
+// Reduce over the last dim V: [N, S, V] -> [N, S]
+__co__ f32 [N, S] ele_reduce_mean(f32 [N, S, V0] inp) {
+  f32 [N, S] out;
+
+  parallel p by NUM_BLOCK : block {
+    foreach {i, s} in [N / #p, S] {
+      shared f32 [1, 1] out_s;
+      out_s.at(0, 0) = 0.0f;
+      foreach v in [V0]
+        out_s.at(0, 0) = out_s.at(0, 0) + inp.at(p#i, s, v);
+      out_s.at(0, 0) = out_s.at(0, 0) / V0;
+      dma.copy out_s => out.chunkat(p#i, s);
+    }
+  }
+
+  return out;
+}
+
+// --------------------------- Host / main ---------------------------
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(N, S, V);
+  a.fill_random(-1.0, 1.0);
+
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto r  = ele_reduce_mean(a.view());
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+  // Verification: for each (n, s), average over V
+  for (size_t n = 0; n < N; ++n) {
+    for (size_t s = 0; s < S; ++s) {
+      double acc = 0.0;
+      for (size_t v = 0; v < V; ++v) acc += a[n][s][v];
+      float ref = static_cast<float>(acc / V);
+      if (std::fabs(ref - r[n][s]) > 1e-5f) {
+        std::cout << "Mismatch at (n=" << n << ", s=" << s
+                  << ") ref=" << ref << " got=" << r[n][s] << "\n";
+        choreo::choreo_assert(false, "reduce_mean mismatch (case12)");
+      }
+    }
+  }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " us\n";
+  return 0;
+}
+

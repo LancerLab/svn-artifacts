@@ -1,0 +1,82 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+#include <cmath>
+
+#define N 64
+#define C 1280
+#define H 7
+#define W 7
+
+#ifndef NUM_BLOCK
+  #define NUM_BLOCK 2
+#endif
+#ifndef NUM_THREAD
+  #define NUM_THREAD 8
+#endif
+
+__cok__ {
+  // Generic 2D reduce-mean kernel:
+  // in  : [m, n]
+  // out : [m]
+  __co_device__ void reduce_mean_kernel(float* in, float* out, int m, int n) {
+    for (int i = 0; i < m; ++i) {
+      float acc = 0.f;
+      int base = i * n;
+      for (int j = 0; j < n; ++j) acc += in[base + j];
+      out[i] = acc / n;
+    }
+  }
+}
+
+// Reduce over H and W: [N, C, H, W] -> [N, C]
+__co__ f32 [N, C] ele_reduce_mean(f32 [N, C, H, W] inp) {
+  f32 [N, C] out;
+
+  parallel p by NUM_BLOCK : block {
+    foreach {i, c_tile} in [N / #p, 20] {
+      shared f32 [1, 64] out_s;
+      parallel q by 64 {
+        out_s.at(0, q) = 0.0f;
+        foreach {h, w} in [H, W]
+          out_s.at(0, q) = out_s.at(0, q) + inp.at(p#i, c_tile#q, h, w);
+        out_s.at(0, q) = out_s.at(0, q) / (H * W);
+      }
+      dma.copy out_s => out.chunkat(p#i, c_tile);
+    }
+  }
+
+  return out;
+}
+
+// --------------------------- Host / main ---------------------------
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(N, C, H, W);
+  a.fill_random(-1.0, 1.0);
+
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto r  = ele_reduce_mean(a.view());
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+  // Verification: for each (n, c) average over H and W
+  for (size_t n = 0; n < N; ++n) {
+    for (size_t c = 0; c < C; ++c) {
+      double acc = 0.0;
+      for (size_t h = 0; h < H; ++h)
+        for (size_t w = 0; w < W; ++w)
+          acc += a[n][c][h][w];
+      float ref = static_cast<float>(acc / (H * W));
+      if (std::fabs(ref - r[n][c]) > 1e-5f) {
+        std::cout << "Mismatch at (n=" << n << ", c=" << c
+                  << ") ref=" << ref << " got=" << r[n][c] << "\n";
+        choreo::choreo_assert(false, "reduce_mean mismatch (case13)");
+      }
+    }
+  }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " us\n";
+  return 0;
+}
+

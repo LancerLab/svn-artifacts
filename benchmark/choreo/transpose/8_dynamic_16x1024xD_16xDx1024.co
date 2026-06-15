@@ -1,0 +1,21 @@
+#include "choreo.h"
+#include "common.h"
+
+#ifdef __STATIC_SHAPE__
+#define d_model 48
+#endif
+
+__co__ auto TRANSPOSE(f32 [16, 1024, d_model] i) {
+  f32 [i.span(0), i.span(2), i.span(1)] o;
+  parallel p by 4 : block {
+    foreach x in [i.span(0)/#p] {
+      foreach {y, z} in [i.span(1), i.span(2)]
+        o.at(p#x, z, y) = i.at(p#x, y, z);
+    }
+  }
+  return o;
+}
+
+int main() {
+  test3("TRANSPOSE", TRANSPOSE, {16, 1024, 48}, {0, 2, 1});
+}

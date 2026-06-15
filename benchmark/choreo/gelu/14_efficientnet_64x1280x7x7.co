@@ -1,0 +1,24 @@
+#include "choreo.h"
+#include "common.h"
+
+__co__ auto GELU(f32 [64, 1280, 7, 7] i) {
+  f32 [i.span] o;
+  parallel p by 4 : block {
+    foreach {x, y, z} in [16, 1280, 7] {
+      shared f32 [1, 1, 1, 7] is, os;
+      fs = dma.copy.async i.chunkat(p#x, y, z, _) => is;
+      wait fs;
+      parallel q by 7 {
+        v = is.at(0, 0, 0, q);
+        v2 = v * v;
+        os.at(0, 0, 0, q) = 0.5f * v + 0.3989422804014327f * v2 - 0.06649038006690546f * v2 * v2 + 0.009973557010035819f * v2 * v2 * v2 - 0.00118732821548045f * v2 * v2 * v2 * v2;
+      }
+      dma.copy os => o.chunkat(p#x, y, z, _);
+    }
+  }
+  return o;
+}
+
+int main() {
+  test4("GELU", GELU, {64, 1280, 7, 7});
+}

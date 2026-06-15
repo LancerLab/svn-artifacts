@@ -1,0 +1,43 @@
+#include "choreo.h"
+#include "common.h"
+
+#ifndef NUM_BLOCK
+  #define NUM_BLOCK 8
+#endif
+#ifndef NUM_THREAD
+  #define NUM_THREAD 1
+#endif
+
+#ifdef __STATIC_SHAPE__
+#define num_positions 256
+#endif
+
+__co__ auto EMBEDDING(s32 [16, num_positions] id, f32 [512, 768] w) {
+  bs = id.span(0);
+  tokens = id.span(1);
+  vs = w.span(0);
+  hidden_size = w.span(1);
+
+  f32 [bs, tokens, hidden_size] o;
+  
+  parallel p by NUM_BLOCK : block {
+    foreach n in [bs / #p] {
+      shared s32 [tokens] _id;
+      dma.copy id.chunkat(p#n, _).span_as(tokens) => _id;
+      foreach idx in [tokens] {
+        v = _id.at(idx);
+        assert(v >= 0, "expect v >= 0");
+        assert(v < vs, "expect v < vs");
+        shared f32 [hidden_size] _w;
+        dma.copy w.subspan(1, hidden_size).at(v, 0).span_as(hidden_size) => _w;
+        dma.copy _w => o.chunkat(p#n, idx, _).span_as(hidden_size);
+      }
+    }
+  }
+  return o;
+}
+
+
+int main() {
+  test("EMBEDDING", EMBEDDING, {16, 256}, {512, 768});
+}

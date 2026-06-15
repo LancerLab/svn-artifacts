@@ -1,0 +1,31 @@
+#include "common.hpp"
+
+#ifdef __STATIC_SHAPE__
+#define num_heads 8
+#endif
+
+// case4: [32, num_heads, 512, 64] + [32, num_heads, 64, 512] --> [32, num_heads, 512, 512] (Dynamic)
+__co__ auto matmul4(f32 [32, num_heads, 512, 64] lhs, f32 [32, num_heads, 64, 512] rhs) {
+  f32 [lhs.span(0), lhs.span(1), lhs.span(2), rhs.span(3)] output;
+  parallel p by 4, q by 8 {
+    with index = {m_tile, n_tile, k_tile} in [16, 16, 1] {
+      foreach m_tile, n_tile {
+        local f32[output.span(0)/#p/#q, output.span(1), output.span(2)/#m_tile, output.span(3)/#n_tile] l1_out {0.0f};
+        foreach k_tile {
+          l1_a = dma.copy lhs.chunkat(p#q, _, m_tile, k_tile) => local;
+          l1_b = dma.transp<0,1,3,2> rhs.chunkat(p#q, _, k_tile, n_tile) => local;
+          foreach {i, j} in [l1_a.span(0), l1_a.span(1)] {
+            call k_matmul(l1_a.chunkat(i, j, _, _), l1_b.chunkat(i, j, _, _), l1_out.chunkat(i,j,_,_), l1_a.span(2), l1_b.span(2), l1_a.span(3));
+          }
+          dma.copy l1_out => output.chunkat(p#q, _, m_tile, n_tile);
+        }
+      }
+    }
+  }
+  return output;
+}
+
+int main() {
+  TEST3(matmul4, 32, 8, 512, 512, 64);
+  return 0;
+}

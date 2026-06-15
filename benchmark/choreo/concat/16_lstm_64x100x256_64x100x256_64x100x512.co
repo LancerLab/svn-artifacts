@@ -1,0 +1,67 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+
+#define I 64
+#define J 100
+#define K 256
+#define L 1
+
+#ifndef NUM_BLOCK
+  #define NUM_BLOCK 2
+#endif
+#ifndef NUM_THREAD
+  #define NUM_THREAD 2
+#endif
+
+// ---------------- choreo operator ----------------
+__co__ f32 [I, J, 2*K, L] ele_concat_K(f32 [I, J, K, L] a, f32 [I, J, K, L] b) {
+  f32 [I, J, 2*K, L] out;
+
+  parallel p by NUM_BLOCK : block {
+    foreach {i, j} in [I / #p, J] {
+      shared f32 [1, 1, K, L] as, bs;
+      shared f32 [1, 1, 2 * K, L] os;
+      af = dma.copy.async a.chunkat(p#i, j, _, _) => as;
+      bf = dma.copy.async b.chunkat(p#i, j, _, _) => bs;
+      wait af, bf;
+      foreach q in [K] {
+        os.at(0, 0, q, 0) = as.at(0, 0, q, 0);
+        os.at(0, 0, q + K, 0) = bs.at(0, 0, q, 0);
+      }
+      dma.copy os => out.chunkat(p#i, j, _, _);
+    }
+  }
+  return out;
+}
+
+// ---------------- host test ----------------
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(I, J, K, L);
+  auto b = choreo::make_spandata<choreo::f32>(I, J, K, L);
+  a.fill_random(-1.0, 1.0);
+  b.fill_random(-1.0, 1.0);
+
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto r  = ele_concat_K(a.view(), b.view());
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+  for (size_t i=0;i<I;++i)
+    for (size_t j=0;j<J;++j)
+      for (size_t kk=0; kk<2*K; ++kk) {
+        size_t which = kk / K;
+        size_t k     = kk % K;
+        float got = r[i][j][kk][0];
+        float ref = (which==0)? a[i][j][k][0] : b[i][j][k][0];
+        if (ref!=got) {
+          std::cout << "Mismatch at ("<<i<<","<<j<<","<<kk<<")\n";
+          choreo::choreo_assert(false,"concat mismatch");
+        }
+      }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " us\n";
+  return 0;
+}
+
