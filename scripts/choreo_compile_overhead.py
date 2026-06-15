@@ -62,7 +62,7 @@ def compile_once(choreo: Path, src: Path, out_dir: Path) -> Tuple[Optional[float
     """Run `choreo -es src -t cute -o <tmp>` and return (wall-time in ms, ok).
     Returns (None, False) on timeout, (ms, False) on compile error."""
     out = out_dir / (src.stem + ".gen")
-    cmd = [str(choreo), str(src), "-es", "-t", "cute", "-o", str(out)]
+    cmd = [str(choreo), str(src), "-es", "-fc", "--max-local-mem-capacity=2000000", "-t", "cute", "-o", str(out)]
     t0 = time.perf_counter()
     try:
         result = subprocess.run(cmd, capture_output=True, text=True,

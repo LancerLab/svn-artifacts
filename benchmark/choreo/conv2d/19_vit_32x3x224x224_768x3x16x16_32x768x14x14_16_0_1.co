@@ -13,7 +13,6 @@ __co__ auto CONV2D(f32 [32, 3, 224, 224] i, f32 [768, 3, 16, 16] w) {
   Cout = w.span(0);
   Kh = w.span(2);
   Kw = w.span(3);
-  // 14
   Ho = (H + 2 * padding - dilation * (Kh - 1) - 1) / stride + 1;
   Wo = (W + 2 * padding - dilation * (Kw - 1) - 1) / stride + 1;
   Hpad = H + 2 * padding;
@@ -25,31 +24,24 @@ __co__ auto CONV2D(f32 [32, 3, 224, 224] i, f32 [768, 3, 16, 16] w) {
   K = Cin * Kh * Kw;
 
   parallel p by 2  {
-    shared f32 [M, K] A;
-    B = dma.copy w.span_as(Cout, K) => shared;
-    shared f32 [Ho*Wo, Cout] Y;
-
     foreach n in [N / #p] {
-      // 1. im2col
-      with {x, y} in [Hpad/16, Wpad/16] {
-        foreach x, y {
-          if (x >= Ho) break;
-          if (y >= Wo) break;
-          dma.copy i.chunkat(p#n, _, x, y) => A.subspan(1, _).at(x*Wo + y, 0).span_as(1, Cin, Kh, Kw);
+      parallel q by 14  {
+        foreach {cot} in [48] {
+          shared f32 [14, 768] A;
+          shared f32 [16, 768] B_tile;
+          dma.copy w.span_as(Cout, K).chunkat(cot, _) => B_tile;
+          with {x, y} in [Ho/14, Wo] {
+            foreach x, y {
+              dma.copy i.chunkat(p#n, _, (q#x)*16, y*16).span_as(1, Cin, Kh, Kw).span_as(1, K) => A.subspan(1, _).at(x*Wo + y, 0).span_as(1, K);
+            }
+          }
+          l1_A = dma.copy A => local;
+          l1_B = dma.copy B_tile => local;
+          local f32 [14, 16] l1_Y{0.0f};
+          call k_matmul(l1_A.data, l1_B.data, l1_Y, 14, 16, K);
+          dma.transp<1, 0> l1_Y => o.chunkat(p#n, cot, q, _).span_as(16, 14);
         }
       }
-      // 2. GEMM: C = A x B, result shape: M x Cout
-      parallel q by 7  {
-        l1_A = dma.copy A.chunkat(q, _) => local;
-        foreach {qq} in [16] {
-          local f32 [A.span(0)/#q, B.span(0)/#qq] l1_Y{0.0f};
-          l1_B = dma.copy B.chunkat(qq, _) => local;
-          call k_matmul(l1_A.data, l1_B.data, l1_Y, M/#q, Cout/#qq, K);
-          dma.copy l1_Y => Y.chunkat(q, qq);
-        }
-      }
-      
-      dma.transp<0, 3, 1, 2> Y.span_as(1, Ho, Wo, Cout) => o.chunkat(p#n, _, _, _);
     }
   }
   return o;

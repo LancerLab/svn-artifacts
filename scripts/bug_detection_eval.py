@@ -153,7 +153,7 @@ def test_svn_detection(choreo_bin: str, mutant: Path, target: str = "cute") -> s
     """Test if SVN detects the bug. Returns resolution stage."""
     try:
         result = subprocess.run(
-            [choreo_bin, "-t", target, "-es", "--runtime-check=all",
+            [choreo_bin, "-t", target, "-es", "-fc", "--max-local-mem-capacity=2000000", "--runtime-check=all",
              "--show-assess", str(mutant), "-o", "/dev/null"],
             capture_output=True, text=True, timeout=30
         )

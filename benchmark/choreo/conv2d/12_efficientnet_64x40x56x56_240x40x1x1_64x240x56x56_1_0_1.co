@@ -13,10 +13,8 @@ __co__ auto CONV2D(f32 [64, 40, 56, 56] i, f32 [240, 40, 1, 1] w) {
   Cout = w.span(0);
   Kh = w.span(2);
   Kw = w.span(3);
-  Ho = H;
-  Wo = W;
-  Hpad = H;
-  Wpad = W;
+  Ho = (H + 2 * padding - dilation * (Kh - 1) - 1) / stride + 1;
+  Wo = (W + 2 * padding - dilation * (Kw - 1) - 1) / stride + 1;
 
   f32 [N, Cout, Ho, Wo] o;
 
@@ -24,39 +22,23 @@ __co__ auto CONV2D(f32 [64, 40, 56, 56] i, f32 [240, 40, 1, 1] w) {
   K = Cin * Kh * Kw;
 
   parallel p by 2  {
-    // 56*56, 40
-    shared f32 [M, K] A;
-    // 240, 40
     B = dma.copy w.span_as(Cout, K) => shared;
-    // 56*56, 240
-    shared f32 [Ho*Wo, Cout] Y;
 
     foreach n in [N / #p] {
-      // 1. im2col
-      dma.transp<2, 3, 1, 0> i.chunkat(p#n, _, _, _) => A.span_as(Ho, Wo, Cin, 1);
-      // 2. GEMM: C = A x B, result shape: M x Cout
       parallel q by 8  {
-        K_vd = A.span(1) / 32 * 32;
-        K_sl = A.span(1) - K_vd;
-        l1_A = dma.copy A.subspan(A.span(0)/#q, K_vd).at(q, 0) => local;
         foreach {qq} in [#q] {
-          local f32 [A.span(0)/#q, B.span(0)/#qq] l1_Y{0.0f};
-          l1_B = dma.copy B.subspan(B.span(0)/#qq, K_vd).at(qq, 0) => local;
-          call k_matmul(l1_A.data, l1_B.data, l1_Y, M/#q, Cout/#qq, K_vd);
-          l1_A_sl = dma.copy A.chunkat(q, _).modspan(_, K_vd).at(0, 1) => local;
-          l1_B_sl = dma.copy B.chunkat(qq, _).modspan(_, K_vd).at(0, 1) => local;
-          call k_matmul(l1_A_sl.data, l1_B_sl.data, l1_Y, M/#q, Cout/#qq, K_sl);
-          dma.copy l1_Y => Y.chunkat(q, qq);
+          local f32 [M/#q, Cout/#qq] l1_Y{0.0f};
+          l1_A = dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(_, q, _).span_as(K, 392) => local;
+          l1_B = dma.copy B.chunkat(qq, _) => local;
+          call k_matmul(l1_A.data, l1_B.data, l1_Y, M/#q, Cout/#qq, K);
+          dma.transp<1, 0> l1_Y => o.chunkat(p#n, qq, q, _).span_as(Cout/#qq, 392);
         }
       }
-      
-      dma.transp<0, 3, 1, 2> Y.span_as(1, Ho, Wo, Cout) => o.chunkat(p#n, _, _, _);
     }
   }
   return o;
 }
 
-
 int main() {
-  test("CONV2D", CONV2D, {64, 40, 56, 56}, {240, 40, 1, 1}, 1, 0, 1);
+  test("CONV2D", CONV2D, {64, 40, 56, 56}, {240, 40, 1, 1}, 1, 0, 1 );
 }
