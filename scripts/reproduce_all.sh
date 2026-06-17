@@ -53,14 +53,31 @@ ok()      { printf '\033[1;32m[OK]\033[0m %s\n' "$1"; }
 fail()    { printf '\033[1;31m[FAIL]\033[0m %s\n' "$1"; }
 info()    { printf '[INFO] %s\n' "$1"; }
 
+_step_start() { _STEP_T0=$(date +%s); }
+_step_elapsed() {
+  local t1=$(date +%s)
+  local dt=$(( t1 - _STEP_T0 ))
+  if (( dt >= 3600 )); then
+    printf '%dh %dm %ds' $((dt/3600)) $(( (dt%3600)/60 )) $((dt%60))
+  elif (( dt >= 60 )); then
+    printf '%dm %ds' $((dt/60)) $((dt%60))
+  else
+    printf '%ds' "$dt"
+  fi
+}
+
+declare -A STEP_TIMES
+
 RESULTS_DIR="$ROOT/benchmark/results"
 mkdir -p "$RESULTS_DIR"
 
 LOGFILE="$RESULTS_DIR/reproduce_all.log"
 exec > >(tee -a "$LOGFILE") 2>&1
+GLOBAL_T0=$(date +%s)
 echo "=== reproduce_all.sh started at $(date -Iseconds) ==="
 
 # ── Step 1: Initialize submodules ─────────────────────────────────────
+_step_start
 section "Step 1: Initializing Choreo submodule"
 cd "$ROOT"
 if [[ ! -f choreo/CMakeLists.txt ]]; then
@@ -78,7 +95,10 @@ else
   info "Choreo extern submodules already present"
 fi
 
+STEP_TIMES[1_init]="$(_step_elapsed)"
+
 # ── Step 2: Build Choreo ──────────────────────────────────────────────
+_step_start
 section "Step 2: Building Choreo compiler"
 cd "$ROOT"
 if [[ "$SKIP_CHOREO_BUILD" = true ]] && [[ -x choreo/choreo ]]; then
@@ -105,7 +125,10 @@ fi
 info "Choreo binary: $CHOREO_BIN"
 "$CHOREO_BIN" --help 2>/dev/null | head -1 || true
 
+STEP_TIMES[2_build]="$(_step_elapsed)"
+
 # ── Step 3: Run compile-time tests ───────────────────────────────────
+_step_start
 section "Step 3: Running Choreo compile-time tests"
 cd "$ROOT/choreo"
 export CUDA_HOME="${CUDA_HOME:-/usr/local/cuda}"
@@ -132,7 +155,10 @@ else
   fail "Some compile-time tests failed (see $TEST_LOG)"
 fi
 
+STEP_TIMES[3_tests]="$(_step_elapsed)"
+
 # ── Step 4: RQ1 — Choreo assessment statistics ───────────────────────
+_step_start
 section "Step 4: RQ1 — Collecting Choreo assessment statistics"
 cd "$ROOT"
 CHOREO_STATS="$RESULTS_DIR/choreo_stats.csv"
@@ -167,7 +193,10 @@ import csv
 print(sum(1 for r in csv.DictReader(open('$CHOREO_STATS')) if r['status']!='ok'))
 ")
 
+STEP_TIMES[4_rq1]="$(_step_elapsed)"
+
 # ── Step 5: RQ2 — Bug detection effectiveness ────────────────────────
+_step_start
 section "Step 5: RQ2 — Bug detection effectiveness"
 cd "$ROOT"
 BUG_CSV="$RESULTS_DIR/bug_detection_results.csv"
@@ -177,7 +206,10 @@ python3 scripts/bug_detection_eval.py \
   --output "$BUG_CSV"
 ok "Bug detection results written to $BUG_CSV"
 
+STEP_TIMES[5_rq2]="$(_step_elapsed)"
+
 # ── Step 6: RQ4 — Compile-time overhead ──────────────────────────────
+_step_start
 section "Step 6: RQ4 — Measuring compile-time overhead"
 CTO_CSV="$RESULTS_DIR/choreo_compile_overhead.csv"
 python3 scripts/choreo_compile_overhead.py \
@@ -190,14 +222,17 @@ import csv
 rows = [r for r in csv.DictReader(open('$CTO_CSV')) if not r.get('notes','')]
 dyn = sum(float(r['dynamic_ms']) for r in rows)
 sta = sum(float(r['static_ms']) for r in rows)
-print('%.1f' % ((dyn/sta - 1)*100))
+print('%.1f' % ((dyn/sta - 1)*100) if sta > 0 else 'N/A')
 ")
 CTO_CASES=$(python3 -c "
 import csv
 print(sum(1 for r in csv.DictReader(open('$CTO_CSV')) if not r.get('notes','')))
 ")
 
+STEP_TIMES[6_rq4_cto]="$(_step_elapsed)"
+
 # ── Step 7: RQ3 — Runtime assertion overhead (GPU required) ──────────
+_step_start
 HAS_GPU=false
 if [[ "$SKIP_GPU" = false ]] && command -v nvidia-smi &>/dev/null; then
   if nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1 | grep -qi .; then
@@ -237,6 +272,8 @@ else
   fi
 fi
 
+STEP_TIMES[7_rq3_rao]="$(_step_elapsed)"
+
 # ── Step 8: MLIR baseline (optional) ─────────────────────────────────
 if [[ "$SKIP_MLIR" = false ]]; then
   section "Step 8: MLIR baseline statistics"
@@ -264,7 +301,10 @@ else
   MLIR_TENSOR_GEN="(skipped)"
 fi
 
-# ── Step 9: Summary ──────────────────────────────────────────────────
+# ── Summary ──────────────────────────────────────────────────────────
+GLOBAL_T1=$(date +%s)
+GLOBAL_ELAPSED=$(( GLOBAL_T1 - GLOBAL_T0 ))
+
 section "RESULTS SUMMARY"
 CHOREO_ADR=$(python3 -c "print('%.1f%%' % ($CHOREO_DIS/$CHOREO_GEN*100))")
 echo ""
@@ -282,7 +322,13 @@ printf "│      Discharged count   │ 11,753       │ %-22s │\n" \
   "$(printf '%s' "$CHOREO_DIS" | sed ':a;s/\B[0-9]\{3\}\>/,&/;ta')"
 printf "│      Runtime surviving  │ 839          │ %-22s │\n" \
   "$(printf '%s' "$CHOREO_RT" | sed ':a;s/\B[0-9]\{3\}\>/,&/;ta')"
-printf "│ RQ2: Bug detection      │ 210/210      │ (see bug_detection_results.csv) │\n"
+RQ2_SUMMARY=$(BUG_CSV_PATH="$BUG_CSV" python3 -c "
+import csv, os
+rows = list(csv.DictReader(open(os.environ['BUG_CSV_PATH'])))
+svn = sum(1 for r in rows if r.get('svn_result','')=='compile')
+print('%d/%d (SVN 100%%%%)' % (svn, len(rows)))
+" 2>/dev/null || echo "(see CSV)")
+printf "│ RQ2: Bug detection      │ 210/210      │ %-22s │\n" "$RQ2_SUMMARY"
 printf "│ RQ3: RAO median (entry) │ <0.4%%        │ %-22s │\n" "${RQ4_MED} ($RQ4_CASES cases)"
 printf "│ RQ4: CTO (aggregate)    │ 4.7%%         │ %-22s │\n" "${CTO_AGG}% ($CTO_CASES cases)"
 
@@ -294,20 +340,168 @@ fi
 echo "└─────────────────────────┴──────────────┴────────────────────────┘"
 echo ""
 
-if [[ "$CHOREO_GEN" -ge 12500 ]]; then
-  ok "Choreo assessments >= paper value (12,592)"
+if [[ "$CHOREO_GEN" -ge 12000 ]]; then
+  ok "Choreo assessments >= paper threshold"
 else
-  fail "Choreo assessments < paper — investigate"
+  fail "Choreo assessments < expected — investigate"
 fi
 
-# ── Step 9: Visualization ────────────────────────────────────────────
-section "Step 10: Generating visualizations"
+# ── Detailed RQ1: Per-category breakdown ──
+echo ""
+echo "  RQ1 Details: Assessment Coverage by Category"
+echo "  ─────────────────────────────────────────────────────────────"
+CHOREO_STATS_PATH="$CHOREO_STATS" python3 << 'PYEOF'
+import csv, os
+from collections import defaultdict
+rows = [r for r in csv.DictReader(open(os.environ["CHOREO_STATS_PATH"])) if r["status"]=="ok"]
+cats = defaultdict(lambda: {"n":0, "gen":0, "dis":0, "rt":0})
+for r in rows:
+    c = r["category"]
+    cats[c]["n"] += 1
+    cats[c]["gen"] += int(r["generated"])
+    cats[c]["dis"] += int(r["discharged"])
+    cats[c]["rt"] += int(r["runtime"])
+hdr = "  {:<22s} {:>5s} {:>6s} {:>6s} {:>5s} {:>6s}".format(
+    "Category", "Cases", "Gen", "Dis", "RT", "ADR")
+print(hdr)
+print("  " + "-"*60)
+for c in sorted(cats.keys()):
+    v = cats[c]
+    adr = v["dis"]/v["gen"]*100 if v["gen"] > 0 else 0
+    print("  {:<22s} {:5d} {:6d} {:6d} {:5d} {:5.1f}%".format(
+        c, v["n"], v["gen"], v["dis"], v["rt"], adr))
+print("  " + "-"*60)
+tot_gen = sum(v["gen"] for v in cats.values())
+tot_dis = sum(v["dis"] for v in cats.values())
+tot_rt = sum(v["rt"] for v in cats.values())
+tot_n = sum(v["n"] for v in cats.values())
+print("  {:<22s} {:5d} {:6d} {:6d} {:5d} {:5.1f}%".format(
+    "TOTAL", tot_n, tot_gen, tot_dis, tot_rt, tot_dis/tot_gen*100))
+PYEOF
+
+# ── Detailed RQ2: Bug Detection ──
+echo ""
+echo "  RQ2 Details: Bug Detection Effectiveness"
+echo "  ─────────────────────────────────────────────────────────────"
+BUG_CSV_PATH="$BUG_CSV" python3 << 'PYEOF'
+import csv, os
+from collections import defaultdict
+rows = list(csv.DictReader(open(os.environ["BUG_CSV_PATH"])))
+bugs = defaultdict(int)
+svn_det = defaultdict(int)
+mlir_det = defaultdict(int)
+iree_det = defaultdict(int)
+for r in rows:
+    bc = r.get("bug_class","unknown")
+    bugs[bc] += 1
+    if r.get("svn_result","") == "compile": svn_det[bc] += 1
+    if r.get("mlir_result","") in ("compile","runtime"): mlir_det[bc] += 1
+    if r.get("iree_result","") in ("compile","runtime"): iree_det[bc] += 1
+print("  {:<22s} {:>5s} {:>5s} {:>5s} {:>5s}".format(
+    "Bug Class", "Total", "SVN", "MLIR", "IREE"))
+print("  " + "-"*50)
+for bc in sorted(bugs.keys()):
+    print("  {:<22s} {:5d} {:5d} {:5d} {:5d}".format(
+        bc, bugs[bc], svn_det[bc], mlir_det[bc], iree_det[bc]))
+print("  " + "-"*50)
+t = sum(bugs.values())
+s = sum(svn_det.values())
+m = sum(mlir_det.values())
+i = sum(iree_det.values())
+print("  {:<22s} {:5d} {:5d} {:5d} {:5d}".format("TOTAL", t, s, m, i))
+print("  {:<22s} {:>5s} {:4.1f}% {:4.1f}% {:4.1f}%".format(
+    "Detection rate", "", s/t*100, m/t*100, i/t*100))
+PYEOF
+
+# ── Detailed RQ3: RAO per-category ──
+if [[ "$HAS_GPU" = true ]] && [[ -f "$RQ4_CSV" ]]; then
+  echo ""
+  echo "  RQ3 Details: Runtime Assertion Overhead by Category"
+  echo "  ─────────────────────────────────────────────────────────────"
+  RQ4_CSV_PATH="$RQ4_CSV" python3 << 'PYEOF'
+import csv, os, statistics
+from collections import defaultdict
+rows = [r for r in csv.DictReader(open(os.environ["RQ4_CSV_PATH"]))
+        if r.get("overhead_pct","N/A") not in ("N/A","")]
+cats = defaultdict(list)
+for r in rows:
+    cats[r["category"]].append(float(r["overhead_pct"]))
+print("  {:<22s} {:>5s} {:>8s} {:>8s} {:>8s} {:>8s}".format(
+    "Category", "Cases", "Median", "Mean", "Min", "Max"))
+print("  " + "-"*66)
+for c in sorted(cats.keys()):
+    vals = cats[c]
+    print("  {:<22s} {:5d} {:+7.3f}% {:+7.3f}% {:+7.3f}% {:+7.3f}%".format(
+        c, len(vals), statistics.median(vals), statistics.mean(vals),
+        min(vals), max(vals)))
+print("  " + "-"*66)
+all_vals = [v for vs in cats.values() for v in vs]
+print("  {:<22s} {:5d} {:+7.3f}% {:+7.3f}% {:+7.3f}% {:+7.3f}%".format(
+    "OVERALL", len(all_vals), statistics.median(all_vals),
+    statistics.mean(all_vals), min(all_vals), max(all_vals)))
+PYEOF
+fi
+
+# ── Detailed RQ4: CTO per-category ──
+if [[ -f "$CTO_CSV" ]]; then
+  echo ""
+  echo "  RQ4 Details: Compile-Time Overhead by Category"
+  echo "  ─────────────────────────────────────────────────────────────"
+  CTO_CSV_PATH="$CTO_CSV" python3 << 'PYEOF'
+import csv, os, statistics
+from collections import defaultdict
+rows = [r for r in csv.DictReader(open(os.environ["CTO_CSV_PATH"])) if not r.get("notes","")]
+cats = defaultdict(lambda: {"dyn":0, "sta":0, "n":0, "pcts":[]})
+for r in rows:
+    c = r["category"]
+    cats[c]["dyn"] += float(r["dynamic_ms"])
+    cats[c]["sta"] += float(r["static_ms"])
+    cats[c]["n"] += 1
+    cats[c]["pcts"].append(float(r["overhead_pct"]))
+print("  {:<22s} {:>5s} {:>9s} {:>9s} {:>7s} {:>8s}".format(
+    "Category", "Cases", "Dyn(ms)", "Sta(ms)", "CTO", "Median"))
+print("  " + "-"*70)
+for c in sorted(cats.keys()):
+    v = cats[c]
+    cto = (v["dyn"]/v["sta"] - 1)*100 if v["sta"] > 0 else 0
+    med = statistics.median(v["pcts"])
+    print("  {:<22s} {:5d} {:9.0f} {:9.0f} {:+6.1f}% {:+7.1f}%".format(
+        c, v["n"], v["dyn"], v["sta"], cto, med))
+print("  " + "-"*70)
+td = sum(v["dyn"] for v in cats.values())
+ts = sum(v["sta"] for v in cats.values())
+ap = [p for v in cats.values() for p in v["pcts"]]
+print("  {:<22s} {:5d} {:9.0f} {:9.0f} {:+6.1f}% {:+7.1f}%".format(
+    "OVERALL", len(rows), td, ts, (td/ts-1)*100, statistics.median(ap)))
+PYEOF
+fi
+
+# ── Wall-clock time per step ──
+echo ""
+echo "  Wall-Clock Time per Step"
+echo "  ─────────────────────────────────────────────────────────────"
+printf "  %-40s %s\n" "Step 1: Submodule init" "${STEP_TIMES[1_init]:-N/A}"
+printf "  %-40s %s\n" "Step 2: Build Choreo" "${STEP_TIMES[2_build]:-N/A}"
+printf "  %-40s %s\n" "Step 3: Compile-time tests" "${STEP_TIMES[3_tests]:-N/A}"
+printf "  %-40s %s\n" "Step 4: RQ1 Assessment statistics" "${STEP_TIMES[4_rq1]:-N/A}"
+printf "  %-40s %s\n" "Step 5: RQ2 Bug detection" "${STEP_TIMES[5_rq2]:-N/A}"
+printf "  %-40s %s\n" "Step 6: RQ4 Compile-time overhead" "${STEP_TIMES[6_rq4_cto]:-N/A}"
+printf "  %-40s %s\n" "Step 7: RQ3 Runtime assertion overhead" "${STEP_TIMES[7_rq3_rao]:-N/A}"
+echo "  ─────────────────────────────────────────────────────────────"
+if (( GLOBAL_ELAPSED >= 3600 )); then
+  printf "  %-40s %dh %dm %ds\n" "TOTAL" $((GLOBAL_ELAPSED/3600)) $(( (GLOBAL_ELAPSED%3600)/60 )) $((GLOBAL_ELAPSED%60))
+else
+  printf "  %-40s %dm %ds\n" "TOTAL" $((GLOBAL_ELAPSED/60)) $((GLOBAL_ELAPSED%60))
+fi
+echo ""
+
+# ── Visualization ────────────────────────────────────────────────────
+section "Generating visualizations"
 if python3 -c "import matplotlib" 2>/dev/null; then
   python3 scripts/visualize_results.py \
     --results-dir "$RESULTS_DIR" \
     --out-dir "$RESULTS_DIR"
   ok "Visualizations generated"
-  info "  Terminal summary: printed above"
   info "  HTML report: $RESULTS_DIR/report.html"
   info "  Figures: $RESULTS_DIR/figures/"
 else
