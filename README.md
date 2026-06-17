@@ -100,6 +100,21 @@ The script produces:
 - **`benchmark/results/bug_detection_results.csv`**: Raw RQ2 data
 - **`benchmark/results/choreo_runtime_entry.csv`**: Raw RQ3 data (if GPU available)
 - **`benchmark/results/choreo_compile_overhead.csv`**: Raw RQ4 data
+- **`benchmark/results/reproduce_all.log`**: Full terminal log of the reproduction run
+
+### Viewing Results Again
+
+After reproduction completes, you can re-display the full summary at any time
+without re-running experiments:
+
+```bash
+python3 scripts/show_results.py
+```
+
+This reads the CSV files in `benchmark/results/` and prints the same detailed
+tables (RQ1–RQ4 breakdowns, paper-vs-reproduced comparison). Use `--no-color`
+for pipe-friendly output, or `--results-dir DIR` to point at a different data
+directory.
 
 ## Research Questions
 

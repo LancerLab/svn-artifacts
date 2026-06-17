@@ -16,6 +16,9 @@
 #   bash scripts/reproduce_all.sh --skip-gpu   # skip RQ3 (needs CUDA GPU)
 #   bash scripts/reproduce_all.sh --rq4-reps 5 # number of CTO repetitions
 #
+# To view results from a previous run without re-running experiments:
+#   python3 scripts/show_results.py
+#
 # Prerequisites:
 #   - cmake >= 3.16, ninja-build, g++ >= 9 (C++17)
 #   - git (for submodule init)
@@ -512,4 +515,8 @@ fi
 echo ""
 echo "Full results in: $RESULTS_DIR/"
 echo "Log: $LOGFILE"
+echo ""
+echo "To view these results again without re-running experiments:"
+echo "  python3 scripts/show_results.py"
+echo ""
 echo "=== reproduce_all.sh finished at $(date -Iseconds) ==="
