@@ -27,8 +27,8 @@ from typing import Dict, List, Optional, Tuple
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 CHOREO_CANDIDATES = [
-    WORKSPACE_ROOT / "choreo" / "build-release" / "choreo",
     WORKSPACE_ROOT / "build-release" / "choreo",
+    WORKSPACE_ROOT / "choreo" / "build-release" / "choreo",
     WORKSPACE_ROOT / "choreo" / "choreo",
     WORKSPACE_ROOT / "choreo" / "build-debug"   / "choreo",
 ]
@@ -66,7 +66,7 @@ def _is_dynamic(co_file: Path) -> bool:
 
 def generate_script(choreo: Path, co_file: Path, out_sh: Path,
                     rtc_level: str) -> bool:
-    cmd = [str(choreo), str(co_file), "-gs", "-t", "cute",
+    cmd = [str(choreo), "-gs", "-fc", "--max-local-mem-capacity=2000000", "-t", "cute", str(co_file),
            f"--runtime-check={rtc_level}", "-o", str(out_sh)]
     try:
         subprocess.run(cmd, capture_output=True, text=True,
