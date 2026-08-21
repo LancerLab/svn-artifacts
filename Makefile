@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 ROOT := $(CURDIR)
-CHOREO_DIR := $(ROOT)/choreo
+CHOREO_DIR := $(ROOT)/croqtile
 TRITON_VENV := $(ROOT)/external/triton-v3.6.0/.venv
 TRITON_PYTHON := $(TRITON_VENV)/bin/python
 

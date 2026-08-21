@@ -47,10 +47,10 @@ WORKSPACE_ROOT = Path(__file__).parent.parent
 
 # build-debug supports --stats; build-release does not (treats it as positional arg)
 _CHOREO_CANDIDATES = [
-    WORKSPACE_ROOT / "choreo" / "build-debug"   / "choreo",
-    WORKSPACE_ROOT / "choreo" / "build-release" / "choreo",
+    WORKSPACE_ROOT / "croqtile" / "build-debug"   / "choreo",
+    WORKSPACE_ROOT / "croqtile" / "build-release" / "choreo",
     WORKSPACE_ROOT / "build-release" / "choreo",
-    WORKSPACE_ROOT / "choreo" / "choreo",
+    WORKSPACE_ROOT / "croqtile" / "choreo",
 ]
 DEFAULT_CASES_DIR = WORKSPACE_ROOT / "benchmark/choreo"
 DEFAULT_OUT       = WORKSPACE_ROOT / "benchmark/results/choreo_stats.csv"

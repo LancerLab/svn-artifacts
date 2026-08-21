@@ -28,9 +28,9 @@ from typing import Dict, List, Optional, Tuple
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 CHOREO_CANDIDATES = [
     WORKSPACE_ROOT / "build-release" / "choreo",
-    WORKSPACE_ROOT / "choreo" / "build-release" / "choreo",
-    WORKSPACE_ROOT / "choreo" / "choreo",
-    WORKSPACE_ROOT / "choreo" / "build-debug"   / "choreo",
+    WORKSPACE_ROOT / "croqtile" / "build-release" / "choreo",
+    WORKSPACE_ROOT / "croqtile" / "choreo",
+    WORKSPACE_ROOT / "croqtile" / "build-debug"   / "choreo",
 ]
 CASES_DIR   = WORKSPACE_ROOT / "benchmark" / "choreo"
 DEFAULT_OUT = WORKSPACE_ROOT / "benchmark" / "results" / "choreo_runtime_entry.csv"
@@ -46,7 +46,7 @@ if _CUDA_BIN not in os.environ.get("PATH", ""):
 if "CUDA_HOME" not in os.environ:
     os.environ["CUDA_HOME"] = "/usr/local/cuda"
 if "CUTE_HOME" not in os.environ:
-    _cutlass = WORKSPACE_ROOT / "choreo" / "extern" / "cutlass"
+    _cutlass = WORKSPACE_ROOT / "croqtile" / "extern" / "cutlass"
     if _cutlass.is_dir():
         os.environ["CUTE_HOME"] = str(_cutlass)
 

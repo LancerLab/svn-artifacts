@@ -45,7 +45,7 @@ PAPER_BDE = {
 
 def find_choreo():
     candidates = [
-        ROOT / "choreo" / "choreo",
+        ROOT / "croqtile" / "choreo",
         ROOT / "build" / "choreo",
     ]
     for c in candidates:

@@ -13,7 +13,7 @@ to reproduce the results (RQ1–RQ4) presented in the paper.
 
 ```
 .
-├── choreo/                  # Choreo compiler (git submodule → GitHub)
+├── croqtile/                 # Croqtile compiler (git submodule → GitHub)
 ├── benchmark/
 │   ├── choreo/              # 310 Choreo (.co) benchmark cases (15 categories)
 │   ├── mlir/                # MLIR linalg comparison cases

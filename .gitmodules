@@ -1,4 +1,4 @@
-[submodule "choreo"]
-	path = choreo
+[submodule "croqtile"]
+	path = croqtile
 	url = https://github.com/LancerLab/croqtile.git
-	branch = svn-artifacts
+	branch = main

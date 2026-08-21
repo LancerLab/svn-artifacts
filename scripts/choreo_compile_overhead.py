@@ -33,10 +33,10 @@ from typing import Dict, List, Optional, Tuple
 
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 CHOREO_CANDIDATES = [
-    WORKSPACE_ROOT / "choreo" / "build-release" / "choreo",
+    WORKSPACE_ROOT / "croqtile" / "build-release" / "choreo",
     WORKSPACE_ROOT / "build-release" / "choreo",
-    WORKSPACE_ROOT / "choreo" / "choreo",
-    WORKSPACE_ROOT / "choreo" / "build-debug"  / "choreo",
+    WORKSPACE_ROOT / "croqtile" / "choreo",
+    WORKSPACE_ROOT / "croqtile" / "build-debug"  / "choreo",
 ]
 CASES_DIR   = WORKSPACE_ROOT / "benchmark" / "choreo"
 DEFAULT_OUT = WORKSPACE_ROOT / "benchmark" / "results" / "choreo_compile_overhead.csv"
