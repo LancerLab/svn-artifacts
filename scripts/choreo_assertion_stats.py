@@ -76,7 +76,8 @@ def find_choreo_bin(hint: Path | None) -> Path:
     )
 
 
-def run_choreo(choreo: Path, co_file: Path, timeout_s: int = 120) -> dict:
+def run_choreo(choreo: Path, co_file: Path, timeout_s: int = 120,
+               extra_flags: list[str] | None = None) -> dict:
     """Run choreo --stats (no GPU target) to measure DSVN analysis only.
 
     We use '-t cute' because the benchmark kernels are written for the CuTe
@@ -85,7 +86,8 @@ def run_choreo(choreo: Path, co_file: Path, timeout_s: int = 120) -> dict:
     flag merely enables the code-generation paths these kernels require.
     """
     result = subprocess.run(
-        [str(choreo), "--stats", "-es", "--max-local-mem-capacity=2000000", "-t", "cute", str(co_file)],
+        [str(choreo), "--stats", "-es", "--max-local-mem-capacity=2000000", "-t", "cute"]
+        + (extra_flags or []) + [str(co_file)],
         capture_output=True, text=True, timeout=timeout_s,
         stdin=subprocess.DEVNULL,
     )
@@ -158,12 +160,12 @@ def _is_dynamic(case_name: str) -> bool:
 
 
 def _run_choreo_job(args_tuple):
-    choreo, co_file, timeout_s = args_tuple
+    choreo, co_file, timeout_s, extra_flags = args_tuple
     cat = co_file.parent.name
     case = co_file.stem
     is_dyn = _is_dynamic(case)
     try:
-        result = run_choreo(choreo, co_file, timeout_s)
+        result = run_choreo(choreo, co_file, timeout_s, extra_flags)
     except subprocess.TimeoutExpired:
         result = {"status": "timeout", "generated": 0, "discharged": 0,
                   "static_true": 0, "static_false": 0, "runtime": 0,
@@ -174,7 +176,7 @@ def _run_choreo_job(args_tuple):
 
 
 def collect(cases_dir: Path, choreo: Path, verbose: bool = False,
-            workers: int = 8) -> list[dict]:
+            workers: int = 8, extra_flags: list[str] | None = None) -> list[dict]:
     from multiprocessing.pool import ThreadPool
     jobs = []
     for cat_dir in sorted(cases_dir.iterdir()):
@@ -183,7 +185,7 @@ def collect(cases_dir: Path, choreo: Path, verbose: bool = False,
         for co_file in sorted(cat_dir.glob("*.co")):
             if co_file.stem.startswith("bench_"):
                 continue  # skip performance harness files
-            jobs.append((choreo, co_file, 120))
+            jobs.append((choreo, co_file, 120, extra_flags))
 
     rows: list[dict] = []
     with ThreadPool(workers) as pool:
@@ -207,14 +209,20 @@ def main(argv: list[str] | None = None) -> None:
     ap.add_argument("--verbose", "-v", action="store_true")
     ap.add_argument("--workers", type=int, default=8,
                     help="Parallel worker threads (default: 8)")
+    ap.add_argument("--choreo-flags", type=str, default="",
+                    help="Extra flags passed to choreo (e.g. \"--disable-vn-share\"")
     args = ap.parse_args(argv)
 
     choreo = find_choreo_bin(args.choreo)
     print(f"Using choreo: {choreo}")
     print(f"Scanning {args.cases_dir} with {args.workers} workers…")
 
+    import shlex
+    extra_flags = shlex.split(args.choreo_flags)
+    if extra_flags:
+        print(f"Extra choreo flags: {extra_flags}")
     rows = collect(args.cases_dir, choreo, verbose=args.verbose,
-                   workers=args.workers)
+                   workers=args.workers, extra_flags=extra_flags)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = ["category", "case_name", "is_dynamic", "status",
