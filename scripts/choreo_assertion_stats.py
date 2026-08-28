@@ -101,7 +101,7 @@ def run_choreo(choreo: Path, co_file: Path, timeout_s: int = 120,
                 "resolution_rate": "0.0000",
                 "st_struct": 0, "st_scalar": 0, "st_const": 0,
                 "rt_struct": 0, "rt_scalar": 0, "rt_const": 0,
-                "direct_checks": 0,
+                "direct_checks": 0, "mech_canonical": 0, "mech_interval": 0,
                 "ut_shape": 0, "ut_elem": 0, "ut_loop": 0, "ut_hw": 0,
                 "rt_shape": 0, "rt_elem": 0, "rt_loop": 0, "rt_hw": 0}
 
@@ -136,6 +136,8 @@ def run_choreo(choreo: Path, co_file: Path, timeout_s: int = 120,
     rt_scalar  = stats.get("Runtime assertions over scalar symbols only", 0)
     rt_const   = stats.get("Runtime assertions constant-only", 0)
     direct     = stats.get("Direct static checks (bypassing assessor)", 0)
+    mech_canon = stats.get("Static-true via canonical normalization", 0)
+    mech_intv  = stats.get("Static-true via interval/bounded-type proof", 0)
 
     return {
         "status":          "ok",
@@ -152,6 +154,8 @@ def run_choreo(choreo: Path, co_file: Path, timeout_s: int = 120,
         "rt_scalar":       rt_scalar,
         "rt_const":        rt_const,
         "direct_checks":   direct,
+        "mech_canonical":  mech_canon,
+        "mech_interval":   mech_intv,
         "ut_shape":        ut_shape,
         "ut_elem":         ut_elem,
         "ut_loop":         ut_loop,
@@ -191,7 +195,7 @@ def _run_choreo_job(args_tuple):
                   "resolution_rate": "0.0000",
                   "st_struct": 0, "st_scalar": 0, "st_const": 0,
                   "rt_struct": 0, "rt_scalar": 0, "rt_const": 0,
-                  "direct_checks": 0,
+                  "direct_checks": 0, "mech_canonical": 0, "mech_interval": 0,
                   "ut_shape": 0, "ut_elem": 0, "ut_loop": 0, "ut_hw": 0,
                   "rt_shape": 0, "rt_elem": 0, "rt_loop": 0, "rt_hw": 0}
     return dict(category=cat, case_name=case, is_dynamic=int(is_dyn), **result)
@@ -252,7 +256,7 @@ def main(argv: list[str] | None = None) -> None:
                   "runtime", "resolution_rate",
                   "st_struct", "st_scalar", "st_const",
                   "rt_struct", "rt_scalar", "rt_const",
-                  "direct_checks",
+                  "direct_checks", "mech_canonical", "mech_interval",
                   "ut_shape", "ut_elem", "ut_loop", "ut_hw",
                   "rt_shape", "rt_elem", "rt_loop", "rt_hw"]
     with open(args.out, "w", newline="", encoding="utf-8") as f:
