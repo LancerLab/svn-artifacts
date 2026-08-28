@@ -99,6 +99,9 @@ def run_choreo(choreo: Path, co_file: Path, timeout_s: int = 120,
         return {"status": "error", "generated": 0, "discharged": 0,
                 "static_true": 0, "static_false": 0, "runtime": 0,
                 "resolution_rate": "0.0000",
+                "st_struct": 0, "st_scalar": 0, "st_const": 0,
+                "rt_struct": 0, "rt_scalar": 0, "rt_const": 0,
+                "direct_checks": 0,
                 "ut_shape": 0, "ut_elem": 0, "ut_loop": 0, "ut_hw": 0,
                 "rt_shape": 0, "rt_elem": 0, "rt_loop": 0, "rt_hw": 0}
 
@@ -125,6 +128,15 @@ def run_choreo(choreo: Path, co_file: Path, timeout_s: int = 120,
     rt_loop    = stats.get("Runtime assertions (loop-bound)", 0)
     rt_hw      = stats.get("Runtime assertions (hw-constraint)", 0)
 
+    # Information-dependence breakdown (RQ4 capability gap)
+    st_struct  = stats.get("Static-true needing block/thread structure", 0)
+    st_scalar  = stats.get("Static-true over scalar symbols only", 0)
+    st_const   = stats.get("Static-true constant-only", 0)
+    rt_struct  = stats.get("Runtime assertions referencing block/thread structure", 0)
+    rt_scalar  = stats.get("Runtime assertions over scalar symbols only", 0)
+    rt_const   = stats.get("Runtime assertions constant-only", 0)
+    direct     = stats.get("Direct static checks (bypassing assessor)", 0)
+
     return {
         "status":          "ok",
         "generated":       generated,
@@ -133,6 +145,13 @@ def run_choreo(choreo: Path, co_file: Path, timeout_s: int = 120,
         "static_false":    static_false,
         "runtime":         runtime,
         "resolution_rate": f"{rate:.4f}",
+        "st_struct":       st_struct,
+        "st_scalar":       st_scalar,
+        "st_const":        st_const,
+        "rt_struct":       rt_struct,
+        "rt_scalar":       rt_scalar,
+        "rt_const":        rt_const,
+        "direct_checks":   direct,
         "ut_shape":        ut_shape,
         "ut_elem":         ut_elem,
         "ut_loop":         ut_loop,
@@ -170,6 +189,9 @@ def _run_choreo_job(args_tuple):
         result = {"status": "timeout", "generated": 0, "discharged": 0,
                   "static_true": 0, "static_false": 0, "runtime": 0,
                   "resolution_rate": "0.0000",
+                  "st_struct": 0, "st_scalar": 0, "st_const": 0,
+                  "rt_struct": 0, "rt_scalar": 0, "rt_const": 0,
+                  "direct_checks": 0,
                   "ut_shape": 0, "ut_elem": 0, "ut_loop": 0, "ut_hw": 0,
                   "rt_shape": 0, "rt_elem": 0, "rt_loop": 0, "rt_hw": 0}
     return dict(category=cat, case_name=case, is_dynamic=int(is_dyn), **result)
@@ -228,6 +250,9 @@ def main(argv: list[str] | None = None) -> None:
     fieldnames = ["category", "case_name", "is_dynamic", "status",
                   "generated", "discharged", "static_true", "static_false",
                   "runtime", "resolution_rate",
+                  "st_struct", "st_scalar", "st_const",
+                  "rt_struct", "rt_scalar", "rt_const",
+                  "direct_checks",
                   "ut_shape", "ut_elem", "ut_loop", "ut_hw",
                   "rt_shape", "rt_elem", "rt_loop", "rt_hw"]
     with open(args.out, "w", newline="", encoding="utf-8") as f:
