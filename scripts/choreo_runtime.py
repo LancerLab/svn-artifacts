@@ -18,6 +18,7 @@ Usage:
 
 import argparse
 import csv
+import re
 import statistics
 import subprocess
 import sys
@@ -55,7 +56,7 @@ def _is_dynamic(co_file: Path) -> bool:
 
 def generate_script(choreo: Path, co_file: Path, out_sh: Path,
                     rtc_level: Optional[str] = None,
-                    static: bool = False) -> bool:
+                    static: bool = False, arch: str = "") -> bool:
     """Generate a .sh execute-script via choreo -gs [-t cute] [--runtime-check=].
     Returns True iff the output file was created and is non-empty
     (choreo may exit non-zero on warnings but still produce valid output).
@@ -74,6 +75,8 @@ def generate_script(choreo: Path, co_file: Path, out_sh: Path,
     cmd = [str(choreo), str(input_co), "-gs", "-t", "cute", "-o", str(out_sh)]
     if rtc_level is not None:
         cmd.append(f"--runtime-check={rtc_level}")
+    if arch:
+        cmd.append(f"-arch={arch}")
 
     try:
         subprocess.run(cmd, capture_output=True, text=True,
@@ -97,19 +100,51 @@ def run_once(sh_file: Path) -> Optional[int]:
         return None
     if r.returncode != 0:
         return None
-    for line in (r.stdout + r.stderr).splitlines():
-        if "Execution time:" in line and "microseconds" in line:
-            try:
-                return int(line.split(":")[1].strip().split()[0])
-            except (ValueError, IndexError):
-                pass
-    return None
+    m = _EXECTIME_RE.search(r.stdout + r.stderr)
+    return int(m.group(1)) if m else None
+
+
+_EXECTIME_RE = re.compile(r"Execution time:\s*(\d+)")
+_EXE_RE = re.compile(r"-o\s+(\S+\.exe)")
+
+
+def compile_once(sh_file: Path) -> Optional[Path]:
+    """Compile the case once (sh --compile-link); return the exe path."""
+    try:
+        r = subprocess.run(["bash", str(sh_file), "--compile-link"],
+                           capture_output=True, text=True,
+                           stdin=subprocess.DEVNULL, timeout=EXEC_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        return None
+    if r.returncode != 0:
+        return None
+    m = _EXE_RE.search(sh_file.read_text(errors="ignore"))
+    if not m:
+        return None
+    exe = Path(m.group(1))
+    return exe if exe.exists() else None
+
+
+def run_exe(exe: Path) -> Optional[int]:
+    """Run a prebuilt exe; return execution time in microseconds or None."""
+    try:
+        r = subprocess.run([str(exe)], capture_output=True, text=True,
+                           stdin=subprocess.DEVNULL, timeout=EXEC_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        return None
+    if r.returncode != 0:
+        return None
+    m = _EXECTIME_RE.search(r.stdout + r.stderr)
+    return int(m.group(1)) if m else None
 
 
 def measure_median(sh_file: Path, reps: int) -> Tuple[Optional[float], str]:
+    exe = compile_once(sh_file)
+    if exe is None:
+        return None, "compile-failed"
     times = []
     for _ in range(reps):
-        t = run_once(sh_file)
+        t = run_exe(exe)
         if t is None:
             return None, "run-failed"
         times.append(t)
@@ -117,7 +152,8 @@ def measure_median(sh_file: Path, reps: int) -> Tuple[Optional[float], str]:
 
 
 def collect(cases_dir: Path, choreo: Path, reps: int,
-            verbose: bool = False) -> List[Dict]:
+            verbose: bool = False, arch: str = "",
+            per_category: int = 0) -> List[Dict]:
     rows: List[Dict] = []
     with tempfile.TemporaryDirectory(prefix="choreo_rt_") as tmpdir:
         td = Path(tmpdir)
@@ -125,9 +161,13 @@ def collect(cases_dir: Path, choreo: Path, reps: int,
             if not cat_dir.is_dir():
                 continue
             category = cat_dir.name
+            taken = 0
             for co_file in sorted(cat_dir.glob("*.co")):
                 if not _is_dynamic(co_file):
                     continue
+                if per_category > 0 and taken >= per_category:
+                    break
+                taken += 1
                 case_name = co_file.stem
                 if verbose:
                     print(f"  {category}/{case_name}", flush=True)
@@ -139,7 +179,8 @@ def collect(cases_dir: Path, choreo: Path, reps: int,
                 for level in RTC_LEVELS:
                     sh = td / f"{case_name}_rtc_{level}.sh"
                     col = f"rtc_{level}_us"
-                    if not generate_script(choreo, co_file, sh, rtc_level=level):
+                    if not generate_script(choreo, co_file, sh, rtc_level=level,
+                                           arch=arch):
                         if verbose: print(f"    rtc={level}: gen-failed")
                         row[col] = "error"; notes.append(f"gen-{level}-failed")
                         continue
@@ -153,7 +194,8 @@ def collect(cases_dir: Path, choreo: Path, reps: int,
 
                 # Static variant
                 sh_stat = td / f"{case_name}_static.sh"
-                if not generate_script(choreo, co_file, sh_stat, static=True):
+                if not generate_script(choreo, co_file, sh_stat, static=True,
+                                       arch=arch):
                     if verbose: print(f"    static: gen-failed")
                     row["static_us"] = "error"; notes.append("gen-static-failed")
                 else:
@@ -177,6 +219,10 @@ def main(argv: Optional[List[str]] = None) -> None:
     ap.add_argument("--out",       type=Path, default=DEFAULT_OUT)
     ap.add_argument("--cases-dir", type=Path, default=CASES_DIR)
     ap.add_argument("--verbose", "-v", action="store_true")
+    ap.add_argument("--arch", type=str, default="sm_120",
+                    help="GPU arch for generated scripts (default: sm_120)")
+    ap.add_argument("--per-category", type=int, default=0,
+                    help="Limit to N dynamic cases per category (0 = all)")
     args = ap.parse_args(argv)
 
     choreo = find_choreo_bin()
@@ -186,7 +232,8 @@ def main(argv: Optional[List[str]] = None) -> None:
     print(f"variants : rtc=none/low/medium/high + static")
     print()
 
-    rows = collect(args.cases_dir, choreo, args.reps, verbose=args.verbose)
+    rows = collect(args.cases_dir, choreo, args.reps, verbose=args.verbose,
+                   arch=args.arch, per_category=args.per_category)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = ["category", "case_name",
