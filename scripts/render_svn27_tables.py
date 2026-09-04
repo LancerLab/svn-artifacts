@@ -234,7 +234,9 @@ def fig_mechanism_per_category():
     shares = data / totals * 100.0
     labels = ["canonical", "interval",
               "direct", "runtime"]
-    colors = ["#4c9bd4", "#e2824e", "#7fbf7f", "#c44e52"]
+    # Okabe-Ito colorblind-safe palette (ASPLOS 2027 CFP requires
+    # color-blind-friendly figures).
+    colors = ["#0072B2", "#E69F00", "#009E73", "#D55E00"]
 
     fig, ax = plt.subplots(figsize=(3.4, 3.0))
     left = np.zeros(len(cats))
