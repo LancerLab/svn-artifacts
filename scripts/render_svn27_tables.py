@@ -44,7 +44,7 @@ def table_rq1_category():
     for r in rows:
         by_cat[r["category"]].append(r)
     lines = [
-        r"\begin{table}[t]", r"\centering\small",
+        r"\begin{table}[t]", r"\centering\footnotesize",
         r"\caption{Per-category discharge. ADR = statically discharged / "
         r"generated obligations.}",
         r"\label{tab:rq1-category}",
@@ -87,7 +87,7 @@ def table_rq2_bugs():
               "wrong_output": "Wrong output shape",
               "stride_error": "Stride/layout error"}
     lines = [
-        r"\begin{table}[t]", r"\centering\small",
+        r"\begin{table}[t]", r"\centering\footnotesize",
         r"\caption{Detection of injected bugs (detections per class). "
         r"Ours detects all at compile time; MLIR detects 23 at compile time "
         r"and 20 more only at runtime; IREE detects 23 at runtime entry.}",
@@ -121,7 +121,7 @@ def table_rq3_runtime():
     for r in ok:
         by_cat[r["category"]].append(r)
     lines = [
-        r"\begin{table}[t]", r"\centering\small",
+        r"\begin{table}[t]", r"\centering\footnotesize",
         r"\caption{Residual runtime-check cost: median end-to-end kernel time "
         r"per category (3 runs per variant), normalized to the no-checks "
         r"variant.}",
@@ -163,7 +163,7 @@ def table_rq5_ablation():
                ("$-$ VN-based simplification", "rq5_no_vn_simplify.csv"),
                ("$-$ both", "rq5_no_vn_both.csv")]
     lines = [
-        r"\begin{table}[t]", r"\centering\small",
+        r"\begin{table}[t]", r"\centering\footnotesize",
         r"\caption{Minimality ablation (310 cases): removing the "
         r"value-numbering layer does not change the discharge outcome.}",
         r"\label{tab:rq5-ablation}",
@@ -187,14 +187,15 @@ def table_rq6_mechanism():
     dis = S("discharged")
     entries = [
         ("Canonical normalization", "constant-only", S("mech_canonical")),
-        ("Interval over bounded types", "block/thread structure",
+        ("Interval (bounded types)", "block/thread struct.",
          S("mech_interval")),
         ("Direct static checks", "compiler-internal", S("direct_checks")),
     ]
     lines = [
-        r"\begin{table}[t]", r"\centering\small",
+        r"\begin{table}[t]", r"\centering\footnotesize",
         r"\caption{Discharge by mechanism and information dependence.}",
         r"\label{tab:rq6-mechanism}",
+        r"\setlength{\tabcolsep}{3pt}",
         r"\begin{tabular}{@{}llrr@{}}", r"\toprule",
         r"Mechanism & Dependence & Discharged & Share\\",
         r"\midrule",
@@ -222,6 +223,8 @@ def fig_mechanism_per_category():
     import matplotlib
     matplotlib.use("Agg")
     matplotlib.rcParams["pdf.fonttype"] = 42
+    # Column-width figure with fonts that stay >= 8pt after inclusion.
+    matplotlib.rcParams.update({"font.size": 8.5})
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -229,11 +232,11 @@ def fig_mechanism_per_category():
     data = np.array([by_cat[c] for c in cats], dtype=float)
     totals = data.sum(axis=1, keepdims=True)
     shares = data / totals * 100.0
-    labels = ["canonical (const)", "interval (bounded types)",
-              "direct checks", "runtime residue"]
+    labels = ["canonical", "interval",
+              "direct", "runtime"]
     colors = ["#4c9bd4", "#e2824e", "#7fbf7f", "#c44e52"]
 
-    fig, ax = plt.subplots(figsize=(7, 3.2))
+    fig, ax = plt.subplots(figsize=(3.4, 3.0))
     left = np.zeros(len(cats))
     for i in range(4):
         ax.barh(cats, shares[:, i], left=left, label=labels[i],
@@ -242,8 +245,8 @@ def fig_mechanism_per_category():
     ax.set_xlim(0, 100)
     ax.set_xlabel("share of obligations (%)")
     ax.invert_yaxis()
-    ax.legend(ncol=2, fontsize=8, loc="lower center",
-              bbox_to_anchor=(0.5, -0.42))
+    ax.legend(ncol=2, fontsize=8, loc="lower center", columnspacing=0.9, handlelength=1.4,
+              bbox_to_anchor=(0.5, -0.55))
     fig.tight_layout()
     FIGDIR.mkdir(parents=True, exist_ok=True)
     out = FIGDIR / "fig_mechanism_per_category.pdf"
