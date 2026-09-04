@@ -1,4 +1,15 @@
-# SVN: Shape Value Numbering — CGO 2027 Artifact
+# SVN: Shape Value Numbering — Compiler-Auditor Artifact
+
+> **ASPLOS 2027 note:** for the ASPLOS 2027 paper (*The Compiler as Auditor:
+> Safety Ledgers for AI-Native GPU Kernels*), use
+> ```
+> bash scripts/reproduce_asplos27.sh   # add --skip-build / --skip-gpu as needed
+> ```
+> which regenerates every CSV behind the paper's tables and figures (RQ1–RQ6),
+> re-renders them into `../asplos27/{tables,figures}/`, and prints a
+> number-by-number comparison against the paper. The CGO 2027 pipeline below
+> (`reproduce_all.sh`) is retained for reference; its summary table compares
+> against the older CGO numbers.
 
 This repository is the artifact for the paper:
 
