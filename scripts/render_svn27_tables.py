@@ -59,9 +59,10 @@ def table_rq1_category():
         d = sum(int(r["discharged"]) for r in sub)
         rt = sum(int(r["runtime"]) for r in sub)
         cat_tex = cat.replace("_", chr(92) + "_")
+        adr = f"{d/g*100:.1f}\\%" if g > 0 else "---"
         lines.append(
             f"{cat_tex} & {len(sub)} & {g:,} & {d:,} & "
-            f"{d/g*100:.1f}\\% & {rt:,} \\\\")
+            f"{adr} & {rt:,} \\\\")
         tot[0] += len(sub); tot[1] += g; tot[2] += d; tot[3] += rt
     lines += [
         r"\midrule",
@@ -228,7 +229,9 @@ def fig_mechanism_per_category():
     import matplotlib.pyplot as plt
     import numpy as np
 
-    cats = sorted(by_cat)
+    # skip categories whose kernels generate no obligations (e.g., reshape's
+    # pure DMA copies): shares would be 0/0.
+    cats = [c for c in sorted(by_cat) if sum(by_cat[c]) > 0]
     data = np.array([by_cat[c] for c in cats], dtype=float)
     totals = data.sum(axis=1, keepdims=True)
     shares = data / totals * 100.0

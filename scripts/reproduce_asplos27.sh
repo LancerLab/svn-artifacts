@@ -79,9 +79,9 @@ PYEOF
 # -- Step 3: RQ5 — minimality ablation --------------------------------------
 section "Step 3: RQ5 — ablation (4 configurations)"
 cp "$RESULTS/rq6_mechanism.csv" "$RESULTS/rq5_full_svn.csv"
-$STATS --choreo-flags "--disable-vn-share"    --out "$RESULTS/rq5_no_vn_share.csv"
-$STATS --choreo-flags "--disable-vn-simplify" --out "$RESULTS/rq5_no_vn_simplify.csv"
-$STATS --choreo-flags "--disable-vn-share --disable-vn-simplify" \
+$STATS --choreo-flags="--disable-vn-share"    --out "$RESULTS/rq5_no_vn_share.csv"
+$STATS --choreo-flags="--disable-vn-simplify" --out "$RESULTS/rq5_no_vn_simplify.csv"
+$STATS --choreo-flags="--disable-vn-share --disable-vn-simplify" \
   --out "$RESULTS/rq5_no_vn_both.csv"
 
 # -- Step 4: RQ2 — bug detection --------------------------------------------
