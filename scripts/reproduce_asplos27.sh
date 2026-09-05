@@ -50,6 +50,9 @@ BIN="$ROOT/croqtile/build-release/choreo"
 
 # -- Step 1: build (or reuse) the pinned compiler ---------------------------
 section "Step 1: Choreo compiler"
+# Nested submodules (cutlass, gtest) are required by the build.
+cd "$ROOT" && git submodule update --init --recursive croqtile
+cd "$ROOT/croqtile" && git submodule update --init --recursive
 if [[ "$SKIP_BUILD" = false ]]; then
   cd "$ROOT" && make choreo-build
 fi
