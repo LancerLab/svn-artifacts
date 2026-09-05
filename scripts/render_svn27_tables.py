@@ -135,9 +135,16 @@ def table_rq3_runtime():
     all_low, all_high, all_static = [], [], []
     for cat in sorted(by_cat):
         sub = by_cat[cat]
+        # per-case overhead ratios first (normalizes each kernel), then
+        # median within the category; consistent with the "Median over
+        # cases" row, which is the median of per-case ratios.
         n = statistics.median(float(r["rtc_none_us"]) for r in sub)
-        lo = statistics.median(float(r["rtc_low_us"]) for r in sub)
-        hi = statistics.median(float(r["rtc_high_us"]) for r in sub)
+        lo = 100 * statistics.median(
+            (float(r["rtc_low_us"]) - float(r["rtc_none_us"]))
+            / float(r["rtc_none_us"]) for r in sub) / 100 * n + n
+        hi = 100 * statistics.median(
+            (float(r["rtc_high_us"]) - float(r["rtc_none_us"]))
+            / float(r["rtc_none_us"]) for r in sub) / 100 * n + n
         st = statistics.median(float(r["static_us"]) for r in sub)
         all_low.append((float(r["rtc_low_us"]) - float(r["rtc_none_us"]))
                        / float(r["rtc_none_us"]) * 100 for r in sub)
