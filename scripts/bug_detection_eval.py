@@ -153,17 +153,32 @@ def test_svn_detection(choreo_bin: str, mutant: Path, target: str = "cute") -> s
     """Test if SVN detects the bug. Returns resolution stage."""
     try:
         result = subprocess.run(
-            [choreo_bin, "-t", target, "-es", "-fc", "--max-local-mem-capacity=2000000", "--runtime-check=all",
-             "--show-assess", str(mutant), "-o", "/dev/null"],
+            [choreo_bin, "-t", target, "-es", "-fc", "--max-local-mem-capacity=2000000", "--show-assess", str(mutant), "-o", "/dev/null"],
             capture_output=True, text=True, timeout=30
         )
         if result.returncode != 0:
             return "compile"
         output = result.stdout + result.stderr
-        if re.search(r'error|errors have been detected', output, re.IGNORECASE):
+        # NOTE: match the static-false COUNT, not the label: the summary line
+        # always contains the string "static-false" (even with count 0).
+        sf = sum(int(m.group(1)) for m in
+                 re.finditer(r"(\d+) static-false", output))
+        if sf > 0:
             return "compile"
-        if "static-false" in output:
+        if re.search(r'\berror:|errors have been detected', output):
             return "compile"
+        # Compiles clean: check whether the materialized budgeted checks
+        # catch the bug at launch (before any device execution).
+        sh = mutant.with_suffix(".sh")
+        g = subprocess.run([choreo_bin, str(mutant), "-gs", "-t", target,
+                            "-o", str(sh)],
+                           capture_output=True, text=True, timeout=120)
+        if g.returncode == 0 and sh.exists():
+            x = subprocess.run(["bash", str(sh), "--execute"],
+                               capture_output=True, text=True, timeout=300)
+            xo = x.stdout + x.stderr
+            if "runtime check failed" in xo or "choreo_assert" in xo:
+                return "launch"
         return "undetected"
     except (subprocess.TimeoutExpired, OSError):
         return "timeout"

@@ -76,36 +76,40 @@ def table_rq1_category():
 # ---------------------------------------------------------------- RQ2
 def table_rq2_bugs():
     rows = load("bug_detection_results.csv")
-    by_cls = defaultdict(lambda: [0, 0, 0, 0])
+    by_cls = defaultdict(lambda: [0, 0, 0, 0, 0])
     for r in rows:
         e = by_cls[r["bug_class"]]
         e[0] += 1
         e[1] += r["svn_resolution"] == "compile"
-        e[2] += r["mlir_resolution"] in ("compile", "runtime")
-        e[3] += r["iree_resolution"] in ("compile", "entry")
+        e[2] += r["svn_resolution"] == "launch"
+        e[3] += r["mlir_resolution"] in ("compile", "runtime")
+        e[4] += r["iree_resolution"] in ("compile", "entry")
     pretty = {"dim_mismatch": "Dimension mismatch",
               "input_dep_oob": "Input-dependent OOB",
               "wrong_output": "Wrong output shape",
               "stride_error": "Stride/layout error"}
     lines = [
         r"\begin{table}[t]", r"\centering\footnotesize",
-        r"\caption{Detection of injected bugs (detections per class). "
-        r"Ours detects all at compile time; MLIR detects 23 at compile time "
-        r"and 20 more only at runtime; IREE detects 23 at runtime entry.}",
+        r"\caption{Detection of injected bugs by stage. \emph{Compile} = "
+        r"refuted statically; \emph{launch} = caught by budgeted entry "
+        r"checks before any device execution (default budget). MLIR detects "
+        r"23 at compile time and 20 more only at runtime; IREE detects 23 "
+        r"at runtime entry.}",
         r"\label{tab:rq2-bugs}",
-        r"\begin{tabular}{@{}lrrrr@{}}", r"\toprule",
-        r"Bug class & Injected & Ours & MLIR & IREE\\",
+        r"\begin{tabular}{@{}lrrrrr@{}}", r"\toprule",
+        r"Bug class & Injected & Compile & Launch & MLIR & IREE\\",
         r"\midrule",
     ]
-    tot = [0, 0, 0, 0]
+    tot = [0, 0, 0, 0, 0]
     for cls in sorted(by_cls):
-        n, s, m, i = by_cls[cls]
-        lines.append(f"{pretty.get(cls, cls)} & {n} & {s} & {m} & {i} \\\\")
-        tot[0] += n; tot[1] += s; tot[2] += m; tot[3] += i
+        n, c, l, m, i = by_cls[cls]
+        lines.append(f"{pretty.get(cls, cls)} & {n} & {c} & {l} & {m} & {i} "
+                     + chr(92)*2)
+        for k, v in zip(range(5), (n, c, l, m, i)): tot[k] += v
     lines += [
         r"\midrule",
-        f"\\textbf{{Total}} & {tot[0]} & \\textbf{{{tot[1]}}} & {tot[2]} & "
-        f"{tot[3]} \\\\",
+        f"\\textbf{{Total}} & {tot[0]} & \\textbf{{{tot[1]}}} & "
+        f"\\textbf{{{tot[2]}}} & {tot[3]} & {tot[4]} " + chr(92)*2,
         r"\bottomrule", r"\end{tabular}", r"\end{table}",
     ]
     write("rq2_bugs.tex", "\n".join(lines) + "\n")
