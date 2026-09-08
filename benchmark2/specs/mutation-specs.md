@@ -73,7 +73,25 @@ is translated to the surface's own mechanism for the same conceptual defect:
 |---|---|---|---|---|---|
 | M1 OOB | `a.at(i)` | omit `tl.load` mask | n/a (no memory) | `affine`/`memref` index out of range | entry shape only |
 | M2 shape | DMA extent mismatch | n/a (no cross-tensor contract) | **rank/shape mismatch** (primary target) | n/a | entry shape check |
-| M3 hw | `mma`/`tma` alignment, atom divisibility | partial (`tl.dot` K divisibility) | n/a | partial (`vector`/`affine` alignment) | n/a |
+| M3 hw | `mma`/`tma` alignment, atom divisibility | partial (`tl.dot` K divisibility) | n/a | **n/a** *(measured; was "partial")* | n/a |
+
+### 4.1 M3 × MLIR-low = `n/a` (measured 2026-09-09, owner-approved)
+
+The cell above previously read "partial (`vector`/`affine` alignment)". All three
+M3 defect specs were probed on **LLVM 21.1.0** and none is checked by MLIR's
+verifier, `generate-runtime-verification` (RTV), or `canonicalize`/`cse`:
+
+| Spec | Probe | Result |
+|---|---|---|
+| M3.1 atom divisibility | `vector.contract` with K=13 (`vector<16x13xf16> × vector<13x16xf16>`) | verifier **rc=0**, RTV **0 asserts**; K=16 behaves identically. `convert-vector-to-nvgpu` is **not a registered pass** in this build, so no lowering step enforces an atom shape. |
+| M3.2 misaligned base | `memref<64xf32, 4>` + `memref.store` | verifier rc=0; RTV emits **1** assert whose message is `^ out-of-bounds access` — a *bounds* check. Control **without** the alignment attribute yields the same count ⇒ alignment contributes nothing. |
+| M3.3 shared-mem over limit | 800 KB workgroup allocation (H800 max ≈ 228 KB) | unreachable via MLIR: `memref.alloc` + `#gpu.address_space<workgroup>` lowers to **`llvm.call @malloc`** (never `addrspace(3)`); `gpu.alloc` is **"explicitly marked illegal"** under `convert-gpu-to-nvvm`; a hand-written `llvm.mlir.global {addr_space = 3}` is **dead-stripped** (800 KB and 256 B controls serialize byte-identically). |
+
+Raw `ptxas -arch=sm_90` **does** reject the M3.3 case
+(`uses too much shared data (0xc3500 bytes, 0xc000 max)`), but `ptxas` is a
+downstream vendor assembler in the same category as compute-sanitizer — not part
+of the MLIR pipeline under audit. Per §6/R4 this `n/a` is **C2 evidence** (the
+surface cannot express the obligation class), never counted as "detected".
 
 **MLIR/linalg split:** linalg is compared only against **M2 (shape)**; low-level
 MLIR only against **M1 (memory)**. The two MLIR targets get **different,

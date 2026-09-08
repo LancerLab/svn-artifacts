@@ -66,7 +66,7 @@ never rebuilt.
 |---|---|---|
 | `choreo` | croqtile | `build-release/choreo` (current; pin `git rev-parse HEAD` at `setup`) |
 | `triton` | Triton | *(pin in `triton/run.sh setup`)* |
-| `mlir-linalg` / `mlir-low` | LLVM/MLIR | *(pin in each `run.sh setup`)* |
+| `mlir-linalg` / `mlir-low` | LLVM/MLIR | **LLVM 21.1.0**, prebuilt at `~/dev/croqtile/extern/llvm-project/bin` (owner-approved 2026-09-09; see §5.1) |
 | `iree` | IREE | `ce36167c3be514dd165a3ecff2d377cfa8eca0c9` (release `iree-3.12.0rc20260908`, 2026-09-08 main; wheel `iree_base_compiler`/`iree_base_runtime`) |
 | `tilelang` (exploratory) | TileLang | *(pin in `tilelang/run.sh setup`)* |
 
@@ -89,6 +89,43 @@ Each worker records its exact clone commit + build flags in `manifest.md` **at
   (sm_120), driver 580.95.05 / CUDA 13.0. **Differs from §2 machine
   precondition (2×H800)** — discrete E1/E2/E3 outcomes only; arch recorded per
   record so numbers can be re-derived on the final host.
+
+### 5.1 MLIR lanes — pinned toolchain and measurement protocol
+
+Owner rulings 2026-09-08/09 for `mlir-linalg` and `mlir-low`:
+
+- **LLVM 21.1.0** from croqtile's `extern/` (`~/dev/croqtile/extern/llvm-project/bin`).
+  The LLVM-18 assumption in `benchmark/../scripts/*.sh` (`~/mlir-local/usr/bin/mlir-opt-18`)
+  is **abandoned** — that directory does not exist on this machine.
+- **`mlir-cpu-runner` was renamed `mlir-runner`** in LLVM 21.
+- **Report BOTH RTV-off and RTV-on** variants (owner: "both for now"). RTV =
+  `generate-runtime-verification`. This is a fairness requirement: RTV is opt-in,
+  and bare MLIR on an OOB `memref.load` **silently returns garbage with exit 0**.
+  The two variants are separate rows/records, never merged.
+- **Pass ordering is a correctness requirement, not a detail.** `lower-affine`
+  must precede RTV (RTV instruments `memref.load`/`tensor.extract` but **not**
+  `affine.load`: 0 asserts before, 1 after). `convert-index-to-llvm` must be in
+  the lowering pipeline (RTV emits `index.bool.constant`).
+- **Runtime protocol:** `stdbuf -o0 mlir-runner --entry-point-result=void
+  --shared-libs=<libmlir_runner_utils.so>,<libmlir_c_runner_utils.so>` —
+  comma-separated, and `stdbuf -o0` is mandatory because the assert message goes
+  to **stdout** via `puts` before `abort()` and is otherwise lost. Distinguish a
+  JIT-symbol-error exit 1 from a genuine detection (exit 134).
+
+### 5.2 Small-input convention (plan §2.4 — delegated to the MLIR lanes)
+
+Plan §2.4 assigns the small-input convention to the coordinator, but Phase 0 did
+not pin one. Owner delegated it per-lane 2026-09-09 ("in different lane you may
+have different tiling choices, where a unique small value does not fit").
+Convention for `mlir-linalg` and `mlir-low`:
+
+1. Preserve **rank** and the **static-vs-dynamic pattern** exactly, so small and
+   full agree semantically (§2.4).
+2. Replace every static extent with the smallest value that preserves op
+   semantics (≥1; contraction dims equal on both operands for `matmul`/`conv2d`).
+3. Bind every dynamic extent to a small constant at the entry, recorded per
+   category in the lane's `raw/` provenance.
+4. Keep **dtype unchanged** — f16 vs f32 matters for any alignment reasoning.
 
 ## 6. Device plan (§12.6)
 
