@@ -6,8 +6,11 @@
 
 // - case6: [128, channels, 112, 112] --> [128, 112, 112, channels] (Dynamic)
 __co__ auto reshape6(f32 [128, channels, 112, 112] input) {
-  output = dma.copy input.span_as([128, 112, 112, channels]) => global;
-  return output.data;
+  f32 [128, 112, 112, channels] output;
+  parallel p by 1 {
+    dma.copy input.span_as([128, 112, 112, channels]) => output;
+  }
+  return output;
 }
 
 int main() {

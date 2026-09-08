@@ -6,8 +6,11 @@
 
 // - case13: [32, 512, vocab_size] --> [32, 512 * vocab_size] (Dynamic)
 __co__ auto reshape13(f32 [32, 512, vocab_size] input) {
-  output = dma.copy input.span_as([32, 512 * vocab_size]) => global;
-  return output.data;
+  f32 [32, 512 * vocab_size] output;
+  parallel p by 1 {
+    dma.copy input.span_as([32, 512 * vocab_size]) => output;
+  }
+  return output;
 }
 
 int main() {

@@ -6,8 +6,11 @@
 
 // - case7: [32, 197, embed_dim] --> [32, 197, embed_dim / 64, 64] (Dynamic)
 __co__ auto reshape7(f32 [32, 197, embed_dim] input) {
-  output = dma.copy input.span_as([32, 197, embed_dim / 64, 64]) => global;
-  return output.data;
+  f32 [32, 197, embed_dim / 64, 64] output;
+  parallel p by 1 {
+    dma.copy input.span_as([32, 197, embed_dim / 64, 64]) => output;
+  }
+  return output;
 }
 
 int main() {

@@ -6,8 +6,11 @@
 
 // - case4: [32, num_heads, 512, 64] --> [32, 512, num_heads * 64] (Attention)
 __co__ auto reshape4(f32 [32, num_heads, 512, 64] input) {
-  output = dma.copy input.span_as([32, 512, num_heads * 64]) => global;
-  return output.data;
+  f32 [32, 512, num_heads * 64] output;
+  parallel p by 1 {
+    dma.copy input.span_as([32, 512, num_heads * 64]) => output;
+  }
+  return output;
 }
 
 int main() {

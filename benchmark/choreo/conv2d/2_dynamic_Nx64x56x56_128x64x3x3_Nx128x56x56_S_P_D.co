@@ -15,40 +15,34 @@ __co__ auto CONV2D(f32 [batch_size, 64, 56, 56] i, f32 [128, 64, 3, 3] w, int st
   Kw = w.span(3);
   Ho = (H + 2 * padding - dilation * (Kh - 1) - 1) / stride + 1;
   Wo = (W + 2 * padding - dilation * (Kw - 1) - 1) / stride + 1;
-  Hpad = H + 2 * padding;
-  Wpad = W + 2 * padding;
 
-  f32 [N, Cout, Ho, Wo] o{-1.0f};
+  f32 [N, Cout, Ho, Wo] o;
 
-  M = Ho * Wo;
-  K = Cin * Kh * Kw;
-
+  // Direct-accumulation convolution (conv2d/9 idiom): no im2col matrix is ever
+  // materialized. Each (co, n) pair is handled cooperatively by the threads of
+  // the two parallel-by levels; the padded input channel plane and the 3x3
+  // weight slice are streamed into LOCAL memory (a few KB each), and the output
+  // plane Y[Ho, Wo] is accumulated in local memory. Shared memory is not used,
+  // so the 48 KB safe limit is trivially respected.
   parallel p by 2  {
-    shared f32 [M, K] A;
-    B = dma.copy w.span_as(Cout, K) => shared;
-    shared f32 [Ho*Wo, Cout] Y{-2.0f};
-
-    foreach n in [N / #p] {
-      // 1. im2col
-      i_s_padded = dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, {0, 0, 0, 0}, 0.0f> i.chunkat(p#n, _, _, _) => shared;
-      with {i, j} in [Hpad, Wpad] {
-        foreach i(:-2:), j(:-2:) {
-          dma.copy i_s_padded.chunkat(_, _, i, j).subspan(_, _, Kh, Kw) => A.subspan(1, _).at(i*Wo + j, 0).span_as(1, Cin, Kh, Kw);
+    parallel q by 4  {
+      foreach {co, n} in [Cout, N / #p / #q] {
+        local f32 [Ho, Wo] Y{0.0f};
+        foreach ci in [Cin] {
+          il = dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, {0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => local;
+          ws = dma.copy w.chunkat(co, ci, _, _) => local;
+          foreach {ho, wo} in [Ho, Wo] {
+            f32 sum = 0.0f;
+            foreach {hw, ww} in [Kh, Kw] {
+              hi = ho * stride + hw * dilation;
+              wi = wo * stride + ww * dilation;
+              sum += il.data.at(0, 0, hi, wi) * ws.data.at(0, 0, hw, ww);
+            }
+            Y.at(ho, wo) += sum;
+          }
         }
+        dma.copy Y.span_as(1, 1, Ho, Wo) => o.chunkat(p#q#n, co, _, _);
       }
-
-      // 2. GEMM: C = A x B, result shape: M x Cout
-      parallel q by 8  {
-        l1_A = dma.copy A.chunkat(q, _) => local;
-        foreach {qq} in [#q] {
-          local f32 [A.span(0)/#q, B.span(0)/#qq] l1_Y{0.0f};
-          l1_B = dma.copy B.chunkat(qq, _) => local;
-          call k_matmul(l1_A.data, l1_B.data, l1_Y, M/#q, Cout/#qq, K);
-          dma.copy l1_Y => Y.chunkat(q, qq);
-        }
-      }
-      
-      dma.transp<0, 3, 1, 2> Y.span_as(1, Ho, Wo, Cout) => o.chunkat(p#n, _, _, _);
     }
   }
   return o;

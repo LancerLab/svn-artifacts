@@ -6,8 +6,11 @@
 
 // - case8: [16, 1024, d_model] --> [16, 1024, d_model / 64, 64] (Dynamic)
 __co__ auto reshape8(f32 [16, 1024, d_model] input) {
-  output = dma.copy input.span_as([16, 1024, d_model / 64, 64]) => global;
-  return output.data;
+  f32 [16, 1024, d_model / 64, 64] output;
+  parallel p by 1 {
+    dma.copy input.span_as([16, 1024, d_model / 64, 64]) => output;
+  }
+  return output;
 }
 
 int main() {

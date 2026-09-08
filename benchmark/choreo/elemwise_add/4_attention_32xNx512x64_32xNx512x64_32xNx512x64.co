@@ -17,13 +17,8 @@ __co__ auto ele_add(f32 [I, N, K, L] lhs, f32 [I, N, K, L] rhs) {
     foreach i in [I / #p] {
       foreach j in [N] {
         foreach k in [K] {
-          shared f32 [1, 1, 1, L] lhs_s, rhs_s, out_s;
-          lfs = dma.copy.async lhs.chunkat(p#i, j, k, _) => lhs_s;
-          rfs = dma.copy.async rhs.chunkat(p#i, j, k, _) => rhs_s;
-          wait lfs, rfs;
-          parallel q by L
-            out_s.at(0, 0, 0, q) = lhs_s.at(0, 0, 0, q) + rhs_s.at(0, 0, 0, q);
-          dma.copy out_s => out.chunkat(p#i, j, k, _);
+          foreach l in [L]
+            out.at(p#i, j, k, l) = lhs.at(p#i, j, k, l) + rhs.at(p#i, j, k, l);
         }
       }
     }

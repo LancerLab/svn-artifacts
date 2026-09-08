@@ -7,8 +7,11 @@
 
 // - case11: [16, 512, scale_h, scale_w] --> [16, 512 * scale_h * scale_w] (Dynamic)
 __co__ auto reshape11(f32 [16, 512, scale_h, scale_w] input) {
-  output = dma.copy input.span_as([16, 512 * scale_h * scale_w]) => global;
-  return output.data;
+  f32 [16, 512 * scale_h * scale_w] output;
+  parallel p by 1 {
+    dma.copy input.span_as([16, 512 * scale_h * scale_w]) => output;
+  }
+  return output;
 }
 
 int main() {

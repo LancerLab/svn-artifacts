@@ -8,8 +8,11 @@
 
 // - case5: [batch_size, 1280, height, width] --> [batch_size, 1280 * height * width] (Dynamic)
 __co__ auto reshape5(f32 [batch_size, 1280, height, width] input) {
-  output = dma.copy input.span_as([batch_size, 1280 * height * width]) => global;
-  return output.data;
+  f32 [batch_size, 1280 * height * width] output;
+  parallel p by 1 {
+    dma.copy input.span_as([batch_size, 1280 * height * width]) => output;
+  }
+  return output;
 }
 
 int main() {

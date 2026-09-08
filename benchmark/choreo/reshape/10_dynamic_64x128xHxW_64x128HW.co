@@ -7,8 +7,11 @@
 
 // - case10: [64, 128, height, width] --> [64, 128 * height * width] (Dynamic)
 __co__ auto reshape10(f32 [64, 128, height, width] input) {
-  output = dma.copy input.span_as([64, 128 * height * width]) => global;
-  return output.data;
+  f32 [64, 128 * height * width] output;
+  parallel p by 1 {
+    dma.copy input.span_as([64, 128 * height * width]) => output;
+  }
+  return output;
 }
 
 int main() {
