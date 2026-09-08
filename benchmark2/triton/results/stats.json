@@ -1,0 +1,10 @@
+{
+ "toolchain": "triton",
+ "S1_detection_matrix": {},
+ "S8_expressibility": {
+  "M1": "masks only (user values; no generated checks)",
+  "M2": "n/a (no cross-tensor contract)",
+  "M3": "partial (tl.dot tile rules + smem budget at JIT)"
+ },
+ "S9_remainder": "n/a (no generated checks)"
+}

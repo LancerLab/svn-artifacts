@@ -1,0 +1,7 @@
+triton=3.8.0
+numpy=2.2.6
+gpu=NVIDIA GeForce RTX 5060 Ti
+driver=580.95.05
+cuda=Build cuda_13.0.r13.0/compiler.36424714_0
+note: torch-free lane (gpubuf.py ctypes shim); pinned by wheel hash
+wheel=triton-3.8.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64
