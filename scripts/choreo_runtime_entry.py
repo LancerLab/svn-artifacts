@@ -1,18 +1,20 @@
 """scripts/choreo_runtime_entry.py
-Measure the runtime overhead of Choreo's default assertion level (entry) vs
-no assertions (none) on all dynamic benchmark cases.
+Measure the runtime overhead of Choreo's assertion levels against the
+baseline (no assertions) on all dynamic benchmark cases.
 
-The 'entry' level inserts only host-side runtime_check() calls at function
-entry -- a superset of ENTRY-type assessments (host param-shape checks) and
-a small number of HOIST-type assessments (pre-kernel-launch checks). These
-are the cheapest possible runtime assertions: a handful of integer comparisons
-before the GPU kernel is launched, with no device-side overhead.
+Supported levels (via --levels):
+  none        - baseline, no assertions
+  entry       - host-side entry-point checks only
+  all         - full checks with assertion hoisting
+  all-nohoist - full checks without assertion hoisting
 
 Output: benchmark/results/choreo_runtime_entry.csv
-Columns: category, case_name, none_us, entry_us, overhead_pct, notes
+Columns: category, case_name, <level>_us per level, overhead_pct (entry vs
+none), overhead_<level>_pct per non-none level, notes
 
 Usage:
   python3 scripts/choreo_runtime_entry.py [--reps N] [--out PATH] [--verbose]
+  python3 scripts/choreo_runtime_entry.py --levels none,entry,all,all-nohoist
 """
 
 import argparse
@@ -38,6 +40,22 @@ DEFAULT_OUT = WORKSPACE_ROOT / "benchmark" / "results" / "choreo_runtime_entry.c
 N_REPS         = 5
 GEN_TIMEOUT_S  = 30
 EXEC_TIMEOUT_S = 600
+
+# Assertion levels supported by --levels (level name -> choreo runtime flags).
+# 'none' is the baseline (no assertions); 'entry' is host-side entry checks;
+# 'all' is full checks with assertion hoisting; 'all-nohoist' is full checks
+# with hoisting disabled.
+LEVEL_FLAGS = {
+    "none":        ["--runtime-check=none"],
+    "entry":       ["--runtime-check=entry"],
+    "all":         ["--runtime-check=all"],
+    "all-nohoist": ["--runtime-check=all", "--disable-assert-hoist"],
+}
+
+
+def _col(level: str) -> str:
+    """Sanitize a level name for use as a CSV column key."""
+    return level.replace("-", "_")
 
 # Ensure CUDA and CuTe are discoverable
 _CUDA_BIN = "/usr/local/cuda/bin"
@@ -65,9 +83,9 @@ def _is_dynamic(co_file: Path) -> bool:
 
 
 def generate_script(choreo: Path, co_file: Path, out_sh: Path,
-                    rtc_level: str) -> bool:
+                    rtc_flags: List[str]) -> bool:
     cmd = [str(choreo), "-gs", "-fc", "--max-local-mem-capacity=2000000", "-t", "cute", str(co_file),
-           f"--runtime-check={rtc_level}", "-o", str(out_sh)]
+           *rtc_flags, "-o", str(out_sh)]
     try:
         subprocess.run(cmd, capture_output=True, text=True,
                        stdin=subprocess.DEVNULL, timeout=GEN_TIMEOUT_S)
@@ -106,7 +124,7 @@ def measure_median(sh_file: Path, reps: int) -> Tuple[Optional[float], str]:
 
 
 def collect(cases_dir: Path, choreo: Path, reps: int,
-            verbose: bool = False) -> List[Dict]:
+            levels: List[str], verbose: bool = False) -> List[Dict]:
     rows: List[Dict] = []
     with tempfile.TemporaryDirectory(prefix="choreo_rte_") as tmpdir:
         td = Path(tmpdir)
@@ -124,10 +142,10 @@ def collect(cases_dir: Path, choreo: Path, reps: int,
                 row: Dict = {"category": category, "case_name": case_name}
                 notes: List[str] = []
 
-                for level in ("none", "entry"):
-                    sh = td / f"{case_name}_rtc_{level}.sh"
-                    col = f"{level}_us"
-                    if not generate_script(choreo, co_file, sh, level):
+                for level in levels:
+                    sh = td / f"{case_name}_rtc_{_col(level)}.sh"
+                    col = f"{_col(level)}_us"
+                    if not generate_script(choreo, co_file, sh, LEVEL_FLAGS[level]):
                         if verbose:
                             print(f"    rtc={level}: gen-failed")
                         row[col] = "error"
@@ -144,14 +162,24 @@ def collect(cases_dir: Path, choreo: Path, reps: int,
                             print(f"    rtc={level}: {med:.0f} us")
                         row[col] = f"{med:.0f}"
 
-                # Compute overhead
-                if row.get("none_us", "error") != "error" and \
-                   row.get("entry_us", "error") != "error":
-                    none_t  = float(row["none_us"])
-                    entry_t = float(row["entry_us"])
+                # Compute per-level overhead relative to the 'none' baseline.
+                if row.get("none_us", "error") != "error":
+                    none_t = float(row["none_us"])
                     if none_t > 0:
-                        ovhd = (entry_t / none_t - 1.0) * 100.0
-                        row["overhead_pct"] = f"{ovhd:.3f}"
+                        for level in levels:
+                            if level == "none":
+                                continue
+                            col = f"{_col(level)}_us"
+                            if row.get(col, "error") != "error":
+                                ovhd = (float(row[col]) / none_t - 1.0) * 100.0
+                                row[f"overhead_{_col(level)}_pct"] = f"{ovhd:.3f}"
+                            else:
+                                row[f"overhead_{_col(level)}_pct"] = "N/A"
+                        # Backward-compatible column: entry vs none.
+                        if row.get("entry_us", "error") != "error":
+                            row["overhead_pct"] = f"{(float(row['entry_us']) / none_t - 1.0) * 100.0:.3f}"
+                        else:
+                            row["overhead_pct"] = "N/A"
                     else:
                         row["overhead_pct"] = "N/A"
                 else:
@@ -169,49 +197,78 @@ def main(argv=None) -> None:
     ap.add_argument("--reps",      type=int,  default=N_REPS)
     ap.add_argument("--out",       type=Path, default=DEFAULT_OUT)
     ap.add_argument("--cases-dir", type=Path, default=CASES_DIR)
+    ap.add_argument("--levels",    type=str,
+                    default="none,entry",
+                    help="comma-separated assertion levels: none,entry,all,all-nohoist")
     ap.add_argument("--verbose", "-v", action="store_true")
     args = ap.parse_args(argv)
+
+    levels = [l.strip() for l in args.levels.split(",") if l.strip()]
+    for l in levels:
+        if l not in LEVEL_FLAGS:
+            sys.exit(f"Unknown level '{l}'. Choose from: {', '.join(LEVEL_FLAGS)}")
+    if "none" not in levels:
+        sys.exit("--levels must include 'none' as the baseline")
 
     choreo = find_choreo_bin()
     print(f"choreo   : {choreo}")
     print(f"cases    : {args.cases_dir}")
     print(f"reps     : {args.reps}")
-    print(f"variants : none  vs  entry (default level)")
+    print(f"variants : {'  vs  '.join(levels)}")
     print()
 
-    rows = collect(args.cases_dir, choreo, args.reps, verbose=args.verbose)
+    rows = collect(args.cases_dir, choreo, args.reps, levels,
+                   verbose=args.verbose)
 
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    fieldnames = ["category", "case_name", "none_us", "entry_us",
-                  "overhead_pct", "notes"]
+    fieldnames = ["category", "case_name"]
+    fieldnames += [f"{_col(l)}_us" for l in levels]
+    fieldnames += ["overhead_pct"]
+    fieldnames += [f"overhead_{_col(l)}_pct" for l in levels if l != "none"]
+    fieldnames += ["notes"]
     with open(args.out, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
 
-    ok = [r for r in rows
-          if r.get("none_us", "error") != "error"
-          and r.get("entry_us", "error") != "error"]
+    ok = [r for r in rows if r.get("none_us", "error") != "error"]
     err = len(rows) - len(ok)
 
     print(f"\nWrote {len(rows)} rows  ->  {args.out}")
-    print(f"Successfully measured: {len(ok)} / {len(rows)}  (errors: {err})")
+    print(f"Successfully measured baseline: {len(ok)} / {len(rows)}  (errors: {err})")
 
     if ok:
-        ovhds = [float(r["overhead_pct"]) for r in ok
-                 if r.get("overhead_pct", "N/A") != "N/A"]
-        if ovhds:
-            print(f"\nOverhead (entry vs none):")
-            print(f"  median : {statistics.median(ovhds):+.3f}%")
-            print(f"  mean   : {statistics.mean(ovhds):+.3f}%")
-            print(f"  min    : {min(ovhds):+.3f}%")
-            print(f"  max    : {max(ovhds):+.3f}%")
+        # Per-level overhead vs none.
+        print("\nOverhead (vs none):")
+        level_medians: Dict[str, float] = {}
+        for level in levels:
+            if level == "none":
+                continue
+            col = f"overhead_{_col(level)}_pct"
+            ovhds = [float(r[col]) for r in ok if r.get(col, "N/A") not in ("N/A", "")]
+            if ovhds:
+                med = statistics.median(ovhds)
+                level_medians[level] = med
+                print(f"  {level:12s}: median={med:+.3f}%  mean={statistics.mean(ovhds):+.3f}%"
+                      f"  min={min(ovhds):+.3f}%  max={max(ovhds):+.3f}%  n={len(ovhds)}")
+            else:
+                print(f"  {level:12s}: (no successful measurements)")
 
-            import collections
-            by_cat: Dict[str, List[float]] = collections.defaultdict(list)
-            for r in ok:
-                if r.get("overhead_pct", "N/A") != "N/A":
-                    by_cat[r["category"]].append(float(r["overhead_pct"]))
+        # Hoisting reduction: no-hoist overhead / hoisted overhead.
+        if "all" in level_medians and "all-nohoist" in level_medians:
+            hoisted = level_medians["all"]
+            nohoist = level_medians["all-nohoist"]
+            if hoisted > 0:
+                print(f"\nHoisting reduction (all-nohoist / all): {nohoist / hoisted:.1f}x")
+            elif nohoist > 0:
+                print("\nHoisting reduction: infinite (hoisted overhead ~0)")
+
+        import collections
+        by_cat: Dict[str, List[float]] = collections.defaultdict(list)
+        for r in ok:
+            if r.get("overhead_pct", "N/A") != "N/A":
+                by_cat[r["category"]].append(float(r["overhead_pct"]))
+        if by_cat:
             print("\nPer-category median overhead (entry vs none):")
             for cat, vals in sorted(by_cat.items()):
                 print(f"  {cat:25s}: median={statistics.median(vals):+.3f}%  "

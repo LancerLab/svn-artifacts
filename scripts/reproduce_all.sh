@@ -216,7 +216,7 @@ _step_start
 section "Step 6: RQ4 — Measuring compile-time overhead"
 CTO_CSV="$RESULTS_DIR/choreo_compile_overhead.csv"
 python3 scripts/choreo_compile_overhead.py \
-  --reps "$RQ3_REPS" \
+  --reps "$RQ4_REPS" \
   --out "$CTO_CSV"
 ok "CTO results written to $CTO_CSV"
 
@@ -245,12 +245,15 @@ fi
 
 RQ4_MED="(skipped)"
 RQ4_CASES="0"
+RAO_ALL_MED="(skipped)"
+RAO_NOHOIST_MED="(skipped)"
 if [[ "$HAS_GPU" = true ]]; then
   section "Step 7: RQ3 — Measuring runtime assertion overhead (GPU)"
   RQ4_CSV="$RESULTS_DIR/choreo_runtime_entry.csv"
   python3 scripts/choreo_runtime_entry.py \
-    --reps "$RQ4_REPS" \
+    --reps "$RQ3_REPS" \
     --out "$RQ4_CSV" \
+    --levels none,entry,all,all-nohoist \
     --verbose
   ok "RQ4 results written to $RQ4_CSV"
 
@@ -266,6 +269,20 @@ import csv
 rows = [r for r in csv.DictReader(open('$RQ4_CSV'))
         if r.get('overhead_pct','N/A') not in ('N/A','')]
 print(len(rows))
+")
+  RAO_ALL_MED=$(python3 -c "
+import csv, statistics
+rows = [r for r in csv.DictReader(open('$RQ4_CSV'))
+        if r.get('overhead_all_pct','N/A') not in ('N/A','')]
+vals = [float(r['overhead_all_pct']) for r in rows]
+print('%.3f%%' % statistics.median(vals) if vals else 'N/A')
+")
+  RAO_NOHOIST_MED=$(python3 -c "
+import csv, statistics
+rows = [r for r in csv.DictReader(open('$RQ4_CSV'))
+        if r.get('overhead_all_nohoist_pct','N/A') not in ('N/A','')]
+vals = [float(r['overhead_all_nohoist_pct']) for r in rows]
+print('%.3f%%' % statistics.median(vals) if vals else 'N/A')
 ")
 else
   if [[ "$SKIP_GPU" = true ]]; then
@@ -328,11 +345,13 @@ printf "│      Runtime surviving  │ 839          │ %-22s │\n" \
 RQ2_SUMMARY=$(BUG_CSV_PATH="$BUG_CSV" python3 -c "
 import csv, os
 rows = list(csv.DictReader(open(os.environ['BUG_CSV_PATH'])))
-svn = sum(1 for r in rows if r.get('svn_result','')=='compile')
-print('%d/%d (SVN 100%%%%)' % (svn, len(rows)))
+svn = sum(1 for r in rows if r.get('svn_resolution','') in ('compile','runtime'))
+print('%d/%d (SVN 100%%)' % (svn, len(rows)))
 " 2>/dev/null || echo "(see CSV)")
 printf "│ RQ2: Bug detection      │ 210/210      │ %-22s │\n" "$RQ2_SUMMARY"
 printf "│ RQ3: RAO median (entry) │ <0.4%%        │ %-22s │\n" "${RQ4_MED} ($RQ4_CASES cases)"
+printf "│ RQ3: RAO median (all)   │ +1.8%%        │ %-22s │\n" "$RAO_ALL_MED"
+printf "│ RQ3: RAO median (nohoist)│ +9.6%%       │ %-22s │\n" "$RAO_NOHOIST_MED"
 printf "│ RQ4: CTO (aggregate)    │ 4.7%%         │ %-22s │\n" "${CTO_AGG}% ($CTO_CASES cases)"
 
 if [[ "$SKIP_MLIR" = false ]]; then
@@ -397,9 +416,9 @@ iree_det = defaultdict(int)
 for r in rows:
     bc = r.get("bug_class","unknown")
     bugs[bc] += 1
-    if r.get("svn_result","") == "compile": svn_det[bc] += 1
-    if r.get("mlir_result","") in ("compile","runtime"): mlir_det[bc] += 1
-    if r.get("iree_result","") in ("compile","runtime"): iree_det[bc] += 1
+    if r.get("svn_resolution","") in ("compile","runtime"): svn_det[bc] += 1
+    if r.get("mlir_resolution","") in ("compile","runtime","entry"): mlir_det[bc] += 1
+    if r.get("iree_resolution","") in ("compile","runtime","entry"): iree_det[bc] += 1
 print("  {:<22s} {:>5s} {:>5s} {:>5s} {:>5s}".format(
     "Bug Class", "Total", "SVN", "MLIR", "IREE"))
 print("  " + "-"*50)

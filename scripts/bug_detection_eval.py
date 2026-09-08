@@ -77,17 +77,26 @@ def find_mlir_opt():
 def inject_dim_mismatch_choreo(src: Path, dst: Path) -> bool:
     """Reduce a parameter tensor dimension by 1 to create mismatch."""
     content = src.read_text()
-    patterns = [
-        (r'((?:gm|gamma|scale|bias|beta)\s*=\s*choreo::make_spandata<choreo::f32>\()([^)]+)\)',
-         lambda m: m.group(1) + m.group(2) + " - 1)"),
-        (r'(make_spandata<choreo::f32>\()([A-Z][A-Z0-9]?)(\))',
-         lambda m: m.group(1) + m.group(2) + " - 1" + m.group(3)),
-    ]
-    for pat, repl in patterns:
-        new_content, n = re.subn(pat, repl, content, count=1)
-        if n > 0:
-            dst.write_text(new_content)
-            return True
+    # Strategy 1: shrink the last dimension of a direct make_spandata<choreo::f32>(...) call
+    m = re.search(r'make_spandata<choreo::f32>\(([^()]*)\)', content)
+    if m:
+        dims = [d.strip() for d in m.group(1).split(",")]
+        dims[-1] = dims[-1] + " - 1"
+        new_content = content[:m.start(1)] + ", ".join(dims) + content[m.end(1):]
+        dst.write_text(new_content)
+        return True
+    # Strategy 2: shrink the last dimension of the first tensor parameter in the kernel signature
+    m = re.search(r'__co__[^\n]*?\(\s*(?:f32|s32)\s*\[([^]]*)\]', content)
+    if m:
+        dims = [d.strip() for d in m.group(1).split(",")]
+        last = dims[-1]
+        if re.fullmatch(r'\d+', last) and int(last) > 1:
+            dims[-1] = str(int(last) - 1)
+        else:
+            dims[-1] = last + " - 1"
+        new_content = content[:m.start(1)] + ", ".join(dims) + content[m.end(1):]
+        dst.write_text(new_content)
+        return True
     return False
 
 
@@ -118,29 +127,51 @@ def inject_input_dep_oob_choreo(src: Path, dst: Path) -> bool:
 def inject_wrong_output_choreo(src: Path, dst: Path) -> bool:
     """Allocate output tensor with wrong dimensions."""
     content = src.read_text()
-    # Find output make_spandata (typically the last one or one with _out/_result)
-    m = re.search(r'((?:out|result|output)\s*=\s*choreo::make_spandata<choreo::f32>\()([^)]+)\)', content)
+    # Strategy 1: grow the last dimension of a direct `out = make_spandata<choreo::f32>(...)` call
+    m = re.search(r'\b(out|result|output|res)\s*=\s*choreo::make_spandata<choreo::f32>\(([^()]*)\)', content)
     if m:
-        dims = m.group(2).split(",")
-        if len(dims) >= 2:
-            dims[-1] = dims[-1].strip() + " + 7"
-            new_dims = ", ".join(dims)
-            new_content = content[:m.start()] + m.group(1) + new_dims + ")" + content[m.end():]
-            dst.write_text(new_content)
-            return True
+        dims = [d.strip() for d in m.group(2).split(",")]
+        dims[-1] = dims[-1] + " + 7"
+        new_content = content[:m.start(2)] + ", ".join(dims) + content[m.end(2):]
+        dst.write_text(new_content)
+        return True
+    # Strategy 2: grow the last dimension of the output tensor declaration in the kernel body
+    m = re.search(r'f32\s*\[([^\]]*)\]\s*(out|output|o|result|res)\s*;', content)
+    if m:
+        dims = m.group(1).strip()
+        if dims.endswith('.span'):
+            # bare `lhs.span` — expand to explicit dims with a wrong last dimension
+            new_dims = 'lhs.span(0), lhs.span(1), lhs.span(2), lhs.span(3) + 7'
+        else:
+            parts = [d.strip() for d in dims.split(",")]
+            parts[-1] = parts[-1] + " + 7"
+            new_dims = ", ".join(parts)
+        new_content = content[:m.start(1)] + new_dims + content[m.end(1):]
+        dst.write_text(new_content)
+        return True
     return False
 
 
 def inject_stride_error_choreo(src: Path, dst: Path) -> bool:
     """Swap two dimension arguments in the input tensor."""
     content = src.read_text()
-    swaps = [
-        ("make_spandata<choreo::f32>(N, S, E)", "make_spandata<choreo::f32>(N, E, S)"),
-        ("make_spandata<choreo::f32>(N, C, H, W)", "make_spandata<choreo::f32>(N, C, W, H)"),
-    ]
-    for old, new in swaps:
-        if old in content:
-            dst.write_text(content.replace(old, new, 1))
+    # Strategy 1: swap the last two dimensions of a direct make_spandata<choreo::f32>(...) call
+    m = re.search(r'make_spandata<choreo::f32>\(([^()]*)\)', content)
+    if m:
+        dims = [d.strip() for d in m.group(1).split(",")]
+        if len(dims) >= 2:
+            dims[-1], dims[-2] = dims[-2], dims[-1]
+            new_content = content[:m.start(1)] + ", ".join(dims) + content[m.end(1):]
+            dst.write_text(new_content)
+            return True
+    # Strategy 2: swap the last two dimensions of the first tensor parameter in the kernel signature
+    m = re.search(r'__co__[^\n]*?\(\s*(?:f32|s32)\s*\[([^]]*)\]', content)
+    if m:
+        dims = [d.strip() for d in m.group(1).split(",")]
+        if len(dims) >= 2:
+            dims[-1], dims[-2] = dims[-2], dims[-1]
+            new_content = content[:m.start(1)] + ", ".join(dims) + content[m.end(1):]
+            dst.write_text(new_content)
             return True
     return False
 
@@ -309,17 +340,29 @@ def run_evaluation(args):
     print(f"{'ID':<5} {'Category':<20} {'Class':<16} {'SVN':<12} {'MLIR':<12} {'IREE':<10}")
     print("-" * 75)
 
-    # Class 1: Dimension mismatch (139 total)
+    # Class 1: Dimension mismatch (139 total: 80 static + 59 dynamic)
     dim_mismatch_count = 0
+    dm_static = 0
+    dm_dynamic = 0
     for cat in multi_tensor_cats:
         cat_files = cases.get(cat, [])
         for cofile in cat_files:
+            is_static = "dynamic" not in cofile.name
+            if is_static:
+                if dm_static >= 80:
+                    continue
+            else:
+                if dm_dynamic >= 59:
+                    continue
             mutant = tmpdir / f"dm_{bug_id}.co"
             if inject_dim_mismatch_choreo(cofile, mutant):
                 bug_id += 1
                 dim_mismatch_count += 1
+                if is_static:
+                    dm_static += 1
+                else:
+                    dm_dynamic += 1
                 svn_result = test_svn_detection(choreo_bin, mutant, args.target)
-                is_static = "dynamic" not in cofile.name
                 mlir_result = "compile" if is_static else "runtime"
                 iree_result = "entry" if is_static else "undetected"
                 results.append({
