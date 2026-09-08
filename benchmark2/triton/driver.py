@@ -241,9 +241,55 @@ def cmd_e2(device: str, size: str):
                 "expressible": val, "toolchain_version": triton_version()})
 
 
+SANITIZER = "/usr/local/cuda/bin/compute-sanitizer"
+
+
+def run_mutant_sanitizer(category: str, family: int, raw: Path):
+    """S12 (§3.5): does compute-sanitizer memcheck flag what bare Triton
+    missed? Run the mutant under the sanitizer; record flagged + exercised."""
+    mod, cls, pcat, _ = CURRENT_TABLE[category]
+    mid = f"{mod}-f{family}"
+    try:
+        r = subprocess.run(
+            [SANITIZER, "--tool", "memcheck", sys.executable,
+             str(HERE / "mutants" / f"{mod}.py"), "--family", str(family)],
+            capture_output=True, text=True, timeout=600, cwd=str(HERE))
+    except (subprocess.TimeoutExpired, OSError) as e:
+        return {"toolchain": "triton", "category": category, "class": cls,
+                "mutant_id": mid, "flagged": "timeout", "fault": "none",
+                "exercised": "unknown", "detail": str(e)[:120]}
+    out = r.stdout + r.stderr
+    flagged = ("Invalid __global__" in out or "Invalid __shared__" in out
+               or "misaligned" in out.lower())
+    fault = ("oob" if "Invalid __global__" in out
+             else "misaligned" if "misaligned" in out.lower() else "none")
+    m = re.search(r"RESULT run=(\w+) out=(\S+)", out)
+    # exercised = the kernel body actually ran on device: either it completed
+    # or the sanitizer observed the faulting access itself.
+    exercised = "true" if (flagged or (m and m.group(1) == "ok")) else "false"
+    return {"toolchain": "triton", "category": category, "class": cls,
+            "mutant_id": mid, "flagged": str(flagged).lower(),
+            "fault": fault, "exercised": exercised,
+            "detail": ("sanitizer: " + out.strip().splitlines()[-1][:100])
+                      if flagged else "clean"}
+
+
+def cmd_sanitizer(device: str, level2: bool = False):
+    raw = HERE / "raw"
+    table = dict(MUTANTS)
+    if level2:
+        table.update(MUTANTS_L2)
+    for category, (mod, cls, pcat, fams) in table.items():
+        for fam in fams:
+            rec = run_mutant_sanitizer(category, fam, raw)
+            emit(raw / "sanitizer.jsonl", rec)
+            print(rec["mutant_id"], "flagged=" + rec["flagged"],
+                  rec["fault"], "exercised=" + rec["exercised"])
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("stage", choices=["gate", "minimal", "e2"])
+    ap.add_argument("stage", choices=["gate", "minimal", "e2", "sanitizer"])
     ap.add_argument("--category", default=None)
     ap.add_argument("--size", default="small", choices=["small", "full"])
     ap.add_argument("--device", default="0")
@@ -255,9 +301,16 @@ def main():
         sys.exit(0 if ok else 1)
     if args.stage == "minimal":
         if args.level2:
-            global CURRENT_TABLE
-            CURRENT_TABLE = MUTANTS_L2
+            CURRENT_TABLE.clear()
+            CURRENT_TABLE.update(MUTANTS_L2)
         cmd_minimal(args.device, level2=args.level2)
+    if args.stage == "sanitizer":
+        table = dict(MUTANTS)
+        if args.level2:
+            table.update(MUTANTS_L2)
+        CURRENT_TABLE.clear()
+        CURRENT_TABLE.update(table)
+        cmd_sanitizer(args.device, level2=args.level2)
     if args.stage == "e2":
         cmd_e2(args.device, args.size)
 

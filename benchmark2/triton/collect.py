@@ -41,6 +41,7 @@ def main():
     kernels = load_jsonl(RAW / "kernels.jsonl")
 
     expr = load_jsonl(RAW / "expressibility.jsonl")
+    san = load_jsonl(RAW / "sanitizer.jsonl")
     all_errs = []
     for r in mutants:
         all_errs += validate(r, "mutant")
@@ -48,6 +49,8 @@ def main():
         all_errs += validate(r, "kernel")
     for r in expr:
         all_errs += validate(r, "expressibility")
+    for r in san:
+        all_errs += validate(r, "sanitizer")
     # Known coordinator-side schema gaps (reported; pending enum update):
     #  - stage: enum lacks a not-detected value (we use "none")
     #  - paper_category: enum lacks "hw" (M3 has no RQ2 bug category)
@@ -66,8 +69,20 @@ def main():
         (RES / "mutants.json").write_text(json.dumps(mutants, indent=1))
         (RES / "kernels.json").write_text(json.dumps(kernels, indent=1))
         (RES / "expressibility.json").write_text(json.dumps(expr, indent=1))
+        (RES / "sanitizer.json").write_text(json.dumps(san, indent=1))
         print(f"collected {len(mutants)} mutants, {len(kernels)} kernel records")
 
+    # S12: sanitizer supplement — flagged∧exercised per class
+    s12 = {}
+    for r in san:
+        c = r["class"]
+        s12.setdefault(c, {"flagged_and_exercised": 0, "total": 0,
+                           "flagged": 0})
+        s12[c]["total"] += 1
+        if r.get("flagged") == "true":
+            s12[c]["flagged"] += 1
+            if r.get("exercised") == "true":
+                s12[c]["flagged_and_exercised"] += 1
     # stats (schema/statistics-manifest.md): S1 detection matrix for this lane
     by_class = {}
     for r in mutants:
@@ -86,7 +101,8 @@ def main():
                  "M1": "masks only (user values; no generated checks)",
                  "M2": "n/a (no cross-tensor contract)",
                  "M3": "partial (tl.dot tile rules + smem budget at JIT)"},
-             "S9_remainder": "n/a (no generated checks)"}
+             "S9_remainder": "n/a (no generated checks)",
+             "S12_sanitizer_supplement": s12}
     (RES / "stats.json").parent.mkdir(parents=True, exist_ok=True)
     (RES / "stats.json").write_text(json.dumps(stats, indent=1))
     print(json.dumps(stats, indent=1))
