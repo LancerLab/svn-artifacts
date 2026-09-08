@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# ============================================================================
+# benchmark2/<toolchain>/run.sh — reference harness skeleton (Phase 0).
+# Copy this into each toolchain subdir and fill the `run_*` bodies.
+# Contract is IDENTICAL across all workers (§12.1). Runs and collection are
+# separate stages: run -> raw artifacts; collect -> JSON (schema/record-schema.json);
+# stats -> results/<toolchain>/stats.json (schema/statistics-manifest.md).
+# ============================================================================
+set -euo pipefail
+
+TOOLCHAIN="$(basename "$(dirname "$(realpath "$0")")")"   # e.g. triton, choreo
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"                  # benchmark2/
+RAW="$ROOT/$TOOLCHAIN/raw"
+RESULTS="$ROOT/results/$TOOLCHAIN"
+DEVICE="${DEVICE:-${CUDA_VISIBLE_DEVICES:-0}}"
+
+die() { echo "ERROR: $*" >&2; exit 1; }
+
+cmd_setup() {
+  # one-time: clone the toolchain repo @ pinned commit (manifest.md) + build.
+  # NEVER installs system CUDA — that is a shared machine precondition.
+  echo "[$TOOLCHAIN] setup (clone @ pinned commit + build) — implement me"
+}
+
+cmd_minimal() {
+  # level-1 E1: compose+gate the specs/ minimal set (§5 of mutation-specs.md),
+  # mutate the assigned classes, classify every mutant -> raw JSON.
+  # --level2 widens the set (only after e2+e3 green).
+  echo "[$TOOLCHAIN] minimal (mutate + classify) — implement me"
+}
+
+cmd_e2() { echo "[$TOOLCHAIN] e2 (compose+gate 15 categories, expressibility) — implement me"; }
+cmd_e3() { echo "[$TOOLCHAIN] e3 (remainder = unconditional guards) — implement me"; }
+cmd_e4() { echo "[$TOOLCHAIN] e4 (compile cost — choreo only) — implement me"; }
+cmd_e5() { echo "[$TOOLCHAIN] e5 (runtime residue A/B + latency — choreo only, exclusive lock) — implement me"; }
+
+cmd_collect() {
+  # idempotent: re-parse raw/ -> results/<toolchain>/*.json (record-schema.json).
+  echo "[$TOOLCHAIN] collect — implement me"
+}
+
+cmd_stats() {
+  # aggregate JSON -> results/<toolchain>/stats.json (statistics-manifest.md).
+  echo "[$TOOLCHAIN] stats — implement me"
+}
+
+cmd_all() {
+  cmd_minimal; cmd_e2; cmd_e3; cmd_collect; cmd_stats
+  case "$TOOLCHAIN" in choreo) cmd_e4; cmd_e5;; esac
+}
+
+usage() { echo "usage: $0 {setup|minimal[--level2]|e2|e3|e4|e5|collect|stats|all} [--small|--full] [--device i]"; }
+
+SUB="${1:-}"; shift || true
+SIZE="small"; LEVEL2=""
+for a in "$@"; do
+  case "$a" in
+    --small) SIZE="small";; --full) SIZE="full";;
+    --level2) LEVEL2=1;;
+    --device) DEVICE="$2"; shift;; --device=*) DEVICE="${a#*=}";;
+  esac
+done
+
+mkdir -p "$RAW" "$RESULTS"
+case "$SUB" in
+  setup) cmd_setup;; minimal) cmd_minimal;; e2) cmd_e2;; e3) cmd_e3;;
+  e4) cmd_e4;; e5) cmd_e5;; collect) cmd_collect;; stats) cmd_stats;;
+  all) cmd_all;; *) usage; exit 1;;
+esac

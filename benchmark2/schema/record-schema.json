@@ -1,0 +1,74 @@
+{
+  "$comment": "benchmark2 raw-record schema (one JSON object per observation line). Pinned 2026-09-08 (Phase 0). Every record carries settings_hash + kernel_hash + toolchain version from manifest.md.",
+  "version": "1.0",
+  "records": {
+    "kernel": {
+      "fields": ["toolchain", "category", "settings_hash", "kernel_hash", "size", "gpu_device", "exclusive", "compile", "run", "ref_check"],
+      "enums": {
+        "size": ["small", "full"],
+        "exclusive": ["true", "false"],
+        "compile": ["ok", "fail", "detected"],
+        "run": ["ok", "crash"],
+        "ref_check": ["pass", "fail"]
+      },
+      "produced_by": ["minimal", "e2"]
+    },
+    "mutant": {
+      "fields": ["toolchain", "category", "class", "paper_category", "mutant_id", "level", "outcome", "stage", "manifest"],
+      "enums": {
+        "class": ["M1", "M2", "M3"],
+        "paper_category": ["dim-mismatch", "oob", "wrong-shape", "stride"],
+        "level": ["1", "2"],
+        "outcome": ["compile", "runtime", "never", "n/a"],
+        "stage": ["compile", "runtime"],
+        "manifest": ["corrupts", "noop"]
+      },
+      "produced_by": ["minimal", "minimal --level2"]
+    },
+    "sanitizer": {
+      "fields": ["toolchain", "category", "class", "mutant_id", "flagged", "fault", "exercised"],
+      "enums": {
+        "flagged": ["true", "false"],
+        "fault": ["oob", "uninit", "misaligned", "none"],
+        "exercised": ["true", "false"]
+      },
+      "produced_by": ["minimal (SOTA targets only, --tool memcheck)"]
+    },
+    "obligation": {
+      "fields": ["toolchain", "category", "kernel_id", "obligation_id", "class", "outcome", "mechanism"],
+      "enums": {
+        "class": ["elem", "shape", "loop", "hw"],
+        "outcome": ["proven", "refuted", "runtime", "budgeted"],
+        "mechanism": ["canonical", "interval", "direct"]
+      },
+      "produced_by": ["e2", "e3 (choreo)"]
+    },
+    "expressibility": {
+      "fields": ["toolchain", "category", "class", "expressible"],
+      "enums": { "expressible": ["yes", "no", "partial"] },
+      "produced_by": ["e2 (SOTA)"]
+    },
+    "remainder": {
+      "fields": ["toolchain", "category", "unconditional_guards", "criterion_ref"],
+      "produced_by": ["e3 (SOTA)"]
+    },
+    "cost": {
+      "fields": ["toolchain", "category", "compile_overhead_pct", "bucket"],
+      "produced_by": ["e4 (choreo)"]
+    },
+    "residue": {
+      "fields": ["toolchain", "category", "checks", "runtime_ms", "gpu_device", "exclusive"],
+      "enums": { "checks": ["on", "off"], "exclusive": ["true", "false"] },
+      "produced_by": ["e5 (E5a, choreo)"]
+    },
+    "latency": {
+      "fields": ["detector", "category", "mutant_id", "check_loc", "time_to_report_us", "gpu_device", "exclusive"],
+      "enums": {
+        "detector": ["choreo-entry", "compute-sanitizer"],
+        "check_loc": ["entry", "interior"],
+        "exclusive": ["true", "false"]
+      },
+      "produced_by": ["e5 (E5b, choreo)"]
+    }
+  }
+}
