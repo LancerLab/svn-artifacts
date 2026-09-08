@@ -1,4 +1,5 @@
 """concat — y = concat(a, b) along dim 1 (settings/concat.md)."""
+import argparse
 import sys
 from pathlib import Path
 import numpy as np
@@ -28,8 +29,11 @@ def concat(a, b):
 
 
 if __name__ == "__main__":
-    for na, nb in [(16 * 512 * 100, 16 * 512 * 55), (1023, 77)]:
-        a, b = randn(na), randn(nb, seed=1)
-        got = concat(GpuBuf.from_numpy(a), GpuBuf.from_numpy(b)).to_host()
-        assert np.array_equal(got, np.concatenate([a, b])), (na, nb)
-        print("ok", (na, nb))
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    na, nb = (SMALL if a.size == "small" else FULL)["concat"]
+    x, b = randn(na), randn(nb, seed=1)
+    got = concat(GpuBuf.from_numpy(x), GpuBuf.from_numpy(b)).to_host()
+    assert np.array_equal(got, np.concatenate([x, b])), (na, nb)
+    print("ok", a.size, (na, nb))

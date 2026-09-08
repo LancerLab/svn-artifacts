@@ -1,4 +1,5 @@
 """reduce_mean — row mean over trailing dim (settings/reduce_mean.md)."""
+import argparse
 import sys
 from pathlib import Path
 import numpy as np
@@ -26,9 +27,12 @@ def reduce_mean(x, n_rows, n_cols):
 
 
 if __name__ == "__main__":
-    for rows, cols in [(64, 128 * 28 * 28), (32, 197 * 768), (16, 1023)]:
-        x = randn(rows * cols)
-        got = reduce_mean(GpuBuf.from_numpy(x), rows, cols).to_host()
-        want = x.reshape(rows, cols).mean(axis=-1)
-        assert np.allclose(got, want, atol=1e-4), (rows, cols)
-        print("ok", (rows, cols))
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    rows, cols = (SMALL if a.size == "small" else FULL)["reduce_mean"]
+    x = randn(rows * cols)
+    got = reduce_mean(GpuBuf.from_numpy(x), rows, cols).to_host()
+    want = x.reshape(rows, cols).mean(axis=-1)
+    assert np.allclose(got, want, atol=1e-4), (rows, cols)
+    print("ok", a.size, (rows, cols))

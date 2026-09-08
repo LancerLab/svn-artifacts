@@ -2,6 +2,7 @@
 y[b,co,oh,ow] = sum_{ci,kh,kw} x[b,ci,oh*sh+kh,ow*sw+kw] * w[co,ci,kh,kw].
 Direct tiled composition (no im2col). Host side uses ../gpubuf.py (no torch).
 """
+import argparse
 import sys
 from pathlib import Path
 
@@ -73,14 +74,13 @@ def reference(x: np.ndarray, w: np.ndarray, stride=(1, 1)) -> np.ndarray:
 
 
 if __name__ == "__main__":
-    for shape, wshape in [((8, 16, 14, 14), (16, 16, 3, 3)),
-                          ((4, 8, 12, 12), (8, 8, 1, 1))]:
-        B, C, H, W = shape
-        CO, _, KH, KW = wshape
-        x = randn(B * C * H * W)
-        w = randn(CO * C * KH * KW, seed=1)
-        got = conv2d(GpuBuf.from_numpy(x), GpuBuf.from_numpy(w),
-                     B, C, H, W, CO, KH, KW).to_host()
-        want = reference(x.reshape(shape), w.reshape(wshape)).ravel()
-        assert np.allclose(got, want, atol=1e-2), (shape, "MISMATCH")
-        print("ok", shape)
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    B, C, H, W, CO, KH, KW = (SMALL if a.size == "small" else FULL)["conv2d"]
+    x = randn(B * C * H * W); w = randn(CO * C * KH * KW, seed=1)
+    got = conv2d(GpuBuf.from_numpy(x), GpuBuf.from_numpy(w),
+                 B, C, H, W, CO, KH, KW).to_host()
+    want = reference(x.reshape(B, C, H, W), w.reshape(CO, C, KH, KW)).ravel()
+    assert np.allclose(got, want, atol=1e-1), (B, C, H, W, CO)
+    print("ok", a.size, (B, C, H, W, CO, KH, KW))

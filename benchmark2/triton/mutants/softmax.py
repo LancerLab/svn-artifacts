@@ -79,12 +79,14 @@ CANARY = 4096
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--family", type=int, required=True)
+    ap.add_argument("--size", default="full", choices=["small", "full"])
     args = ap.parse_args()
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     from gpubuf import GpuBuf, randn, sync
     import numpy as np
-    rows, cols = 64, 1023
+    from sizes import SMALL, FULL_RAGGED
+    rows, cols = (FULL_RAGGED if args.size == "full" else SMALL)["softmax"]
     x = randn(rows * cols)
     yhost = np.full(rows * cols + CANARY, -777.0, dtype=np.float32)
     yhost[rows * cols:] = 123.25

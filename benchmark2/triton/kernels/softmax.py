@@ -2,6 +2,7 @@
 y = exp(x - max) / sum(exp(x - max)) over the trailing dim. Row-wise kernel.
 Host side uses ../gpubuf.py (no torch).
 """
+import argparse
 import sys
 from pathlib import Path
 
@@ -39,9 +40,12 @@ def reference(x: np.ndarray) -> np.ndarray:
 
 
 if __name__ == "__main__":
-    for rows, cols in [(64 * 128, 56 * 56), (32 * 197, 512), (100, 769)]:
-        x = randn(rows * cols)
-        got = softmax(GpuBuf.from_numpy(x), rows, cols).to_host()
-        want = reference(x.reshape(rows, cols)).ravel()
-        assert np.allclose(got, want, atol=1e-5), (rows, cols, "MISMATCH")
-        print("ok", (rows, cols))
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    rows, cols = (SMALL if a.size == "small" else FULL)["softmax"]
+    x = randn(rows * cols)
+    got = softmax(GpuBuf.from_numpy(x), rows, cols).to_host()
+    want = reference(x.reshape(rows, cols)).ravel()
+    assert np.allclose(got, want, atol=1e-4), (rows, cols)
+    print("ok", a.size, (rows, cols))

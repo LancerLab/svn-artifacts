@@ -71,12 +71,14 @@ CANARY = 4096
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--family", type=int, required=True)
+    ap.add_argument("--size", default="full", choices=["small", "full"])
     args = ap.parse_args()
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     from gpubuf import GpuBuf, randn, sync
     import numpy as np
-    M, N = 65, 127
+    from sizes import SMALL, FULL_RAGGED
+    M, N = (FULL_RAGGED if args.size == "full" else SMALL)["transpose"]
     x = randn(M * N)
     yhost = np.full(M * N + CANARY, -777.0, dtype=np.float32)
     yhost[M * N:] = 123.25

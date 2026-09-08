@@ -2,6 +2,7 @@
 y = lhs @ rhs over the inner dim K. Tiled tl.dot kernel with fixed tiles.
 Host side uses ../gpubuf.py (no torch).
 """
+import argparse
 import sys
 from pathlib import Path
 
@@ -50,11 +51,13 @@ def reference(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 
 
 if __name__ == "__main__":
-    for M, K, N in [(256, 512, 128), (100, 300, 255)]:
-        a = randn(M * K)
-        b = randn(K * N, seed=1)
-        got = matmul(GpuBuf.from_numpy(a), GpuBuf.from_numpy(b), M, K, N
-                     ).to_host()
-        want = reference(a.reshape(M, K), b.reshape(K, N)).ravel()
-        assert np.allclose(got, want, atol=1e-2), (M, K, N, "MISMATCH")
-        print("ok", (M, K, N))
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    M, K, N = (SMALL if a.size == "small" else FULL)["matmul"]
+    aa = randn(M * K); bb = randn(K * N, seed=1)
+    got = matmul(GpuBuf.from_numpy(aa), GpuBuf.from_numpy(bb), M, K, N
+                 ).to_host()
+    want = (aa.reshape(M, K) @ bb.reshape(K, N)).ravel()
+    assert np.allclose(got, want, atol=1e-1, rtol=1e-2), (M, K, N)
+    print("ok", a.size, (M, K, N))

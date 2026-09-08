@@ -1,4 +1,5 @@
 """gelu — tanh approximation (settings/gelu.md)."""
+import argparse
 import sys
 from pathlib import Path
 import numpy as np
@@ -27,10 +28,13 @@ def gelu(x):
 
 
 if __name__ == "__main__":
-    for n in [32 * 512 * 768, 127 * 1023]:
-        x = randn(n)
-        got = gelu(GpuBuf.from_numpy(x)).to_host()
-        t = np.sqrt(2 / np.pi) * (x + 0.044715 * x**3)
-        want = 0.5 * x * (1 + np.tanh(t))
-        assert np.allclose(got, want, atol=1e-5), n
-        print("ok", n)
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    n = (SMALL if a.size == "small" else FULL)["gelu"][0]
+    x = randn(n)
+    got = gelu(GpuBuf.from_numpy(x)).to_host()
+    t = np.sqrt(2 / np.pi) * (x + 0.044715 * x**3)
+    want = 0.5 * x * (1 + np.tanh(t))
+    assert np.allclose(got, want, atol=1e-5), n
+    print("ok", a.size, n)

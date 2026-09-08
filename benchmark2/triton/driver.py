@@ -110,8 +110,8 @@ def gate_kernel(category: str, size: str, device: str, raw: Path):
     mod = f"{category}"
     try:
         subprocess.run(
-            [sys.executable, str(KERNELS / f"{mod}.py")],
-            check=True, capture_output=True, text=True, timeout=600)
+            [sys.executable, str(KERNELS / f"{mod}.py"), "--size", size],
+            check=True, capture_output=True, text=True, timeout=900)
         emit(raw / "kernels.jsonl",
              kernel_record(category, size, "ok", "ok", "pass", device))
         return True
@@ -151,15 +151,15 @@ COMPILE_ERR_MARKERS = ("OutOfResources", "CompilationError",
 CURRENT_TABLE = MUTANTS
 
 
-def run_mutant(category: str, family: int, raw: Path):
+def run_mutant(category: str, family: int, raw: Path, size: str = "full"):
     """Run one mutant in a subprocess; classify per the taxonomy."""
     mod, cls, pcat, _ = CURRENT_TABLE[category]
     mid = f"{mod}-f{family}"
     try:
         r = subprocess.run(
             [sys.executable, str(HERE / "mutants" / f"{mod}.py"),
-             "--family", str(family)],
-            capture_output=True, text=True, timeout=300,
+             "--family", str(family), "--size", size],
+            capture_output=True, text=True, timeout=900,
             cwd=str(HERE))
     except subprocess.TimeoutExpired:
         return mutant_record(category, cls, pcat, mid, 1, "runtime",
@@ -192,7 +192,7 @@ def run_mutant(category: str, family: int, raw: Path):
                          f"oracle={oracle}")
 
 
-def cmd_minimal(device: str, level2: bool = False):
+def cmd_minimal(device: str, level2: bool = False, size: str = "full"):
     raw = HERE / "raw"
     table = MUTANTS_L2 if level2 else MUTANTS
     for category in table:
@@ -200,8 +200,9 @@ def cmd_minimal(device: str, level2: bool = False):
         if not fams:
             continue  # nothing assigned on this surface for this operator
         for fam in fams:
-            rec = run_mutant(category, fam, raw)
+            rec = run_mutant(category, fam, raw, size=size)
             rec["level"] = "2" if level2 else "1"
+            rec["detail"] += f" size={size}"
             emit(raw / "mutants.jsonl", rec)
             print(rec["mutant_id"], rec["outcome"], rec["manifest"],
                   rec["detail"][:80])
@@ -227,12 +228,14 @@ KERNEL_MOD = {"layer_normalization": "layer_norm", "elemwise_add":
 
 def cmd_e2(device: str, size: str):
     raw = HERE / "raw"
-    # gate every composed category
+    # gate every composed category at BOTH sizes (plan rec. 4: small/full
+    # pairing — same program, same reference check, both sizes recorded)
     for cat in CATEGORIES:
         mod = KERNEL_MOD.get(cat, cat)
         if not (KERNELS / f"{mod}.py").exists():
             continue
-        gate_kernel(cat, size, device, raw)
+        for sz in ("small", "full"):
+            gate_kernel(cat, sz, device, raw)
     # expressibility records per category per class
     for cat in CATEGORIES:
         for cls, val in TRITON_EXPRESSIBILITY.items():
@@ -291,7 +294,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("stage", choices=["gate", "minimal", "e2", "sanitizer"])
     ap.add_argument("--category", default=None)
-    ap.add_argument("--size", default="small", choices=["small", "full"])
+    ap.add_argument("--size", default="full", choices=["small", "full"])
     ap.add_argument("--device", default="0")
     ap.add_argument("--level2", action="store_true")
     args = ap.parse_args()
@@ -303,7 +306,7 @@ def main():
         if args.level2:
             CURRENT_TABLE.clear()
             CURRENT_TABLE.update(MUTANTS_L2)
-        cmd_minimal(args.device, level2=args.level2)
+        cmd_minimal(args.device, level2=args.level2, size=args.size)
     if args.stage == "sanitizer":
         table = dict(MUTANTS)
         if args.level2:

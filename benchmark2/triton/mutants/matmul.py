@@ -39,6 +39,7 @@ FAMILIES = {1: dict(BM=32, BN=32, BK=8),    # K atom violation
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--family", type=int, required=True)
+    ap.add_argument("--size", default="full", choices=["small", "full"])
     args = ap.parse_args()
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -46,7 +47,8 @@ def main():
     import numpy as np
     import numpy as np
     dt = np.float16 if args.family == 1 else np.float32
-    M, K, N = 64, 48, 64
+    from sizes import SMALL, FULL_RAGGED
+    M, K, N = (FULL_RAGGED if args.size == "full" else SMALL)["matmul"]
     a = randn(M * K).astype(dt)   # fp16 for the MMA atom constraint
     b = randn(K * N, seed=1).astype(dt)
     c = GpuBuf(M * N)

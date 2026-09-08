@@ -9,7 +9,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-CLOBBERED",
+  "detail": "oracle=diff+canary-CLOBBERED size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -22,7 +22,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-CLOBBERED",
+  "detail": "oracle=diff+canary-CLOBBERED size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -32,10 +32,10 @@
   "paper_category": "oob",
   "mutant_id": "layer_norm-f3",
   "level": "1",
-  "outcome": "never",
-  "stage": "none",
+  "outcome": "runtime",
+  "stage": "runtime",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-ok",
+  "detail": "child crash size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -48,7 +48,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-ok",
+  "detail": "oracle=diff+canary-ok size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -61,7 +61,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-ok",
+  "detail": "oracle=diff+canary-ok size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -74,7 +74,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-CLOBBERED",
+  "detail": "oracle=diff+canary-CLOBBERED size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -87,7 +87,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-CLOBBERED",
+  "detail": "oracle=diff+canary-CLOBBERED size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -97,10 +97,10 @@
   "paper_category": "oob",
   "mutant_id": "softmax-f3",
   "level": "1",
-  "outcome": "never",
-  "stage": "none",
+  "outcome": "runtime",
+  "stage": "runtime",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-ok",
+  "detail": "child crash size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -113,7 +113,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-ok",
+  "detail": "oracle=diff+canary-ok size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -126,7 +126,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-ok",
+  "detail": "oracle=diff+canary-ok size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -139,7 +139,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=same+canary-CLOBBERED",
+  "detail": "oracle=same+canary-CLOBBERED size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -152,7 +152,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=same+canary-CLOBBERED",
+  "detail": "oracle=same+canary-CLOBBERED size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -165,7 +165,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-ok",
+  "detail": "oracle=diff+canary-ok size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -178,7 +178,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-ok",
+  "detail": "oracle=diff+canary-ok size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -191,7 +191,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-ok",
+  "detail": "oracle=diff+canary-ok size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -204,7 +204,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-ok",
+  "detail": "oracle=diff+canary-ok size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -217,7 +217,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-CLOBBERED",
+  "detail": "oracle=same+canary-CLOBBERED size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -229,8 +229,8 @@
   "level": "1",
   "outcome": "never",
   "stage": "none",
-  "manifest": "corrupts",
-  "detail": "oracle=same+canary-CLOBBERED",
+  "manifest": "noop",
+  "detail": "oracle=same+canary-ok size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -243,7 +243,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-ok",
+  "detail": "oracle=diff+canary-ok size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -256,7 +256,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-ok",
+  "detail": "oracle=diff+canary-ok size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -269,7 +269,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-ok",
+  "detail": "oracle=diff+canary-ok size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -282,7 +282,7 @@
   "outcome": "compile",
   "stage": "compile",
   "manifest": "corrupts",
-  "detail": "jit: child reported crash",
+  "detail": "jit: child reported crash size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -295,7 +295,7 @@
   "outcome": "compile",
   "stage": "compile",
   "manifest": "corrupts",
-  "detail": "jit: child reported crash",
+  "detail": "jit: child reported crash size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -308,7 +308,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-CLOBBERED",
+  "detail": "oracle=diff+canary-CLOBBERED size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -321,20 +321,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff+canary-ok",
-  "toolchain_version": "3.8.0"
- },
- {
-  "toolchain": "triton",
-  "category": "conv2d",
-  "class": "M1",
-  "paper_category": "oob",
-  "mutant_id": "conv2d-f1",
-  "level": "2",
-  "outcome": "never",
-  "stage": "none",
-  "manifest": "corrupts",
-  "detail": "oracle=diff+canary-CLOBBERED",
+  "detail": "oracle=diff+canary-ok size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -347,7 +334,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff",
+  "detail": "oracle=diff size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -360,7 +347,7 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff",
+  "detail": "oracle=diff size=full",
   "toolchain_version": "3.8.0"
  },
  {
@@ -373,7 +360,20 @@
   "outcome": "never",
   "stage": "none",
   "manifest": "corrupts",
-  "detail": "oracle=diff",
+  "detail": "oracle=diff size=full",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "conv2d",
+  "class": "M1",
+  "paper_category": "oob",
+  "mutant_id": "conv2d-f1",
+  "level": "2",
+  "outcome": "never",
+  "stage": "none",
+  "manifest": "corrupts",
+  "detail": "oracle=diff+canary-CLOBBERED size=full",
   "toolchain_version": "3.8.0"
  }
 ]

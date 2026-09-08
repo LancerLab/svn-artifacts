@@ -23,10 +23,12 @@ def embed_kernel(tab_ptr, idx_ptr, y_ptr, N, D, BLOCK: tl.constexpr):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--family", type=int, required=True)
+    ap.add_argument("--size", default="full", choices=["small", "full"])
     args = ap.parse_args()
     import ctypes
     from gpubuf import _rt, _ck
-    V, D = 256, 128
+    from sizes import SMALL, FULL_RAGGED
+    V, D, _nidx = (FULL_RAGGED if args.size == "full" else SMALL)["embedding"]
     table = randn(V * D)
     rng = np.random.default_rng(0)
     # family 1: idx holds V+3 (out of table range); family 2: idx = -1

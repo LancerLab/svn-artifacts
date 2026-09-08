@@ -55,8 +55,10 @@ FAMILIES = {1: pool_nomask, 2: pool_offbyone}
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--family", type=int, required=True)
+    ap.add_argument("--size", default="full", choices=["small", "full"])
     args = ap.parse_args()
-    C, H, W, k = 16, 14, 14, 3   # 14 % 3 != 0: ragged window boundary
+    from sizes import SMALL, FULL_RAGGED
+    C, H, W, k = (FULL_RAGGED if args.size == "full" else SMALL)["max_pool2d"]
     OH, OW = H // k, W // k
     x = randn(C * H * W)
     yhost = np.full(C * OH * OW + CANARY, -777.0, dtype=np.float32)

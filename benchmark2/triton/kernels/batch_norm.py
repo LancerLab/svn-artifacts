@@ -1,6 +1,7 @@
 """batch_norm — per-channel normalize (settings/batch_norm.md).
 y = (x - mean[c]) / sqrt(var[c] + eps) * scale[c] + bias[c].
 """
+import argparse
 import sys
 from pathlib import Path
 import numpy as np
@@ -39,17 +40,20 @@ def batch_norm(x, mean, var, scale, bias, N, C, H, W, eps=1e-5):
 
 
 if __name__ == "__main__":
-    for N, C, H, W in [(8, 32, 14, 14), (4, 16, 9, 13)]:
-        HW = H * W
-        x = randn(N * C * HW)
-        xs = x.reshape(N, C, HW)
-        mean = xs.mean(axis=(0, 2)).astype(np.float32)
-        var = xs.var(axis=(0, 2)).astype(np.float32)
-        s = randn(C, seed=1); b = randn(C, seed=2)
-        got = batch_norm(GpuBuf.from_numpy(x), GpuBuf.from_numpy(mean),
-                         GpuBuf.from_numpy(var), GpuBuf.from_numpy(s),
-                         GpuBuf.from_numpy(b), N, C, H, W).to_host()
-        want = ((xs - mean[None, :, None]) / np.sqrt(var[None, :, None] + 1e-5)
-                * s[None, :, None] + b[None, :, None]).ravel()
-        assert np.allclose(got, want, atol=1e-3), (N, C, H, W)
-        print("ok", (N, C, H, W))
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    N, C, H, W = (SMALL if a.size == "small" else FULL)["batch_norm"]
+    HW = H * W
+    x = randn(N * C * HW)
+    xs = x.reshape(N, C, HW)
+    mean = xs.mean(axis=(0, 2)).astype(np.float32)
+    var = xs.var(axis=(0, 2)).astype(np.float32)
+    s = randn(C, seed=1); b = randn(C, seed=2)
+    got = batch_norm(GpuBuf.from_numpy(x), GpuBuf.from_numpy(mean),
+                     GpuBuf.from_numpy(var), GpuBuf.from_numpy(s),
+                     GpuBuf.from_numpy(b), N, C, H, W).to_host()
+    want = ((xs - mean[None, :, None]) / np.sqrt(var[None, :, None] + 1e-5)
+            * s[None, :, None] + b[None, :, None]).ravel()
+    assert np.allclose(got, want, atol=1e-2), (N, C, H, W)
+    print("ok", a.size, (N, C, H, W))

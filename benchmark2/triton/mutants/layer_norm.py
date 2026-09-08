@@ -89,12 +89,14 @@ CANARY = 4096
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--family", type=int, required=True)
+    ap.add_argument("--size", default="full", choices=["small", "full"])
     args = ap.parse_args()
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     from gpubuf import GpuBuf, randn, sync
     import numpy as np
-    rows, cols = 197, 769  # ragged cols
+    from sizes import SMALL, FULL_RAGGED
+    rows, cols = (FULL_RAGGED if args.size == "full" else SMALL)["layer_normalization"]
     x = randn(rows * cols)
     s = randn(cols, seed=1)
     b = randn(cols, seed=2)

@@ -1,4 +1,5 @@
 """elemwise_add — y = a + b (settings/elemwise_add.md)."""
+import argparse
 import sys
 from pathlib import Path
 import numpy as np
@@ -26,8 +27,11 @@ def elemwise_add(a, b):
 
 
 if __name__ == "__main__":
-    for n in [127 * 1023 + 5, 64 * 1280]:
-        a, b = randn(n), randn(n, seed=1)
-        got = elemwise_add(GpuBuf.from_numpy(a), GpuBuf.from_numpy(b)).to_host()
-        assert np.allclose(got, a + b), n
-        print("ok", n)
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    n = (SMALL if a.size == "small" else FULL)["elemwise_add"][0]
+    x, b = randn(n), randn(n, seed=1)
+    got = elemwise_add(GpuBuf.from_numpy(x), GpuBuf.from_numpy(b)).to_host()
+    assert np.allclose(got, x + b), n
+    print("ok", a.size, n)

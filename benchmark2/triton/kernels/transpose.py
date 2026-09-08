@@ -2,6 +2,7 @@
 y = x.swapaxes(-1, -2) on the trailing two dims of a [B, M, N] input.
 Host side uses ../gpubuf.py (no torch).
 """
+import argparse
 import sys
 from pathlib import Path
 
@@ -42,10 +43,13 @@ def reference(x: np.ndarray) -> np.ndarray:
 
 
 if __name__ == "__main__":
-    for shape in [(32, 197, 768), (64, 100, 255), (16, 64, 33)]:
-        B, M, N = shape
-        x = randn(B * M * N)
-        got = transpose(GpuBuf.from_numpy(x), B, M, N).to_host()
-        want = reference(x.reshape(shape)).ravel()
-        assert np.array_equal(got, want), (shape, "MISMATCH")
-        print("ok", shape)
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    M, N = (SMALL if a.size == "small" else FULL)["transpose"]
+    B = 16
+    x = randn(B * M * N)
+    got = transpose(GpuBuf.from_numpy(x), B, M, N).to_host()
+    want = x.reshape(B, M, N).transpose(0, 2, 1).ravel()
+    assert np.array_equal(got, want), (B, M, N)
+    print("ok", a.size, (B, M, N))

@@ -71,12 +71,14 @@ CANARY = 4096  # guard floats after the output
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--family", type=int, required=True)
+    ap.add_argument("--size", default="full", choices=["small", "full"])
     args = ap.parse_args()
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     from gpubuf import GpuBuf, randn, sync
     import numpy as np
-    n = 127 * 1023 + 5  # ragged: not divisible by BLOCK
+    from sizes import SMALL, FULL_RAGGED
+    n = (FULL_RAGGED if args.size == "full" else SMALL)["relu"][0]
     x = randn(n)
     # y with a canary tail: foreign-memory corruption is observable
     yhost = np.full(n + CANARY, -777.0, dtype=np.float32)

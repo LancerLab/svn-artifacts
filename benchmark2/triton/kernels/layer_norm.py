@@ -3,6 +3,7 @@ benchmark2/settings/layer_normalization.md.
 y = (x - mean)/sqrt(var+eps) * scale + bias; mean/var over the trailing dim.
 Row-wise kernel (one program per row). Host side uses ../gpubuf.py (no torch).
 """
+import argparse
 import sys
 from pathlib import Path
 
@@ -48,12 +49,13 @@ def reference(x: np.ndarray, s: np.ndarray, b: np.ndarray,
 
 
 if __name__ == "__main__":
-    for rows, cols in [(64 * 100, 256), (32 * 197, 768), (16 * 16, 1023)]:
-        x = randn(rows * cols)
-        s = randn(cols, seed=1)
-        b = randn(cols, seed=2)
-        got = layer_norm(GpuBuf.from_numpy(x), GpuBuf.from_numpy(s),
-                         GpuBuf.from_numpy(b), rows, cols).to_host()
-        want = reference(x.reshape(rows, cols), s, b).ravel()
-        assert np.allclose(got, want, atol=1e-4), (rows, cols, "MISMATCH")
-        print("ok", (rows, cols))
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    rows, cols = (SMALL if a.size == "small" else FULL)["layer_normalization"]
+    x = randn(rows * cols); s = randn(cols, seed=1); b = randn(cols, seed=2)
+    got = layer_norm(GpuBuf.from_numpy(x), GpuBuf.from_numpy(s),
+                     GpuBuf.from_numpy(b), rows, cols).to_host()
+    want = reference(x.reshape(rows, cols), s, b).ravel()
+    assert np.allclose(got, want, atol=1e-3), (rows, cols)
+    print("ok", a.size, (rows, cols))

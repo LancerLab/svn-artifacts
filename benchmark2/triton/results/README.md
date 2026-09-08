@@ -3,12 +3,18 @@
 Machine: 1× NVIDIA RTX 5060 Ti (sm_120), driver 580.95.05, CUDA 13.0,
 Triton 3.8.0 (uv venv, torch-free: gpubuf.py ctypes/libcudart shim + numpy refs).
 
-## S1 — detection matrix (bare Triton)
+## S1 — detection matrix (bare Triton) — FINAL, full-size runs
 
 | Class | Injected | Compile | Runtime | Never | n/a |
 |---|---|---|---|---|---|
-| M1 element-access | 27 | 0 | 0 | 27 | 0 |
+| M1 element-access | 27 | 0 | 2 | 25 | 0 |
 | M3 hw-constraint | 2 | 2 | 0 | 0 | 0 |
+
+Size split (plan §2.4/rec. 4): gates pass at both small and full; mutants run
+at FULL_RAGGED (sizes.py — full magnitude, ragged boundary so mask defects
+manifest; the dynamic-dim cases take any runtime extent). Two mutants are
+size-sensitive: layer_norm-f3/softmax-f3 (negative index) run silent at small
+size but fault (illegal access) at full — recorded as runtime at full.
 
 - M1: Triton detects nothing. All 27 mutants run to completion; every one is
   proven corrupting by the oracle (output diff or clobbered canary — the

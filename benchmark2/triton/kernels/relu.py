@@ -3,6 +3,7 @@ y = max(x, 0); elementwise, output shape = input shape.
 Reference-checked against a numpy host reference (no torch on this machine;
 see ../gpubuf.py).
 """
+import argparse
 import sys
 from pathlib import Path
 
@@ -36,9 +37,11 @@ def reference(x: np.ndarray) -> np.ndarray:
 
 
 if __name__ == "__main__":
-    for shape in [(64 * 1280 * 7 * 7,), (32 * 197 * 768,), (127 * 1023,)]:
-        x = randn(shape[0])
-        got = relu(GpuBuf.from_numpy(x)).to_host()
-        want = reference(x)
-        assert np.allclose(got, want), (shape, "MISMATCH")
-        print("ok", shape)
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    n = (SMALL if a.size == "small" else FULL)["relu"][0]
+    x = randn(n)
+    got = relu(GpuBuf.from_numpy(x)).to_host()
+    assert np.allclose(got, np.maximum(x, 0.0)), n
+    print("ok", a.size, n)

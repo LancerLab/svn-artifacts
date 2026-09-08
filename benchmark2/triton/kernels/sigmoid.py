@@ -1,4 +1,5 @@
 """sigmoid — y = 1/(1+e^-x) (settings/sigmoid.md)."""
+import argparse
 import sys
 from pathlib import Path
 import numpy as np
@@ -25,8 +26,11 @@ def sigmoid(x):
 
 
 if __name__ == "__main__":
-    for n in [127 * 1023 + 5, 64 * 100 * 256]:
-        x = randn(n)
-        got = sigmoid(GpuBuf.from_numpy(x)).to_host()
-        assert np.allclose(got, 1 / (1 + np.exp(-x)), atol=1e-6), n
-        print("ok", n)
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    n = (SMALL if a.size == "small" else FULL)["sigmoid"][0]
+    x = randn(n)
+    got = sigmoid(GpuBuf.from_numpy(x)).to_host()
+    assert np.allclose(got, 1 / (1 + np.exp(-x)), atol=1e-6), n
+    print("ok", a.size, n)

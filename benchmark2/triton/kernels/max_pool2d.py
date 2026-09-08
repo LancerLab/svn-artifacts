@@ -1,4 +1,5 @@
 """max_pool2d — windowed max (settings/max_pool2d.md)."""
+import argparse
 import sys
 from pathlib import Path
 import numpy as np
@@ -39,10 +40,13 @@ def max_pool2d(x, C, H, W, k):
 
 
 if __name__ == "__main__":
-    for C, H, W, k in [(64, 28, 28, 2), (32, 26, 26, 2), (16, 9, 9, 3)]:
-        x = randn(C * H * W)
-        got = max_pool2d(GpuBuf.from_numpy(x), C, H, W, k).to_host()
-        xs = x.reshape(C, H // k, k, W // k, k)
-        want = xs.max(axis=(2, 4)).ravel()
-        assert np.array_equal(got, want), (C, H, W, k)
-        print("ok", (C, H, W, k))
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    C, H, W, k = (SMALL if a.size == "small" else FULL)["max_pool2d"]
+    x = randn(C * H * W)
+    got = max_pool2d(GpuBuf.from_numpy(x), C, H, W, k).to_host()
+    xs = x.reshape(C, H // k, k, W // k, k)
+    want = xs.max(axis=(2, 4)).ravel()
+    assert np.array_equal(got, want), (C, H, W, k)
+    print("ok", a.size, (C, H, W, k))

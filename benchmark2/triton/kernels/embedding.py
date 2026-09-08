@@ -1,4 +1,5 @@
 """embedding — y[i] = table[idx[i]] (settings/embedding.md)."""
+import argparse
 import sys
 from pathlib import Path
 import numpy as np
@@ -31,10 +32,13 @@ class IntBuf(GpuBuf):
 
 
 if __name__ == "__main__":
-    V, D = 50257, 128
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    V, D, n_idx = (SMALL if a.size == "small" else FULL)["embedding"]
     table = randn(V * D)
     rng = np.random.default_rng(0)
-    idx = rng.integers(0, V, size=1000).astype(np.int32)
+    idx = rng.integers(0, V, size=n_idx).astype(np.int32)
     # int32 device buffer
     ib = GpuBuf.__new__(IntBuf)
     ib.n = idx.size

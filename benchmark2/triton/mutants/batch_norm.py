@@ -31,8 +31,10 @@ def bn_offlane(x_ptr, mean_ptr, var_ptr, s_ptr, b_ptr, y_ptr, CHW, C, HW, eps,
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--family", type=int, required=True)
+    ap.add_argument("--size", default="full", choices=["small", "full"])
     args = ap.parse_args()
-    N, C, H, W = 4, 16, 9, 13
+    from sizes import SMALL, FULL_RAGGED
+    N, C, H, W = (FULL_RAGGED if args.size == "full" else SMALL)["batch_norm"]
     HW = H * W
     x = randn(N * C * HW)
     xs = x.reshape(N, C, HW)

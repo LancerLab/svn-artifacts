@@ -1,4 +1,5 @@
 """reshape — pure re-viewing copy (settings/reshape.md)."""
+import argparse
 import sys
 from pathlib import Path
 import numpy as np
@@ -24,8 +25,11 @@ def reshape(x, n):
 
 
 if __name__ == "__main__":
-    for n in [64 * 128 * 28 * 28, 127 * 1023 + 5]:
-        x = randn(n)
-        got = reshape(GpuBuf.from_numpy(x), n).to_host()
-        assert np.array_equal(got, x), n
-        print("ok", n)
+    ap = argparse.ArgumentParser(); ap.add_argument("--size", default="small")
+    a = ap.parse_args()
+    from sizes import SMALL, FULL
+    n = (SMALL if a.size == "small" else FULL)["reshape"][0]
+    x = randn(n)
+    got = reshape(GpuBuf.from_numpy(x), n).to_host()
+    assert np.array_equal(got, x), n
+    print("ok", a.size, n)

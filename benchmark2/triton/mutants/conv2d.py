@@ -37,8 +37,10 @@ def conv_nomask(x_ptr, w_ptr, y_ptr, B, C, H, W, CO, KH, KW, OH, OW,
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--family", type=int, required=True)
+    ap.add_argument("--size", default="full", choices=["small", "full"])
     args = ap.parse_args()
-    B, C, H, W, CO, KH, KW = 4, 8, 13, 13, 8, 3, 3  # odd H/W: boundary matters
+    from sizes import SMALL, FULL_RAGGED
+    B, C, H, W, CO, KH, KW = (FULL_RAGGED if args.size == "full" else SMALL)["conv2d"]
     OH, OW = H - KH + 1, W - KW + 1
     x = randn(B * C * H * W)
     w = randn(CO * C * KH * KW, seed=1)
@@ -58,15 +60,14 @@ def main():
     if got is None:
         out = "none"
     else:
-        xs, ws = x.reshape(B, C, H, W), w.reshape(CO, C, KH, KW)
-        ref = np.zeros((B, CO, OH, OW), dtype=np.float32)
-        for b in range(B):
-            for co in range(CO):
-                for i in range(OH):
-                    for j in range(OW):
-                        ref[b, co, i, j] = np.sum(xs[b, :, i:i+KH, j:j+KW]
-                                                  * ws[co])
-        out_same = np.allclose(got[:B*CO*OH*OW], ref.ravel(), atol=1e-2)
+        # reference: the gated correct kernel (verified vs numpy at small size;
+        # a python loop reference is infeasible at full size)
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent
+                               / "kernels"))
+        from conv2d import conv2d as ref_conv2d
+        refg = ref_conv2d(GpuBuf.from_numpy(x), GpuBuf.from_numpy(w),
+                          B, C, H, W, CO, KH, KW).to_host()
+        out_same = np.allclose(got[:B*CO*OH*OW], refg, atol=1e-2)
         canary_ok = np.array_equal(got[B*CO*OH*OW:],
                                    np.full(CANARY, 123.25, dtype=np.float32))
         out = ("same" if out_same else "diff") + \
