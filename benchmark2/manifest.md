@@ -80,27 +80,23 @@ Two GPUs (`--device 0`, `--device 1`). Correctness lanes (E1/E2/E3) share freely
 `nvidia-smi` idle and `exclusive=true` recorded. The `qc` worker rejects any
 `cost`/`residue`/`latency` record with `exclusive=false`.
 
-## 7. Data-integrity gate (§7) — BLOCKING, awaiting owner
+## 7. Data-integrity gate (§7) — RESOLVED 2026-09-08
 
-The raw CSV **cannot be reconciled** to the paper and is flagged, per §8.0 step 0
-("if the raw CSV cannot be confirmed, ask the owner before proceeding").
+Owner ruled the 210-row `bug_detection_results.csv` (regenerated 2026-09-08)
+authoritative, superseding the 103-suite. The paper (`main.tex`,
+`tab:rq2-bugs`) is now written against the 210-suite:
 
-`benchmark/results/bug_detection_results.csv` (210 rows, regenerated 2026-09-08,
-untracked) contradicts the paper's `tab:rq2-bugs` on **three** independent axes:
+| Axis | Authoritative (210-suite) |
+|---|---|
+| Total bugs | **210** |
+| Class split | dim_mismatch 139, input_dep_oob 58, wrong_output 8, stride_error 5 |
+| choreo (svn) resolution | **210 compile** / 0 launch / 0 undetected |
+| MLIR | compile 80 / runtime 59 / undetected 71 |
+| IREE | entry 80 / undetected 130 |
 
-| Axis | Paper (`tab:rq2-bugs`) | Raw CSV (2026-09-08) |
-|---|---|---|
-| Total bugs | **103** | **210** |
-| Class split | dim-mismatch 43, OOB 58, stride 1, wrong-shape 1 | dim_mismatch 139, input_dep_oob 58, wrong_output 8, stride_error 5 |
-| choreo (svn) resolution | 2 compile + **101 launch** | **210 compile** (all) |
-| MLIR | 43 (compile) | compile 80 / runtime 59 / undetected 71 |
-| IREE | 23 (entry) | entry 80 / undetected 130 |
-
-This also subsumes the two §7 discrepancies (2+101 vs 2+100+1-timeout; and the
-"DMA shape mismatch vs OOB" attribution): neither can be settled until the owner
-states which suite (103 vs 210) and which classifier output is authoritative.
-**No new number is written into `main.tex` until this is resolved.** The S11
-integrity-register cell remains **TBD** pending the owner's ruling.
+S11 integrity-register is populated from this suite. Workers may proceed
+against this authoritative baseline; no new number is written unless it traces
+to a `benchmark2/results/` JSON record.
 
 ## 8. Schema + statistics contract
 

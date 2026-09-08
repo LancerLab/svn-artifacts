@@ -9,7 +9,7 @@
 |---|---|---|---|
 | S1 | detection matrix | per class × toolchain: `n_injected, n_compile, n_runtime, n_never, n_na` | `tab:rq2-bugs` |
 | S12 | sanitizer supplement | per class × SOTA toolchain: `flagged ∧ exercised` mutants (Δ vs bare SOTA) | `tab:rq2-bugs` sanitizer column |
-| S2 | choreo before-device | `Σ(n_compile + n_runtime)` per class; **never = 0** asserted | abstract "103/103" |
+| S2 | choreo before-device | `Σ(n_compile + n_runtime)` per class; **never = 0** asserted | abstract "210/210" |
 | S3 | generation totals | choreo obligations per class, per category, + grand total | `tab:gen-capability`, abstract "17,717" |
 | S4 | per-operator ledger | per category: `expressed / discharged / runtime / budgeted / dropped(=0)` | `tab:per-operator`; `layer_norm`=79/74/5/0 |
 | S5 | discharge rate | `Σ discharged / Σ generated`, **split static-shape vs dynamic-shape** | RQ1; "93.2%", "99.2%/87.9%" |
@@ -19,7 +19,7 @@
 | S9 | SOTA remainder | per toolchain: `Σ unconditional_guards` per category | `tab:per-operator` (SOTA cols) |
 | S10 | compile cost | median compile-overhead % (choreo) | RQ4 |
 | S13 | runtime cost & latency | E5a: Δ(residue on/off) per dynamic-shape case; E5b: choreo-entry vs sanitizer time-to-report | RQ3 + E5 |
-| S11 | integrity register | §7 4-way split (compile/runtime/timeout/never) re-derived from raw CSV | Phase-0 gate |
+| S11 | integrity register | 210-suite 3-way split (compile / launch / never) re-derived from raw CSV — owner ruled authoritative 2026-09-08 | Phase-0 gate |
 
 ## Non-negotiable cross-cutting fields
 
