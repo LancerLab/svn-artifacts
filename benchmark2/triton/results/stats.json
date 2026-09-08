@@ -1,6 +1,21 @@
 {
  "toolchain": "triton",
- "S1_detection_matrix": {},
+ "S1_detection_matrix": {
+  "M1": {
+   "n_injected": 27,
+   "n_compile": 0,
+   "n_runtime": 0,
+   "n_never": 27,
+   "n_na": 0
+  },
+  "M3": {
+   "n_injected": 2,
+   "n_compile": 2,
+   "n_runtime": 0,
+   "n_never": 0,
+   "n_na": 0
+  }
+ },
  "S8_expressibility": {
   "M1": "masks only (user values; no generated checks)",
   "M2": "n/a (no cross-tensor contract)",

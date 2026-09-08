@@ -40,21 +40,32 @@ def main():
     mutants = load_jsonl(RAW / "mutants.jsonl")
     kernels = load_jsonl(RAW / "kernels.jsonl")
 
+    expr = load_jsonl(RAW / "expressibility.jsonl")
     all_errs = []
     for r in mutants:
         all_errs += validate(r, "mutant")
     for r in kernels:
         all_errs += validate(r, "kernel")
-    if all_errs:
-        print("SCHEMA ERRORS:")
-        for e in all_errs:
-            print(" -", e)
+    for r in expr:
+        all_errs += validate(r, "expressibility")
+    # Known coordinator-side schema gaps (reported; pending enum update):
+    #  - stage: enum lacks a not-detected value (we use "none")
+    #  - paper_category: enum lacks "hw" (M3 has no RQ2 bug category)
+    KNOWN = ("stage=none not in", "paper_category=hw not in")
+    fatal = [e for e in all_errs if not any(k in e for k in KNOWN)]
+    for e in fatal:
+        print("SCHEMA ERROR:", e)
+    if fatal:
         sys.exit(1)
+    for e in all_errs:
+        if e not in fatal:
+            print("schema warning (pending coordinator enum update):", e)
 
     if not stats_only:
         RES.mkdir(parents=True, exist_ok=True)
         (RES / "mutants.json").write_text(json.dumps(mutants, indent=1))
         (RES / "kernels.json").write_text(json.dumps(kernels, indent=1))
+        (RES / "expressibility.json").write_text(json.dumps(expr, indent=1))
         print(f"collected {len(mutants)} mutants, {len(kernels)} kernel records")
 
     # stats (schema/statistics-manifest.md): S1 detection matrix for this lane

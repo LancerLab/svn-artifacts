@@ -42,13 +42,7 @@ cmd_minimal() {
 
 cmd_e2() {
   need
-  # compose+gate all 15 categories: gate the composed kernels that exist in
-  # kernels/; record expressibility per class (see results/expressibility.json)
-  for k in "$HERE"/kernels/*.py; do
-    cat_name="$(basename "$k" .py)"
-    "$PY" "$HERE/driver.py" gate --category "$cat_name" --size "$SIZE" \
-      --device "$DEVICE" || echo "gate failed: $cat_name"
-  done
+  "$PY" "$HERE/driver.py" e2 --size "$SIZE" --device "$DEVICE"
 }
 
 cmd_e3() {

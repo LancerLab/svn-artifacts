@@ -1,0 +1,422 @@
+[
+ {
+  "toolchain": "triton",
+  "category": "batch_norm",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "batch_norm",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "batch_norm",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "batch_norm",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "concat",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "concat",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "concat",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "concat",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "conv2d",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "conv2d",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "conv2d",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "conv2d",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "elemwise_add",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "elemwise_add",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "elemwise_add",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "elemwise_add",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "embedding",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "embedding",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "embedding",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "embedding",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "gelu",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "gelu",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "gelu",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "gelu",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "layer_normalization",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "layer_normalization",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "layer_normalization",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "layer_normalization",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "matmul",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "matmul",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "matmul",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "matmul",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "max_pool2d",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "max_pool2d",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "max_pool2d",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "max_pool2d",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "reduce_mean",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "reduce_mean",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "reduce_mean",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "reduce_mean",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "relu",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "relu",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "relu",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "relu",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "reshape",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "reshape",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "reshape",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "reshape",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "sigmoid",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "sigmoid",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "sigmoid",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "sigmoid",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "softmax",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "softmax",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "softmax",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "softmax",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "transpose",
+  "class": "elem",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "transpose",
+  "class": "shape",
+  "expressible": "no",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "transpose",
+  "class": "loop",
+  "expressible": "yes",
+  "toolchain_version": "3.8.0"
+ },
+ {
+  "toolchain": "triton",
+  "category": "transpose",
+  "class": "hw",
+  "expressible": "partial",
+  "toolchain_version": "3.8.0"
+ }
+]

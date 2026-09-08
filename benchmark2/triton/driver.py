@@ -135,15 +135,25 @@ MUTANTS = {
     "matmul": ("matmul", "M3", "hw", [1, 2]),
     "conv2d": ("conv2d", "M3", "hw", []),
 }
+# level-2 (plan §3.1 priority rows; run only via `minimal --level2`)
+MUTANTS_L2 = {
+    "max_pool2d": ("max_pool2d", "M1", "oob", [1, 2]),
+    "conv2d": ("conv2d", "M1", "oob", [1]),
+    "embedding": ("embedding", "M1", "oob", [1, 2]),
+    "batch_norm": ("batch_norm", "M1", "oob", [1]),
+}
 PAPER_CAT = {"M1": "oob", "M3": "hw"}
 
 COMPILE_ERR_MARKERS = ("OutOfResources", "CompilationError",
                        "Input shapes should have", "MLIR", "frontend error")
 
 
+CURRENT_TABLE = MUTANTS
+
+
 def run_mutant(category: str, family: int, raw: Path):
     """Run one mutant in a subprocess; classify per the taxonomy."""
-    mod, cls, pcat, _ = MUTANTS[category]
+    mod, cls, pcat, _ = CURRENT_TABLE[category]
     mid = f"{mod}-f{family}"
     try:
         r = subprocess.run(
@@ -182,32 +192,74 @@ def run_mutant(category: str, family: int, raw: Path):
                          f"oracle={oracle}")
 
 
-def cmd_minimal(device: str):
+def cmd_minimal(device: str, level2: bool = False):
     raw = HERE / "raw"
-    for category in MUTANTS:
-        mod, cls, pcat, fams = MUTANTS[category]
+    table = MUTANTS_L2 if level2 else MUTANTS
+    for category in table:
+        mod, cls, pcat, fams = table[category]
         if not fams:
             continue  # nothing assigned on this surface for this operator
         for fam in fams:
             rec = run_mutant(category, fam, raw)
+            rec["level"] = "2" if level2 else "1"
             emit(raw / "mutants.jsonl", rec)
             print(rec["mutant_id"], rec["outcome"], rec["manifest"],
                   rec["detail"][:80])
 
 
+# ---------------------------------------------------------------- e2
+# Triton expressibility per obligation class (schema: expressibility record).
+# Triton has no generated checks; every check is a user-written mask value.
+TRITON_EXPRESSIBILITY = {
+    "elem": "yes",     # masks express bounds, but are user values
+    "shape": "no",     # no cross-tensor contract on the surface
+    "loop": "yes",     # manual loop bounds
+    "hw": "partial",   # tl.dot tile rules + smem budget checked at JIT only
+}
+CATEGORIES = ["batch_norm", "concat", "conv2d", "elemwise_add", "embedding",
+              "gelu", "layer_normalization", "matmul", "max_pool2d",
+              "reduce_mean", "relu", "reshape", "sigmoid", "softmax",
+              "transpose"]
+KERNEL_MOD = {"layer_normalization": "layer_norm", "elemwise_add":
+              "elemwise_add", "reduce_mean": "reduce_mean", "max_pool2d":
+              "max_pool2d", "batch_norm": "batch_norm"}
+
+
+def cmd_e2(device: str, size: str):
+    raw = HERE / "raw"
+    # gate every composed category
+    for cat in CATEGORIES:
+        mod = KERNEL_MOD.get(cat, cat)
+        if not (KERNELS / f"{mod}.py").exists():
+            continue
+        gate_kernel(cat, size, device, raw)
+    # expressibility records per category per class
+    for cat in CATEGORIES:
+        for cls, val in TRITON_EXPRESSIBILITY.items():
+            emit(raw / "expressibility.jsonl", {
+                "toolchain": "triton", "category": cat, "class": cls,
+                "expressible": val, "toolchain_version": triton_version()})
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("stage", choices=["gate", "minimal"])
+    ap.add_argument("stage", choices=["gate", "minimal", "e2"])
     ap.add_argument("--category", default=None)
     ap.add_argument("--size", default="small", choices=["small", "full"])
     ap.add_argument("--device", default="0")
+    ap.add_argument("--level2", action="store_true")
     args = ap.parse_args()
     raw = HERE / "raw"
     if args.stage == "gate":
         ok = gate_kernel(args.category, args.size, args.device, raw)
         sys.exit(0 if ok else 1)
     if args.stage == "minimal":
-        cmd_minimal(args.device)
+        if args.level2:
+            global CURRENT_TABLE
+            CURRENT_TABLE = MUTANTS_L2
+        cmd_minimal(args.device, level2=args.level2)
+    if args.stage == "e2":
+        cmd_e2(args.device, args.size)
 
 
 if __name__ == "__main__":
