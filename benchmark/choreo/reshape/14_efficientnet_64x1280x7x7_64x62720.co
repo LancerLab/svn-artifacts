@@ -2,8 +2,11 @@
 
 // - case14: [64, 1280, 7, 7] --> [64, 62720] (EfficientNet)
 __co__ auto reshape14(f32 [64, 1280, 7, 7] input) {
-  output = dma.copy input.span_as([64, 1280 * 7 * 7]) => global;
-  return output.data;
+  f32 [64, 1280 * 7 * 7] output;
+  parallel p by 1 {
+    dma.copy input.span_as([64, 1280 * 7 * 7]) => output;
+  }
+  return output;
 }
 
 int main() {
