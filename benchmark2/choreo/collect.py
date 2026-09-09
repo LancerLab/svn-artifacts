@@ -173,7 +173,38 @@ def read_json(path):
         return json.load(f)
 
 
-def from_e1_mutants(data, ver):
+def load_never_causes(raw_dir):
+    """mutant_id -> {cause, cause_under_execute, reason} from the never attribution.
+
+    WHY THIS JOIN LIVES HERE. Ruling R-D2 (2026-09-10, `DECISIONS-NEEDED.md`)
+    retires the old `never = 0` acceptance criterion and replaces it with
+    **no *unattributed* `never`** -- every never-detected mutant must carry one of
+    the five recorded causes. But `stats.py` reads ONLY the register, never
+    `raw/`, so a criterion about attribution cannot be evaluated unless the
+    attribution is ON the register record. Joining it here is what makes the new
+    criterion checkable from committed data alone.
+
+    The join key is `mutant_id`, verified 37/37 exact with no orphans in either
+    direction. Missing file is not an error: `analyze_never.py` runs after E1, and
+    collect is called between stages, so an absent attribution simply means the
+    criterion is not yet evaluable (stats.py reports that explicitly rather than
+    silently passing).
+    """
+    a = read_json(os.path.join(raw_dir, "never_attribution.json"))
+    if not a:
+        return {}
+    out = {}
+    for r in a.get("results", []):
+        mid = r.get("mutant_id")
+        if not mid:
+            continue
+        out[mid] = {"cause": r.get("cause"),
+                    "cause_under_execute": r.get("cause_under_execute"),
+                    "reason": r.get("reason")}
+    return out
+
+
+def from_e1_mutants(data, ver, never_causes=None):
     """E1 → `mutant` records (S1/S2). Returns (mutants, []) — no kernel arm.
 
     WHY NO `kernel` RECORDS. The first cut of this function also emitted one
@@ -228,6 +259,19 @@ def from_e1_mutants(data, ver):
                       "log_dir", "note", "infra_error"):
             if r.get(extra) is not None:
                 m[extra] = r[extra]
+        # R-D2: stamp the attributed cause onto every `never` row so the new
+        # acceptance criterion (no unattributed never) is derivable from the
+        # register. `never_cause` is None only if analyze_never.py has not run or
+        # did not cover this mutant -- which stats.py then reports as a FAIL of
+        # the criterion, not as a silent pass.
+        if never_causes and m.get("outcome") == "never":
+            c = never_causes.get(m.get("mutant_id"))
+            if c:
+                m["never_cause"] = c.get("cause")
+                if c.get("cause_under_execute") is not None:
+                    m["never_cause_under_execute"] = c["cause_under_execute"]
+                if c.get("reason") is not None:
+                    m["never_cause_reason"] = c["reason"]
         mutants.append(m)
     return mutants, []
 
@@ -377,7 +421,7 @@ def main():
     e1 = read_json(os.path.join(a.raw, "e1_mutant_records.json"))
     if e1:
         present.append("e1_mutant_records.json")
-        m, k = from_e1_mutants(e1, ver)
+        m, k = from_e1_mutants(e1, ver, load_never_causes(a.raw))
         buckets["mutant"].extend(m)
         buckets["kernel"].extend(k)   # always empty; kept so the tuple shape is stable
     else:

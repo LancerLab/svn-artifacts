@@ -201,8 +201,15 @@ def s1_s2(mutants, present):
     """S1 detection matrix + S2 before-device total.
 
     S1 is per class x toolchain: n_injected, n_compile, n_runtime, n_never, n_na.
-    S2 is Sum(n_compile + n_runtime) per class with `never = 0` ASSERTED -- the
-    assertion is the claim, so it is computed and reported rather than assumed.
+    S2 is Sum(n_compile + n_runtime) per class.
+
+    R-D2 (coordinator ruling 2026-09-10): the old `never = 0` acceptance criterion
+    is **RETIRED**. It was a Phase-0 gate calibrated against a 210-kernel corpus
+    and predates per-cause attribution. The criterion is now **no *unattributed*
+    `never`** -- every never-detected mutant must carry one of the five recorded
+    causes. A non-zero `never` is therefore not a failure; an unattributed one is.
+    The per-cause table and the R-D2b flag-matrix ablation are emitted alongside so
+    §5.2 ¶2 can be written from this block alone.
 
     `noop` mutants are excluded from n_injected. specs §11.1: a mutant whose own
     manifest check says it does not corrupt anything is a false success and is
@@ -268,9 +275,8 @@ def s1_s2(mutants, present):
     never = t.get("n_never", 0)
     s2 = {
         "status": "ok",
-        "feeds": ('E1 detection matrix (§5.2 ¶2); acceptance criterion '
-                  'never=0 — the abstract\'s "210/210" is a PROVISIONAL '
-                  'placeholder pending re-registration'),
+        "feeds": ('E1 detection matrix (§5.2 ¶2) — the "210/210" headline is '
+                  'DROPPED (R-D2); criterion is now "no unattributed never"'),
         "n_injected": t["n_injected"],
         "n_before_device": before_device,
         "n_compile": t.get("n_compile", 0),
@@ -279,11 +285,14 @@ def s1_s2(mutants, present):
         "n_na": t.get("n_na", 0),
         "n_discarded_noop": t.get("n_discarded_noop", 0),
         "pct_before_device": pct(before_device, t["n_injected"]),
-        # The assertion IS the statistic. plan's acceptance criterion 1 wants
-        # "every choreo cell non-zero before device execution" and S2 wants
-        # never = 0 asserted, so the pass/fail is computed here, not left to a
-        # reader comparing two numbers.
+        # RETIRED by R-D2, kept only so the old artifact stays comparable and so
+        # the ruling's effect is auditable. This is NOT the acceptance criterion
+        # any more and must not be printed as a pass/fail. See
+        # `no_unattributed_never` below for the criterion that replaced it.
         "never_is_zero": never == 0,
+        "never_is_zero_status": (
+            "RETIRED (R-D2, 2026-09-10) — a non-zero `never` is no longer a "
+            "failure; an UNATTRIBUTED one is. Do not report this as pass/fail."),
         "per_class_before_device": {
             cls: (s1["per_class"][cls].get("n_compile", 0)
                   + s1["per_class"][cls].get("n_runtime", 0))
@@ -291,22 +300,82 @@ def s1_s2(mutants, present):
         },
     }
     s2.update(prov(mutants))
-    if never:
+
+    # ---- R-D2: the criterion that replaced `never = 0` ------------------
+    # `never_cause` is stamped onto the register record by collect.py from
+    # raw/never_attribution.json (analyze_never.py). stats.py reads only the
+    # register, so the criterion is evaluable from committed data alone.
+    never_rows = [m for m in mutants
+                  if m.get("outcome") == "never" and m.get("manifest") != "noop"]
+    if never_rows:
+        causes = collections.Counter(r.get("never_cause") for r in never_rows)
+        unattributed = sorted(r.get("mutant_id") for r in never_rows
+                              if not r.get("never_cause"))
+        # The five recorded causes, grouped exactly as R-D2's §5.2 ¶2 wording does:
+        # 25 out-of-scope/not-assessed-by-construction + 12 hoisting/config.
+        OUT_OF_SCOPE_OR_NOT_ASSESSED = ("C4_NOT_ASSESSED", "C5_OUT_OF_SCOPE")
+        TOOLCHAIN_OR_CONFIG = ("HOISTING_DEFECT", "C3_LOWER_BOUND_OMITTED",
+                               "C1_COST_FILTER_SUPPRESSED")
+        s2["never_attribution"] = {
+            "criterion": "no unattributed `never` (R-D2, 2026-09-10; replaces the "
+                         "retired `never = 0`)",
+            "no_unattributed_never": not unattributed,
+            "n_unattributed": len(unattributed),
+            "unattributed_mutants": unattributed,
+            "cause_counts": {k: int(v) for k, v in sorted(causes.items(),
+                                                           key=lambda kv: -kv[1])
+                             if k is not None},
+            "n_out_of_scope_or_not_assessed": sum(
+                int(causes.get(c, 0)) for c in OUT_OF_SCOPE_OR_NOT_ASSESSED),
+            "n_toolchain_or_config": sum(
+                int(causes.get(c, 0)) for c in TOOLCHAIN_OR_CONFIG),
+            # R-D2b: the 2x2 flag matrix (-rtc x hoist) is an ABLATION, not a
+            # re-pin. The pinned default stays the headline; this shows the
+            # hoisting defect's recoverable cost.
+            "flag_matrix_ablation": {
+                "status": "R-D2b — report as sensitivity, pinned default is the "
+                          "headline",
+                "at_pinned_default": f"{before_device}/{t['n_injected']} = "
+                                     f"{pct(before_device, t['n_injected'])}%",
+                "with_rtc_all_and_hoist_disabled": "43/72 = 59.72%",
+                "recovered_by_flags": 8,
+                "source": "raw/c2_probe_groundtruth.json (s2_implication)",
+            },
+            "toolchain_bugs_to_log": {
+                "HOISTING_DEFECT": "guard emitted but hoisted past the induction "
+                                   "variable's reset — VACUOUS, confirmed by "
+                                   "--disable-assert-hoist. R-D2: log as a "
+                                   "toolchain bug, do NOT hide behind a flag.",
+                "C3_LOWER_BOUND_OMITTED": "only one of the index's two bounds was "
+                                          "generated — croqtile soundness bug.",
+            },
+        }
         s2["never_note"] = (
-            f"{never} mutant(s) reached outcome=never: choreo neither refuted "
-            "them at compile time nor fired a runtime guard. S2's `never = 0` "
-            "assertion FAILS for this mutant set. Inspect `never_mutants` "
-            "before reporting any before-device figure."
+            f"{never} mutant(s) reached outcome=never. Under R-D2 this is NOT a "
+            f"failure provided every one is attributed: "
+            f"{len(unattributed)} unattributed. "
+            f"{s2['never_attribution']['n_out_of_scope_or_not_assessed']} are "
+            f"out-of-scope or not-assessed-by-construction and "
+            f"{s2['never_attribution']['n_toolchain_or_config']} are attributable "
+            f"to a hoisting defect plus cost-filter/lower-bound configuration."
         )
         s2["never_mutants"] = [
             {"mutant_id": m.get("mutant_id"), "class": m.get("class"),
              "category": m.get("category"),
              "detector": m.get("detector"),
              "manifest": m.get("manifest"),
+             "never_cause": m.get("never_cause"),
+             "never_cause_reason": m.get("never_cause_reason"),
              "note": m.get("note")}
-            for m in mutants
-            if m.get("outcome") == "never" and m.get("manifest") != "noop"
+            for m in never_rows
         ]
+    else:
+        s2["never_attribution"] = {
+            "criterion": "no unattributed `never` (R-D2, 2026-09-10)",
+            "no_unattributed_never": True, "n_unattributed": 0,
+            "unattributed_mutants": [], "cause_counts": {},
+            "note": "no `never` outcomes in this mutant set",
+        }
     return s1, s2
 
 
@@ -341,7 +410,7 @@ def s3(obligations):
     return {
         "status": "ok",
         "feeds": ('E2 generation completeness (§5.3 ¶1; tab:gen-capability, '
-                  'abstract "17,717")'),
+                  'abstract "17,353" — R-D5 re-registered from 17,717)'),
         "grand_total": grand,
         "per_class": {c: int(by_class.get(c, 0)) for c in OBL_CLASSES},
         "per_category": {c: int(n) for c, n in sorted(by_cat.items())},
@@ -558,8 +627,9 @@ def s5(obligations, kernels):
 
     return {
         "status": "ok",
-        "feeds": ('E3 discharge strength (§5.4 ¶1; "93.2%", "99.2%/87.9%", '
-                  'residue 1,199 accounted)'),
+        "feeds": ('E3 discharge strength (§5.4 ¶1; RQ1 "93.04%", '
+                  '"100.0%/86.87%", residue 1,208 — R-D5 re-registered from '
+                  '93.2%/99.2%/87.9%/1,199)'),
         "static": block("static"),
         "dynamic": block("dynamic"),
         "all": allb,
@@ -634,8 +704,9 @@ def s7(obligations):
     interval = sum(1 for o in obligations if o.get("mechanism") == "interval")
     return {
         "status": "not_measurable",
-        "feeds": ('E3 mechanism-attribution ¶ (§5.4 ¶3; "93.2%->77.2%", '
-                  'residue x3.4 — the only direct evaluation of claimed C2)'),
+        "feeds": ('E3 mechanism-attribution ¶ (§5.4 ¶3; "93.2%->77.2%" is '
+                  'INHERITED, not re-derived — R-D5/S7 not_measurable on this '
+                  'build; interval-discharged 2,920 per S6)'),
         "reason": S7_REASON,
         "inherited_from_paper": PAPER_REF["S7_inherited"],
         "what_would_be_needed": (
@@ -710,7 +781,9 @@ def s10(costs):
 
     out = {
         "status": "ok",
-        "feeds": "E4 compile-time cost (§5.5 ¶1; was RQ4)",
+        "feeds": ("E4 compile-time cost (§5.5 ¶1; RQ4) — median front-end-vs-nvcc "
+                  "compile-link %, NOT checks-on/off (R-D4); abstract's 0.6% -> "
+                  "0.13%"),
         "grand_median_pct": grand,
         "n_categories": len(meds),
         "per_category": per_cat,
@@ -902,8 +975,9 @@ def s13(residue, latency, present):
     # A/B feeds E4 ¶2 (cost), while E5b's latency feeds E5 ¶1 (runtime guarantee
     # vs the dynamic oracle). They are one artifact but two floats.
     out = {"status": "ok",
-           "feeds": ("E4 residue A/B (§5.5 ¶2, E5a) + E5 latency "
-                     "(§5.6 ¶1, E5b)")}
+           "feeds": ("E4 residue A/B (§5.5 ¶2, E5a: structurally zero on device, "
+                     "below measurement floor on host — R-D3) + E5 (§5.6 ¶1, E5b: "
+                     "DETECTION ASYMMETRY / coverage, NOT a latency ratio — R-D1)")}
 
     # ---- E5a -------------------------------------------------------------
     if not present.get("residue") or not residue:
@@ -1711,16 +1785,34 @@ def report(st):
         s2 = st["S2_before_device"]
         print(f"\n  S2 before-device: {s2['n_before_device']}/{s2['n_injected']} "
               f"= {s2['pct_before_device']}%")
+        # R-D2: `never = 0` is RETIRED. The criterion is now "no unattributed
+        # never", so that is what gets a PASS/FAIL line. Printing the retired
+        # assertion as *** FAIL *** would misreport a settled ruling as an open
+        # defect.
+        na = s2.get("never_attribution", {})
         print(f"     never = {s2['n_never']}   "
-              f"assertion `never == 0`: "
-              f"{'PASS' if s2['never_is_zero'] else '*** FAIL ***'}")
-        if not s2["never_is_zero"]:
-            print(f"     {s2.get('never_note','')}")
-            for m in s2.get("never_mutants", [])[:12]:
-                print(f"       {m['mutant_id']:<28} {m['class']}/{m['category']:<22}"
-                      f" detector={m.get('detector')}")
-            if len(s2.get("never_mutants", [])) > 12:
-                print(f"       ... and {len(s2['never_mutants'])-12} more")
+              f"(criterion `never == 0` is RETIRED, R-D2)")
+        print(f"     criterion `no unattributed never`: "
+              f"{'PASS' if na.get('no_unattributed_never') else '*** FAIL ***'}"
+              f"   ({na.get('n_unattributed', 0)} unattributed)")
+        if na.get("cause_counts"):
+            print(f"       causes: " + "  ".join(
+                f"{k}={v}" for k, v in na["cause_counts"].items()))
+            print(f"       {na.get('n_out_of_scope_or_not_assessed',0)} "
+                  f"out-of-scope/not-assessed + "
+                  f"{na.get('n_toolchain_or_config',0)} hoisting/config")
+            fm = na.get("flag_matrix_ablation")
+            if fm:
+                print(f"       ablation (R-D2b, NOT the headline): "
+                      f"{fm['at_pinned_default']} pinned -> "
+                      f"{fm['with_rtc_all_and_hoist_disabled']} with "
+                      f"-rtc=all + hoist disabled "
+                      f"(+{fm['recovered_by_flags']} recovered)")
+        for m in s2.get("never_mutants", [])[:12]:
+            print(f"       {m['mutant_id']:<28} {m['class']}/{m['category']:<22}"
+                  f" cause={m.get('never_cause')}")
+        if len(s2.get("never_mutants", [])) > 12:
+            print(f"       ... and {len(s2['never_mutants'])-12} more")
 
     print(f"\n{line}\nS3  GENERATION TOTALS (E2)\n{line}")
     s3v = st["S3_generation_totals"]
