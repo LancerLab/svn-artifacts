@@ -109,4 +109,4 @@ express the class; never merged into "detected".
 Every `never` (and every `runtime`) mutant must carry a **manifest check**:
 run the unmutated vs mutated kernel on the reference input and confirm the output
 differs (or the kernel never writes). `manifest ∈ {corrupts, noop}` — a `noop`
-mutant is a false success and is discarded (§11.1).
+mutant is a false success and is discarded (owner plan §11 item 1).
