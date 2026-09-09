@@ -375,3 +375,126 @@ not support:
   measurement floor on the host** (per `noise_note`), not as a percentage.
 - **Abstract/intro/conclusion:** the *"210/210"* placeholder must go; the real
   corpus is **310 kernels / 17,353 obligations**.
+
+---
+
+# COORDINATOR RULINGS — 2026-09-10 (all decisions)
+
+Reviewed against the updated design (`manifest.md` §5.1–5.2,
+`specs/mutation-specs.md` §0/§4.1/§5.1/§7.1) and the committed
+`../results/choreo/stats.json`. **Every ruling below is final; no re-measurement
+is required and no prose that the data does not support is sanctioned.** The
+worker's fallback framing (above) is ratified as the *actual* framing, not a
+last resort.
+
+## R-D6 — pin to `f2f238f`, no rebuild (D6b). **APPROVED.**
+
+`binary_sha1_12 = c3ebb1654d1d` is the authoritative build identity; the
+`toolchain.py` mtime heuristic is advisory only. State in `manifest.md` §5 that
+the choreo data was collected on `f2f238f` and that the launch-rejection fix
+`1fa4719` **postdates** the data. Do not rebuild — a rebuild invalidates the
+arch sweep, ground-truth fixture, and E4/E5 artifacts, and breaks host-quiet for
+other lanes. The stale-binary flag is a disclosure, not a defect.
+
+## R-D2 — `never = 0` is RETIRED; report with per-cause attribution. **D2a.**
+
+`never = 0` was a Phase-0 gate calibrated against a 210-kernel corpus and predates
+per-cause attribution; it is **not** the acceptance criterion any more. The new
+criterion is: **no *unattributed* `never`** — every `never` mutant must carry one
+of the five recorded causes (`C4_NOT_ASSESSED`, `C5_OUT_OF_SCOPE`,
+`HOISTING_DEFECT`, `C3_LOWER_BOUND_OMITTED`, `C1_COST_FILTER_SUPPRESSED`).
+
+- §5.2 ¶2 is **rewritten, not voided**: "choreo catches **35/72 (48.6%)** before
+  device execution (24 compile-time refutations + 11 launch-time guards); of the
+  37 not caught, **25 are out-of-scope or not-assessed-by-construction** and **12
+  are attributable to a hoisting defect + cost-filter/lower-bound configuration**."
+- **D2b — yes, report the 2×2 flag matrix as an ablation** (`-rtc` × hoist), but
+  the **pinned default (48.6%) remains the headline**; the 59.7% configuration is
+  a sensitivity result that shows the hoisting defect's recoverable cost, not a
+  re-pin. Log the 6 `HOISTING_DEFECT` cases as a toolchain bug to fix later — do
+  **not** hide them behind a flag.
+- **D2c — moot.** §5.2 ¶2 is written; the "210/210" headline is dropped everywhere
+  (abstract, intro, RQ2, conclusion).
+
+## R-D1 — re-frame §5.6 around the detection asymmetry (D1a). **APPROVED.**
+
+The "64×/472×" multiplier headline is **dropped** — 12 of 16 pairs are confounded
+(6 `process-abort` by choreo's own ungated assertion, 4 `no-fault-reported`, 2
+`launch-rejected`). The publishable claim is **coverage, not speed**:
+
+> choreo detected **all 4 faults** that compute-sanitizer ran to completion and
+> reported zero errors on (`M2.s1.ln1.bias`, `M2.s1.ln1.caller.bias`,
+> `M2.s1.ln3.bias`, `M2.s1.mm1.rhs`); a further **2** never reached the oracle
+> (launch refused), and **6** were killed by choreo's own ungated assertion before
+> memcheck judged. The oracle's silence is not a latency advantage — it produced
+> no report at all.
+
+This **inverts** the intended "faster than the oracle" story into "catches faults
+the oracle cannot see at all" — a stronger claim, and it is the one the data
+supports. If a latency figure is wanted at all, use **n=4, median 84.45×**
+(min 2.58, max 204.39, oracle slower 4/4) with the confound stated.
+
+Log the `choreo.h:221` finding (a source-**A**-device site firing despite
+`--disable-runtime-check`) as a toolchain bug — do not assume the flag silences
+all of source A.
+
+## R-D3 — no E5a re-measure; below-floor framing; drop the static premise. **APPROVED.**
+
+Consistent with R-D6 (no rebuild, no post-fix binary): **do not re-measure E5a.**
+- **D3b — yes**: §5.5 ¶2 states residue as **structurally zero on the device**
+  (byte-identical device code, 0 check calls) and **below the measurement floor
+  on the host** (14/14 deltas inside rep-to-rep spread), *not* as a percentage.
+- **D3c — drop the static claim**: 0 static kernels were measured (`--size small`
+  selects dynamic only), so "static shapes carry zero residue by construction" is
+  untested and must be removed or marked structural-not-measured.
+
+## R-D4 — carry S10's 0.13%, reframe as front-end vs nvcc. **APPROVED.**
+
+The 0.6% (checks-on vs checks-off) is **unobtainable** — `-rtc=none` /
+`-zero-cost` / `--disable-runtime-check` all give a byte-identical ledger. E4 ¶1
+carries **`grand_median_pct = 0.1296`** and is rewritten to describe
+**front-end vs nvcc compile-link**, not checks-on vs checks-off. Update the
+abstract's "0.6% median compile-time overhead" accordingly (0.13%).
+
+## R-D5 — confirm the sweep, and it is larger than listed. **APPROVED (expanded).**
+
+Re-register from `stats.json`; the worker's table is a subset. The full stale →
+measured list (all in `main.tex`/abstract):
+
+| Claim in paper | Measured | Source |
+|---|---|---|
+| "210/210 before device" | **drop** | S2 |
+| 17{,}717 obligations | **17{,}353** | S3 |
+| 16{,}518 discharged (93.2%) | **16{,}145 (93.04%)** | S5 |
+| 99.2% static (8,341/8,410) | **100.0% (8,156/8,156)** | S5 |
+| 87.9% dynamic (8,177/9,307) | **86.87% (7,989/9,197)** | S5 |
+| residue 1{,}199 | **1{,}208** | S5 |
+| 2{,}837 interval-discharged | **2{,}920** | S6 |
+| "93.2%→77.2%, residue ×3.4" | **inherited, not measured** | S7 = `not_measurable` |
+| 0.6% (mean 1.9%) compile | **0.13% front-end vs nvcc** | S10 |
+
+⚠ The S7 no-interval counterfactual is **`not_measurable`** (no flag disables
+interval reasoning; all three flags are ledger-identical). The "77.2%" figure is
+inherited from the prior ablation, not re-derived — label it as such in §5.4 ¶3,
+or drop it. The mechanism paragraph's "2,837" → "2,920" (S6 `interval: 2920`).
+
+## R-D7 — approve reshape/14; exclude conv2d/10; document the 36. **APPROVED.**
+
+- **D7a — approve** the `reshape/14` fix (0 obligations, corpus-neutral).
+- **D7b — exclude** `conv2d/10_dynamic` with a note (the real violation is the
+  288.0 KB shared `A` tile vs ~228 KB hardware max; the filename's `112x112` is
+  wrong, content is `[8,128,16,16]`). Do **not** re-derive the 17,353 ledger this
+  close to deadline.
+- **D7c — document, do not audit-as-a-class.** The 36 silent rejections are an
+  artifact of the pre-fix binary (`f2f238f`) + `--max-local-mem-capacity`; they
+  affect only the timing/measurement lanes (E4/E5), not the static E2/E3 corpus.
+  Fold into the R-D6 "postdates the data" limitation note.
+
+## On the MLIR lanes
+
+The landed work (`mlir-shared/` harness, §5.1 toolchain/protocol pin, §4.1
+M3×MLIR-low = `n/a`, §5.1 enumeration arithmetic, §7.1 per-mutant manifestation)
+is **accepted as-is** — all four owner decisions are already resolved in-repo. The
+`mlir-linalg`/`mlir-low` **S1/S8/S9/S12 result outputs are still pending** (only
+the shared harness has landed; there is no `results/mlir-*` yet). Flag when those
+lanes push so they get the same homework check.
