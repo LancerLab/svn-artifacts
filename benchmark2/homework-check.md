@@ -1,15 +1,31 @@
 # benchmark2 — Homework Check (iree + triton lanes)
 
-> Coordinator review, 2026-09-09. Cross-checks the committed `iree/` and
-> `triton/` lane outputs against the shared contract (`manifest.md`,
-> `specs/mutation-specs.md`, `schema/statistics-manifest.md`,
+> Coordinator review, 2026-09-09 (last updated 2026-09-10). Cross-checks the
+> committed `iree/` and `triton/` lane outputs against the shared contract
+> (`manifest.md`, `specs/mutation-specs.md`, `schema/statistics-manifest.md`,
 > `schema/record-schema.json`, and the `experiment-redesign-plan.md` §3.3–3.5 /
 > §12 ownership table).
 >
-> **Verdict: measurement work is substantially complete, but the lanes have not
-> "done everything."** The items below are the blocking and non-blocking gaps.
-> Each item states the evidence, the required fix, and the acceptance check.
-> Close every `[ ]` before this lane is considered done.
+> **Verdict: all items resolved.** The lanes closed every item in the close-out
+> commit `8ca5568`; the coordinator then repaired a one-line markdown regression
+> in `statistics-manifest.md` (`760bfbb`). Per-item status is below; the
+> original evidence + fix text is retained for audit.
+
+## Resolution status (2026-09-10)
+
+| Item | Status | Where |
+|---|---|---|
+| I1 — IREE S12 surfacing | ✅ resolved | `results/iree/stats.json` → `S12_sanitizer_supplement` |
+| I2 — IREE S1 n/a accounting | ✅ resolved | M1/M3 rows → `n_na: 40` |
+| I3 — IREE full-size gate failures | ✅ resolved | `full_size_failures[]` disposition |
+| I4 — IREE raw/ traceability | ✅ resolved | `iree/README.md` provenance note |
+| T1 — Triton S1 M2 row | ✅ resolved | M2 row → `n_na: 40` |
+| T2 — Triton e3_remainder.json | ✅ resolved | file committed |
+| T3 — Triton expressibility dedup | ✅ resolved | 120 → 60 lines |
+| T4 — Triton S8 4-class re-key | ✅ resolved | `{elem, shape, loop, hw}` |
+| C1 — stage enum | ✅ resolved | `["compile", "runtime", "none"]` |
+| C2 — paper_category enum | ✅ resolved | adds `"hw"` |
+| C3 — S8 format pin | ✅ resolved | `statistics-manifest.md` §"S8 exact shape" |
 
 ---
 
@@ -153,12 +169,15 @@
   untracked local work and is not covered here; it owns S1–S7/S10/S13 and has
   its own acceptance criterion (`never = 0` per the 2026-09-09 binding addendum,
   item 5).
-- **mlir-linalg / mlir-low** lanes do not exist yet (binding addendum item 5);
-  **tilelang** is exploratory.
+- **mlir-linalg / mlir-low** lanes do not exist yet (binding addendum item 5).
+  As of 2026-09-10 **no mlir-lane commits have landed** on `origin/main` or
+  `origin/cgo27` — a follow-up check is required when they arrive.
+- **tilelang** is exploratory.
 
 ## Definition of done
 
-All blocking items (I1, I2, I3, T1, T2, T4, C1, C2, C3) closed; non-blocking
-items (I4, T3) either closed or explicitly waived by the coordinator; every
-number in `stats.json` traces to committed raw JSON; and `run.sh all` completes
-with schema-valid output.
+✅ **Met (2026-09-10).** All blocking items (I1, I2, I3, T1, T2, T4, C1, C2,
+C3) closed in `8ca5568`; non-blocking items (I4, T3) closed in the same commit;
+every number in `stats.json` traces to committed raw JSON; and `run.sh all`
+completes with schema-valid output. The only follow-up was the `760bfbb`
+markdown-row repair (doc-only).
