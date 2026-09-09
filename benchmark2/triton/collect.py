@@ -51,18 +51,22 @@ def main():
         all_errs += validate(r, "expressibility")
     for r in san:
         all_errs += validate(r, "sanitizer")
-    # Known coordinator-side schema gaps (reported; pending enum update):
-    #  - stage: enum lacks a not-detected value (we use "none")
-    #  - paper_category: enum lacks "hw" (M3 has no RQ2 bug category)
-    KNOWN = ("stage=none not in", "paper_category=hw not in")
-    fatal = [e for e in all_errs if not any(k in e for k in KNOWN)]
+    fatal = list(dict.fromkeys(all_errs))
     for e in fatal:
         print("SCHEMA ERROR:", e)
     if fatal:
         sys.exit(1)
-    for e in all_errs:
-        if e not in fatal:
-            print("schema warning (pending coordinator enum update):", e)
+
+    # de-duplicate expressibility (e2 re-runs may have appended twice)
+    seen = set()
+    expr_dedup = []
+    for r in expr:
+        k = (r.get("category"), r.get("class"))
+        if k in seen:
+            continue
+        seen.add(k)
+        expr_dedup.append(r)
+    expr = expr_dedup
 
     if not stats_only:
         RES.mkdir(parents=True, exist_ok=True)
@@ -95,12 +99,21 @@ def main():
               "n_never": v.get("never", 0),
               "n_na": v.get("n/a", 0)}
           for c, v in by_class.items()}
+    # T1: Triton has no cross-tensor contract, so all spec M2 (N=40) are n/a.
+    s1.setdefault("M2", {"n_injected": 0, "n_compile": 0, "n_runtime": 0,
+                         "n_never": 0, "n_na": 40,
+                         "note": "no cross-tensor contract (§3.3)"})
+
+    # T4: S8 = 4-class × {yes, partial, no} counts (schema + IREE shape).
+    s8 = {}
+    for r in expr:
+        c = r["class"]
+        s8.setdefault(c, {"yes": 0, "partial": 0, "no": 0})
+        s8[c][r["expressible"]] += 1
+
     stats = {"toolchain": "triton",
              "S1_detection_matrix": s1,
-             "S8_expressibility": {
-                 "M1": "masks only (user values; no generated checks)",
-                 "M2": "n/a (no cross-tensor contract)",
-                 "M3": "partial (tl.dot tile rules + smem budget at JIT)"},
+             "S8_expressibility": {c: v for c, v in sorted(s8.items())},
              "S9_remainder": "n/a (no generated checks)",
              "S12_sanitizer_supplement": s12}
     (RES / "stats.json").parent.mkdir(parents=True, exist_ok=True)

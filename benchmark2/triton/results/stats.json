@@ -14,12 +14,37 @@
    "n_runtime": 0,
    "n_never": 0,
    "n_na": 0
+  },
+  "M2": {
+   "n_injected": 0,
+   "n_compile": 0,
+   "n_runtime": 0,
+   "n_never": 0,
+   "n_na": 40,
+   "note": "no cross-tensor contract (\u00a73.3)"
   }
  },
  "S8_expressibility": {
-  "M1": "masks only (user values; no generated checks)",
-  "M2": "n/a (no cross-tensor contract)",
-  "M3": "partial (tl.dot tile rules + smem budget at JIT)"
+  "elem": {
+   "yes": 15,
+   "partial": 0,
+   "no": 0
+  },
+  "hw": {
+   "yes": 0,
+   "partial": 15,
+   "no": 0
+  },
+  "loop": {
+   "yes": 15,
+   "partial": 0,
+   "no": 0
+  },
+  "shape": {
+   "yes": 0,
+   "partial": 0,
+   "no": 15
+  }
  },
  "S9_remainder": "n/a (no generated checks)",
  "S12_sanitizer_supplement": {

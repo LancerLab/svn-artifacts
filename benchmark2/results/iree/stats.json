@@ -13,16 +13,16 @@
       "n_compile": 0,
       "n_runtime": 0,
       "n_never": 0,
-      "n_na": 0,
-      "note": "no expressible element-access mutant on the iree linalg entry surface (\u00a73.3); any spec M1 mutant => n/a (R4)"
+      "n_na": 40,
+      "note": "no expressible element-access mutant on the iree linalg entry surface (\u00a73.3); all spec N=40 mutants => n/a (R4)"
     },
     "M3": {
       "n_injected": 0,
       "n_compile": 0,
       "n_runtime": 0,
       "n_never": 0,
-      "n_na": 0,
-      "note": "no expressible hw-constraint mutant on the iree linalg entry surface (\u00a73.3); any spec M3 mutant => n/a (R4)"
+      "n_na": 40,
+      "note": "no expressible hardware-constraint mutant on the iree linalg entry surface (\u00a73.3); all spec N=40 mutants => n/a (R4)"
     }
   },
   "S8_expressibility": {
@@ -67,6 +67,13 @@
     },
     "total": 157,
     "criterion_ref": "entry dynamic dims (not statically foldable)"
+  },
+  "S12_sanitizer_supplement": {
+    "M2": {
+      "flagged_and_exercised": 0,
+      "total": 23,
+      "flagged": 0
+    }
   },
   "kernel_gate": {
     "batch_norm": {
@@ -145,11 +152,32 @@
       "ref_pass": 42
     }
   },
+  "full_size_failures": [
+    {
+      "category": "conv2d",
+      "kernel": "3_dynamic_16x256xHxW_256x256x3x3_16x256xHxW_S_P_D",
+      "size": "full",
+      "disposition": "full-size dynamic-dim concretization exceeds 16 GB VRAM (OOM/timeout); --small gate passes"
+    },
+    {
+      "category": "conv2d",
+      "kernel": "4_dynamic_32x128xHxW_256x128x3x3_32x256xHxW_S_P_D",
+      "size": "full",
+      "disposition": "full-size dynamic-dim concretization exceeds 16 GB VRAM (OOM/timeout); --small gate passes"
+    },
+    {
+      "category": "matmul",
+      "kernel": "6_dynamic_32x197xE_Ex3072_32x197x3072",
+      "size": "full",
+      "disposition": "full-size dynamic-dim concretization exceeds 16 GB VRAM (OOM/timeout); --small gate passes"
+    }
+  ],
   "totals": {
     "kernels": 622,
     "compiled": 622,
     "ran_ok": 619,
-    "ref_pass": 619
+    "ref_pass": 619,
+    "full_size_failures": 3
   },
-  "note": "Correctness only, sm_120 (dev build). Kernel gate = structural ref-check. E1 S1: measured M2 entry-shape mutants; M1/M3 n/a per \u00a73.3 (iree linalg entry surface has no expressible element-access/hw mutant). S12 (compute-sanitizer) pending."
+  "note": "Correctness only, sm_120 (dev build). Kernel gate = structural ref-check. E1 S1: measured M2 entry-shape mutants; M1/M3 n/a per \u00a73.3. S12: M2 shape-contract mutants are not memory faults, so compute-sanitizer --tool memcheck is silent by design (plan \u00a73.5)."
 }

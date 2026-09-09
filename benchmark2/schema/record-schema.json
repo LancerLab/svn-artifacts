@@ -17,10 +17,10 @@
       "fields": ["toolchain", "category", "class", "paper_category", "mutant_id", "level", "outcome", "stage", "manifest"],
       "enums": {
         "class": ["M1", "M2", "M3"],
-        "paper_category": ["dim-mismatch", "oob", "wrong-shape", "stride"],
+        "paper_category": ["dim-mismatch", "oob", "wrong-shape", "stride", "hw"],
         "level": ["1", "2"],
         "outcome": ["compile", "runtime", "never", "n/a"],
-        "stage": ["compile", "runtime"],
+        "stage": ["compile", "runtime", "none"],
         "manifest": ["corrupts", "noop"]
       },
       "produced_by": ["minimal", "minimal --level2"]
