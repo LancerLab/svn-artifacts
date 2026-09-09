@@ -96,14 +96,47 @@ def smallized(dims: list) -> list:
     return [SMALL if d == "?" else d for d in dims]
 
 
-def fullsized(dims: list) -> list:
-    # documented representative size for dynamic dims in --full mode (final
-    # recorded numbers; symbol assignment to be pinned by coordinator).
-    return [FULL if d == "?" else d for d in dims]
+_FULL_SHAPES = None
 
 
-def input_spec(dims: list, dtype: str, size: str) -> str:
-    dd = smallized(dims) if size == "small" else fullsized(dims)
+def full_shapes():
+    global _FULL_SHAPES
+    if _FULL_SHAPES is None:
+        p = LANE / "full_shapes.json"
+        _FULL_SHAPES = json.loads(p.read_text()) if p.exists() else {"cases": {}}
+    return _FULL_SHAPES
+
+
+def case_dims(cat: str, stem: str) -> list:
+    return full_shapes().get("cases", {}).get(f"{cat}/{stem}", {}).get("dims", [])
+
+
+def concrete_feed_dims(cat: str, stem: str, arg_dims: list, size: str) -> list:
+    """Per-operand concrete run dims: concrete `#define` value for --full,
+    ragged small for --small (plan §2.4), falling back to the legacy blanket
+    only for dims with no pinned full size."""
+    concrete = case_dims(cat, stem)
+    out = []
+    for i, dims in enumerate(arg_dims):
+        cd = concrete[i] if i < len(concrete) else []
+        feed = []
+        for j, d in enumerate(dims):
+            if d != "?":
+                feed.append(d)
+                continue
+            cv = cd[j] if j < len(cd) else "?"
+            if size == "full":
+                feed.append(FULL if cv == "?" else cv)
+            else:
+                # ragged small: (cv % 7)+3 for the concrete value, else SMALL
+                feed.append((cv % 7) + 3 if isinstance(cv, int) else SMALL)
+        out.append(feed)
+    return out
+
+
+def input_spec(dims: list, dtype: str, size: str, cat: str = "", stem: str = "") -> str:
+    dd = concrete_feed_dims(cat, stem, [dims], size)[0] if (cat and stem) else \
+        (smallized(dims) if size == "small" else fullsized(dims))
     shape = "x".join(str(d) for d in dd)
     return f"{shape}x{dtype}=" + "1"  # shape-conformant all-ones (structural gate)
 
@@ -153,7 +186,7 @@ def gate_kernel(cat: str, stem: str, mlir: Path, size="small") -> dict:
     c = compile_kernel(mlir, vmfb, clog)
     if c != "ok":
         return {**base, "compile": "fail", "run": "-", "ref_check": "fail"}
-    specs = [input_spec(dims, dtype, size) for (_n, dims, dtype) in args]
+    specs = [input_spec(dims, dtype, size, cat, stem) for (_n, dims, dtype) in args]
     run, shape, rlog = run_module(vmfb, fname, specs)
     exp = expected_shape(ret, size)
     # ref_check is structural: the device run must return a tensor whose shape

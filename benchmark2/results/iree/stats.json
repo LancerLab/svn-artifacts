@@ -70,86 +70,86 @@
   },
   "kernel_gate": {
     "batch_norm": {
-      "compiled": 42,
-      "run_ok": 42,
-      "ref_pass": 21
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
     },
     "concat": {
-      "compiled": 42,
-      "run_ok": 42,
-      "ref_pass": 21
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
     },
     "conv2d": {
-      "compiled": 42,
-      "run_ok": 42,
-      "ref_pass": 21
+      "compiled": 82,
+      "run_ok": 82,
+      "ref_pass": 40
     },
     "elemwise_add": {
-      "compiled": 42,
-      "run_ok": 42,
-      "ref_pass": 21
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
     },
     "embedding": {
-      "compiled": 40,
-      "run_ok": 40,
-      "ref_pass": 20
+      "compiled": 80,
+      "run_ok": 80,
+      "ref_pass": 40
     },
     "gelu": {
-      "compiled": 42,
-      "run_ok": 42,
-      "ref_pass": 21
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
     },
     "layer_normalization": {
-      "compiled": 42,
-      "run_ok": 42,
-      "ref_pass": 21
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
     },
     "matmul": {
-      "compiled": 40,
-      "run_ok": 40,
-      "ref_pass": 20
+      "compiled": 79,
+      "run_ok": 79,
+      "ref_pass": 39
     },
     "max_pool2d": {
-      "compiled": 40,
-      "run_ok": 40,
-      "ref_pass": 20
+      "compiled": 80,
+      "run_ok": 80,
+      "ref_pass": 40
     },
     "reduce_mean": {
-      "compiled": 40,
-      "run_ok": 40,
-      "ref_pass": 20
+      "compiled": 80,
+      "run_ok": 80,
+      "ref_pass": 40
     },
     "relu": {
-      "compiled": 44,
-      "run_ok": 44,
-      "ref_pass": 22
+      "compiled": 88,
+      "run_ok": 88,
+      "ref_pass": 44
     },
     "reshape": {
-      "compiled": 42,
-      "run_ok": 42,
-      "ref_pass": 21
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
     },
     "sigmoid": {
-      "compiled": 42,
-      "run_ok": 42,
-      "ref_pass": 21
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
     },
     "softmax": {
-      "compiled": 40,
-      "run_ok": 40,
-      "ref_pass": 20
+      "compiled": 80,
+      "run_ok": 80,
+      "ref_pass": 40
     },
     "transpose": {
-      "compiled": 42,
-      "run_ok": 42,
-      "ref_pass": 21
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
     }
   },
   "totals": {
-    "kernels": 311,
-    "compiled": 311,
-    "ran_ok": 311,
-    "ref_pass": 311
+    "kernels": 622,
+    "compiled": 622,
+    "ran_ok": 619,
+    "ref_pass": 619
   },
   "note": "Correctness only, sm_120 (dev build). Kernel gate = structural ref-check. E1 S1: measured M2 entry-shape mutants; M1/M3 n/a per \u00a73.3 (iree linalg entry surface has no expressible element-access/hw mutant). S12 (compute-sanitizer) pending."
 }
