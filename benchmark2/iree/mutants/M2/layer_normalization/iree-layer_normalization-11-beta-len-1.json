@@ -1,0 +1,42 @@
+{
+  "mutant_id": "iree-layer_normalization-11-beta-len-1",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "layer_normalization",
+  "kernel": "11_dynamic_32xSx768_768_768",
+  "settings_hash": "8dbff8357c9b",
+  "kernel_hash": "ae395aff00c3",
+  "mutation": {
+    "operand_index": 2,
+    "dim_index": 0,
+    "delta": -1,
+    "reference_dims": [
+      [
+        32,
+        "?",
+        768
+      ],
+      [
+        768
+      ],
+      [
+        768
+      ]
+    ],
+    "mutant_dims": [
+      [
+        32,
+        "?",
+        768
+      ],
+      [
+        768
+      ],
+      [
+        767
+      ]
+    ]
+  },
+  "outcome": "runtime",
+  "manifest": "corrupts"
+}

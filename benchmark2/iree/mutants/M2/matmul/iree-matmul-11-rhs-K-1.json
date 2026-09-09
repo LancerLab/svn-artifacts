@@ -1,0 +1,38 @@
+{
+  "mutant_id": "iree-matmul-11-rhs-K-1",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "matmul",
+  "kernel": "11_dynamic_32xSx768_768x768_32xSx768",
+  "settings_hash": "ba2aa2b58125",
+  "kernel_hash": "0b1506d74b78",
+  "mutation": {
+    "operand_index": 1,
+    "dim_index": 0,
+    "delta": -1,
+    "reference_dims": [
+      [
+        32,
+        "?",
+        768
+      ],
+      [
+        768,
+        768
+      ]
+    ],
+    "mutant_dims": [
+      [
+        32,
+        "?",
+        768
+      ],
+      [
+        767,
+        768
+      ]
+    ]
+  },
+  "outcome": "runtime",
+  "manifest": "corrupts"
+}

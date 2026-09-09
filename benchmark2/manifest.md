@@ -67,11 +67,28 @@ never rebuilt.
 | `choreo` | croqtile | `build-release/choreo` (current; pin `git rev-parse HEAD` at `setup`) |
 | `triton` | Triton | *(pin in `triton/run.sh setup`)* |
 | `mlir-linalg` / `mlir-low` | LLVM/MLIR | *(pin in each `run.sh setup`)* |
-| `iree` | IREE | *(pin in `iree/run.sh setup`)* |
+| `iree` | IREE | `ce36167c3be514dd165a3ecff2d377cfa8eca0c9` (release `iree-3.12.0rc20260908`, 2026-09-08 main; wheel `iree_base_compiler`/`iree_base_runtime`) |
 | `tilelang` (exploratory) | TileLang | *(pin in `tilelang/run.sh setup`)* |
 
 Each worker records its exact clone commit + build flags in `manifest.md` **at
 `setup` time** (idempotent, one-time).
+
+**iree lane (pinned by `iree` worker at `setup`, 2026-09-08):**
+- Install: python venv (`/home/gxf/.tools/iree-dev-<build>-venv`) + `pip install
+  iree_base_compiler` + `iree_base_runtime` from the release tag
+  `iree-3.12.0rc20260908` (commit `ce36167c`); tools `iree-compile`,
+  `iree-run-module` on `PATH`.
+- Compile flags: `--iree-hal-target-backends=cuda --iree-cuda-target=<arch>`.
+- **arch knob:** `IREE_CUDA_TARGET` (default `sm_120` on the current lane host;
+  overridable `sm_86`/`sm_90` for the final host). sm_120 (and ≥ sm_89 in
+  release v3.11.0) additionally need `--iree-cuda-target-features=+ptx87`
+  (`IREE_CUDA_FEATURES`); **sm_90 currently fails codegen config on both
+  v3.11.0 and 2026-09-08 main — do not pick an sm_90 final host for this lane
+  without re-testing** (§8.1 feasibility finding, 2026-09-09).
+- Lane run host (correctness, current): `garfee-ubuntu`, 1 × RTX 5060 Ti
+  (sm_120), driver 580.95.05 / CUDA 13.0. **Differs from §2 machine
+  precondition (2×H800)** — discrete E1/E2/E3 outcomes only; arch recorded per
+  record so numbers can be re-derived on the final host.
 
 ## 6. Device plan (§12.6)
 

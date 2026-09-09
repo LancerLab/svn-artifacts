@@ -1,0 +1,15 @@
+{"toolchain": "iree", "category": "batch_norm", "unconditional_guards": 11, "criterion_ref": "entry dynamic dims (not statically foldable)"}
+{"toolchain": "iree", "category": "concat", "unconditional_guards": 11, "criterion_ref": "entry dynamic dims (not statically foldable)"}
+{"toolchain": "iree", "category": "conv2d", "unconditional_guards": 7, "criterion_ref": "entry dynamic dims (not statically foldable)"}
+{"toolchain": "iree", "category": "elemwise_add", "unconditional_guards": 10, "criterion_ref": "entry dynamic dims (not statically foldable)"}
+{"toolchain": "iree", "category": "embedding", "unconditional_guards": 10, "criterion_ref": "entry dynamic dims (not statically foldable)"}
+{"toolchain": "iree", "category": "gelu", "unconditional_guards": 11, "criterion_ref": "entry dynamic dims (not statically foldable)"}
+{"toolchain": "iree", "category": "layer_normalization", "unconditional_guards": 11, "criterion_ref": "entry dynamic dims (not statically foldable)"}
+{"toolchain": "iree", "category": "matmul", "unconditional_guards": 10, "criterion_ref": "entry dynamic dims (not statically foldable)"}
+{"toolchain": "iree", "category": "max_pool2d", "unconditional_guards": 10, "criterion_ref": "entry dynamic dims (not statically foldable)"}
+{"toolchain": "iree", "category": "reduce_mean", "unconditional_guards": 10, "criterion_ref": "entry dynamic dims (not statically foldable)"}
+{"toolchain": "iree", "category": "relu", "unconditional_guards": 12, "criterion_ref": "entry dynamic dims (not statically foldable)"}
+{"toolchain": "iree", "category": "reshape", "unconditional_guards": 11, "criterion_ref": "entry dynamic dims (not statically foldable)"}
+{"toolchain": "iree", "category": "sigmoid", "unconditional_guards": 11, "criterion_ref": "entry dynamic dims (not statically foldable)"}
+{"toolchain": "iree", "category": "softmax", "unconditional_guards": 11, "criterion_ref": "entry dynamic dims (not statically foldable)"}
+{"toolchain": "iree", "category": "transpose", "unconditional_guards": 11, "criterion_ref": "entry dynamic dims (not statically foldable)"}

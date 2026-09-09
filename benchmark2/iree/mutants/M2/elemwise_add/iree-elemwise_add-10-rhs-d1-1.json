@@ -1,0 +1,44 @@
+{
+  "mutant_id": "iree-elemwise_add-10-rhs-d1-1",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "elemwise_add",
+  "kernel": "10_dynamic_16x512xHxW_16x512xHxW_16x512xHxW",
+  "settings_hash": "8b1728850022",
+  "kernel_hash": "a0baa434d53e",
+  "mutation": {
+    "operand_index": 1,
+    "dim_index": 1,
+    "delta": -1,
+    "reference_dims": [
+      [
+        16,
+        512,
+        "?",
+        "?"
+      ],
+      [
+        16,
+        512,
+        "?",
+        "?"
+      ]
+    ],
+    "mutant_dims": [
+      [
+        16,
+        512,
+        "?",
+        "?"
+      ],
+      [
+        16,
+        511,
+        "?",
+        "?"
+      ]
+    ]
+  },
+  "outcome": "runtime",
+  "manifest": "corrupts"
+}

@@ -152,9 +152,11 @@ def _empty(dims, dv, dtype="f32", name="%out"):
 # ---------------------------------------------------------------------------
 
 def _amap(n_iters, dim_indices):
-    """Return affine_map<(d0,...,d_{n-1}) -> (d_i,...)> string."""
+    """Return affine_map<(d0,...,d_{n-1}) -> (d_i,...)> string.
+    A None entry emits the constant 0 (broadcast of a size-1 dim)."""
     domain = "({})".format(", ".join("d{}".format(i) for i in range(n_iters)))
-    range_ = "({})".format(", ".join("d{}".format(i) for i in dim_indices))
+    range_ = "({})".format(", ".join("0" if x is None else "d{}".format(x)
+                                     for x in dim_indices))
     return "affine_map<{} -> {}>".format(domain, range_)
 
 def _linalg_fill(result_name, fill_val_var, out_var, out_type):
@@ -273,8 +275,20 @@ def gen_elemwise_add(stem, shapes):
     body.append(_empty(C, out_dv, name="%out"))
 
     if ndA == ndB:
-        # Same-rank: simple identity maps for both inputs
-        maps   = [list(range(ndC)), list(range(ndC)), list(range(ndC))]
+        # Same-rank: broadcast-aware maps. A dim that is 1 in one operand and
+        # >1 in the other broadcasts (maps to constant 0); equal/`?` dims map
+        # to the shared iterator. Identity when the shapes already agree.
+        def _bmap(dims, C):
+            out = []
+            for i in range(ndC):
+                if dims[i] == C[i]:
+                    out.append(i)
+                elif dims[i] == 1:
+                    out.append(None)
+                else:
+                    out.append(i)
+            return out
+        maps   = [_bmap(A, C), _bmap(B, C), list(range(ndC))]
         itype  = ["parallel"] * ndC
         region = [
             "    ^bb0(%a: f32, %b: f32, %init: f32):",
@@ -586,6 +600,22 @@ def _reshape_collapse(fname, A, C):
     return build_mlir(fname, [("input", A)], lines, C)
 
 def gen_reshape(stem, shapes):
+    """Try the simple expand/collapse paths, then the general 1D fallback."""
+    if len(shapes) < 2:
+        return None
+    A, C = shapes[0], shapes[1]
+    # A same-rank permutation is a transpose, not a reshape (row-major reshape
+    # never permutes); the collapse+expand path would silently mis-compose it.
+    if len(A) == len(C) and A != C and \
+            sorted(str(x) for x in A) == sorted(str(x) for x in C):
+        return gen_transpose(stem, [A, C])
+    res = _gen_reshape_simple(stem, shapes)
+    if res is not None:
+        return res
+    return _reshape_general(stem, A, C)
+
+
+def _gen_reshape_simple(stem, shapes):
     if len(shapes) < 2:
         return None
     A, C = shapes[0], shapes[1]; fname = stem
@@ -626,6 +656,67 @@ def gen_reshape(stem, shapes):
             "    return %out : {}".format(tC),
         ]
         return build_mlir(fname, [("input", A)], body, C)
+
+
+def _reshape_general(fname, A, C):
+    """General pure (row-major) reshape via collapse-to-1D + expand-to-target.
+
+    Handles the interleaved splits the simple expand/collapse paths miss.
+    Requires the reshape to be total-preserving with at most one dynamic output
+    dim. A same-rank permutation (transpose in disguise) is routed to transpose.
+    """
+    ndA, ndC = len(A), len(C)
+    tA = tensor_type(A); tC = tensor_type(C)
+
+    # Permutation case (same multiset, same rank) -> linalg.transpose
+    if ndA == ndC and sorted([str(x) for x in A]) == sorted([str(x) for x in C]):
+        return gen_transpose(fname, [A, C])
+
+    # total must match: static check when possible
+    def is_int(d): return isinstance(d, int) and not isinstance(d, bool)
+    if all(is_int(d) for d in A) and all(is_int(d) for d in C):
+        pa, pc = 1, 1
+        for d in A: pa *= d
+        for d in C: pc *= d
+        if pa != pc:
+            return None
+    n_dyn_out = sum(1 for d in C if d == "?")
+    if n_dyn_out > 1:
+        return None
+
+    body = _consts(max(2, ndA, ndC))
+    a_lines, a_d = _dims("input", A)
+    body += a_lines
+
+    dyn_in = any(d == "?" for d in A)
+    coll = "[[{}]]".format(", ".join(str(i) for i in range(ndA)))
+    if dyn_in:
+        body.append("    %flat = tensor.collapse_shape %input {} : {} into tensor<?xf32>".format(coll, tA))
+        tMid = "tensor<?xf32>"
+    else:
+        n = 1
+        for d in A: n *= d
+        body.append("    %flat = tensor.collapse_shape %input {} : {} into tensor<{}xf32>".format(coll, tA, n))
+        tMid = "tensor<{}xf32>".format(n)
+
+    exp = "[[{}]]".format(", ".join(str(i) for i in range(ndC)))
+    out_tokens = []
+    if n_dyn_out == 1:
+        body.append("    %flat_sz = tensor.dim %flat, %c0 : {}".format(tMid))
+        stat_prod = 1
+        for d in C:
+            if is_int(d): stat_prod *= d
+        body.append("    %cstat = arith.constant {} : index".format(stat_prod))
+        body.append("    %dyn_dim = arith.divui %flat_sz, %cstat : index")
+        out_tokens = ["%dyn_dim" if d == "?" else str(d) for d in C]
+    else:
+        out_tokens = [str(d) for d in C]
+    out_shape_str = "[" + ", ".join(out_tokens) + "]"
+    body.append("    %out = tensor.expand_shape %flat {} output_shape {} : {} into {}".format(
+        exp, out_shape_str, tMid, tC))
+    body.append("    return %out : {}".format(tC))
+    return build_mlir(fname, [("input", A)], body, C)
+
 
 # ---- concat ----
 
@@ -1035,6 +1126,13 @@ def gen_max_pool2d(stem, shapes):
         if isinstance(d, int):
             v = "%po_sz{}".format(i)
             body.append("    {} = arith.constant {} : index".format(v, d))
+            return v
+        # Dynamic spatial dim: pooling output = floor(in / strides) (no pad).
+        if i in (2, 3) and strides > 1:
+            cst = "%po_s{}".format(i)
+            v = "%po_sz{}".format(i)
+            body.append("    {} = arith.constant {} : index".format(cst, strides))
+            body.append("    {} = arith.divui {}, {} : index".format(v, a_d[i], cst))
             return v
         return a_d[i]
 
