@@ -1,0 +1,2051 @@
+{
+ "toolchain": "choreo",
+ "toolchain_version": "f2f238fbf380e6121caf361d359ef1cf7d568ee8",
+ "toolchain_identity": {
+  "toolchain": "choreo",
+  "version": "f2f238fbf380e6121caf361d359ef1cf7d568ee8",
+  "version_basis": "mtime<=commit-date",
+  "checkout_head": "1fa4719fcf4bca50f153a18daf05beadd44f87e3",
+  "checkout_branch": "HEAD",
+  "checkout_dirty_source_files": [],
+  "binary": "croqtile/build-release/choreo",
+  "binary_sha1_12": "c3ebb1654d1d",
+  "binary_mtime": 1788937035.0511596,
+  "binary_stale_vs_checkout": true
+ },
+ "produced_by": "stats.py",
+ "inputs": {
+  "cost": 15,
+  "expressibility": 0,
+  "kernel": 310,
+  "latency": 32,
+  "mutant": 120,
+  "obligation": 17353,
+  "remainder": 0,
+  "residue": 28,
+  "sanitizer": 0
+ },
+ "lane_owns": [
+  "S1",
+  "S2",
+  "S3",
+  "S4",
+  "S5",
+  "S6",
+  "S7",
+  "S10",
+  "S13"
+ ],
+ "S1_detection_matrix": {
+  "status": "ok",
+  "feeds": "E1 detection matrix (\u00a75.2 \u00b62; replaces tab:rq2-bugs)",
+  "per_class": {
+   "M1": {
+    "n_compile": 9,
+    "n_discarded_noop": 10,
+    "n_injected": 30,
+    "n_never": 17,
+    "n_runtime": 4,
+    "stage_compile": 9,
+    "stage_runtime": 21,
+    "n_n/a": 0
+   },
+   "M2": {
+    "n_compile": 13,
+    "n_discarded_noop": 10,
+    "n_injected": 30,
+    "n_never": 10,
+    "n_runtime": 7,
+    "stage_compile": 13,
+    "stage_runtime": 17,
+    "n_n/a": 0
+   },
+   "M3": {
+    "n_compile": 2,
+    "n_discarded_noop": 28,
+    "n_injected": 12,
+    "n_never": 10,
+    "stage_compile": 2,
+    "stage_runtime": 10,
+    "n_runtime": 0,
+    "n_n/a": 0
+   }
+  },
+  "totals": {
+   "n_compile": 24,
+   "n_discarded_noop": 48,
+   "n_injected": 72,
+   "n_n/a": 0,
+   "n_never": 37,
+   "n_runtime": 11,
+   "stage_compile": 24,
+   "stage_runtime": 48
+  },
+  "undecidable_manifest_mutants": [],
+  "settings_hash": [
+   "28fee96c8330",
+   "55b2395980bd",
+   "7abb8bd6e718",
+   "8dbff8357c9b",
+   "ba2aa2b58125",
+   "d59f419be35e",
+   "df847a35dd4b"
+  ],
+  "toolchain_version": [
+   "680533f50d5340346ea1587c116278916f902bc2"
+  ]
+ },
+ "S2_before_device": {
+  "status": "ok",
+  "feeds": "E1 detection matrix (\u00a75.2 \u00b62); acceptance criterion never=0 \u2014 the abstract's \"210/210\" is a PROVISIONAL placeholder pending re-registration",
+  "n_injected": 72,
+  "n_before_device": 35,
+  "n_compile": 24,
+  "n_runtime": 11,
+  "n_never": 37,
+  "n_na": 0,
+  "n_discarded_noop": 48,
+  "pct_before_device": 48.6111,
+  "never_is_zero": false,
+  "per_class_before_device": {
+   "M1": 13,
+   "M2": 20,
+   "M3": 2
+  },
+  "settings_hash": [
+   "28fee96c8330",
+   "55b2395980bd",
+   "7abb8bd6e718",
+   "8dbff8357c9b",
+   "ba2aa2b58125",
+   "d59f419be35e",
+   "df847a35dd4b"
+  ],
+  "toolchain_version": [
+   "680533f50d5340346ea1587c116278916f902bc2"
+  ],
+  "never_note": "37 mutant(s) reached outcome=never: choreo neither refuted them at compile time nor fired a runtime guard. S2's `never = 0` assertion FAILS for this mutant set. Inspect `never_mutants` before reporting any before-device figure.",
+  "never_mutants": [
+   {
+    "mutant_id": "M1.s1.ln3.mask",
+    "class": "M1",
+    "category": "layer_normalization",
+    "detector": "crash",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s2.ln1.out",
+    "class": "M1",
+    "category": "layer_normalization",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s2.ln1.scale",
+    "class": "M1",
+    "category": "layer_normalization",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s2.ln3.scale",
+    "class": "M1",
+    "category": "layer_normalization",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s3.ln1.bias",
+    "class": "M1",
+    "category": "layer_normalization",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s3.ln3.bias",
+    "class": "M1",
+    "category": "layer_normalization",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s5.ln1.chunk",
+    "class": "M1",
+    "category": "layer_normalization",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s6.ln1.zerostride",
+    "class": "M1",
+    "category": "layer_normalization",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s3.rl1.write",
+    "class": "M1",
+    "category": "relu",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s3.rl11.write",
+    "class": "M1",
+    "category": "relu",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s5.rl1.load",
+    "class": "M1",
+    "category": "relu",
+    "detector": "crash",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s5.rl1.store",
+    "class": "M1",
+    "category": "relu",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s5.rl11.load",
+    "class": "M1",
+    "category": "relu",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s3.tp1.write",
+    "class": "M1",
+    "category": "transpose",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s3.tp11.write",
+    "class": "M1",
+    "category": "transpose",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s5.tp1.load",
+    "class": "M1",
+    "category": "transpose",
+    "detector": "crash",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.s5.tp1.store",
+    "class": "M1",
+    "category": "transpose",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M2.s5.cc1.dup",
+    "class": "M2",
+    "category": "concat",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M2.s5.cc1.partial",
+    "class": "M2",
+    "category": "concat",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M2.s5.cc11.dup",
+    "class": "M2",
+    "category": "concat",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M2.s5.cc11.partial",
+    "class": "M2",
+    "category": "concat",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M2.s3.ln3.reduce",
+    "class": "M2",
+    "category": "layer_normalization",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M2.s4.ln1.caller.out",
+    "class": "M2",
+    "category": "layer_normalization",
+    "detector": "runtime_lib",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M2.s4.ln1.out",
+    "class": "M2",
+    "category": "layer_normalization",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M2.s4.ln3.caller.out",
+    "class": "M2",
+    "category": "layer_normalization",
+    "detector": "runtime_lib",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M2.s2.mm1.tiles",
+    "class": "M2",
+    "category": "matmul",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M2.s4.mm1.out",
+    "class": "M2",
+    "category": "matmul",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M3.s1.mm1.atom10",
+    "class": "M3",
+    "category": "matmul",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M3.s1.mm1.atom12",
+    "class": "M3",
+    "category": "matmul",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M3.s1.mm1.atom20",
+    "class": "M3",
+    "category": "matmul",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M3.s1.mm1.atom24",
+    "class": "M3",
+    "category": "matmul",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M3.s1.mm1.atom6",
+    "class": "M3",
+    "category": "matmul",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M3.s1.mm1.ktile7",
+    "class": "M3",
+    "category": "matmul",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M3.s1.mm1.ktile9",
+    "class": "M3",
+    "category": "matmul",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M3.s2.mm1.lhs1",
+    "class": "M3",
+    "category": "matmul",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M3.s2.mm1.rhs1",
+    "class": "M3",
+    "category": "matmul",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   },
+   {
+    "mutant_id": "M3.s2.mm1.rhs2",
+    "class": "M3",
+    "category": "matmul",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "note": null
+   }
+  ]
+ },
+ "S3_generation_totals": {
+  "status": "ok",
+  "feeds": "E2 generation completeness (\u00a75.3 \u00b61; tab:gen-capability, abstract \"17,717\")",
+  "grand_total": 17353,
+  "per_class": {
+   "elem": 9073,
+   "shape": 4477,
+   "loop": 326,
+   "hw": 3477
+  },
+  "per_category": {
+   "batch_norm": 1575,
+   "concat": 1539,
+   "conv2d": 1406,
+   "elemwise_add": 1187,
+   "embedding": 610,
+   "gelu": 842,
+   "layer_normalization": 1825,
+   "matmul": 1029,
+   "max_pool2d": 2077,
+   "reduce_mean": 697,
+   "relu": 1102,
+   "sigmoid": 833,
+   "softmax": 1913,
+   "transpose": 718
+  },
+  "per_category_per_class": {
+   "batch_norm": {
+    "elem": 1434,
+    "shape": 117,
+    "loop": 24,
+    "hw": 0
+   },
+   "concat": {
+    "elem": 591,
+    "shape": 443,
+    "loop": 19,
+    "hw": 486
+   },
+   "conv2d": {
+    "elem": 262,
+    "shape": 783,
+    "loop": 24,
+    "hw": 337
+   },
+   "elemwise_add": {
+    "elem": 362,
+    "shape": 409,
+    "loop": 10,
+    "hw": 406
+   },
+   "embedding": {
+    "elem": 100,
+    "shape": 380,
+    "loop": 10,
+    "hw": 120
+   },
+   "gelu": {
+    "elem": 260,
+    "shape": 260,
+    "loop": 26,
+    "hw": 296
+   },
+   "layer_normalization": {
+    "elem": 1652,
+    "shape": 103,
+    "loop": 70,
+    "hw": 0
+   },
+   "matmul": {
+    "elem": 204,
+    "shape": 496,
+    "loop": 2,
+    "hw": 327
+   },
+   "max_pool2d": {
+    "elem": 1424,
+    "shape": 303,
+    "loop": 30,
+    "hw": 320
+   },
+   "reduce_mean": {
+    "elem": 475,
+    "shape": 125,
+    "loop": 13,
+    "hw": 84
+   },
+   "relu": {
+    "elem": 447,
+    "shape": 291,
+    "loop": 28,
+    "hw": 336
+   },
+   "sigmoid": {
+    "elem": 256,
+    "shape": 261,
+    "loop": 20,
+    "hw": 296
+   },
+   "softmax": {
+    "elem": 1279,
+    "shape": 329,
+    "loop": 25,
+    "hw": 280
+   },
+   "transpose": {
+    "elem": 327,
+    "shape": 177,
+    "loop": 25,
+    "hw": 189
+   }
+  },
+  "unmapped_class_values": {},
+  "paper_reference": {
+   "grand_total": 17717,
+   "delta": -364
+  },
+  "settings_hash": [
+   "1f5436bfab1f",
+   "28fee96c8330",
+   "45f6e81d94c0",
+   "55b2395980bd",
+   "666bab9695c5",
+   "7abb8bd6e718",
+   "8b1728850022",
+   "8dbff8357c9b",
+   "b4ee0b5faac2",
+   "ba2aa2b58125",
+   "cfc639e6ee00",
+   "d59f419be35e",
+   "df847a35dd4b",
+   "f08293b4eb9e"
+  ],
+  "toolchain_version": [
+   "680533f50d5340346ea1587c116278916f902bc2"
+  ]
+ },
+ "S4_per_operator": {
+  "status": "ok",
+  "feeds": "E2 generation completeness (\u00a75.3 \u00b61; the worked per-operator counts that anchor the running example)",
+  "per_category": {
+   "batch_norm": {
+    "expressed": 1575,
+    "discharged": 1439,
+    "proven": 1439,
+    "refuted": 0,
+    "runtime": 48,
+    "budgeted": 88,
+    "remainder": 136,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 91.3651,
+    "mechanism": {
+     "canonical": 1076,
+     "interval": 352,
+     "direct": 147
+    },
+    "shape_class": {
+     "dynamic": 912,
+     "static": 663
+    },
+    "zero_obligation_kernels": []
+   },
+   "concat": {
+    "expressed": 1539,
+    "discharged": 1508,
+    "proven": 1508,
+    "refuted": 0,
+    "runtime": 19,
+    "budgeted": 12,
+    "remainder": 31,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 97.9857,
+    "mechanism": {
+     "canonical": 1062,
+     "interval": 44,
+     "direct": 433
+    },
+    "shape_class": {
+     "dynamic": 674,
+     "static": 865
+    },
+    "zero_obligation_kernels": []
+   },
+   "conv2d": {
+    "expressed": 1406,
+    "discharged": 1259,
+    "proven": 1259,
+    "refuted": 0,
+    "runtime": 114,
+    "budgeted": 33,
+    "remainder": 147,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 89.5448,
+    "mechanism": {
+     "canonical": 474,
+     "interval": 32,
+     "direct": 900
+    },
+    "shape_class": {
+     "dynamic": 1084,
+     "static": 322
+    },
+    "zero_obligation_kernels": []
+   },
+   "elemwise_add": {
+    "expressed": 1187,
+    "discharged": 1124,
+    "proven": 1124,
+    "refuted": 0,
+    "runtime": 51,
+    "budgeted": 12,
+    "remainder": 63,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 94.6925,
+    "mechanism": {
+     "canonical": 793,
+     "interval": 6,
+     "direct": 388
+    },
+    "shape_class": {
+     "dynamic": 577,
+     "static": 610
+    },
+    "zero_obligation_kernels": []
+   },
+   "embedding": {
+    "expressed": 610,
+    "discharged": 572,
+    "proven": 572,
+    "refuted": 0,
+    "runtime": 38,
+    "budgeted": 0,
+    "remainder": 38,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 93.7705,
+    "mechanism": {
+     "canonical": 150,
+     "interval": 0,
+     "direct": 460
+    },
+    "shape_class": {
+     "dynamic": 310,
+     "static": 300
+    },
+    "zero_obligation_kernels": []
+   },
+   "gelu": {
+    "expressed": 842,
+    "discharged": 818,
+    "proven": 818,
+    "refuted": 0,
+    "runtime": 24,
+    "budgeted": 0,
+    "remainder": 24,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 97.1496,
+    "mechanism": {
+     "canonical": 588,
+     "interval": 0,
+     "direct": 254
+    },
+    "shape_class": {
+     "dynamic": 462,
+     "static": 380
+    },
+    "zero_obligation_kernels": []
+   },
+   "layer_normalization": {
+    "expressed": 1825,
+    "discharged": 1682,
+    "proven": 1682,
+    "refuted": 0,
+    "runtime": 39,
+    "budgeted": 104,
+    "remainder": 143,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 92.1644,
+    "mechanism": {
+     "canonical": 1020,
+     "interval": 618,
+     "direct": 187
+    },
+    "shape_class": {
+     "dynamic": 995,
+     "static": 830
+    },
+    "zero_obligation_kernels": []
+   },
+   "matmul": {
+    "expressed": 1029,
+    "discharged": 976,
+    "proven": 976,
+    "refuted": 0,
+    "runtime": 49,
+    "budgeted": 4,
+    "remainder": 53,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 94.8494,
+    "mechanism": {
+     "canonical": 373,
+     "interval": 16,
+     "direct": 640
+    },
+    "shape_class": {
+     "dynamic": 523,
+     "static": 506
+    },
+    "zero_obligation_kernels": []
+   },
+   "max_pool2d": {
+    "expressed": 2077,
+    "discharged": 1810,
+    "proven": 1810,
+    "refuted": 0,
+    "runtime": 115,
+    "budgeted": 152,
+    "remainder": 267,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 87.1449,
+    "mechanism": {
+     "canonical": 502,
+     "interval": 1032,
+     "direct": 543
+    },
+    "shape_class": {
+     "dynamic": 1007,
+     "static": 1070
+    },
+    "zero_obligation_kernels": []
+   },
+   "reduce_mean": {
+    "expressed": 697,
+    "discharged": 665,
+    "proven": 665,
+    "refuted": 0,
+    "runtime": 23,
+    "budgeted": 9,
+    "remainder": 32,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 95.4089,
+    "mechanism": {
+     "canonical": 465,
+     "interval": 107,
+     "direct": 125
+    },
+    "shape_class": {
+     "dynamic": 351,
+     "static": 346
+    },
+    "zero_obligation_kernels": []
+   },
+   "relu": {
+    "expressed": 1102,
+    "discharged": 1074,
+    "proven": 1074,
+    "refuted": 0,
+    "runtime": 28,
+    "budgeted": 0,
+    "remainder": 28,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 97.4592,
+    "mechanism": {
+     "canonical": 819,
+     "interval": 0,
+     "direct": 283
+    },
+    "shape_class": {
+     "dynamic": 596,
+     "static": 506
+    },
+    "zero_obligation_kernels": []
+   },
+   "sigmoid": {
+    "expressed": 833,
+    "discharged": 810,
+    "proven": 810,
+    "refuted": 0,
+    "runtime": 23,
+    "budgeted": 0,
+    "remainder": 23,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 97.2389,
+    "mechanism": {
+     "canonical": 580,
+     "interval": 0,
+     "direct": 253
+    },
+    "shape_class": {
+     "dynamic": 344,
+     "static": 489
+    },
+    "zero_obligation_kernels": []
+   },
+   "softmax": {
+    "expressed": 1913,
+    "discharged": 1732,
+    "proven": 1732,
+    "refuted": 0,
+    "runtime": 82,
+    "budgeted": 99,
+    "remainder": 181,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 90.5384,
+    "mechanism": {
+     "canonical": 780,
+     "interval": 645,
+     "direct": 488
+    },
+    "shape_class": {
+     "dynamic": 1074,
+     "static": 839
+    },
+    "zero_obligation_kernels": []
+   },
+   "transpose": {
+    "expressed": 718,
+    "discharged": 676,
+    "proven": 676,
+    "refuted": 0,
+    "runtime": 22,
+    "budgeted": 20,
+    "remainder": 42,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 94.1504,
+    "mechanism": {
+     "canonical": 398,
+     "interval": 68,
+     "direct": 252
+    },
+    "shape_class": {
+     "dynamic": 288,
+     "static": 430
+    },
+    "zero_obligation_kernels": []
+   },
+   "reshape": {
+    "expressed": 0,
+    "discharged": 0,
+    "proven": 0,
+    "refuted": 0,
+    "runtime": 0,
+    "budgeted": 0,
+    "remainder": 0,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": null,
+    "zero_obligation_kernels": [
+     "reshape/10_dynamic_64x128xHxW_64x128HW",
+     "reshape/11_dynamic_16x512xSxS_16x512SS",
+     "reshape/12_dynamic_64xTx256_64Tx256",
+     "reshape/13_dynamic_32x512xV_32x512V",
+     "reshape/14_efficientnet_64x1280x7x7_64x62720",
+     "reshape/15_gpt_16x1024x1024_16x16x1024x64",
+     "reshape/16_lstm_64x100x256_6400x256",
+     "reshape/17_mobilenet_128x96x7x7_128x4704",
+     "reshape/18_resnet_64x512x7x7_64x25088",
+     "reshape/19_transformer_32x512x2048_32x1048576",
+     "reshape/1_bert_32x512x768_32x512x12x64",
+     "reshape/20_unet_16x512x32x32_16x32x32x512",
+     "reshape/21_vit_32x3x224x224_32x196x768",
+     "reshape/2_cnn_128x128x28x28_128x100352",
+     "reshape/3_attention_BxSx768_BxSx12x64",
+     "reshape/4_attention_32xNx512x64_32x512xN64",
+     "reshape/5_dynamic_Bx1280xHxW_Bx1280HW",
+     "reshape/6_dynamic_128xCx112x112_128x112x112xC",
+     "reshape/7_dynamic_32x197xE_32x197xEd64x64",
+     "reshape/8_dynamic_16x1024xD_16x1024xDd64x64",
+     "reshape/9_dynamic_Bx256xHxW_Bx256HW"
+    ]
+   }
+  },
+  "totals": {
+   "expressed": 17353,
+   "discharged": 16145,
+   "proven": 16145,
+   "refuted": 0,
+   "runtime": 675,
+   "budgeted": 533,
+   "remainder": 1208,
+   "dropped": 0,
+   "unmapped_outcome": 0
+  },
+  "n_kernels_with_obligations": 289,
+  "n_zero_obligation_kernels": 21,
+  "zero_obligation_kernel_ids": [
+   "reshape/10_dynamic_64x128xHxW_64x128HW",
+   "reshape/11_dynamic_16x512xSxS_16x512SS",
+   "reshape/12_dynamic_64xTx256_64Tx256",
+   "reshape/13_dynamic_32x512xV_32x512V",
+   "reshape/14_efficientnet_64x1280x7x7_64x62720",
+   "reshape/15_gpt_16x1024x1024_16x16x1024x64",
+   "reshape/16_lstm_64x100x256_6400x256",
+   "reshape/17_mobilenet_128x96x7x7_128x4704",
+   "reshape/18_resnet_64x512x7x7_64x25088",
+   "reshape/19_transformer_32x512x2048_32x1048576",
+   "reshape/1_bert_32x512x768_32x512x12x64",
+   "reshape/20_unet_16x512x32x32_16x32x32x512",
+   "reshape/21_vit_32x3x224x224_32x196x768",
+   "reshape/2_cnn_128x128x28x28_128x100352",
+   "reshape/3_attention_BxSx768_BxSx12x64",
+   "reshape/4_attention_32xNx512x64_32x512xN64",
+   "reshape/5_dynamic_Bx1280xHxW_Bx1280HW",
+   "reshape/6_dynamic_128xCx112x112_128x112x112xC",
+   "reshape/7_dynamic_32x197xE_32x197xEd64x64",
+   "reshape/8_dynamic_16x1024xD_16x1024xDd64x64",
+   "reshape/9_dynamic_Bx256xHxW_Bx256HW"
+  ],
+  "dropped_is_zero_everywhere": true,
+  "layer_norm_criterion": {
+   "kernel_id": "layer_normalization/3_attention_32xNx512x64_64_64",
+   "grain": "per-kernel (79 is one kernel's obligation count, not the category's 1825)",
+   "expected": {
+    "expressed": 79,
+    "discharged": 74,
+    "runtime": 5,
+    "dropped": 0
+   },
+   "measured": {
+    "expressed": 79,
+    "discharged": 74,
+    "runtime": 5,
+    "dropped": 0
+   },
+   "runtime_field_is_remainder": "runtime+budgeted = 1+4 = 5",
+   "matches": true
+  },
+  "settings_hash": [
+   "1f5436bfab1f",
+   "28fee96c8330",
+   "45f6e81d94c0",
+   "55b2395980bd",
+   "666bab9695c5",
+   "7abb8bd6e718",
+   "8b1728850022",
+   "8dbff8357c9b",
+   "b4ee0b5faac2",
+   "ba2aa2b58125",
+   "cfc639e6ee00",
+   "d59f419be35e",
+   "df847a35dd4b",
+   "f08293b4eb9e"
+  ],
+  "toolchain_version": [
+   "680533f50d5340346ea1587c116278916f902bc2"
+  ]
+ },
+ "S5_discharge_rate": {
+  "status": "ok",
+  "feeds": "E3 discharge strength (\u00a75.4 \u00b61; \"93.2%\", \"99.2%/87.9%\", residue 1,199 accounted)",
+  "static": {
+   "kernels": 151,
+   "expressed": 8156,
+   "discharged": 8156,
+   "remainder": 0,
+   "discharge_pct": 100.0
+  },
+  "dynamic": {
+   "kernels": 159,
+   "expressed": 9197,
+   "discharged": 7989,
+   "remainder": 1208,
+   "discharge_pct": 86.8653
+  },
+  "all": {
+   "kernels": 310,
+   "expressed": 17353,
+   "discharged": 16145,
+   "remainder": 1208,
+   "discharge_pct": 93.0387
+  },
+  "paper_reference": {
+   "all_pct": 93.2,
+   "static_pct": 99.2,
+   "dynamic_pct": 87.9
+  },
+  "settings_hash": [
+   "1f5436bfab1f",
+   "28fee96c8330",
+   "45f6e81d94c0",
+   "55b2395980bd",
+   "666bab9695c5",
+   "7abb8bd6e718",
+   "8b1728850022",
+   "8dbff8357c9b",
+   "b4ee0b5faac2",
+   "ba2aa2b58125",
+   "cfc639e6ee00",
+   "d59f419be35e",
+   "df847a35dd4b",
+   "f08293b4eb9e"
+  ],
+  "toolchain_version": [
+   "680533f50d5340346ea1587c116278916f902bc2"
+  ]
+ },
+ "S6_mechanism_split": {
+  "status": "ok",
+  "feeds": "E3 mechanism-attribution \u00b6 (\u00a75.4 \u00b63, prose only \u2014 tab:rq6-mechanism and fig:mechanism CUT)",
+  "per_outcome": {
+   "proven": {
+    "canonical": 7872,
+    "interval": 2920,
+    "direct": 5353,
+    "total": 16145
+   },
+   "refuted": {
+    "canonical": 0,
+    "interval": 0,
+    "direct": 0,
+    "total": 0
+   },
+   "runtime": {
+    "canonical": 675,
+    "interval": 0,
+    "direct": 0,
+    "total": 675
+   },
+   "budgeted": {
+    "canonical": 533,
+    "interval": 0,
+    "direct": 0,
+    "total": 533
+   }
+  },
+  "totals": {
+   "canonical": 9080,
+   "interval": 2920,
+   "direct": 5353
+  },
+  "unmapped_mechanism_values": {},
+  "settings_hash": [
+   "1f5436bfab1f",
+   "28fee96c8330",
+   "45f6e81d94c0",
+   "55b2395980bd",
+   "666bab9695c5",
+   "7abb8bd6e718",
+   "8b1728850022",
+   "8dbff8357c9b",
+   "b4ee0b5faac2",
+   "ba2aa2b58125",
+   "cfc639e6ee00",
+   "d59f419be35e",
+   "df847a35dd4b",
+   "f08293b4eb9e"
+  ],
+  "toolchain_version": [
+   "680533f50d5340346ea1587c116278916f902bc2"
+  ]
+ },
+ "S7_no_interval_counterfactual": {
+  "status": "not_measurable",
+  "feeds": "E3 mechanism-attribution \u00b6 (\u00a75.4 \u00b63; \"93.2%->77.2%\", residue x3.4 \u2014 the only direct evaluation of claimed C2)",
+  "reason": "No flag in the pinned build disables interval reasoning. `-rtc=none`, `--disable-runtime-check` and `-zero-cost` are all ledger-identical (verified: 72 obligations, 5 runtime, on layer_normalization/3_attention) because they gate guard EMISSION, not assessment. The counterfactual therefore cannot be re-derived here; the 93.2%->77.2% figure is INHERITED from the existing ablation, not measured by this lane.",
+  "inherited_from_paper": {
+   "with_interval_pct": 93.2,
+   "without_interval_pct": 77.2
+  },
+  "what_would_be_needed": "a build flag that disables interval/bounded-type reasoning in the assessor while leaving canonical normalization on. No such flag exists at this commit; -rtc/--disable-runtime-check/-zero-cost all produce a byte-identical ledger.",
+  "interval_discharged_upper_bound": 2920,
+  "interval_pct_of_all": 16.8271,
+  "settings_hash": [
+   "1f5436bfab1f",
+   "28fee96c8330",
+   "45f6e81d94c0",
+   "55b2395980bd",
+   "666bab9695c5",
+   "7abb8bd6e718",
+   "8b1728850022",
+   "8dbff8357c9b",
+   "b4ee0b5faac2",
+   "ba2aa2b58125",
+   "cfc639e6ee00",
+   "d59f419be35e",
+   "df847a35dd4b",
+   "f08293b4eb9e"
+  ],
+  "toolchain_version": [
+   "680533f50d5340346ea1587c116278916f902bc2"
+  ]
+ },
+ "S10_compile_cost": {
+  "status": "ok",
+  "feeds": "E4 compile-time cost (\u00a75.5 \u00b61; was RQ4)",
+  "grand_median_pct": 0.1296,
+  "n_categories": 15,
+  "per_category": {
+   "batch_norm": {
+    "median_pct": 0.2583,
+    "n_kernels": 2,
+    "min_pct": 0.2422,
+    "max_pct": 0.2744,
+    "mean_pct": 0.2583,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "concat": {
+    "median_pct": 0.1296,
+    "n_kernels": 2,
+    "min_pct": 0.1079,
+    "max_pct": 0.1513,
+    "mean_pct": 0.1296,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "conv2d": {
+    "median_pct": 0.0052,
+    "n_kernels": 1,
+    "min_pct": 0.0052,
+    "max_pct": 0.0052,
+    "mean_pct": 0.0052,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "elemwise_add": {
+    "median_pct": 0.1331,
+    "n_kernels": 2,
+    "min_pct": 0.1173,
+    "max_pct": 0.1489,
+    "mean_pct": 0.1331,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "embedding": {
+    "median_pct": 0.0778,
+    "n_kernels": 2,
+    "min_pct": 0.0714,
+    "max_pct": 0.0842,
+    "mean_pct": 0.0778,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "gelu": {
+    "median_pct": 0.0999,
+    "n_kernels": 2,
+    "min_pct": 0.0817,
+    "max_pct": 0.1181,
+    "mean_pct": 0.0999,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "layer_normalization": {
+    "median_pct": 0.2188,
+    "n_kernels": 2,
+    "min_pct": 0.2115,
+    "max_pct": 0.226,
+    "mean_pct": 0.2188,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "matmul": {
+    "median_pct": 0.0804,
+    "n_kernels": 2,
+    "min_pct": 0.0743,
+    "max_pct": 0.0866,
+    "mean_pct": 0.0804,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "max_pool2d": {
+    "median_pct": 0.2576,
+    "n_kernels": 2,
+    "min_pct": 0.2389,
+    "max_pct": 0.2764,
+    "mean_pct": 0.2576,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "reduce_mean": {
+    "median_pct": 0.1413,
+    "n_kernels": 2,
+    "min_pct": 0.1329,
+    "max_pct": 0.1498,
+    "mean_pct": 0.1413,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "relu": {
+    "median_pct": 0.1638,
+    "n_kernels": 2,
+    "min_pct": 0.1564,
+    "max_pct": 0.1711,
+    "mean_pct": 0.1638,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "reshape": {
+    "median_pct": 0.0782,
+    "n_kernels": 1,
+    "min_pct": 0.0782,
+    "max_pct": 0.0782,
+    "mean_pct": 0.0782,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "sigmoid": {
+    "median_pct": 0.1092,
+    "n_kernels": 2,
+    "min_pct": 0.1067,
+    "max_pct": 0.1117,
+    "mean_pct": 0.1092,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "softmax": {
+    "median_pct": 0.2408,
+    "n_kernels": 2,
+    "min_pct": 0.1967,
+    "max_pct": 0.2848,
+    "mean_pct": 0.2408,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "transpose": {
+    "median_pct": 0.0816,
+    "n_kernels": 2,
+    "min_pct": 0.0794,
+    "max_pct": 0.0838,
+    "mean_pct": 0.0816,
+    "bucket": "<0.5%",
+    "exclusive": true
+   }
+  },
+  "bucket_distribution": {
+   "<0.5%": 15
+  },
+  "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports.",
+  "paper_reference": {
+   "rq4_median_pct": 0.6,
+   "rq4_bucket": "0.5-1%"
+  },
+  "inadmissible_exclusive_false": [],
+  "settings_hash": [
+   "1f5436bfab1f",
+   "28fee96c8330",
+   "45f6e81d94c0",
+   "55b2395980bd",
+   "666bab9695c5",
+   "7abb8bd6e718",
+   "8b1728850022",
+   "8dbff8357c9b",
+   "b4ee0b5faac2",
+   "ba2aa2b58125",
+   "cfc639e6ee00",
+   "d59f419be35e",
+   "df847a35dd4b",
+   "f08293b4eb9e",
+   "fc1e3097da54"
+  ],
+  "toolchain_version": [
+   "680533f50d5340346ea1587c116278916f902bc2"
+  ],
+  "reproduces_rq4": false,
+  "rq4_note": "measured grand median 0.1296% vs RQ4's 0.6%. These are NOT the same quantity: the assessor cannot be disabled on this build, so what is separable is choreo's front end against nvcc, not checks-on against checks-off. No measured category lands in RQ4's 0.5-1% bucket. See `definition`. The coordinator decides which number the paper carries; this lane does not silently substitute one for the other."
+ },
+ "S13_runtime_and_latency": {
+  "status": "ok",
+  "feeds": "E4 residue A/B (\u00a75.5 \u00b62, E5a) + E5 latency (\u00a75.6 \u00b61, E5b)",
+  "E5a": {
+   "status": "ok",
+   "n_cases": 14,
+   "n_unpaired": 0,
+   "unpaired": [],
+   "median_delta_pct": 3.9162,
+   "median_delta_ms": 16.7225,
+   "n_delta_within_noise": 14,
+   "n_negative_delta": 6,
+   "negative_delta_cases": [
+    {
+     "kernel_id": "batch_norm/10_dynamic_16x512xHxW_512_512_16x512xHxW",
+     "delta_pct": -0.0669
+    },
+    {
+     "kernel_id": "elemwise_add/10_dynamic_16x512xHxW_16x512xHxW_16x512xHxW",
+     "delta_pct": -0.2075
+    },
+    {
+     "kernel_id": "embedding/10_dynamic_32xS_Vx768_32xSx768",
+     "delta_pct": -18.1119
+    },
+    {
+     "kernel_id": "matmul/10_dynamic_128x1280_1280xN_128xN",
+     "delta_pct": -14.7373
+    },
+    {
+     "kernel_id": "relu/10_dynamic_16x512xHxW_16x512xHxW",
+     "delta_pct": -0.3837
+    },
+    {
+     "kernel_id": "reshape/10_dynamic_64x128xHxW_64x128HW",
+     "delta_pct": -2.1715
+    }
+   ],
+   "n_with_clock_drift": 2,
+   "per_case": [
+    {
+     "category": "batch_norm",
+     "kernel_id": "batch_norm/10_dynamic_16x512xHxW_512_512_16x512xHxW",
+     "checks_on_ms": 344.983,
+     "checks_off_ms": 345.214,
+     "delta_ms": -0.231,
+     "delta_pct": -0.0669,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 1410,
+     "exclusive": "true",
+     "arm_spread_pct": 9.81,
+     "device_code": {
+      "device_body_lines": 64,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 6
+     },
+     "launch_ok": true,
+     "launch_asserted": false
+    },
+    {
+     "category": "concat",
+     "kernel_id": "concat/10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW",
+     "checks_on_ms": 352.146,
+     "checks_off_ms": 347.256,
+     "delta_ms": 4.89,
+     "delta_pct": 1.4082,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 0,
+     "exclusive": "true",
+     "arm_spread_pct": 295.56,
+     "device_code": {
+      "device_body_lines": 103,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 8
+     },
+     "launch_ok": true,
+     "launch_asserted": false
+    },
+    {
+     "category": "elemwise_add",
+     "kernel_id": "elemwise_add/10_dynamic_16x512xHxW_16x512xHxW_16x512xHxW",
+     "checks_on_ms": 1841.816,
+     "checks_off_ms": 1845.646,
+     "delta_ms": -3.83,
+     "delta_pct": -0.2075,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 1410,
+     "exclusive": "true",
+     "arm_spread_pct": 13.02,
+     "device_code": {
+      "device_body_lines": 101,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 15
+     },
+     "launch_ok": true,
+     "launch_asserted": false
+    },
+    {
+     "category": "embedding",
+     "kernel_id": "embedding/10_dynamic_32xS_Vx768_32xSx768",
+     "checks_on_ms": 411.97,
+     "checks_off_ms": 503.089,
+     "delta_ms": -91.119,
+     "delta_pct": -18.1119,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 0,
+     "exclusive": "true",
+     "arm_spread_pct": 131.93,
+     "device_code": {
+      "device_body_lines": 75,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 7
+     },
+     "launch_ok": true,
+     "launch_asserted": false
+    },
+    {
+     "category": "gelu",
+     "kernel_id": "gelu/10_dynamic_16x512xHxW",
+     "checks_on_ms": 898.828,
+     "checks_off_ms": 844.572,
+     "delta_ms": 54.256,
+     "delta_pct": 6.4241,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 0,
+     "exclusive": "true",
+     "arm_spread_pct": 24.83,
+     "device_code": {
+      "device_body_lines": 70,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 4
+     },
+     "launch_ok": true,
+     "launch_asserted": false
+    },
+    {
+     "category": "layer_normalization",
+     "kernel_id": "layer_normalization/10_dynamic_16x512xHxW_HxW_HxW",
+     "checks_on_ms": 2328.421,
+     "checks_off_ms": 2155.755,
+     "delta_ms": 172.666,
+     "delta_pct": 8.0095,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 0,
+     "exclusive": "true",
+     "arm_spread_pct": 9.01,
+     "device_code": {
+      "device_body_lines": 76,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 12
+     },
+     "launch_ok": true,
+     "launch_asserted": false
+    },
+    {
+     "category": "matmul",
+     "kernel_id": "matmul/10_dynamic_128x1280_1280xN_128xN",
+     "checks_on_ms": 324.624,
+     "checks_off_ms": 380.734,
+     "delta_ms": -56.11,
+     "delta_pct": -14.7373,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 0,
+     "exclusive": "true",
+     "arm_spread_pct": 70.25,
+     "device_code": {
+      "device_body_lines": 68,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 9
+     },
+     "launch_ok": true,
+     "launch_asserted": false
+    },
+    {
+     "category": "max_pool2d",
+     "kernel_id": "max_pool2d/10_dynamic_32xCxHxW_32xCxHd5xWd5",
+     "checks_on_ms": 493.413,
+     "checks_off_ms": 317.505,
+     "delta_ms": 175.908,
+     "delta_pct": 55.4032,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 0,
+     "exclusive": "true",
+     "arm_spread_pct": 76.39,
+     "device_code": {
+      "device_body_lines": 85,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 17
+     },
+     "launch_ok": true,
+     "launch_asserted": false
+    },
+    {
+     "category": "reduce_mean",
+     "kernel_id": "reduce_mean/10_dynamic_32xSx768_32x768",
+     "checks_on_ms": 402.487,
+     "checks_off_ms": 373.932,
+     "delta_ms": 28.555,
+     "delta_pct": 7.6364,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 0,
+     "exclusive": "true",
+     "arm_spread_pct": 50.77,
+     "device_code": {
+      "device_body_lines": 42,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 4
+     },
+     "launch_ok": true,
+     "launch_asserted": false
+    },
+    {
+     "category": "relu",
+     "kernel_id": "relu/10_dynamic_16x512xHxW_16x512xHxW",
+     "checks_on_ms": 324.496,
+     "checks_off_ms": 325.746,
+     "delta_ms": -1.25,
+     "delta_pct": -0.3837,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 0,
+     "exclusive": "true",
+     "arm_spread_pct": 89.3,
+     "device_code": {
+      "device_body_lines": 70,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 7
+     },
+     "launch_ok": true,
+     "launch_asserted": false
+    },
+    {
+     "category": "reshape",
+     "kernel_id": "reshape/10_dynamic_64x128xHxW_64x128HW",
+     "checks_on_ms": 651.02,
+     "checks_off_ms": 665.471,
+     "delta_ms": -14.451,
+     "delta_pct": -2.1715,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 0,
+     "exclusive": "true",
+     "arm_spread_pct": 18.24,
+     "device_code": {
+      "device_body_lines": 16,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 2
+     },
+     "launch_ok": true,
+     "launch_asserted": false
+    },
+    {
+     "category": "sigmoid",
+     "kernel_id": "sigmoid/10_dynamic_16x512xHxW",
+     "checks_on_ms": 514.384,
+     "checks_off_ms": 346.373,
+     "delta_ms": 168.011,
+     "delta_pct": 48.5058,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 0,
+     "exclusive": "true",
+     "arm_spread_pct": 83.46,
+     "device_code": {
+      "device_body_lines": 72,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 7
+     },
+     "launch_ok": true,
+     "launch_asserted": false
+    },
+    {
+     "category": "softmax",
+     "kernel_id": "softmax/10_dynamic_16x512xHxW_16x512xHxW",
+     "checks_on_ms": 492.828,
+     "checks_off_ms": 372.052,
+     "delta_ms": 120.776,
+     "delta_pct": 32.4621,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 0,
+     "exclusive": "true",
+     "arm_spread_pct": 39.13,
+     "device_code": {
+      "device_body_lines": 98,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 13
+     },
+     "launch_ok": true,
+     "launch_asserted": false
+    },
+    {
+     "category": "transpose",
+     "kernel_id": "transpose/10_dynamic_16x512xHxW_16xHxWx512",
+     "checks_on_ms": 692.708,
+     "checks_off_ms": 547.03,
+     "delta_ms": 145.678,
+     "delta_pct": 26.6307,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 0,
+     "exclusive": "true",
+     "arm_spread_pct": 47.62,
+     "device_code": {
+      "device_body_lines": 22,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 4
+     },
+     "launch_ok": true,
+     "launch_asserted": false
+    }
+   ],
+   "static_cases_measured": 0,
+   "launch_guard": {
+    "n_launch_rejected": 0,
+    "n_timed": 14,
+    "n_selected": 14,
+    "n_arms_launch_unasserted": 28,
+    "excluded_launch_rejected": [],
+    "definition": "launch-rejected = the driver refused cudaLaunchKernel, so no device work happened and the millisecond value is not a measurement. Excluded from every median below; listed by name in `excluded_launch_rejected`. n_arms_launch_unasserted counts arms whose record predates the guard and therefore carries NO launch assertion either way -- those are admitted (voiding them would discard every existing record) but they are counted here so the absence of an assertion is visible rather than implied by ok=True."
+   },
+   "settings_hash": [
+    "1f5436bfab1f",
+    "45f6e81d94c0",
+    "55b2395980bd",
+    "666bab9695c5",
+    "7abb8bd6e718",
+    "8b1728850022",
+    "8dbff8357c9b",
+    "b4ee0b5faac2",
+    "ba2aa2b58125",
+    "cfc639e6ee00",
+    "d59f419be35e",
+    "df847a35dd4b",
+    "f08293b4eb9e",
+    "fc1e3097da54"
+   ],
+   "toolchain_version": [
+    "680533f50d5340346ea1587c116278916f902bc2"
+   ],
+   "launch_unasserted_note": "28 E5a arm record(s) carry NO launch assertion: they were written by a run_e5.py that predates the launch guard, so nothing in the record says whether the kernel reached the device. They are admitted to the median because voiding them would discard the whole existing E5a, but this is an UNASSERTED launch, not a verified one. Measured exposure on this exact data (diag_launch_reject.py, rebuilt on the post-fix binary): 3 of the 14 -- matmul/10_dynamic, max_pool2d/10_dynamic, softmax/10_dynamic -- were silently launch-rejected and recorded ok=True with 324-493 ms timings that measured no device work. RE-MEASURE E5a before quoting any residue number from records carrying this note.",
+   "device_code_evidence": {
+    "n_rows_reporting": 28,
+    "n_device_identical": 28,
+    "total_device_side_check_calls": 0,
+    "host_gated_checks_min": 2,
+    "host_gated_checks_max": 17,
+    "interpretation": "All gated checks are HOST-side entry guards on shape metadata, executed once per launch; the generated device kernel is byte-identical between the checks-on and checks-off arms and contains no check calls. Runtime residue on the device is therefore structurally zero, and the host-side entry cost is a handful of integer comparisons against a multi-second launch."
+   },
+   "negative_delta_note": "6 case(s) show checks-on FASTER than checks-off. A handful of entry guards cannot make a kernel faster, so these are drift or contention, not overhead. Check `clock_drift_mhz` and `exclusive` on those rows before quoting any E5a number. Both devices idle at 345 MHz with persistence_mode Disabled (max 1755 MHz), so a clock ramp alone can produce this -- measured drift here reached 1410 MHz.",
+   "noise_note": "14/14 deltas are INSIDE the arms' own rep-to-rep spread. This is the EXPECTED result, not a failed measurement: the generated device kernel is byte-identical between the two arms and contains zero check calls, so `--disable-runtime-check` removes only HOST-side entry guards (integer comparisons on shape metadata, run once per launch). There is no device-side cost for this host's clock ramp to resolve. The honest RQ3 statement is that runtime residue is structurally zero on the device and below the measurement floor on the host."
+  },
+  "E5b": {
+   "status": "ok",
+   "n_records": 32,
+   "per_detector_and_check_loc": {
+    "choreo-entry/entry": {
+     "n": 16,
+     "median_us": 506611.4,
+     "min_us": 205098.9,
+     "max_us": 752561.3
+    },
+    "compute-sanitizer/interior": {
+     "n": 4,
+     "median_us": 60162261.9,
+     "min_us": 1568263.5,
+     "max_us": 119101742.7
+    }
+   },
+   "ratio": {
+    "n_pairs": 4,
+    "median_ratio": 84.45,
+    "min_ratio": 2.58,
+    "max_ratio": 204.39,
+    "n_pairs_oracle_slower": 4,
+    "per_pair": [
+     {
+      "mutant_id": "M2.s1.ln1.scale",
+      "choreo_entry_us": 506663.2,
+      "sanitizer_us": 2234967.2,
+      "ratio_sanitizer_over_choreo": 4.41
+     },
+     {
+      "mutant_id": "M2.s1.ln3.lhs",
+      "choreo_entry_us": 577770.2,
+      "sanitizer_us": 118089556.6,
+      "ratio_sanitizer_over_choreo": 204.39
+     },
+     {
+      "mutant_id": "M2.s1.ln3.scale",
+      "choreo_entry_us": 607069.4,
+      "sanitizer_us": 1568263.5,
+      "ratio_sanitizer_over_choreo": 2.58
+     },
+     {
+      "mutant_id": "M2.s4.ln3.out",
+      "choreo_entry_us": 724081.9,
+      "sanitizer_us": 119101742.7,
+      "ratio_sanitizer_over_choreo": 164.49
+     }
+    ],
+    "n_confounded": 12,
+    "confounded_pairs": [
+     {
+      "mutant_id": "M1.s2.rl1.read",
+      "reason": "process-abort",
+      "choreo_entry_us": 438228.7,
+      "sanitizer_us": 1249425.3,
+      "ratio_sanitizer_over_choreo": 2.85,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M1.s2.rl11.read",
+      "reason": "process-abort",
+      "choreo_entry_us": 311918.4,
+      "sanitizer_us": 695342.8,
+      "ratio_sanitizer_over_choreo": 2.23,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M1.s2.tp1.read",
+      "reason": "process-abort",
+      "choreo_entry_us": 532724.5,
+      "sanitizer_us": 838069.4,
+      "ratio_sanitizer_over_choreo": 1.57,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M1.s2.tp11.read",
+      "reason": "process-abort",
+      "choreo_entry_us": 517975.2,
+      "sanitizer_us": 1348473.9,
+      "ratio_sanitizer_over_choreo": 2.6,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M2.s1.ln1.bias",
+      "reason": "no-fault-reported",
+      "choreo_entry_us": 205098.9,
+      "sanitizer_us": 96833725.8,
+      "ratio_sanitizer_over_choreo": 472.13,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: compute-sanitizer ran the body to completion and reported `ERROR SUMMARY: 0 errors` -- no fault, so there is no report to time. The wall time measures a full instrumented run that found nothing, which INFLATES the ratio. E1 corroborates: this mutant's oracle arm also recorded oracle_caught=none / oracle_run_rc=0."
+      ]
+     },
+     {
+      "mutant_id": "M2.s1.ln1.caller.bias",
+      "reason": "no-fault-reported",
+      "choreo_entry_us": 438268.9,
+      "sanitizer_us": 83413574.4,
+      "ratio_sanitizer_over_choreo": 190.33,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: compute-sanitizer ran the body to completion and reported `ERROR SUMMARY: 0 errors` -- no fault, so there is no report to time. The wall time measures a full instrumented run that found nothing, which INFLATES the ratio. E1 corroborates: this mutant's oracle arm also recorded oracle_caught=none / oracle_run_rc=0."
+      ]
+     },
+     {
+      "mutant_id": "M2.s1.ln1.caller.scale",
+      "reason": "process-abort",
+      "choreo_entry_us": 421943.3,
+      "sanitizer_us": 52280278.9,
+      "ratio_sanitizer_over_choreo": 123.9,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M2.s1.ln3.bias",
+      "reason": "no-fault-reported",
+      "choreo_entry_us": 752561.3,
+      "sanitizer_us": 162275729.6,
+      "ratio_sanitizer_over_choreo": 215.63,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: compute-sanitizer ran the body to completion and reported `ERROR SUMMARY: 0 errors` -- no fault, so there is no report to time. The wall time measures a full instrumented run that found nothing, which INFLATES the ratio. E1 corroborates: this mutant's oracle arm also recorded oracle_caught=none / oracle_run_rc=0."
+      ]
+     },
+     {
+      "mutant_id": "M2.s1.ln3.caller.scale",
+      "reason": "process-abort",
+      "choreo_entry_us": 506559.6,
+      "sanitizer_us": 118409208.5,
+      "ratio_sanitizer_over_choreo": 233.75,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M2.s1.mm1.rhs",
+      "reason": "no-fault-reported",
+      "choreo_entry_us": 420830.1,
+      "sanitizer_us": 68240808.3,
+      "ratio_sanitizer_over_choreo": 162.16,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: compute-sanitizer ran the body to completion and reported `ERROR SUMMARY: 0 errors` -- no fault, so there is no report to time. The wall time measures a full instrumented run that found nothing, which INFLATES the ratio. E1 corroborates: this mutant's oracle arm also recorded oracle_caught=none / oracle_run_rc=0."
+      ]
+     },
+     {
+      "mutant_id": "M2.s1.mm11.rhs",
+      "reason": "launch-rejected",
+      "choreo_entry_us": 545117.4,
+      "sanitizer_us": 885008.6,
+      "ratio_sanitizer_over_choreo": 1.62,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the driver refused cudaLaunchKernel, so the instrumented body never ran and the wall time measures a refusal. This DEPRESSES the ratio."
+      ]
+     },
+     {
+      "mutant_id": "M3.s3.cv1.local8",
+      "reason": "launch-rejected",
+      "choreo_entry_us": 375310.9,
+      "sanitizer_us": 870602.9,
+      "ratio_sanitizer_over_choreo": 2.32,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the driver refused cudaLaunchKernel, so the instrumented body never ran and the wall time measures a refusal. This DEPRESSES the ratio."
+      ]
+     }
+    ],
+    "n_pairs_before_guard": 16,
+    "definition": "sanitizer time_to_report_us / choreo-entry time_to_report_us, PAIRED on mutant_id. >1 means the dynamic oracle took longer to report the same fault. Pairs where EITHER arm was quarantined by the launch / detection guard are held out and listed in `confounded_pairs`; `n_pairs` is the CLEAN count.",
+    "unguarded_all_pairs": {
+     "n_pairs": 16,
+     "median_ratio": 64.16,
+     "min_ratio": 1.57,
+     "max_ratio": 472.13,
+     "note": "NOT QUOTABLE. Retained so the guard's effect is auditable: this is what the statistic said before the launch/detection guard excluded 12 confounded pair(s)."
+    }
+   },
+   "detection_asymmetry": {
+    "n_oracle_blind": 4,
+    "n_oracle_never_executed": 2,
+    "n_oracle_died_no_report": 0,
+    "n_oracle_aborted_by_choreo_own_ungated_check": 6,
+    "n_both_detected": 4,
+    "n_pairs_compared": 16,
+    "oracle_blind_mutants": [
+     {
+      "mutant_id": "M2.s1.ln1.bias",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "no-fault-reported",
+      "category": "layer_normalization"
+     },
+     {
+      "mutant_id": "M2.s1.ln1.caller.bias",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "no-fault-reported",
+      "category": "layer_normalization"
+     },
+     {
+      "mutant_id": "M2.s1.ln3.bias",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "no-fault-reported",
+      "category": "layer_normalization"
+     },
+     {
+      "mutant_id": "M2.s1.mm1.rhs",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "no-fault-reported",
+      "category": "matmul"
+     }
+    ],
+    "oracle_never_executed_mutants": [
+     {
+      "mutant_id": "M2.s1.mm11.rhs",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "launch-rejected",
+      "category": "matmul"
+     },
+     {
+      "mutant_id": "M3.s3.cv1.local8",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "launch-rejected",
+      "category": "conv2d"
+     }
+    ],
+    "oracle_died_mutants": [],
+    "oracle_aborted_by_choreo_mutants": [
+     {
+      "mutant_id": "M1.s2.rl1.read",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "relu"
+     },
+     {
+      "mutant_id": "M1.s2.rl11.read",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "relu"
+     },
+     {
+      "mutant_id": "M1.s2.tp1.read",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "transpose"
+     },
+     {
+      "mutant_id": "M1.s2.tp11.read",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "transpose"
+     },
+     {
+      "mutant_id": "M2.s1.ln1.caller.scale",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "layer_normalization"
+     },
+     {
+      "mutant_id": "M2.s1.ln3.caller.scale",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "layer_normalization"
+     }
+    ],
+    "definition": "oracle-blind = choreo's entry check reported the fault while compute-sanitizer RAN the instrumented body to completion and reported `ERROR SUMMARY: 0 errors`. oracle-never-executed = the driver refused cudaLaunchKernel on the sanitizer arm, so the oracle never ran the body at all; that is a launch-level refusal, NOT a detection judgement. oracle-died-no-report = the sanitizer arm exited non-zero with no fault line, so it neither completed nor refused. oracle-aborted-by-choreo = the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) while memcheck reported zero errors; verified by running the same executable with NO sanitizer present and observing the identical abort, so the kill is choreo's and not the oracle's. Only the first is a coverage result; the others are counted separately so the coverage claim is not inflated by arms that never got to judge anything. All four are EXCLUDED from the latency ratio above (none produces an oracle report to time) and reported here instead of being silently dropped.",
+    "note": "4 of 8 mutant(s) where the oracle actually executed to completion were caught by choreo's entry check and MISSED entirely by compute-sanitizer. A further 2 never reached execution (launch refused), 0 exited without reporting, and 6 were killed by choreo's own ungated assertion before memcheck could judge; no group is counted as a miss, because in none of them did the oracle render a verdict. The oracle's silence on the 4 is not a latency advantage -- it produced no report at all. This is coverage, not speed.",
+    "premise_violation_note": "6 of the sanitizer arms were built with --disable-runtime-check on the stated premise that the sanitizer would then be the SOLE detector. That premise is FALSE: the flag gates only source A (host runtime_check and device choreo_assert at the HOIST/USE sites), while source B (ArrayProxy::operator[] bounds check) and source C (the user assert BIF) are ungated by construction. On these arms choreo's own ungated check aborted the process, memcheck reported `ERROR SUMMARY: 0 errors`, and the recorded wall clock measured choreo rather than the oracle -- so the ratio would have compared choreo against choreo. Evidence: diag_abort_attribution.py, which runs each executable both with and without compute-sanitizer. This is a DATA problem in the experiment's construction, reported rather than designed around; suppressing sources B and C needs a toolchain flag that may not exist."
+   },
+   "absolute_latency_note": "The ABSOLUTE time_to_report_us is dominated by a shared process-startup + CUDA-context-init constant (~507 ms median on the choreo-entry arm), NOT by the check itself. Do not describe choreo's entry check as \"\u00b5s-scale\" on this evidence. What the data supports: choreo's latency is INPUT-INDEPENDENT (spread 3.7x across 16 distinct faults, because it aborts at launch before touching the data) while the oracle's is DATA-DEPENDENT (spread 76x, because it must run the instrumented body to the fault); hence the oracle is slower on every pair. Both arms time the executable only -- nvcc compile is excluded from both (run_e5.py SYMMETRY FIX, 2026-09-09). An earlier cut of this statistic timed nvcc+run on the choreo arm and run-only on the sanitizer arm, which produced a 0.2x ratio and INVERTED the claim; that number is void.",
+   "check_loc_is_measured_not_assumed": [
+    "entry",
+    "interior"
+   ],
+   "settings_hash": [
+    "28fee96c8330",
+    "7abb8bd6e718",
+    "8dbff8357c9b",
+    "ba2aa2b58125",
+    "df847a35dd4b"
+   ],
+   "toolchain_version": [
+    "f2f238fbf380e6121caf361d359ef1cf7d568ee8"
+   ]
+  }
+ },
+ "not_owned_by_this_lane": {
+  "S8": "SOTA expressibility (triton/mlir-linalg/mlir-low/iree)",
+  "S9": "SOTA remainder (triton/mlir-linalg/mlir-low/iree)",
+  "S11": "integrity register (coordinator)",
+  "S12": "sanitizer supplement (SOTA toolchains)"
+ },
+ "toolchain_warning": "binary predates checkout: records say f2f238fbf380e6121caf361d359ef1cf7d568ee8 (what the binary was built from), checkout HEAD is 1fa4719fcf4bca50f153a18daf05beadd44f87e3. Rebuild and re-run before pinning this version in manifest \u00a75."
+}

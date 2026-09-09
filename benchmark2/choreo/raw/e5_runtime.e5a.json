@@ -1,0 +1,2330 @@
+{
+ "toolchain": "choreo",
+ "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+ "produced_by": "e5",
+ "partial": "e5a-only",
+ "size": "small",
+ "gpu_device": "0",
+ "exclusive": true,
+ "reps": 5,
+ "elapsed_s": {
+  "e5a": 1595.9
+ },
+ "host_contended": [],
+ "residue_records": [
+  {
+   "toolchain": "choreo",
+   "category": "batch_norm",
+   "kernel_id": "batch_norm/10_dynamic_16x512xHxW_512_512_16x512xHxW",
+   "checks": "on",
+   "runtime_ms": 344.983,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 9,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 1410,
+   "settings_hash": "45f6e81d94c0",
+   "kernel_hash": "9a93c7dbc6fe",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    371.863,
+    347.387,
+    343.578,
+    338.033,
+    344.983
+   ],
+   "spread_pct": 9.81,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 64,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 6
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "batch_norm",
+   "kernel_id": "batch_norm/10_dynamic_16x512xHxW_512_512_16x512xHxW",
+   "checks": "off",
+   "runtime_ms": 345.214,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 9,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 1410,
+   "settings_hash": "45f6e81d94c0",
+   "kernel_hash": "9a93c7dbc6fe",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    374.532,
+    345.214,
+    349.178,
+    343.81,
+    341.468
+   ],
+   "spread_pct": 9.58,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 64,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 6
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "concat",
+   "kernel_id": "concat/10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW",
+   "checks": "on",
+   "runtime_ms": 352.146,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 6,
+    "mem_used_mib": 14,
+    "temp_c": 39,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "55b2395980bd",
+   "kernel_hash": "bd91d2c3f228",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    1382.326,
+    352.146,
+    341.528,
+    345.339,
+    515.24
+   ],
+   "spread_pct": 295.56,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 103,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 8
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "concat",
+   "kernel_id": "concat/10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW",
+   "checks": "off",
+   "runtime_ms": 347.256,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 6,
+    "mem_used_mib": 14,
+    "temp_c": 39,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "55b2395980bd",
+   "kernel_hash": "bd91d2c3f228",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    1149.605,
+    344.874,
+    345.359,
+    358.658,
+    347.256
+   ],
+   "spread_pct": 231.74,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 103,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 8
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "elemwise_add",
+   "kernel_id": "elemwise_add/10_dynamic_16x512xHxW_16x512xHxW_16x512xHxW",
+   "checks": "on",
+   "runtime_ms": 1841.816,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 1410,
+   "settings_hash": "8b1728850022",
+   "kernel_hash": "bd41f0cc2901",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    2013.338,
+    1841.816,
+    1877.338,
+    1785.537,
+    1773.443
+   ],
+   "spread_pct": 13.02,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 101,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 15
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "elemwise_add",
+   "kernel_id": "elemwise_add/10_dynamic_16x512xHxW_16x512xHxW_16x512xHxW",
+   "checks": "off",
+   "runtime_ms": 1845.646,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 1410,
+   "settings_hash": "8b1728850022",
+   "kernel_hash": "bd41f0cc2901",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    1932.39,
+    1845.646,
+    1894.754,
+    1773.85,
+    1770.154
+   ],
+   "spread_pct": 8.79,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 101,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 15
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "embedding",
+   "kernel_id": "embedding/10_dynamic_32xS_Vx768_32xSx768",
+   "checks": "on",
+   "runtime_ms": 411.97,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 23,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "666bab9695c5",
+   "kernel_hash": "2be858543c6b",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    899.518,
+    534.61,
+    360.515,
+    356.016,
+    411.97
+   ],
+   "spread_pct": 131.93,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 75,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 7
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "embedding",
+   "kernel_id": "embedding/10_dynamic_32xS_Vx768_32xSx768",
+   "checks": "off",
+   "runtime_ms": 503.089,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 23,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "666bab9695c5",
+   "kernel_hash": "2be858543c6b",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    831.834,
+    355.339,
+    517.351,
+    503.089,
+    351.779
+   ],
+   "spread_pct": 95.42,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 75,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 7
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "gelu",
+   "kernel_id": "gelu/10_dynamic_16x512xHxW",
+   "checks": "on",
+   "runtime_ms": 898.828,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 49,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "f08293b4eb9e",
+   "kernel_hash": "1933492d44d1",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    804.299,
+    833.207,
+    939.934,
+    898.828,
+    913.919
+   ],
+   "spread_pct": 15.09,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 70,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 4
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "gelu",
+   "kernel_id": "gelu/10_dynamic_16x512xHxW",
+   "checks": "off",
+   "runtime_ms": 844.572,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 49,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "f08293b4eb9e",
+   "kernel_hash": "1933492d44d1",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    982.784,
+    775.757,
+    844.572,
+    773.075,
+    933.578
+   ],
+   "spread_pct": 24.83,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 70,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 4
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "layer_normalization",
+   "kernel_id": "layer_normalization/10_dynamic_16x512xHxW_HxW_HxW",
+   "checks": "on",
+   "runtime_ms": 2328.421,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "8dbff8357c9b",
+   "kernel_hash": "555c63559c99",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    2365.671,
+    2194.371,
+    2352.641,
+    2155.833,
+    2328.421
+   ],
+   "spread_pct": 9.01,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 76,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 12
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "layer_normalization",
+   "kernel_id": "layer_normalization/10_dynamic_16x512xHxW_HxW_HxW",
+   "checks": "off",
+   "runtime_ms": 2155.755,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "8dbff8357c9b",
+   "kernel_hash": "555c63559c99",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    2221.967,
+    2218.561,
+    2030.755,
+    2155.755,
+    2146.48
+   ],
+   "spread_pct": 8.87,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 76,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 12
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "matmul",
+   "kernel_id": "matmul/10_dynamic_128x1280_1280xN_128xN",
+   "checks": "on",
+   "runtime_ms": 324.624,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "ba2aa2b58125",
+   "kernel_hash": "bc33893a6e95",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    410.545,
+    358.325,
+    324.624,
+    321.166,
+    323.136
+   ],
+   "spread_pct": 27.53,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 68,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 9
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "matmul",
+   "kernel_id": "matmul/10_dynamic_128x1280_1280xN_128xN",
+   "checks": "off",
+   "runtime_ms": 380.734,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "ba2aa2b58125",
+   "kernel_hash": "bc33893a6e95",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    583.665,
+    318.798,
+    380.734,
+    478.701,
+    316.208
+   ],
+   "spread_pct": 70.25,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 68,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 9
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "max_pool2d",
+   "kernel_id": "max_pool2d/10_dynamic_32xCxHxW_32xCxHd5xWd5",
+   "checks": "on",
+   "runtime_ms": 493.413,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "1f5436bfab1f",
+   "kernel_hash": "9bea677e256b",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    548.685,
+    495.223,
+    493.413,
+    312.803,
+    321.132
+   ],
+   "spread_pct": 47.81,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 85,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 17
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "max_pool2d",
+   "kernel_id": "max_pool2d/10_dynamic_32xCxHxW_32xCxHd5xWd5",
+   "checks": "off",
+   "runtime_ms": 317.505,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "1f5436bfab1f",
+   "kernel_hash": "9bea677e256b",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    556.134,
+    317.505,
+    315.395,
+    313.594,
+    506.687
+   ],
+   "spread_pct": 76.39,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 85,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 17
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "reduce_mean",
+   "kernel_id": "reduce_mean/10_dynamic_32xSx768_32x768",
+   "checks": "on",
+   "runtime_ms": 402.487,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 53,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "b4ee0b5faac2",
+   "kernel_hash": "4f15e42bf307",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    385.45,
+    402.487,
+    560.805,
+    374.142,
+    549.773
+   ],
+   "spread_pct": 46.38,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 42,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 4
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "reduce_mean",
+   "kernel_id": "reduce_mean/10_dynamic_32xSx768_32x768",
+   "checks": "off",
+   "runtime_ms": 373.932,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 53,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "b4ee0b5faac2",
+   "kernel_hash": "4f15e42bf307",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    389.703,
+    368.575,
+    373.932,
+    558.433,
+    370.518
+   ],
+   "spread_pct": 50.77,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 42,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 4
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "relu",
+   "kernel_id": "relu/10_dynamic_16x512xHxW_16x512xHxW",
+   "checks": "on",
+   "runtime_ms": 324.496,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "7abb8bd6e718",
+   "kernel_hash": "fece1067451b",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    536.193,
+    324.496,
+    501.802,
+    246.407,
+    248.913
+   ],
+   "spread_pct": 89.3,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 70,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 7
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "relu",
+   "kernel_id": "relu/10_dynamic_16x512xHxW_16x512xHxW",
+   "checks": "off",
+   "runtime_ms": 325.746,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "7abb8bd6e718",
+   "kernel_hash": "fece1067451b",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    359.11,
+    325.746,
+    333.883,
+    325.55,
+    322.905
+   ],
+   "spread_pct": 11.11,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 70,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 7
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "reshape",
+   "kernel_id": "reshape/10_dynamic_64x128xHxW_64x128HW",
+   "checks": "on",
+   "runtime_ms": 651.02,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 100,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "fc1e3097da54",
+   "kernel_hash": "6397fb64f039",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    665.298,
+    663.092,
+    572.151,
+    651.02,
+    648.477
+   ],
+   "spread_pct": 14.31,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 16,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 2
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "reshape",
+   "kernel_id": "reshape/10_dynamic_64x128xHxW_64x128HW",
+   "checks": "off",
+   "runtime_ms": 665.471,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 100,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "fc1e3097da54",
+   "kernel_hash": "6397fb64f039",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    700.508,
+    668.644,
+    645.645,
+    665.471,
+    579.111
+   ],
+   "spread_pct": 18.24,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 16,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 2
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "sigmoid",
+   "kernel_id": "sigmoid/10_dynamic_16x512xHxW",
+   "checks": "on",
+   "runtime_ms": 514.384,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 18,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "cfc639e6ee00",
+   "kernel_hash": "5ca9a8745707",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    666.071,
+    373.696,
+    347.245,
+    717.032,
+    514.384
+   ],
+   "spread_pct": 71.89,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 72,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 7
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "sigmoid",
+   "kernel_id": "sigmoid/10_dynamic_16x512xHxW",
+   "checks": "off",
+   "runtime_ms": 346.373,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 18,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "cfc639e6ee00",
+   "kernel_hash": "5ca9a8745707",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    563.036,
+    346.373,
+    273.937,
+    376.15,
+    345.53
+   ],
+   "spread_pct": 83.46,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 72,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 7
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "softmax",
+   "kernel_id": "softmax/10_dynamic_16x512xHxW_16x512xHxW",
+   "checks": "on",
+   "runtime_ms": 492.828,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "d59f419be35e",
+   "kernel_hash": "f4f5e7ad52da",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    456.923,
+    492.828,
+    603.437,
+    593.273,
+    410.591
+   ],
+   "spread_pct": 39.13,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 98,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 13
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "softmax",
+   "kernel_id": "softmax/10_dynamic_16x512xHxW_16x512xHxW",
+   "checks": "off",
+   "runtime_ms": 372.052,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "d59f419be35e",
+   "kernel_hash": "f4f5e7ad52da",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    422.005,
+    372.052,
+    371.331,
+    418.771,
+    368.746
+   ],
+   "spread_pct": 14.31,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 98,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 13
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "transpose",
+   "kernel_id": "transpose/10_dynamic_16x512xHxW_16xHxWx512",
+   "checks": "on",
+   "runtime_ms": 692.708,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "df847a35dd4b",
+   "kernel_hash": "de367c3c459c",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    696.204,
+    427.804,
+    757.641,
+    508.664,
+    692.708
+   ],
+   "spread_pct": 47.62,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 22,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 4
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "transpose",
+   "kernel_id": "transpose/10_dynamic_16x512xHxW_16xHxWx512",
+   "checks": "off",
+   "runtime_ms": 547.03,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "settings_hash": "df847a35dd4b",
+   "kernel_hash": "de367c3c459c",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    569.992,
+    511.068,
+    547.03,
+    697.852,
+    512.711
+   ],
+   "spread_pct": 34.15,
+   "reps": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 22,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 4
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  }
+ ],
+ "e5a_kernels": [
+  {
+   "toolchain": "choreo",
+   "category": "batch_norm",
+   "kernel_id": "batch_norm/10_dynamic_16x512xHxW_512_512_16x512xHxW",
+   "shape_class": "dynamic",
+   "settings_hash": "45f6e81d94c0",
+   "kernel_hash": "9a93c7dbc6fe",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 345,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 39,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 9,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 1410,
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 344.983,
+    "samples_ms": [
+     371.863,
+     347.387,
+     343.578,
+     338.033,
+     344.983
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 9.81
+   },
+   "checks_off": {
+    "runtime_ms": 345.214,
+    "samples_ms": [
+     374.532,
+     345.214,
+     349.178,
+     343.81,
+     341.468
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 9.58
+   },
+   "delta_ms": -0.231,
+   "delta_pct": -0.067,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 9.81,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 64,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 6
+   }
+  },
+  {
+   "toolchain": "choreo",
+   "category": "concat",
+   "kernel_id": "concat/10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW",
+   "shape_class": "dynamic",
+   "settings_hash": "55b2395980bd",
+   "kernel_hash": "bd91d2c3f228",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 9,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 6,
+    "mem_used_mib": 14,
+    "temp_c": 39,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 352.146,
+    "samples_ms": [
+     1382.326,
+     352.146,
+     341.528,
+     345.339,
+     515.24
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 295.56
+   },
+   "checks_off": {
+    "runtime_ms": 347.256,
+    "samples_ms": [
+     1149.605,
+     344.874,
+     345.359,
+     358.658,
+     347.256
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 231.74
+   },
+   "delta_ms": 4.89,
+   "delta_pct": 1.408,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 295.56,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 103,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 8
+   }
+  },
+  {
+   "toolchain": "choreo",
+   "category": "elemwise_add",
+   "kernel_id": "elemwise_add/10_dynamic_16x512xHxW_16x512xHxW_16x512xHxW",
+   "shape_class": "dynamic",
+   "settings_hash": "8b1728850022",
+   "kernel_hash": "bd41f0cc2901",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 345,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 39,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 1410,
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 1841.816,
+    "samples_ms": [
+     2013.338,
+     1841.816,
+     1877.338,
+     1785.537,
+     1773.443
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 13.02
+   },
+   "checks_off": {
+    "runtime_ms": 1845.646,
+    "samples_ms": [
+     1932.39,
+     1845.646,
+     1894.754,
+     1773.85,
+     1770.154
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 8.79
+   },
+   "delta_ms": -3.83,
+   "delta_pct": -0.208,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 13.02,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 101,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 15
+   }
+  },
+  {
+   "toolchain": "choreo",
+   "category": "embedding",
+   "kernel_id": "embedding/10_dynamic_32xS_Vx768_32xSx768",
+   "shape_class": "dynamic",
+   "settings_hash": "666bab9695c5",
+   "kernel_hash": "2be858543c6b",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 23,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 411.97,
+    "samples_ms": [
+     899.518,
+     534.61,
+     360.515,
+     356.016,
+     411.97
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 131.93
+   },
+   "checks_off": {
+    "runtime_ms": 503.089,
+    "samples_ms": [
+     831.834,
+     355.339,
+     517.351,
+     503.089,
+     351.779
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 95.42
+   },
+   "delta_ms": -91.119,
+   "delta_pct": -18.112,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 131.93,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 75,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 7
+   }
+  },
+  {
+   "toolchain": "choreo",
+   "category": "gelu",
+   "kernel_id": "gelu/10_dynamic_16x512xHxW",
+   "shape_class": "dynamic",
+   "settings_hash": "f08293b4eb9e",
+   "kernel_hash": "1933492d44d1",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 23,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 49,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 898.828,
+    "samples_ms": [
+     804.299,
+     833.207,
+     939.934,
+     898.828,
+     913.919
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 15.09
+   },
+   "checks_off": {
+    "runtime_ms": 844.572,
+    "samples_ms": [
+     982.784,
+     775.757,
+     844.572,
+     773.075,
+     933.578
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 24.83
+   },
+   "delta_ms": 54.256,
+   "delta_pct": 6.424,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 24.83,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 70,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 4
+   }
+  },
+  {
+   "toolchain": "choreo",
+   "category": "layer_normalization",
+   "kernel_id": "layer_normalization/10_dynamic_16x512xHxW_HxW_HxW",
+   "shape_class": "dynamic",
+   "settings_hash": "8dbff8357c9b",
+   "kernel_hash": "555c63559c99",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 49,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 2328.421,
+    "samples_ms": [
+     2365.671,
+     2194.371,
+     2352.641,
+     2155.833,
+     2328.421
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 9.01
+   },
+   "checks_off": {
+    "runtime_ms": 2155.755,
+    "samples_ms": [
+     2221.967,
+     2218.561,
+     2030.755,
+     2155.755,
+     2146.48
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 8.87
+   },
+   "delta_ms": 172.666,
+   "delta_pct": 8.01,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 9.01,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 76,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 12
+   }
+  },
+  {
+   "toolchain": "choreo",
+   "category": "matmul",
+   "kernel_id": "matmul/10_dynamic_128x1280_1280xN_128xN",
+   "shape_class": "dynamic",
+   "settings_hash": "ba2aa2b58125",
+   "kernel_hash": "bc33893a6e95",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 324.624,
+    "samples_ms": [
+     410.545,
+     358.325,
+     324.624,
+     321.166,
+     323.136
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 27.53
+   },
+   "checks_off": {
+    "runtime_ms": 380.734,
+    "samples_ms": [
+     583.665,
+     318.798,
+     380.734,
+     478.701,
+     316.208
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 70.25
+   },
+   "delta_ms": -56.11,
+   "delta_pct": -14.737,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 70.25,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 68,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 9
+   }
+  },
+  {
+   "toolchain": "choreo",
+   "category": "max_pool2d",
+   "kernel_id": "max_pool2d/10_dynamic_32xCxHxW_32xCxHd5xWd5",
+   "shape_class": "dynamic",
+   "settings_hash": "1f5436bfab1f",
+   "kernel_hash": "9bea677e256b",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 493.413,
+    "samples_ms": [
+     548.685,
+     495.223,
+     493.413,
+     312.803,
+     321.132
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 47.81
+   },
+   "checks_off": {
+    "runtime_ms": 317.505,
+    "samples_ms": [
+     556.134,
+     317.505,
+     315.395,
+     313.594,
+     506.687
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 76.39
+   },
+   "delta_ms": 175.908,
+   "delta_pct": 55.403,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 76.39,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 85,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 17
+   }
+  },
+  {
+   "toolchain": "choreo",
+   "category": "reduce_mean",
+   "kernel_id": "reduce_mean/10_dynamic_32xSx768_32x768",
+   "shape_class": "dynamic",
+   "settings_hash": "b4ee0b5faac2",
+   "kernel_hash": "4f15e42bf307",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 53,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 402.487,
+    "samples_ms": [
+     385.45,
+     402.487,
+     560.805,
+     374.142,
+     549.773
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 46.38
+   },
+   "checks_off": {
+    "runtime_ms": 373.932,
+    "samples_ms": [
+     389.703,
+     368.575,
+     373.932,
+     558.433,
+     370.518
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 50.77
+   },
+   "delta_ms": 28.555,
+   "delta_pct": 7.636,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 50.77,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 42,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 4
+   }
+  },
+  {
+   "toolchain": "choreo",
+   "category": "relu",
+   "kernel_id": "relu/10_dynamic_16x512xHxW_16x512xHxW",
+   "shape_class": "dynamic",
+   "settings_hash": "7abb8bd6e718",
+   "kernel_hash": "fece1067451b",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 1,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 324.496,
+    "samples_ms": [
+     536.193,
+     324.496,
+     501.802,
+     246.407,
+     248.913
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 89.3
+   },
+   "checks_off": {
+    "runtime_ms": 325.746,
+    "samples_ms": [
+     359.11,
+     325.746,
+     333.883,
+     325.55,
+     322.905
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 11.11
+   },
+   "delta_ms": -1.25,
+   "delta_pct": -0.384,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 89.3,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 70,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 7
+   }
+  },
+  {
+   "toolchain": "choreo",
+   "category": "reshape",
+   "kernel_id": "reshape/10_dynamic_64x128xHxW_64x128HW",
+   "shape_class": "dynamic",
+   "settings_hash": "fc1e3097da54",
+   "kernel_hash": "6397fb64f039",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 5,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 100,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 651.02,
+    "samples_ms": [
+     665.298,
+     663.092,
+     572.151,
+     651.02,
+     648.477
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 14.31
+   },
+   "checks_off": {
+    "runtime_ms": 665.471,
+    "samples_ms": [
+     700.508,
+     668.644,
+     645.645,
+     665.471,
+     579.111
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 18.24
+   },
+   "delta_ms": -14.451,
+   "delta_pct": -2.172,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 18.24,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 16,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 2
+   }
+  },
+  {
+   "toolchain": "choreo",
+   "category": "sigmoid",
+   "kernel_id": "sigmoid/10_dynamic_16x512xHxW",
+   "shape_class": "dynamic",
+   "settings_hash": "cfc639e6ee00",
+   "kernel_hash": "5ca9a8745707",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 100,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 18,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 514.384,
+    "samples_ms": [
+     666.071,
+     373.696,
+     347.245,
+     717.032,
+     514.384
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 71.89
+   },
+   "checks_off": {
+    "runtime_ms": 346.373,
+    "samples_ms": [
+     563.036,
+     346.373,
+     273.937,
+     376.15,
+     345.53
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 83.46
+   },
+   "delta_ms": 168.011,
+   "delta_pct": 48.506,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 83.46,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 72,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 7
+   }
+  },
+  {
+   "toolchain": "choreo",
+   "category": "softmax",
+   "kernel_id": "softmax/10_dynamic_16x512xHxW_16x512xHxW",
+   "shape_class": "dynamic",
+   "settings_hash": "d59f419be35e",
+   "kernel_hash": "f4f5e7ad52da",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 18,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 492.828,
+    "samples_ms": [
+     456.923,
+     492.828,
+     603.437,
+     593.273,
+     410.591
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 39.13
+   },
+   "checks_off": {
+    "runtime_ms": 372.052,
+    "samples_ms": [
+     422.005,
+     372.052,
+     371.331,
+     418.771,
+     368.746
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 14.31
+   },
+   "delta_ms": 120.776,
+   "delta_pct": 32.462,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 39.13,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 98,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 13
+   }
+  },
+  {
+   "toolchain": "choreo",
+   "category": "transpose",
+   "kernel_id": "transpose/10_dynamic_16x512xHxW_16xHxWx512",
+   "shape_class": "dynamic",
+   "settings_hash": "df847a35dd4b",
+   "kernel_hash": "de367c3c459c",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 0,
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 692.708,
+    "samples_ms": [
+     696.204,
+     427.804,
+     757.641,
+     508.664,
+     692.708
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 47.62
+   },
+   "checks_off": {
+    "runtime_ms": 547.03,
+    "samples_ms": [
+     569.992,
+     511.068,
+     547.03,
+     697.852,
+     512.711
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "spread_pct": 34.15
+   },
+   "delta_ms": 145.678,
+   "delta_pct": 26.631,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 47.62,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 22,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 4
+   }
+  }
+ ],
+ "e5a_failures": [
+  {
+   "toolchain": "choreo",
+   "category": "conv2d",
+   "kernel_id": "conv2d/10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
+   "shape_class": "dynamic",
+   "settings_hash": "28fee96c8330",
+   "kernel_hash": "d434e35e9aee",
+   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "ok": false,
+   "error": "execute[on] rc=127: nchmark2/choreo/raw/e5_logs/conv2d_10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D/k_on.sh: line 8345: /tmp/1788932824816562987_125220099098432/__choreo_cute_k.exe: No such file or directory\n"
+  }
+ ]
+}

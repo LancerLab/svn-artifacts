@@ -1,0 +1,217 @@
+{
+ "question": "does -arch change what E5a measures (the checks-on/off delta)?",
+ "why": "choreo defaults to nv_arch=sm_86 on sm_90 hardware; E5a is the only lane that EXECUTES, so it is the only one arch could move. E4 times nvcc (immune); E2/E3 are static (arch_sweep.py: 309/311 label-only).",
+ "jit_note": "cuobjdump on the default build shows sm_86.cubin x2 AND sm_86.ptx x1, so the driver JITs at module load. Load is process startup, which the kernel's own `Execution time` marker excludes -- so JIT should not enter E5a's primary timing source. wall_s is recorded alongside to test that.",
+ "method": "all four (arch, arm) combinations are built up front and then executed in a ROTATING order (each round shifts the sequence by one position) so every combination occupies every slot equally often. delta = on - off at the SAME arch, so arch is common-mode; the test is whether the delta is stable.",
+ "method_note": "A first cut blocked by arm (all `on` then all `off`) and reported delta 19ms at sm_86 vs 173ms at sm_90a. That was drift bias, not arch: this host idles at 345MHz with a 1755MHz max and persistence_mode Disabled, so clock ramp trends monotonically across a blocked sequence and whichever combination runs later absorbs it. run_e5.py documents the same failure mode. Rotation plus `mean_position` per arm is the defense; `clock_drift_mhz` is the evidence.",
+ "reps": 2,
+ "rounds": 8,
+ "device": "0",
+ "lock_held": true,
+ "elapsed_s": 1553.8,
+ "n_kernels": 2,
+ "n_errors": 0,
+ "n_delta_agrees": 0,
+ "n_delta_disagrees": 0,
+ "n_delta_both_inside_noise": 2,
+ "verdict_meaning": {
+  "agrees": "both arches produce the same delta, and at least one delta EXCEEDS its arms' own rep-to-rep spread, so the delta is a measurement and it is arch-independent",
+  "disagrees": "the two arches produce different deltas that exceed the noise floor -- arch genuinely moves E5a's result",
+  "both-inside-noise": "BOTH deltas are smaller than their own arms' rep-to-rep spread. This is NOT evidence that arch matters; it is evidence that the delta is not measurable at all on this host. The honest RQ3 statement is that residue is below the measurement floor."
+ },
+ "verdict": "INCONCLUSIVE ON ARCH, but the delta is below the noise floor: 2/2 kernel(s) have BOTH deltas inside their own arms' rep-to-rep spread. Arch is not the problem -- the 345->1755MHz clock ramp is. E5a cannot resolve six entry guards against a ~2400ms kernel on this host; report residue as below the measurement floor rather than quoting a delta_pct.",
+ "records": [
+  {
+   "category": "layer_normalization",
+   "case": "10_dynamic_16x512xHxW_HxW_HxW",
+   "reps": 2,
+   "rounds": 8,
+   "arms": {
+    "default/on": {
+     "nv_arch": "sm_86",
+     "n": 16,
+     "marker_ms_median": 2372.1165,
+     "marker_ms_min": 2196.706,
+     "marker_ms_max": 2395.551,
+     "spread_pct": 8.38,
+     "wall_s_median": 13.3327,
+     "mean_position": 32.5
+    },
+    "default/off": {
+     "nv_arch": "sm_86",
+     "n": 16,
+     "marker_ms_median": 2370.0445,
+     "marker_ms_min": 2266.325,
+     "marker_ms_max": 2390.411,
+     "spread_pct": 5.24,
+     "wall_s_median": 13.3397,
+     "mean_position": 32.5
+    },
+    "native/on": {
+     "nv_arch": "sm_90a",
+     "n": 16,
+     "marker_ms_median": 2373.864,
+     "marker_ms_min": 2188.69,
+     "marker_ms_max": 2387.672,
+     "spread_pct": 8.38,
+     "wall_s_median": 13.3304,
+     "mean_position": 32.5
+    },
+    "native/off": {
+     "nv_arch": "sm_90a",
+     "n": 16,
+     "marker_ms_median": 2367.8545,
+     "marker_ms_min": 2030.414,
+     "marker_ms_max": 2396.55,
+     "spread_pct": 15.46,
+     "wall_s_median": 13.3219,
+     "mean_position": 32.5
+    }
+   },
+   "nv_arch": {
+    "default/on": "sm_86",
+    "default/off": "sm_86",
+    "native/on": "sm_90a",
+    "native/off": "sm_90a"
+   },
+   "clock_drift_mhz": 1410,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 345,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 39,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "delta_marker_ms": {
+    "default": 2.072,
+    "native": 6.0095
+   },
+   "delta_wall_s": {
+    "default": -0.007,
+    "native": 0.0085
+   },
+   "delta_within_noise": {
+    "default": {
+     "delta_ms": 2.072,
+     "delta_pct": 0.087,
+     "arm_spread_pct": 8.38,
+     "within_noise": true
+    },
+    "native": {
+     "delta_ms": 6.0095,
+     "delta_pct": 0.254,
+     "arm_spread_pct": 15.46,
+     "within_noise": true
+    }
+   },
+   "delta_abs_diff_ms": 3.9375,
+   "delta_agrees": false,
+   "delta_verdict": "both-inside-noise"
+  },
+  {
+   "category": "softmax",
+   "case": "10_dynamic_16x512xHxW_16x512xHxW",
+   "reps": 2,
+   "rounds": 8,
+   "arms": {
+    "default/on": {
+     "nv_arch": "sm_86",
+     "n": 16,
+     "marker_ms_median": 379.247,
+     "marker_ms_min": 250.485,
+     "marker_ms_max": 594.38,
+     "spread_pct": 90.68,
+     "wall_s_median": 10.6695,
+     "mean_position": 32.5
+    },
+    "default/off": {
+     "nv_arch": "sm_86",
+     "n": 16,
+     "marker_ms_median": 415.079,
+     "marker_ms_min": 233.032,
+     "marker_ms_max": 695.325,
+     "spread_pct": 111.37,
+     "wall_s_median": 11.2834,
+     "mean_position": 32.5
+    },
+    "native/on": {
+     "nv_arch": "sm_90a",
+     "n": 16,
+     "marker_ms_median": 376.7895,
+     "marker_ms_min": 239.536,
+     "marker_ms_max": 593.226,
+     "spread_pct": 93.87,
+     "wall_s_median": 11.2147,
+     "mean_position": 32.5
+    },
+    "native/off": {
+     "nv_arch": "sm_90a",
+     "n": 16,
+     "marker_ms_median": 397.109,
+     "marker_ms_min": 299.61,
+     "marker_ms_max": 848.449,
+     "spread_pct": 138.21,
+     "wall_s_median": 10.5949,
+     "mean_position": 32.5
+    }
+   },
+   "nv_arch": {
+    "default/on": "sm_86",
+    "default/off": "sm_86",
+    "native/on": "sm_90a",
+    "native/off": "sm_90a"
+   },
+   "clock_drift_mhz": 1410,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 345,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 0,
+    "mem_used_mib": 14,
+    "temp_c": 40,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 1755,
+    "sm_clock_max_mhz": 1755,
+    "gpu_util_pct": 6,
+    "mem_used_mib": 14,
+    "temp_c": 41,
+    "compute_apps": []
+   },
+   "delta_marker_ms": {
+    "default": -35.832,
+    "native": -20.3195
+   },
+   "delta_wall_s": {
+    "default": -0.6139,
+    "native": 0.6198
+   },
+   "delta_within_noise": {
+    "default": {
+     "delta_ms": -35.832,
+     "delta_pct": -8.633,
+     "arm_spread_pct": 111.37,
+     "within_noise": true
+    },
+    "native": {
+     "delta_ms": -20.3195,
+     "delta_pct": -5.117,
+     "arm_spread_pct": 138.21,
+     "within_noise": true
+    }
+   },
+   "delta_abs_diff_ms": 15.5125,
+   "delta_agrees": false,
+   "delta_verdict": "both-inside-noise"
+  }
+ ]
+}

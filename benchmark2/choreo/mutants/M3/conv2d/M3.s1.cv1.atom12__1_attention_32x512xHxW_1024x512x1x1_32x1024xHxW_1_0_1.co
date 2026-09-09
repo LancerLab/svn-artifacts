@@ -1,0 +1,58 @@
+#include "choreo.h"
+#include "common.h"
+
+#ifdef __STATIC_SHAPE__
+#define attn_h 4
+#define attn_w 4
+#endif
+
+#define stride 1
+#define padding 0
+#define dilation 1
+
+__co__ auto CONV2D(f32 [32, 512, attn_h, attn_w] i, f32 [1024, 512, 1, 1] w) {
+  N = i.span(0);
+  Cin = i.span(1);
+  H = i.span(2);
+  W = i.span(3);
+  Cout = w.span(0);
+  Kh = w.span(2);
+  Kw = w.span(3);
+  Ho = (H + 2 * padding - dilation * (Kh - 1) - 1) / stride + 1;
+  Wo = (W + 2 * padding - dilation * (Kw - 1) - 1) / stride + 1;
+  Hpad = H + 2 * padding;
+  Wpad = W + 2 * padding;
+
+  f32 [N, Cout, Ho, Wo] o;
+
+  M = Ho * Wo;
+  K = Cin * Kh * Kw;
+
+  // Cooperative shared-memory tiling (standard GPU GEMM pattern):
+  //   - The full weight matrix B[Cout, K] (2 MB here) does NOT fit in shared.
+  //   - Instead, a K-tile B_tile[Cout, 8] (32 KB, within the 48 KB safe limit)
+  //     is cooperatively loaded into shared by the threads of each parallel-by
+  //     level, reused across the M-tiles, and streamed again for the next K-tile.
+  //   - A is streamed global->local per tile; Y is accumulated in local and
+  //     written straight to global (no shared A / shared Y).
+  parallel p by 2  {
+    foreach n in [N / #p] {
+      parallel q by 4  {
+        local f32 [M/#q, Cout] l1_Y{0.0f};
+        foreach kt in [K / 8] {
+          shared f32 [Cout, 8] B_tile;
+          dma.copy w.span_as(Cout, K).chunkat(_, kt) => B_tile;
+          l1_A = dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(kt, q, _).span_as(8, M/#q) => local;
+          l1_B = dma.copy B_tile => local;
+          call k_matmul(l1_A.data, l1_B.data, l1_Y, M/#q, Cout, 12);
+        }
+        dma.transp<1, 0> l1_Y => o.chunkat(p#n, _, q, _).span_as(Cout, M/#q);
+      }
+    }
+  }
+  return o;
+}
+
+int main() {
+  test("CONV2D", CONV2D, {32, 512, 4, 4}, {1024, 512, 1, 1}, 1, 0, 1);
+}
