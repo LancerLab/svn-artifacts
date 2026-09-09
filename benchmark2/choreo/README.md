@@ -80,13 +80,22 @@ never `raw/`, so every number in `stats.json` traces to a committed `.jsonl`.
 
 ## Known limitations (recorded, not hidden)
 
-- **`never = 0` acceptance criterion FAILS** — 37 of 72 injected mutants are
-  never-detected. §5.2 ¶2 prose is **VOID** until D2 is decided.
-- **E5b's "sole detector" premise is FALSE** — `--disable-runtime-check` gates
-  only assertion source A; sources B and C are ungated by construction. See D1.
-- **E5a measured 0 static kernels** (`--size small` selects dynamic only), so
-  §5.5 ¶2's premise that static shapes carry zero residue is untested here.
-  `--include-static` exists.
+> **All open decisions are now resolved** — see
+> [`DECISIONS-NEEDED.md`](DECISIONS-NEEDED.md) "COORDINATOR RULINGS — 2026-09-10"
+> (R-D1…R-D7). The items below are the resolved findings, kept as the audit trail.
+
+- **`never = 0` is RETIRED (R-D2).** 37 of 72 injected mutants are
+  never-detected, all attributed by cause (25 out-of-scope/not-assessed + 12
+  hoisting/config). §5.2 ¶2 reports **35/72 = 48.6% before device execution**
+  with the per-cause table — it does **not** claim `never = 0`.
+- **E5b's "sole detector" premise is FALSE (R-D1).** `--disable-runtime-check`
+  gates only assertion source A; sources B and C are ungated by construction.
+  §5.6 ¶1 is reframed around the **detection asymmetry** (choreo caught 4/4
+  faults the oracle reported zero errors on), not a latency multiplier.
+- **E5a measured 0 static kernels (R-D3).** §5.5 ¶2's premise that static shapes
+  carry zero residue is untested here; the static claim is dropped and residue is
+  stated as *structurally zero on the device, below the measurement floor on the
+  host*.
 - **`toolchain.py`'s mtime heuristic understates** the binary's source commit
-  under rebuild-then-commit. `binary_sha1_12` is the only field that pins which
-  build ran.
+  under rebuild-then-commit. `binary_sha1_12 = c3ebb1654d1d` (`f2f238f`) is the
+  authoritative build; the `1fa4719` launch-rejection fix postdates the data (R-D6).

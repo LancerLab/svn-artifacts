@@ -75,6 +75,15 @@ never rebuilt.
 Each worker records its exact clone commit + build flags in `manifest.md` **at
 `setup` time** (idempotent, one-time).
 
+**choreo lane (pinned by coordinator, 2026-09-10 — R-D6):**
+- Data collected on source **`f2f238f`** (`binary_sha1_12 = c3ebb1654d1d`,
+  `build-release/choreo`). The launch-rejection fix **`1fa4719` postdates the
+  data** and is not reflected in any committed record.
+- **Do not rebuild or re-run** E1–E5: a rebuild invalidates the arch sweep,
+  ground-truth fixture, and E4/E5 artifacts, and breaks host-quiet for other
+  lanes. The stale-binary flag in `toolchain_identity` is a disclosure, not a
+  defect.
+
 **iree lane (pinned by `iree` worker at `setup`, 2026-09-08):**
 - Install: python venv (`/home/gxf/.tools/iree-dev-<build>-venv`) + `pip install
   iree_base_compiler` + `iree_base_runtime` from the release tag
