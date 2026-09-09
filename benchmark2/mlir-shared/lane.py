@@ -177,12 +177,18 @@ ALL_CATEGORIES = ["batch_norm", "concat", "conv2d", "elemwise_add", "embedding",
                   "transpose"]
 
 # M1.1's dropped-boundary-mask defect injects undefined behavior, so a single
-# run samples one of {noop, abort, hang} non-reproducibly. _validate_m1.py sizes
-# N=16 against the one measured coin-flip cell (relu/static M1.1 at RTV-off,
-# p(noop)=0.633 over 30 runs) so the never/noop tally cell is wrong with
-# probability ~6.6e-4. The linalg M2 battery is deterministic — the verifier
-# either rejects a shape mutant or it does not — so it needs no repetition and
-# runs once. Both are env-overridable for a quick check or a deeper pass.
+# run samples one of {noop, abort, hang} non-reproducibly. N=16 is sized against
+# the one cell whose recorded outcome can realistically flip: relu/static M1.1 at
+# RTV-off, p(noop)=0.532 pooled over 94 runs across five independent draws, so
+# the never/noop tally cell is wrong with probability ~4.1e-5 (95% interval
+# ~1.5e-6..6.1e-4 — p is itself only known by sampling, so quote the interval,
+# not a point estimate). Three other cells (transpose/static + transpose/dynamic
+# M1.1, layer_norm/dynamic M1.2, all RTV-off) have also produced a mixed
+# distribution at least once, but at p(noop)<=1/16 their flip probability is
+# <=1e-19: nondeterministic in the strict sense, stable in practice. The linalg
+# M2 battery has no such cell — its 120 records are all compile/never/n-a with
+# zero runtime outcomes, so nothing samples UB and it runs once. Both counts are
+# env-overridable for a quick check or a deeper pass.
 REPEAT = {"low": int(os.environ.get("M1_REPEAT", "16")),
           "linalg": int(os.environ.get("M2_REPEAT", "1"))}
 RUN_TIMEOUT = int(os.environ.get("MLIR_RUN_TIMEOUT", "15"))

@@ -190,19 +190,82 @@ reproducible. Measured over **30 runs** of the same lowered module, small-size:
 | `relu/static` M1.1, RTV-**on** | 30× `runtime/corrupts` | 0.000 (deterministic) |
 | `relu/static` M1.1, RTV-**off** | 19× `never/noop`, 11× `runtime/corrupts` | **0.633** ← coin flip |
 
-So exactly **one** cell is nondeterministic. That matters because the record tally
-is an artifact: `relu/static` M1.1 RTV-off lands in the `never/noop` bucket only if
-*every* run lands noop, i.e. with probability $p^N$. At the old default `N=5` that
-is **10.2%** — roughly one validation run in ten would have silently shifted a
-tally cell (54/1/41 → 53/2/42). `_validate_m1.py` therefore defaults to
-`N_REPEAT=16` (env `M1_REPEAT`), which puts the risk at **6.6e-4** (~1 in 1500):
+That study covers **`relu` only** — it was scoped to the cell that motivated the
+repeat count, so it is not a census of nondeterminism on this surface. Sampling the
+committed `mutants.jsonl`, a fresh `./run.sh all`, and two `_validate_m1.py` runs
+finds **four** cells that have produced a mixed distribution at least once (all
+RTV-off, all M1). Each row pools every draw of that cell made so far:
+
+| cell | draws | pooled noop | $p(\text{noop})$ | $p^{16}$ |
+|---|---|---|---|---|
+| `relu/static` M1.1 | 5 | 50/94 | **0.532** | **4.1e-5** |
+| `transpose/dynamic` M1.1 | 3 | 3/48 | 0.0625 | 5.4e-20 |
+| `transpose/static` M1.1 | 3 | 2/48 | 0.0417 | 8.3e-23 |
+| `layer_norm/dynamic` M1.2 | 3 | 1/48 | 0.0208 | 1.3e-27 |
+
+So **four cells are nondeterministic, but only one is nondeterministic enough to
+matter.** The reduction rule (`reduce_verdicts`) is conservative — any `runtime`
+run wins, and any `corrupts` beats `noop` — so a recorded cell flips only when
+*every* one of the N runs lands in the weaker bucket. For the three
+`transpose`/`layer_norm` cells $p(\text{noop})$ is ~1/16 or less, making that
+$\lesssim 10^{-19}$: they are nondeterministic in the strict sense and stable in
+every practical sense. `relu/static` M1.1 RTV-off, at $p\approx0.53$, is the one
+real exposure, and it is what `N=16` is sized against.
+
+That matters because the record tally is an artifact: `relu/static` M1.1 RTV-off
+lands in the `never/noop` bucket only if *every* run lands noop, i.e. with
+probability $p^N$. At the old default `N=5` that is **4.3%** at the pooled $p$
+(10.2% at the 30-run study's $p=0.633$) — roughly one validation run in ten to
+twenty-five would have silently shifted a tally cell (54/1/41 → 54/2/40, counting
+`never`/`corrupts`, `never`/`noop`, `runtime`/`corrupts` over all 96 records).
+`_validate_m1.py` therefore defaults to `N_REPEAT=16` (env `M1_REPEAT`).
+
+Note that this churns the *artifact* without moving the *gate*. A mutant counts as a
+`noop` false success (specs §7.1) only when it is noop in every run of **every**
+mode, and `relu/static` M1.1 RTV-**on** is deterministically 16/16
+`runtime/corrupts` — so the validator's exit code is reproducible at any `N`, and
+what `N=16` actually protects is the committed `distribution` text, not the verdict.
+
+No aggregate moves in any of these cases. All four cells reduce to the same
+`outcome`/`manifest` pair in every sample, and `stats.json` was byte-identical
+across the re-run: the reduction is what makes the aggregate stable even though the
+raw draw is not.
+
+**The residual risk at `N=16` is an order of magnitude, not a precise figure.**
+$p(\text{noop})$ is itself only known by sampling, and five independent draws of
+this cell disagree (the validator runs in a tempdir, so its draws are genuinely
+separate from any `run.sh` draw, and the two validator runs are separate from each
+other). The pool below is a **snapshot as of 2026-09-10**; every further run of
+this cell adds a draw and will shift $p$ slightly, which is itself the point — the
+figure is an estimate, not a constant:
+
+| draw | runs | $p(\text{noop})$ | implied $p^{16}$ |
+|---|---|---|---|
+| 30-run study (above) | 19/30 | 0.633 | 6.7e-4 |
+| committed `mutants.jsonl` | 12/16 | 0.750 | 1.0e-2 |
+| `_validate_m1.py` run #1 | 7/16 | 0.438 | 1.8e-6 |
+| fresh `./run.sh all` | 7/16 | 0.438 | 1.8e-6 |
+| `_validate_m1.py` run #2 | 5/16 | 0.3125 | 8.3e-9 |
+| **pooled** | **50/94** | **0.532** | **4.1e-5** |
+
+Pooling all 94 runs gives $p=0.532$ with a Wilson 95% interval of $[0.432, 0.630]$,
+so the flip risk at $N=16$ is **4.1e-5 (~1 in 24,000) at the point estimate, with a
+95% interval spanning ~1.5e-6 (~1 in 685,000) to ~6.1e-4 (~1 in 1600)**. Raising `N`
+narrows this, but the honest reading is "roughly 1 in 20,000, plausibly anywhere
+from 1 in 1600 to 1 in 685,000" — quoting any single figure (the 6.6e-4 an earlier
+revision of this lane carried, derived from one 30-run draw) overstates the
+precision. What is *not* uncertain is the direction: `N=5` was ~4-10%, and `N=16` is
+at least two orders of magnitude better, about three at the point estimate.
 
 | N | 5 | 8 | 12 | 16 |
 |---|---|---|---|---|
-| P(tally cell flips) | 1.0e-1 | 2.6e-2 | 4.2e-3 | **6.6e-4** |
+| P(tally cell flips) at pooled p=0.532 | 4.3e-2 | 6.4e-3 | 5.1e-4 | **4.1e-5** |
 
-The extra wall-clock is spent only on that one cell — every other (mutant, mode) is
-deterministic, so its N runs finish in milliseconds.
+The extra wall-clock is not spent only on that one cell — the lane repeats *every*
+(mutant, mode) cell, and three others are nondeterministic too — but it is only
+*needed* for that one. The other three have $p(\text{noop})\le1/16$, so their
+flip probability is $\lesssim10^{-19}$ and no realistic `N` would change their
+recorded outcome.
 
 `_validate_m1.py` runs each (mutant, mode) `N_REPEAT` times via
 `mlirbench.classify_repeat` and reduces the verdict over the measured distribution
@@ -334,11 +397,11 @@ The full-size `low` minimal was run with `M1_REPEAT=1` rather than the committed
 `16`, because 16 repeats at full size is hours of wall-clock and the repeat count
 exists to sample *nondeterminism*, not to test size correctness. Its RTV split
 therefore reads `never:46, runtime:2` against the committed `never:45, runtime:3`:
-the single nondeterministic cell (`relu/static` M1.1 RTV-off, p(noop)=0.633 per the
-table above) sampled once instead of 16 times. That is the expected consequence of
-N=1, not a size effect — the injection census, the §5.1 expectation check, and every
-deterministic cell are unchanged. The committed artifact keeps `M1_REPEAT=16` at
-small size.
+the one nondeterministic cell that can actually flip (`relu/static` M1.1 RTV-off,
+p(noop)=0.532 pooled over 94 runs — see the risk table above) sampled once instead
+of 16 times. That is the expected consequence of N=1, not a size effect — the
+injection census, the §5.1 expectation check, and every deterministic cell are
+unchanged. The committed artifact keeps `M1_REPEAT=16` at small size.
 
 ### S9 is size-invariant on `linalg` but NOT on `low`
 

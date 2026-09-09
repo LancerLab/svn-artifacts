@@ -84,14 +84,22 @@ N_TARGET = C.N_TARGET_PER_CLASS
 # (mutant, mode) is therefore run N_REPEAT times and the verdict reduced over the
 # distribution (mlirbench.classify_repeat / reduce_verdicts).
 #
-# N_REPEAT is sized against the ONE measured coin-flip cell, relu/static M1.1 at
-# RTV-off: p(noop) = 0.633 over 30 runs.  Its tally cell reads never/noop only if
-# EVERY run lands noop, i.e. with probability p^N:
-#     N=5 -> 1.0e-1    N=8 -> 2.6e-2    N=12 -> 4.2e-3    N=16 -> 6.6e-4
-# N=16 puts the record artifact's reproducibility risk near 1-in-1500.  Every
-# other cell is deterministic -- RTV-on is 30/30 runtime/corrupts at both relu
-# shapes, and relu/dyn RTV-off is 30/30 never/noop -- so the extra wall-clock is
-# spent on the one cell that needs it.  The per-run timeout is short because a
+# N_REPEAT is sized against the ONE cell whose recorded outcome can realistically
+# flip, relu/static M1.1 at RTV-off: p(noop) = 0.532 pooled over 94 runs across
+# five independent draws (30-run study 19/30, committed artifact 12/16, two
+# validator runs 7/16 and 5/16, one fresh `run.sh all` 7/16).  Its tally cell
+# reads never/noop only if EVERY run lands noop, i.e. with probability p^N:
+#     N=5 -> 4.3e-2    N=8 -> 6.4e-3    N=12 -> 5.1e-4    N=16 -> 4.1e-5
+# The 95% interval on that p is [0.432, 0.630], so the N=16 risk is honestly
+# ~1.5e-6..6.1e-4 -- quote the interval, not the point estimate.  Three other
+# cells (transpose/static + transpose/dynamic M1.1, layer_norm/dynamic M1.2, all
+# RTV-off) have also produced a mixed distribution at least once, but at
+# p(noop)<=1/16 their flip probability is <=1e-19, so they are nondeterministic
+# in the strict sense and stable in every practical sense.  NOTE: the
+# "MODE-DEPENDENT DEFECT(S)" this validator reports are a DIFFERENT set -- cells
+# where RTV-off and RTV-on disagree -- and must not be conflated with the
+# mixed-distribution cells.
+# The per-run timeout is short because a
 # correct kernel finishes in milliseconds, so a hang is a property of the defect,
 # not of the workload.  Both are env-overridable (M1_REPEAT / M1_RUN_TIMEOUT) so a
 # quick check or a deeper characterization can be run without editing the file.

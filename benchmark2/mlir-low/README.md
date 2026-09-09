@@ -40,6 +40,27 @@ record (manifest §8). `raw/` **is** committed (unlike `iree`, which gitignores 
 so every committed number traces directly to committed raw JSON — satisfying
 homework-check I4 outright rather than by provenance note.
 
+**Reproducibility caveat.** Re-running `./run.sh all` reproduces every committed
+artifact byte-for-byte *except* the `distribution` strings on the nondeterministic
+cells. Four cells have produced a mixed distribution at least once (all RTV-off, all
+M1): `relu/static` M1.1, `transpose/static` M1.1, `transpose/dynamic` M1.1, and
+`layer_norm/dynamic` M1.2. That field records a 16-sample draw from genuinely
+undefined behaviour, so its split varies run to run — e.g. `relu/static` reads
+`12x never/noop, 4x runtime/corrupts` in the committed file and `7x/9x` in a fresh
+run. Every one of these cells reduces to the *same* `outcome`/`manifest` pair under
+the lane's conservative reduction rule (any `runtime` wins; any `corrupts` beats
+`noop`), so no aggregate in `stats.json` moves — it was byte-identical across the
+re-run. Only the raw distribution text moves, on up to four lines. A dirty `git
+diff` confined to those `distribution` strings after a re-run is expected and is
+**not** a regression. The `mlir-linalg` lane has no such cell and is
+byte-reproducible throughout: its 120 M2 records are all `compile` (68, verifier
+rejects a shape mutant — compilation is deterministic) or `never`/`corrupts` (40,
+in-bounds wrong output, not undefined behaviour) or `n/a` (12), with **zero**
+`runtime` outcomes, so nothing samples UB and it runs at `n_repeat=1`. That is a
+structural argument, not a repeated-sample one: an M2 shape-contract defect either
+fails the verifier or stays within its allocation, unlike M1.1's dropped boundary
+mask whose out-of-bounds write is genuinely UB.
+
 ## Census arithmetic (§5.1 condition 2)
 
 | | |
@@ -188,16 +209,29 @@ this is a real exposure test rather than a repeat:
 The full-size `minimal` was run with `M1_REPEAT=1` rather than the committed `16`,
 because 16 repeats at full size is hours of wall-clock and the repeat count exists to
 sample *nondeterminism*, not to test size correctness. Its RTV split therefore reads
-`never:46, runtime:2` against the committed `never:45, runtime:3`: the single
-nondeterministic cell (`relu/static` M1.1 RTV-off) sampled once instead of 16 times.
+`never:46, runtime:2` against the committed `never:45, runtime:3`: the one
+nondeterministic cell that can actually flip (`relu/static` M1.1 RTV-off) sampled
+once instead of 16 times.
 That cell is a genuine coin flip — the committed small-size record logged
 `12x never/noop, 4x runtime/corrupts` (p(noop)=0.75), the separate 30-run study in
-`../mlir-shared/README.md` measured 0.633, and a fresh `_validate_m1.py` run measured
-0.44 — so which bucket it lands in varies run to run by construction. That is the
+`../mlir-shared/README.md` measured 0.633, and three later draws measured 0.44,
+0.44 and 0.31 — so which bucket it lands in varies run to run by construction. That is the
 expected consequence of N=1, not a size effect: the injection census, the §5.1
 expectation check, and every deterministic cell are unchanged. The committed artifact
-keeps `M1_REPEAT=16` at small size, which puts the risk of a tally cell flipping at
-6.6e-4 (~1 in 1500).
+keeps `M1_REPEAT=16` at small size. Pooling every sampled run of that cell
+available as of 2026-09-10 gives $p(\text{noop})=0.532$ (50/94 across five
+independent draws), so the risk of the tally cell flipping on a re-run is
+**4.1e-5 (~1 in 24,000) at the point estimate** — but $p$ is itself only known by
+sampling and the five draws disagree, so the honest 95% interval spans ~1 in 1600
+to ~1 in 685,000. See `../mlir-shared/README.md` for the full table. What is not
+uncertain is the direction: `N=5` was ~4-10%, and `N=16` is at least two orders of
+magnitude better, about three at the point estimate.
+
+Three other cells (`transpose/static` and `transpose/dynamic` M1.1,
+`layer_norm/dynamic` M1.2, all RTV-off) have also produced a mixed distribution at
+least once, but at $p(\text{noop})\le1/16$ their flip probability is
+$\lesssim10^{-19}$ — nondeterministic in the strict sense, stable in every practical
+sense, and none of them moved the RTV split at N=1.
 
 ## Breadth gap — FLAGGED FOLLOW-UP for the coordinator
 
