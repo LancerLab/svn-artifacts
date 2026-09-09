@@ -56,7 +56,9 @@ never rebuilt.
 - Classes: **M1 element-access**, **M2 shape-compatibility**, **M3
   hardware-constraint**. Iteration-validity folded into M1; hw-constraint
   reinstated. Out of scope (named): concurrency safety, numeric correctness.
-- **Equal count: N = 40 per class → 160 total.**
+- **Equal count: N = 40 per class → 120 total.** *(was "160", stale from the
+  pre-fold 4-class layout; owner decision 2026-09-09 — see
+  `specs/mutation-specs.md` §0 and §5.1.)*
 - Specs + §3.3 translation table: `specs/mutation-specs.md`.
 - Minimal coverage set vs full suite split: `specs/mutation-specs.md` §5.
 
