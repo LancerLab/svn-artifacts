@@ -7,7 +7,11 @@
 // - case7: [128, channels, 112, 112] --> [128, channels, 56, 56] (Dynamic)
 __co__ auto max_pool2d7(f32 [128, channels, 112, 112] input) {
   f32 [input.span(0), input.span(1), input.span(2)/2, input.span(3)/2] output;
-  parallel p by 8, q by 4 {
+  // C=16 caps the channel split at q*c_tile=16, so the batch dim must absorb
+  // the rest: at p=8 each thread holds 16*1*112*112*4 = 784 KB of local
+  // memory, over the 256 KB ceiling.  p=32 gives 4*1*112*112*4 = 196 KB
+  // (+49 KB output), which fits.
+  parallel p by 32, q by 4 {
     foreach {n_tile, c_tile} in [1, 4] {
       l1_input = dma.copy input.chunkat(n_tile#p, c_tile#q, _, _) => local;
       local f32[l1_input.span(0), l1_input.span(1), l1_input.span(2)/2, l1_input.span(3)/2] l1_out;

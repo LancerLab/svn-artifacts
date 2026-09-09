@@ -8,7 +8,12 @@
 // - case5: [batch_size, 256, 56, 56] --> [batch_size, 256, 28, 28] (Dynamic)
 __co__ auto max_pool2d5(f32 [batch_size, 256, 56, 56] input) {
   f32 [input.span(0), input.span(1), input.span(2)/2, input.span(3)/2] output;
-  parallel p by 4, q by 4 {
+  // Tile granularity is bounded by the per-thread LOCAL memory budget: each
+  // thread holds one [batch/p, C/(q*c_tile), H, W] input tile plus its pooled
+  // output.  At p=q=4 that is 4*16*56*56*4 = 784 KB, far over the 256 KB CUDA
+  // local-memory ceiling, so the launch is rejected.  p=q=8 shrinks it to
+  // 2*8*56*56*4 = 196 KB (+49 KB output), which fits.
+  parallel p by 8, q by 8 {
     foreach {n_tile, c_tile} in [1, 4] {
       l1_input = dma.copy input.chunkat(n_tile#p, c_tile#q, _, _) => local;
       local f32[l1_input.span(0), l1_input.span(1), l1_input.span(2)/2, l1_input.span(3)/2] l1_out;

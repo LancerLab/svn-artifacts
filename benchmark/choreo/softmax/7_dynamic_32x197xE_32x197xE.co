@@ -6,9 +6,13 @@
 // case7: [32, 197, embed_dim] --> [32, 197, embed_dim] (Dynamic)
 __co__ auto softmax7(f32 [32, 197, embed_dim] input) {
   f32 [input.span(0), input.span(1), input.span(2)] output;
-  parallel p by 4 {
+  // The reduction runs over embed_dim, so the sequence dim can be split too.
+  // Unsplit, each thread holds 1*197*768*4 = 591 KB of input plus an equal
+  // output tile, far over the 256 KB CUDA local-memory ceiling.  q by 197
+  // reduces the tile to 1*1*768*4 = 3 KB (+3 KB output).
+  parallel p by 4, q by 197 {
     foreach {i} in [input.span(0)/#p] {
-      l1_input = dma.copy input.chunkat(i#p, _, _) => local;
+      l1_input = dma.copy input.chunkat(i#p, q, _) => local;
       local f32[1, l1_input.span(1), l1_input.span(2)] l1_out;
       foreach {j} in [l1_input.span(1)] {
         // Find max for numerical stability
@@ -28,7 +32,7 @@ __co__ auto softmax7(f32 [32, 197, embed_dim] input) {
         foreach {k} in [l1_input.span(2)]
           l1_out.at(0, j, k) = l1_out.at(0, j, k) / sum_exp;
       }
-      dma.copy l1_out => output.chunkat(i#p, _, _);
+      dma.copy l1_out => output.chunkat(i#p, q, _);
     }
   }
   return output;

@@ -43,6 +43,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gpu_local_mem_capacity import capacity_flag  # noqa: E402
+
 WORKSPACE_ROOT = Path(__file__).parent.parent
 
 # build-debug supports --stats; build-release does not (treats it as positional arg)
@@ -86,7 +89,7 @@ def run_choreo(choreo: Path, co_file: Path, timeout_s: int = 120,
     flag merely enables the code-generation paths these kernels require.
     """
     result = subprocess.run(
-        [str(choreo), "--stats", "-es", "--max-local-mem-capacity=2000000", "-t", "cute"]
+        [str(choreo), "--stats", "-es", capacity_flag(), "-t", "cute"]
         + (extra_flags or []) + [str(co_file)],
         capture_output=True, text=True, timeout=timeout_s,
         stdin=subprocess.DEVNULL,

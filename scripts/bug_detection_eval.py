@@ -30,6 +30,9 @@ import tempfile
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gpu_local_mem_capacity import capacity_flag  # noqa: E402
+
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent
 BENCH_DIR = ROOT / "benchmark" / "choreo"
@@ -184,7 +187,7 @@ def test_svn_detection(choreo_bin: str, mutant: Path, target: str = "cute") -> s
     """Test if SVN detects the bug. Returns resolution stage."""
     try:
         result = subprocess.run(
-            [choreo_bin, "-t", target, "-es", "-fc", "--max-local-mem-capacity=2000000", "--show-assess", str(mutant), "-o", "/dev/null"],
+            [choreo_bin, "-t", target, "-es", "-fc", capacity_flag(), "--show-assess", str(mutant), "-o", "/dev/null"],
             capture_output=True, text=True, timeout=30
         )
         if result.returncode != 0:

@@ -9,7 +9,10 @@
 // - case13: [batch_size, channels, 128, 128] --> [batch_size, channels, 32, 32] (Dynamic)
 __co__ auto max_pool2d13(f32 [batch_size, channels, 128, 128] input) {
   f32 [input.span(0), input.span(1), input.span(2)/4, input.span(3)/4] output;
-  parallel p by 4, q by 4 {
+  // At p=4 each thread holds 4*1*128*128*4 = 256 KB of input plus 16 KB of
+  // output = 272 KB, just over the 262144-byte local-memory ceiling.  p=8
+  // halves the input tile to 128 KB (+8 KB output).
+  parallel p by 8, q by 4 {
     foreach {n_tile, c_tile} in [1, 4] {
       l1_input = dma.copy input.chunkat(n_tile#p, c_tile#q, _, _) => local;
       local f32[l1_input.span(0), l1_input.span(1), l1_input.span(2)/4, l1_input.span(3)/4] l1_out;

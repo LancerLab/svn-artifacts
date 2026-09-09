@@ -31,6 +31,9 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gpu_local_mem_capacity import capacity_flag  # noqa: E402
+
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 CHOREO_CANDIDATES = [
     WORKSPACE_ROOT / "croqtile" / "build-release" / "choreo",
@@ -62,7 +65,7 @@ def compile_once(choreo: Path, src: Path, out_dir: Path) -> Tuple[Optional[float
     """Run `choreo -es src -t cute -o <tmp>` and return (wall-time in ms, ok).
     Returns (None, False) on timeout, (ms, False) on compile error."""
     out = out_dir / (src.stem + ".gen")
-    cmd = [str(choreo), "-es", "--max-local-mem-capacity=2000000", "-t", "cute", str(src), "-o", str(out)]
+    cmd = [str(choreo), "-es", capacity_flag(), "-t", "cute", str(src), "-o", str(out)]
     t0 = time.perf_counter()
     try:
         result = subprocess.run(cmd, capture_output=True, text=True,

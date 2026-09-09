@@ -10,7 +10,11 @@ __co__ auto softmax5(f32 [batch_size, 1280, height, width] input) {
   f32 [input.span] output;
   parallel p by 4 {
     foreach batch_idx in [input.span(0)/#p] {
-      foreach {h_tile, w_tile} in [2, 2] {
+      // The reduction runs over the CHANNEL dim, so the spatial tile is free to
+      // be small.  At [2,2] each thread holds 1*1280*7*7*4 = 245 KB of input
+      // plus an equal output tile = 490 KB, over the 256 KB CUDA local-memory
+      // ceiling.  [7,7] (the idiom used by cases 6 and 9) gives 20 KB + 20 KB.
+      foreach {h_tile, w_tile} in [7, 7] {
         l1_input = dma.copy input.chunkat(batch_idx#p, _, h_tile, w_tile) => local;
         local f32[l1_input.span] l1_out;
         foreach {i, j} in [l1_input.span(2), l1_input.span(3)] {

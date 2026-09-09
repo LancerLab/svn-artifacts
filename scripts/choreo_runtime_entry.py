@@ -27,6 +27,9 @@ import tempfile
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from gpu_local_mem_capacity import capacity_flag  # noqa: E402
+
 WORKSPACE_ROOT = Path(__file__).resolve().parent.parent
 CHOREO_CANDIDATES = [
     WORKSPACE_ROOT / "build-release" / "choreo",
@@ -84,7 +87,10 @@ def _is_dynamic(co_file: Path) -> bool:
 
 def generate_script(choreo: Path, co_file: Path, out_sh: Path,
                     rtc_flags: List[str]) -> bool:
-    cmd = [str(choreo), "-gs", "-fc", "--max-local-mem-capacity=2000000", "-t", "cute", str(co_file),
+    # The capacity must be derived from the actual GPU: for dynamic shapes it
+    # sizes the per-thread local arena, and a value the driver cannot back
+    # makes every launch fail.  See gpu_local_mem_capacity.py.
+    cmd = [str(choreo), "-gs", "-fc", capacity_flag(), "-t", "cute", str(co_file),
            *rtc_flags, "-o", str(out_sh)]
     try:
         subprocess.run(cmd, capture_output=True, text=True,
