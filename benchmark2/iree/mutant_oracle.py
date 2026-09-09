@@ -22,6 +22,7 @@ Output: raw/mutant_oracle.jsonl
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -34,19 +35,26 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import gen_iree_cases as g  # noqa: E402
 
 RAW = ROOT / "benchmark2" / "iree" / "raw"
-IREE = Path("/home/gxf/.tools/iree-dev-20260908-venv/bin")
+IREE = Path(os.environ.get(
+    "IREE_BIN_DIR", "/home/gxf/.tools/iree-dev-20260908-venv/bin"))
 COMPILE = IREE / "iree-compile"
 RUN = IREE / "iree-run-module"
+CUDA_TARGET = os.environ.get("IREE_CUDA_TARGET", "sm_120")
+CUDA_FEATURES = os.environ.get("IREE_CUDA_FEATURES", "")
+if CUDA_TARGET == "sm_120" and not CUDA_FEATURES:
+    CUDA_FEATURES = "+ptx87"
 TMP = RAW / "_oracle"
 TMP.mkdir(parents=True, exist_ok=True)
 
 
 def compile_mlir(text, name):
     (TMP / f"{name}.mlir").write_text(text)
-    r = subprocess.run([str(COMPILE), str(TMP / f"{name}.mlir"),
-                        "--iree-hal-target-backends=cuda", "--iree-cuda-target=sm_120",
-                        "--iree-cuda-target-features=+ptx87", "-o", str(TMP / f"{name}.vmfb")],
-                       capture_output=True)
+    cmd = [str(COMPILE), str(TMP / f"{name}.mlir"),
+           "--iree-hal-target-backends=cuda", f"--iree-cuda-target={CUDA_TARGET}"]
+    if CUDA_FEATURES:
+        cmd += [f"--iree-cuda-target-features={CUDA_FEATURES}"]
+    cmd += ["-o", str(TMP / f"{name}.vmfb")]
+    r = subprocess.run(cmd, capture_output=True)
     assert r.returncode == 0, f"compile fail: {r.stderr.decode()[:300]}"
     return TMP / f"{name}.vmfb"
 

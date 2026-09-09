@@ -18,6 +18,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -26,11 +27,14 @@ ROOT = Path(__file__).resolve().parent.parent            # benchmark2/
 LANE = ROOT / "iree"
 RAW = LANE / "raw"
 KERNELS = LANE / "kernels"
-IREE_BIN = Path("/home/gxf/.tools/iree-dev-20260908-venv/bin")
+IREE_BIN = Path(os.environ.get(
+    "IREE_BIN_DIR", "/home/gxf/.tools/iree-dev-20260908-venv/bin"))
 IREE_COMPILE = IREE_BIN / "iree-compile"
 IREE_RUN = IREE_BIN / "iree-run-module"
-CUDA_TARGET = "sm_120"
-CUDA_FEATURES = "+ptx87"
+CUDA_TARGET = os.environ.get("IREE_CUDA_TARGET", "sm_120")
+CUDA_FEATURES = os.environ.get("IREE_CUDA_FEATURES", "")
+if CUDA_TARGET == "sm_120" and not CUDA_FEATURES:
+    CUDA_FEATURES = "+ptx87"
 SMALL = 8
 FULL = 128
 
@@ -81,8 +85,10 @@ def parse_func(mlir: Path):
 
 def compile_kernel(mlir: Path, vmfb: Path, clog: Path, timeout=120) -> str:
     cmd = [str(IREE_COMPILE), str(mlir), "--iree-hal-target-backends=cuda",
-           f"--iree-cuda-target={CUDA_TARGET}",
-           f"--iree-cuda-target-features={CUDA_FEATURES}", "-o", str(vmfb)]
+           f"--iree-cuda-target={CUDA_TARGET}"]
+    if CUDA_FEATURES:
+        cmd += [f"--iree-cuda-target-features={CUDA_FEATURES}"]
+    cmd += ["-o", str(vmfb)]
     try:
         with clog.open("w") as f:
             r = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT,

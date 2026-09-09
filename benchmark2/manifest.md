@@ -96,6 +96,18 @@ Each worker records its exact clone commit + build flags in `manifest.md` **at
   (`IREE_CUDA_FEATURES`); **sm_90 currently fails codegen config on both
   v3.11.0 and 2026-09-08 main — do not pick an sm_90 final host for this lane
   without re-testing** (§8.1 feasibility finding, 2026-09-09).
+  - **Root cause confirmed 2026-09-10 (re-test on H800):** `--iree-cuda-target=sm_90`
+    fails with `error: missing GPU target in #hal.executable.target` (exit 74) at
+    `linalg.generic`. `sm_89`/`sm_86`/`sm_80` compile fine; `sm_90`/`sm_90a` fail.
+    The pinned commit `ce36167c` (releases `rc20260908` **and** `rc20260909`, same
+    commit) has **no Hopper entry** in
+    `compiler/src/iree/compiler/Codegen/Dialect/GPU/TargetUtils/KnownTargets.cpp`
+    → `getNVIDIAGPUTargetDetails()`: the StringSwitch lists `sm_60/61/62, sm_70/72,
+    sm_75, sm_80/86/87, sm_89, sm_120, sm_121` but **skips `sm_90`** (and
+    `normalizeNVIDIAGPUTarget` maps neither `hopper` nor `h100`). So
+    `getCUDATargetDetails("sm_90")` returns null and no `#hal.executable.target`
+    is materialized. The GPU-capability table is still missing Hopper as of IREE
+    `main` (2026-09-10), so no nearby release fixes it.
 - Lane run host (correctness, current): `garfee-ubuntu`, 1 × RTX 5060 Ti
   (sm_120), driver 580.95.05 / CUDA 13.0. **Differs from §2 machine
   precondition (2×H800)** — discrete E1/E2/E3 outcomes only; arch recorded per

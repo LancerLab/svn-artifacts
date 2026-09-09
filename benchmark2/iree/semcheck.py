@@ -11,6 +11,7 @@ Output: raw/semcheck.jsonl — {op, shapes, max_abs_err, pass}
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import sys
@@ -23,9 +24,14 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import gen_iree_cases as g  # noqa: E402
 
 RAW = ROOT / "benchmark2" / "iree" / "raw"
-IREE_BIN = Path("/home/gxf/.tools/iree-dev-20260908-venv/bin")
+IREE_BIN = Path(os.environ.get(
+    "IREE_BIN_DIR", "/home/gxf/.tools/iree-dev-20260908-venv/bin"))
 IREE_COMPILE = IREE_BIN / "iree-compile"
 IREE_RUN = IREE_BIN / "iree-run-module"
+CUDA_TARGET = os.environ.get("IREE_CUDA_TARGET", "sm_120")
+CUDA_FEATURES = os.environ.get("IREE_CUDA_FEATURES", "")
+if CUDA_TARGET == "sm_120" and not CUDA_FEATURES:
+    CUDA_FEATURES = "+ptx87"
 TMP = RAW / "_semcheck"
 TMP.mkdir(parents=True, exist_ok=True)
 
@@ -34,12 +40,12 @@ def compile_mlir(text: str, name: str) -> Path:
     mlir = TMP / f"{name}.mlir"
     vmfb = TMP / f"{name}.vmfb"
     mlir.write_text(text)
-    r = subprocess.run([str(IREE_COMPILE), str(mlir),
-                        "--iree-hal-target-backends=cuda",
-                        "--iree-cuda-target=sm_120",
-                        "--iree-cuda-target-features=+ptx87",
-                        "-o", str(vmfb)],
-                       capture_output=True)
+    cmd = [str(IREE_COMPILE), str(mlir), "--iree-hal-target-backends=cuda",
+           f"--iree-cuda-target={CUDA_TARGET}"]
+    if CUDA_FEATURES:
+        cmd += [f"--iree-cuda-target-features={CUDA_FEATURES}"]
+    cmd += ["-o", str(vmfb)]
+    r = subprocess.run(cmd, capture_output=True)
     if r.returncode != 0:
         raise RuntimeError(f"compile fail {name}: {r.stderr.decode()[:300]}")
     return vmfb

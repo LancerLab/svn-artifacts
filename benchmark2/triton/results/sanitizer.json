@@ -174,20 +174,20 @@
   "category": "transpose",
   "class": "M1",
   "mutant_id": "transpose-f2",
-  "flagged": "true",
-  "fault": "oob",
+  "flagged": "false",
+  "fault": "none",
   "exercised": "true",
-  "detail": "sanitizer: EXC AttributeError: 'int' object has no attribute 'decode'"
+  "detail": "clean"
  },
  {
   "toolchain": "triton",
   "category": "transpose",
   "class": "M1",
   "mutant_id": "transpose-f3",
-  "flagged": "true",
-  "fault": "oob",
+  "flagged": "false",
+  "fault": "none",
   "exercised": "true",
-  "detail": "sanitizer: EXC AttributeError: 'int' object has no attribute 'decode'"
+  "detail": "clean"
  },
  {
   "toolchain": "triton",
@@ -274,10 +274,10 @@
   "category": "embedding",
   "class": "M1",
   "mutant_id": "embedding-f2",
-  "flagged": "false",
-  "fault": "none",
+  "flagged": "true",
+  "fault": "oob",
   "exercised": "true",
-  "detail": "clean"
+  "detail": "sanitizer: EXC AttributeError: 'int' object has no attribute 'decode'"
  },
  {
   "toolchain": "triton",

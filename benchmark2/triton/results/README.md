@@ -1,7 +1,10 @@
-# Triton lane results (E1 L1+L2, E2, E3, S12) — 2026-09-09
+# Triton lane results (E1 L1+L2, E2, E3, S12) — 2026-09-10 (sm_90 final host)
 
-Machine: 1× NVIDIA RTX 5060 Ti (sm_120), driver 580.95.05, CUDA 13.0,
+Machine: 2× NVIDIA H800 PCIe (sm_90), driver 590.48.01, CUDA 13.0 toolkit,
 Triton 3.8.0 (uv venv, torch-free: gpubuf.py ctypes/libcudart shim + numpy refs).
+Arch is auto-detected by Triton (no separate flag): every record carries
+`"arch": "sm_90"` (added to kernel/mutant records this run). Re-derived on the
+sm_90 host; outcomes are arch-invariant and match the 2026-09-09 sm_120 dev run.
 
 ## S1 — detection matrix (bare Triton) — FINAL, full-size runs
 

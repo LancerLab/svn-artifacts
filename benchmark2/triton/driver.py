@@ -46,6 +46,13 @@ def triton_version() -> str:
     return triton.__version__
 
 
+def current_arch() -> str:
+    """Auto-detected GPU arch as 'sm_90'/'sm_120' (Triton targets the GPU
+    it runs on; there is no separate arch flag in this lane)."""
+    from triton.runtime import driver
+    return f"sm_{driver.active.get_current_target().arch}"
+
+
 # ---------------------------------------------------------------- oracle
 def oracle_check(category, ref_out, mut_out) -> str:
     """manifest field: corrupts | noop"""
@@ -73,6 +80,7 @@ def kernel_record(category, size, compile_st, run_st, ref_st, device):
         "kernel_hash": "",
         "size": size,
         "gpu_device": device,
+        "arch": current_arch(),
         "exclusive": "false",
         "compile": compile_st,
         "run": run_st,
@@ -96,6 +104,7 @@ def mutant_record(category, cls, paper_cat, mid, level, outcome, manifest,
         "paper_category": paper_cat,
         "mutant_id": mid,
         "level": str(level),
+        "arch": current_arch(),
         "outcome": outcome,
         "stage": stage_of(outcome),
         "manifest": manifest,
@@ -107,7 +116,7 @@ def mutant_record(category, cls, paper_cat, mid, level, outcome, manifest,
 # ---------------------------------------------------------------- gating
 def gate_kernel(category: str, size: str, device: str, raw: Path):
     """Compose gate: import the kernel module and run its built-in self-check."""
-    mod = f"{category}"
+    mod = KERNEL_MOD.get(category, category)
     try:
         subprocess.run(
             [sys.executable, str(KERNELS / f"{mod}.py"), "--size", size],
