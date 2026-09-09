@@ -1,0 +1,190 @@
+{
+ "batch_norm": {
+  "case": "10_dynamic_16x512xHxW_512_512_16x512xHxW.co",
+  "defines": {
+   "H": "16",
+   "W": "16",
+   "N": "16",
+   "C": "512",
+   "NUM_BLOCK": "16",
+   "NUM_THREAD": "1",
+   "BN_EPS": "0"
+  },
+  "alloc_calls": [
+   "N, C, H, W",
+   "C",
+   "C"
+  ]
+ },
+ "concat": {
+  "case": "10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW.co",
+  "defines": {
+   "K": "4",
+   "L": "4",
+   "I": "16",
+   "J1": "512",
+   "J2": "512",
+   "J_OUT": "1024",
+   "NUM_BLOCK": "2",
+   "NUM_THREAD": "1"
+  },
+  "alloc_calls": [
+   "I, J1, K, L",
+   "I, J2, K, L"
+  ]
+ },
+ "conv2d": {
+  "case": "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D.co",
+  "defines": {},
+  "alloc_calls": []
+ },
+ "elemwise_add": {
+  "case": "10_dynamic_16x512xHxW_16x512xHxW_16x512xHxW.co",
+  "defines": {
+   "I": "16",
+   "J": "512",
+   "K": "8",
+   "L": "3",
+   "NUM_BLOCK": "2",
+   "NUM_THREAD": "8",
+   "N0": "8",
+   "N1": "3"
+  },
+  "alloc_calls": [
+   "I, J, K, L",
+   "I, J, K, L"
+  ]
+ },
+ "embedding": {
+  "case": "10_dynamic_32xS_Vx768_32xSx768.co",
+  "defines": {
+   "NUM_BLOCK": "8",
+   "NUM_THREAD": "1",
+   "seq_len": "128",
+   "vocab_size": "999"
+  },
+  "alloc_calls": []
+ },
+ "gelu": {
+  "case": "10_dynamic_16x512xHxW.co",
+  "defines": {
+   "scale_h": "19",
+   "scale_w": "19"
+  },
+  "alloc_calls": []
+ },
+ "layer_normalization": {
+  "case": "10_dynamic_16x512xHxW_HxW_HxW.co",
+  "defines": {
+   "I": "16",
+   "J": "512",
+   "K": "128",
+   "L": "27",
+   "NUM_BLOCK": "2",
+   "NUM_THREAD": "8",
+   "N1": "128",
+   "N2": "27"
+  },
+  "alloc_calls": [
+   "I, J, K, L",
+   "K, L",
+   "K, L",
+   "I, J, K, L"
+  ]
+ },
+ "matmul": {
+  "case": "10_dynamic_128x1280_1280xN_128xN.co",
+  "defines": {
+   "H": "1000"
+  },
+  "alloc_calls": []
+ },
+ "max_pool2d": {
+  "case": "10_dynamic_32xCxHxW_32xCxHd5xWd5.co",
+  "defines": {
+   "channels": "16",
+   "height": "35",
+   "width": "35"
+  },
+  "alloc_calls": []
+ },
+ "reduce_mean": {
+  "case": "10_dynamic_32xSx768_32x768.co",
+  "defines": {
+   "N": "32",
+   "H": "768",
+   "SEQ_LEN": "2048",
+   "NUM_BLOCK": "2",
+   "NUM_THREAD": "8"
+  },
+  "alloc_calls": [
+   "N, SEQ_LEN, H"
+  ]
+ },
+ "relu": {
+  "case": "10_dynamic_16x512xHxW_16x512xHxW.co",
+  "defines": {
+   "I": "16",
+   "J": "512",
+   "K": "2",
+   "L": "2",
+   "BATCH_SIZE": "32",
+   "NUM_HEADS": "12",
+   "HEIGHT": "2",
+   "WIDTH": "2",
+   "SCALE_H": "112",
+   "SCALE_W": "112",
+   "SEQ_LEN": "512",
+   "TIME_STEPS": "100",
+   "VOCAB_SIZE": "30522",
+   "EMBED_DIM": "768",
+   "D_MODEL": "768",
+   "CHANNELS": "128",
+   "NUM_BLOCK": "8",
+   "NUM_THREAD": "8"
+  },
+  "alloc_calls": [
+   "I, J, K, L"
+  ]
+ },
+ "reshape": {
+  "case": "10_dynamic_64x128xHxW_64x128HW.co",
+  "defines": {
+   "height": "28",
+   "width": "28"
+  },
+  "alloc_calls": []
+ },
+ "sigmoid": {
+  "case": "10_dynamic_16x512xHxW.co",
+  "defines": {
+   "I": "16",
+   "J": "512",
+   "K": "7",
+   "L": "5",
+   "NUM_BLOCK": "2",
+   "NUM_THREAD": "8",
+   "N0": "7",
+   "N1": "5"
+  },
+  "alloc_calls": [
+   "I, J, K, L"
+  ]
+ },
+ "softmax": {
+  "case": "10_dynamic_16x512xHxW_16x512xHxW.co",
+  "defines": {
+   "scale_h": "56",
+   "scale_w": "56"
+  },
+  "alloc_calls": []
+ },
+ "transpose": {
+  "case": "10_dynamic_16x512xHxW_16xHxWx512.co",
+  "defines": {
+   "scale_h": "64",
+   "scale_w": "64"
+  },
+  "alloc_calls": []
+ }
+}
