@@ -217,6 +217,194 @@ N=5, 7 at N=12) — while the record tally stayed byte-identical across the N=5 
 N=12 runs. That is the intended split: the artifact is reproducible, the
 characterization is honestly reported as a sample.
 
+## S12 — external sanitizer supplement (real ASan, measured)
+
+Owner ruling: S12 is a **real measurement**, not `n/a`. The chain is
+
+```
+mlir-opt <bare pipeline> | mlir-translate --mlir-to-llvmir
+  | patch sanitize_address + target triple/datalayout
+  | opt -passes=asan | clang -fsanitize=address | run | parse report
+```
+
+Four defects in that chain had to be found and fixed before any number it produced
+could be trusted; all four are recorded in `mlirbench.py` and in
+`/memories/mlir-asan-instrumentation.md`. The short version: `clang` never
+instruments a `.ll` input (instrumentation must come from `opt -passes=asan`);
+LLVM's ASan pass only instruments functions carrying the `sanitize_address`
+attribute, which `mlir-translate` never emits; `mlir-translate` emits no
+`target triple`/`datalayout`, so ASan computes a wrong shadow offset and a genuine
+overflow surfaces as `SEGV on unknown address`; and a native link needs both runner
+`.so`s **plus** `LD_LIBRARY_PATH` set to `$LLVM_LIB` (rc=127 without it is a
+*loader* failure, not a kernel crash).
+
+S12 runs with **RTV off**. RTV's own `cf.assert` bounds checks would abort before
+the faulty access and make ASan silent — the measurement would then be of RTV, not
+of the external checker.
+
+### The false-negative gate
+
+Zero coverage is not a result. `run_asan` counts
+`call void @__asan_report_{load,store}(?:\d+|N)` sites in the instrumented IR and
+returns `stage="instrument"` with `exercised=False` when the count is 0. Grepping
+`__asan_load4` is **not** sufficient — those appear as declarations even when
+nothing was instrumented. `stats` refuses to report a run containing such a record:
+a zero-coverage record is split by stage into `rejected_before_run` (legitimate —
+the verifier killed it, no binary ever existed) or `not_instrumented` (hard failure
+— the chain is broken and the run is not green). Measured coverage on the mutants
+that did run: 7–13 sites on `low`, 23–44 on `linalg`.
+
+### Measured results
+
+| lane | class | flagged ∧ exercised | total | split |
+|---|---|---|---|---|
+| `mlir-low` | M1 | **38** | 48 | 38 flagged, 10 genuine misses |
+| `mlir-linalg` | M2 | **0** | 54 | 34 rejected before run, 20 ran clean |
+
+The two rows are the whole point of S12 and they must not be averaged. On `low` the
+injected defects are **memory** faults — an out-of-bounds index really does leave
+the allocation — so an external checker sees 38 of 48. On `linalg` they are
+**shape** faults: 34 of 54 never reach a binary at all because the verifier rejects
+the type contract at lowering, and the 20 that do run are all M2.5
+(partial-write / duplicate-write), which produce a wrong *result* while every
+access stays inside its allocation. A memory checker is structurally blind to those.
+That is the ledger-minus-sanitizer gap, and it matches what `iree` shows.
+
+### The 10 `low` misses, audited individually
+
+All 10 carry `instrumented` 7 or 13, so all are genuine sanitizer negatives rather
+than instrumentation failures.
+
+* **8× M1.6** (zero-stride / empty-range), 2 each on `layer_normalization`, `relu`,
+  `softmax`, `transpose`. The mutant performs **no out-of-bounds access at all** —
+  a zero stride or an empty range keeps every address inside the buffer. There is
+  nothing for ASan to report. The output is still wrong, so the mutant records
+  `outcome=never, manifest=corrupts`.
+* **2× M1.4** (transposed-stride), `relu` **dynamic** and `transpose` **dynamic**
+  only. Static M1.4 on both *is* flagged (`heap-buffer-overflow, 0B after end of
+  region`).
+
+### M1.4 is size-dependent — and the rule is exact
+
+`transposed-stride` swaps the **last two read indices** (`emit_low.py`:
+`idx[k], idx[k-1] = idx[k-1], idx[k]`). A swap of two indices only leaves the
+allocation when the two extents it swaps between **differ**; on equal extents the
+permuted address is still a legal address. So the miss set is a function of the
+shape table, not of the mutation, and it changes between sizes. Measured at both:
+
+| category | small dims | trailing equal? | small M1.4 | full dims | trailing equal? | full M1.4 |
+|---|---|---|---|---|---|---|
+| `relu` | `(2,3)` | no | static **flagged**, dyn clean | `(32,512,8,8)` | **yes** | both clean |
+| `softmax` | `(2,4)` | no | both **flagged** | `(16,512,8,8)` | **yes** | both clean |
+| `transpose` | `(2,3)` | no | static **flagged**, dyn clean | `(32,64)` | no | both **flagged** |
+| `layer_normalization` | `(2,2,4)` | no | both **flagged** | `(32,64,128)` | no | both **flagged** |
+
+All 16 cells follow the rule with no exceptions. The dynamic cells need one more
+step: `DYNAMIC_SLOT` binds `relu`/`softmax`/`transpose`'s **axis 0** to
+`_DYN_VALUE = 3`, so at small size `relu`'s `(2,3)` becomes a runtime-**square**
+`3x3` and `transpose`'s becomes `3x3` too — equal trailing extents, hence clean,
+while their static forms still have `(2,3)` and are flagged. At full size `relu`
+and `softmax` are square in the *static* table already (`8,8`), so both shapes go
+clean; `transpose` stays `(32,64)` and both shapes stay flagged.
+
+This is the same category of finding as M1.6: **a corruption that never leaves the
+allocation is invisible to any memory checker.** It is reported as a finding, not
+patched away by choosing dims that force the defect to be observable, because
+forcing output-observability would distort the kernel — the same reasoning as owner
+decision 3 below. The consequence for the paper is that S12's M1 flagged count is
+**38/48 at small size and 36/48 at full size**; the committed artifact reports the
+small-size figure and the size-dependence is documented here rather than hidden.
+
+### Full-size validation
+
+The kernel gate is committed at **both** sizes, matching the `iree` lane (311 small
++ 311 full). Full-size extents are ~1000× larger (`elemwise_add` is
+`32×512×768` ≈ 12.6M elements), so this is a real exposure test, not a repeat:
+
+| check | small | full |
+|---|---|---|
+| `linalg` e2 | 14/14 green | 14/14 green |
+| `low` e2 | 8/8 green | 8/8 green |
+| `linalg` minimal | 120 rec / 50 inj, §5.1 OK | 120 rec / 50 inj, §5.1 OK |
+| `low` minimal | 96 rec / 48 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK |
+| `linalg` s12 | 54 sanitized, reconciled | 54 sanitized, reconciled |
+| `low` s12 | 38 flagged / 10 miss | 36 flagged / 12 miss |
+
+The full-size `low` minimal was run with `M1_REPEAT=1` rather than the committed
+`16`, because 16 repeats at full size is hours of wall-clock and the repeat count
+exists to sample *nondeterminism*, not to test size correctness. Its RTV split
+therefore reads `never:46, runtime:2` against the committed `never:45, runtime:3`:
+the single nondeterministic cell (`relu/static` M1.1 RTV-off, p(noop)=0.633 per the
+table above) sampled once instead of 16 times. That is the expected consequence of
+N=1, not a size effect — the injection census, the §5.1 expectation check, and every
+deterministic cell are unchanged. The committed artifact keeps `M1_REPEAT=16` at
+small size.
+
+### S9 is size-invariant on `linalg` but NOT on `low`
+
+This was expected to hold on both lanes and does not. Measured RTV kernel guards,
+summed over each category's static+dynamic clean kernels:
+
+| category | `low` small | `low` full | `linalg` small | `linalg` full |
+|---|---|---|---|---|
+| `relu` | 20 | **32** | 6 | 6 |
+| `softmax` | 26 | **38** | 30 | 30 |
+| `transpose` | 20 | 20 | 6 | 6 |
+| `layer_normalization` | 42 | 42 | 48 | 48 |
+| `matmul` | — | — | 14 | 14 |
+| `concat` | — | — | 36 | 36 |
+| `elemwise_add` | — | — | 10 | 10 |
+| **S9 total** | **108** | **132** | **150** | **150** |
+
+The cause is the difference between the two surfaces, and it is structural rather
+than a defect. On `low` the kernels are **hand-tiled**: RTV instruments every
+`memref.load`/`store` inside the loop nest, so the guard count tracks the nest
+depth. `FULL_DIMS` makes `relu` `(32,512,8,8)` and `softmax` `(16,512,8,8)` —
+rank 4, against rank 2 at small size — so the nest is two levels deeper and each
+level contributes guards. On `linalg` the body is a `linalg.generic` whose access
+structure is fixed by its indexing maps, so the number of instrumented accesses does
+not grow with rank; `relu` stays at 3 guards per shape whether the tensor is rank 2
+or rank 4.
+
+**The committed S9 is the small-size figure** (108 / 150), matching the independent
+`_validate_rtv.py` census in the table below. `e3` is run at small size by
+`cmd_all`, and `remainder.jsonl` carries no size field — so a reviewer re-running
+`./run.sh e3 --full` on the `low` lane would get 132 and must not read the
+difference as a regression. This is the second measurement on this lane (after M1.4)
+whose value depends on the shape table, and both are documented rather than pinned
+away by choosing size-invariant dims.
+
+The S12 `instrumented` site counts are IR-structural and unchanged across sizes.
+
+The mutation battery and sanitizer supplement are measured at **one** size
+(`census.battery_size` / `census.s12_size` in `stats.json`), following `iree`, whose
+`mutants.jsonl` carries no size field at all. `totals.kernels` therefore spans both
+sizes while `census.n_records` spans one — the difference is not a shortfall.
+
+### The RTV contrast that makes the comparison fair
+
+Manifest §5.1 requires both RTV modes be reported, and the two lanes behave
+oppositely. These are **record** counts (each injection × shape × RTV mode), not
+injection counts:
+
+| lane | RTV off | RTV on | effect |
+|---|---|---|---|
+| `low` M1 | `never:45, runtime:3` | `never:10, runtime:38` | **flips dramatically** |
+| `linalg` M2 | `compile:34, never:20, n/a:6` | identical | **no change at all** |
+
+Bare MLIR on an out-of-bounds `memref.load` silently returns garbage with exit 0, so
+on `low` RTV is doing essentially all of the detection work — 35 records move from
+undetected to caught. On `linalg` RTV adds nothing, because the verifier has already
+rejected the shape contract before RTV ever runs. Reporting only the RTV-on column
+would therefore flatter `low` and say nothing about `linalg`; reporting only RTV-off
+would understate `low` by an order of magnitude. Both are required.
+
+Do not confuse the `linalg` record count with S1's `n_never: 10`. S1 reports at the
+**injection** level, and M2.5 emits two variants (partial-write, duplicate-write)
+that count as one injection, so its 20 records reduce to 10. The 60 `linalg`
+RTV-off records reduce to the 50 injections S1 reports (34 compile + 10 never +
+6 n/a).
+
 ## Two invariants that are easy to break
 
 1. **A mutant is always checked against the *unmutated* case's reference**

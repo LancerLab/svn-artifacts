@@ -1,0 +1,46 @@
+{
+  "size": "small",
+  "size_caveat": "S9 is size-invariant on this surface: a linalg.generic's instrumented access count is fixed by its indexing maps, not by tensor rank",
+  "kernel_guards_per_category": {
+    "matmul": 14,
+    "relu": 6,
+    "softmax": 30,
+    "transpose": 6,
+    "concat": 36,
+    "layer_normalization": 48,
+    "elemwise_add": 10
+  },
+  "elem_measured": {
+    "matmul": true,
+    "relu": true,
+    "softmax": true,
+    "transpose": true,
+    "concat": true,
+    "layer_normalization": true,
+    "elemwise_add": true
+  },
+  "shape_diagnostics": {
+    "concat": true
+  },
+  "shape_compile_rejections": {
+    "layer_normalization": 16,
+    "matmul": 12,
+    "concat": 16,
+    "elemwise_add": 16,
+    "softmax": 8
+  },
+  "shape_evidence_basis": {
+    "concat": "mutation+diagnostic",
+    "elemwise_add": "mutation-only",
+    "layer_normalization": "mutation-only",
+    "matmul": "mutation-only",
+    "relu": "diagnostic-only (no shape diagnostic)",
+    "softmax": "mutation-only",
+    "transpose": "diagnostic-only (no shape diagnostic)"
+  },
+  "assert_diagnostic_classes": {
+    "^ out-of-bounds access": 104,
+    "^ subview runs out-of-bounds along dimension N": 16,
+    "^ offset N is out-of-bounds": 16
+  }
+}

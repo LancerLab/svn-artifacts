@@ -1,0 +1,30 @@
+{
+  "class": "M1",
+  "size": "small",
+  "n_sanitized": 48,
+  "n_not_expressible": 0,
+  "n_mutants_rtv_off": 48,
+  "reconciled": true,
+  "tally": {
+    "flagged=false/fault=none/exercised=true": 10,
+    "flagged=true/fault=oob/exercised=true": 38
+  },
+  "unflagged_by_spec": {
+    "M1.4/dynamic": {
+      "n": 2,
+      "instrumented_min": 7,
+      "instrumented_max": 7
+    },
+    "M1.6/dynamic": {
+      "n": 4,
+      "instrumented_min": 7,
+      "instrumented_max": 13
+    },
+    "M1.6/static": {
+      "n": 4,
+      "instrumented_min": 7,
+      "instrumented_max": 13
+    }
+  },
+  "problems": []
+}

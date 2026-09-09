@@ -1,0 +1,38 @@
+{
+  "toolchain": "mlir-low",
+  "surface": "low",
+  "llvm_version": "LLVM 21.1.0",
+  "llvm_bin": "/home/garfee/dev/croqtile/extern/llvm-project/bin",
+  "llvm_lib": "/home/garfee/dev/croqtile/extern/llvm-project/lib",
+  "mlir_opt": "/home/garfee/dev/croqtile/extern/llvm-project/bin/mlir-opt",
+  "mlir_runner": "/home/garfee/dev/croqtile/extern/llvm-project/bin/mlir-runner",
+  "mlir_translate": "/home/garfee/dev/croqtile/extern/llvm-project/bin/mlir-translate",
+  "clang": "/home/garfee/dev/croqtile/extern/llvm-project/bin/clang",
+  "opt": "/home/garfee/dev/croqtile/extern/llvm-project/bin/opt",
+  "runner_libs": "/home/garfee/dev/croqtile/extern/llvm-project/lib/libmlir_runner_utils.so,/home/garfee/dev/croqtile/extern/llvm-project/lib/libmlir_c_runner_utils.so",
+  "asan_target": [
+    "target datalayout = \"e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128\"",
+    "target triple = \"x86_64-unknown-linux-gnu\""
+  ],
+  "device": "cpu (JIT on host; no GPU, so no .gpu-lock / exclusive)",
+  "categories_composed": [
+    "relu",
+    "transpose",
+    "softmax",
+    "layer_normalization"
+  ],
+  "categories_missing": [
+    "batch_norm",
+    "concat",
+    "conv2d",
+    "elemwise_add",
+    "embedding",
+    "gelu",
+    "matmul",
+    "max_pool2d",
+    "reduce_mean",
+    "reshape",
+    "sigmoid"
+  ],
+  "problems": []
+}

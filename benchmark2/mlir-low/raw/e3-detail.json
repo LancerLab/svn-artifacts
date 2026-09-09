@@ -1,0 +1,27 @@
+{
+  "size": "small",
+  "size_caveat": "S9 depends on the shape table on the `low` surface (hand-tiled loop nests); the committed figure is the one measured at the size recorded above",
+  "kernel_guards_per_category": {
+    "relu": 20,
+    "transpose": 20,
+    "softmax": 26,
+    "layer_normalization": 42
+  },
+  "elem_measured": {
+    "relu": true,
+    "transpose": true,
+    "softmax": true,
+    "layer_normalization": true
+  },
+  "shape_diagnostics": {},
+  "shape_compile_rejections": {},
+  "shape_evidence_basis": {
+    "layer_normalization": "diagnostic-only (no shape diagnostic)",
+    "relu": "diagnostic-only (no shape diagnostic)",
+    "softmax": "diagnostic-only (no shape diagnostic)",
+    "transpose": "diagnostic-only (no shape diagnostic)"
+  },
+  "assert_diagnostic_classes": {
+    "^ out-of-bounds access": 42
+  }
+}

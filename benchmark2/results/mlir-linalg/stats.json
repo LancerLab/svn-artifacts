@@ -1,0 +1,306 @@
+{
+  "toolchain": "mlir-linalg",
+  "toolchain_version": "LLVM 21.1.0",
+  "surface": "linalg",
+  "device": "cpu (JIT on host; no GPU dependency)",
+  "S1_detection": {
+    "M1": {
+      "n_injected": 0,
+      "n_compile": 0,
+      "n_runtime": 0,
+      "n_never": 0,
+      "n_na": 40,
+      "note": "no expressible M1 mutant on this surface; all spec N=40 mutants => n/a. no element-access defect is expressible on the tensor/linalg entry surface: there are no addressable memory locations before lowering (mutation-specs.md \u00a74)"
+    },
+    "M2": {
+      "n_injected": 50,
+      "n_compile": 34,
+      "n_runtime": 0,
+      "n_never": 10,
+      "n_na": 6,
+      "by_rtv": {
+        "off": {
+          "n_injected": 50,
+          "n_compile": 34,
+          "n_runtime": 0,
+          "n_never": 10,
+          "n_na": 6
+        },
+        "on": {
+          "n_injected": 50,
+          "n_compile": 34,
+          "n_runtime": 0,
+          "n_never": 10,
+          "n_na": 6
+        }
+      },
+      "note": "measured on the linalg surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 120 mutant records reduce to 50 injections."
+    },
+    "M3": {
+      "n_injected": 0,
+      "n_compile": 0,
+      "n_runtime": 0,
+      "n_never": 0,
+      "n_na": 40,
+      "note": "no expressible M3 mutant on this surface; all spec N=40 mutants => n/a. hardware-constraint defects need a device target; this lane is a CPU JIT with no hardware contract to violate (mutation-specs.md \u00a74.1, measured)"
+    }
+  },
+  "S8_expressibility": {
+    "elem": {
+      "yes": 7,
+      "partial": 0,
+      "no": 0
+    },
+    "shape": {
+      "yes": 5,
+      "partial": 0,
+      "no": 2
+    },
+    "loop": {
+      "yes": 0,
+      "partial": 0,
+      "no": 7
+    },
+    "hw": {
+      "yes": 0,
+      "partial": 0,
+      "no": 7
+    }
+  },
+  "S9_remainder": {
+    "per_category": {
+      "concat": 36,
+      "elemwise_add": 10,
+      "layer_normalization": 48,
+      "matmul": 14,
+      "relu": 6,
+      "softmax": 30,
+      "transpose": 6
+    },
+    "total": 150,
+    "criterion_ref": "RTV-generated cf.assert at loc(kernel); loc(oracle) guards excluded (folding them in inflated S9 by ~17% overall, ~67% on relu)",
+    "note": "never summed with the other MLIR lane's remainder (mutation-specs.md \u00a77): the low lane's kernels are hand-tiled with an explicit boundary guard, so their guard structure is not comparable"
+  },
+  "S12_sanitizer_supplement": {
+    "M2": {
+      "flagged_and_exercised": 0,
+      "total": 54,
+      "flagged": 0,
+      "exercised": 20,
+      "not_instrumented": 0,
+      "rejected_before_run": 34,
+      "misses": {
+        "M2.5/dynamic": {
+          "n": 10,
+          "instrumented_min": 23,
+          "instrumented_max": 44
+        },
+        "M2.5/static": {
+          "n": 10,
+          "instrumented_min": 23,
+          "instrumented_max": 44
+        }
+      },
+      "miss_note": "each of these ran with real ASan coverage (instrumented > 0) and still produced no report: the injected defect corrupts the result WITHOUT any access leaving its allocation, so no memory checker can see it. This residue \u2014 not the flagged count \u2014 is what S12 measures."
+    },
+    "M1": {
+      "flagged_and_exercised": 0,
+      "total": 0,
+      "flagged": 0,
+      "exercised": 0,
+      "not_instrumented": 0,
+      "rejected_before_run": 0,
+      "note": "no expressible mutant on this surface => nothing to sanitize"
+    },
+    "M3": {
+      "flagged_and_exercised": 0,
+      "total": 0,
+      "flagged": 0,
+      "exercised": 0,
+      "not_instrumented": 0,
+      "rejected_before_run": 0,
+      "note": "no expressible mutant on this surface => nothing to sanitize"
+    }
+  },
+  "S12_method": {
+    "tool": "LLVM AddressSanitizer (native, host CPU)",
+    "chain": "mlir-opt <bare pipeline> | mlir-translate --mlir-to-llvmir | patch sanitize_address + target triple/datalayout | opt -passes=asan | clang -fsanitize=address",
+    "rtv": "off (RTV's own cf.assert would abort before the faulty access and make ASan silent)",
+    "asan_options": "detect_leaks=0:exitcode=86:abort_on_error=0",
+    "false_negative_gate": "every binary's __asan_report_* call sites are counted; 0 sites => stage=instrument and never a 'clean' verdict",
+    "why_not_compute_sanitizer": "compute-sanitizer needs a CUDA device; these lanes are CPU-only, so ASan on a natively linked binary is the equivalent external checker"
+  },
+  "kernel_gate": {
+    "concat": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      },
+      "full": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
+    "elemwise_add": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      },
+      "full": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
+    "layer_normalization": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      },
+      "full": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
+    "matmul": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      },
+      "full": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
+    "relu": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      },
+      "full": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
+    "softmax": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      },
+      "full": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
+    "transpose": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      },
+      "full": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    }
+  },
+  "gate_failures": [],
+  "totals": {
+    "kernels": 28,
+    "compiled": 28,
+    "ran_ok": 28,
+    "ref_pass": 28,
+    "mutant_records": 120,
+    "sanitizer_records": 54,
+    "expressibility_records": 28,
+    "gate_failures": 0
+  },
+  "census": {
+    "class": "M2",
+    "n_injected": 50,
+    "expected_injected": 50,
+    "n_records": 120,
+    "n_target_per_class": 40,
+    "delta_vs_target": 10,
+    "by_rtv": {
+      "off": {
+        "compile": 34,
+        "n/a": 6,
+        "never": 10
+      },
+      "on": {
+        "compile": 34,
+        "n/a": 6,
+        "never": 10
+      }
+    },
+    "battery_size": "small",
+    "s12_size": "small",
+    "note": "\u00a75.1's enumeration arithmetic is owner-approved and must NOT be trimmed to hit N=40 exactly; the overshoot is recorded here rather than silently absorbed"
+  },
+  "scope": {
+    "categories_composed": [
+      "concat",
+      "elemwise_add",
+      "layer_normalization",
+      "matmul",
+      "relu",
+      "softmax",
+      "transpose"
+    ],
+    "n_composed": 7,
+    "categories_missing": [
+      "batch_norm",
+      "conv2d",
+      "embedding",
+      "gelu",
+      "max_pool2d",
+      "reduce_mean",
+      "reshape",
+      "sigmoid"
+    ],
+    "n_missing": 8,
+    "manifest_total": 15,
+    "note": "manifest.md \u00a71 counts 15 categories; this lane composes 7. S8 and the kernel gate are emitted over the composed subset ONLY \u2014 the 8 missing categories (batch_norm, conv2d, embedding, gelu, max_pool2d, reduce_mean, reshape, sigmoid) have no emitter on this surface yet, so their expressibility is UNMEASURED, not 'no'. Fabricating a 'no' row for them would understate the SOTA baseline. FLAGGED FOLLOW-UP for the coordinator: S8's denominator here is 7, not 15, so it is not directly comparable to the triton/iree rows whose denominator is 15."
+  }
+}

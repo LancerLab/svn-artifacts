@@ -1,0 +1,31 @@
+{
+  "class": "M2",
+  "n_records": 120,
+  "n_injected": 50,
+  "expected_injected": 50,
+  "n_target_per_class": 40,
+  "delta_vs_target": 10,
+  "categories": [
+    "layer_normalization",
+    "matmul",
+    "concat",
+    "elemwise_add",
+    "softmax"
+  ],
+  "level2": true,
+  "size": "small",
+  "n_repeat": 1,
+  "by_rtv": {
+    "off": {
+      "compile": 34,
+      "n/a": 6,
+      "never": 10
+    },
+    "on": {
+      "compile": 34,
+      "n/a": 6,
+      "never": 10
+    }
+  },
+  "problems": []
+}

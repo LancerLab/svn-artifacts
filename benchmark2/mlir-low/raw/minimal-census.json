@@ -1,0 +1,28 @@
+{
+  "class": "M1",
+  "n_records": 96,
+  "n_injected": 48,
+  "expected_injected": 48,
+  "n_target_per_class": 40,
+  "delta_vs_target": 8,
+  "categories": [
+    "relu",
+    "transpose",
+    "softmax",
+    "layer_normalization"
+  ],
+  "level2": false,
+  "size": "small",
+  "n_repeat": 16,
+  "by_rtv": {
+    "off": {
+      "never": 45,
+      "runtime": 3
+    },
+    "on": {
+      "never": 10,
+      "runtime": 38
+    }
+  },
+  "problems": []
+}

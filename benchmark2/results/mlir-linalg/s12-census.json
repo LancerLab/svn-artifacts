@@ -1,0 +1,25 @@
+{
+  "class": "M2",
+  "size": "small",
+  "n_sanitized": 54,
+  "n_not_expressible": 6,
+  "n_mutants_rtv_off": 54,
+  "reconciled": true,
+  "tally": {
+    "flagged=false/fault=none/exercised=false": 34,
+    "flagged=false/fault=none/exercised=true": 20
+  },
+  "unflagged_by_spec": {
+    "M2.5/dynamic": {
+      "n": 10,
+      "instrumented_min": 23,
+      "instrumented_max": 44
+    },
+    "M2.5/static": {
+      "n": 10,
+      "instrumented_min": 23,
+      "instrumented_max": 44
+    }
+  },
+  "problems": []
+}
