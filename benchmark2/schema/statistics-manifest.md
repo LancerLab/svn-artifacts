@@ -15,7 +15,8 @@
 | S5 | discharge rate | `Σ discharged / Σ generated`, **split static-shape vs dynamic-shape** | RQ1; "93.2%", "99.2%/87.9%" |
 | S6 | mechanism split | per outcome: `canonical / interval / direct` counts | `tab:rq6-mechanism` |
 | S7 | no-interval counterfactual | re-run with interval reasoning disabled; report Δ rate | "93.2%→77.2%" |
-| S8 | SOTA expressibility | per obligation class × toolchain: counts | `tab:gen-capability` || S9 | SOTA remainder | per toolchain: `Σ unconditional_guards` per category | `tab:per-operator` (SOTA cols) |
+| S8 | SOTA expressibility | per obligation class × toolchain: counts | `tab:gen-capability` |
+| S9 | SOTA remainder | per toolchain: `Σ unconditional_guards` per category | `tab:per-operator` (SOTA cols) |
 | S10 | compile cost | median compile-overhead % (choreo) | RQ4 |
 | S13 | runtime cost & latency | E5a: Δ(residue on/off) per dynamic-shape case; E5b: choreo-entry vs sanitizer time-to-report | RQ3 + E5 |
 | S11 | integrity register | 210-suite 3-way split (compile / launch / never) re-derived from raw CSV — owner ruled authoritative 2026-09-08 | Phase-0 gate |
