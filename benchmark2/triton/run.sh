@@ -6,7 +6,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "$0")" && pwd)"
-VENV="${TRITON_VENV:-/tmp/triton-venv}"
+VENV="${TRITON_VENV:-$HOME/venvs/triton-sm120}"
 PY="$VENV/bin/python"
 SIZE="small"
 LEVEL2=0
@@ -23,10 +23,34 @@ die() { echo "ERROR: $*" >&2; exit 1; }
 need() { [ -x "$PY" ] || die "triton venv missing at $VENV (run: uv venv $VENV && uv pip install triton numpy)"; }
 
 cmd_setup() {
-  need
+  # idempotent, one-time: create the persistent venv and install the pinned
+  # wheel (cached at ~/venvs/wheels/) + numpy. Never touches system CUDA.
+  if [ ! -x "$PY" ]; then
+    uv venv "$VENV" --python 3.10
+    WHEEL="$HOME/venvs/wheels/triton-3.8.0-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
+    if python3 - "$WHEEL" <<'EOF' 2>/dev/null
+import sys, zipfile
+try:
+    sys.exit(0 if zipfile.ZipFile(sys.argv[1]).testzip() is None else 1)
+except Exception:
+    sys.exit(1)
+EOF
+    then
+      VIRTUAL_ENV="$VENV" uv pip install "$WHEEL" numpy
+    else
+      # fallback: unpacked archive cached by uv (offline; survives reboots)
+      ARCH=$(ls -d "$HOME/.cache/uv/archive-v0/"*/triton 2>/dev/null | head -1)
+      [ -n "$ARCH" ] || { echo "no wheel and no uv cache archive"; exit 1; }
+      SP="$VENV/lib/python3.10/site-packages"
+      mkdir -p "$SP"
+      cp -r "$ARCH" "$SP/" && cp -r "${ARCH%/triton}/triton-3.8.0.dist-info" "$SP/"
+      VIRTUAL_ENV="$VENV" uv pip install --offline numpy
+    fi
+  fi
   {
     echo "triton=$("$PY" -c 'import triton; print(triton.__version__)')"
     echo "numpy=$("$PY" -c 'import numpy; print(numpy.__version__)')"
+    echo "venv=$VENV (persistent; NOT /tmp)"
     echo "gpu=$(nvidia-smi --query-gpu=name --format=csv,noheader | head -1)"
     echo "driver=$(nvidia-smi --query-gpu=driver_version --format=csv,noheader | head -1)"
     echo "cuda=$(/usr/local/cuda/bin/nvcc --version | tail -1)"
