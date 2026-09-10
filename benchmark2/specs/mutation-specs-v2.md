@@ -8,10 +8,17 @@ remains the spec under which all results up to and including the ASPLOS-era
 
 v2.1 is **additive to v2.0**: every v2.0 spec id keeps its meaning, so existing
 v2.0 rows stay valid and no cell is invalidated. v2.1 adds M1.13–M1.18,
-M2.10–M2.14, M3.7–M3.12, L3–L10, the new class **M4**, and the
-**runtime-check-level curve** (§9). Rationale and evidence:
+M2.10–M2.14, M3.7–M3.12, L3–L10, the new class **M4**, the
+**runtime-check-level curve** (§9.2), and the **coverage audit against the
+empirical bug taxonomies** (§9.5). Rationale and evidence:
 `svn/eurosys27/plan/mutation-redesign.md`,
-`svn/eurosys27/plan/hardware-constraint-inventory.md`.
+`svn/eurosys27/plan/hardware-constraint-inventory.md`,
+`svn/eurosys27/plan/real-world-bug-coverage.md`.
+
+§9.4 records two resolutions: **M4 is adopted** and **tile-coordinate mutation is
+expressible, so M1.14 is unblocked**. §9.5.1–§9.5.3 propose three further specs
+(M1.19, M3.13, M5) that are **not adopted** — v2.1 remains the generation spec
+until they are accepted.
 
 Every generated mutant's `stats.json` **must** carry `spec_version`. A table that
 mixes v1 and v2 rows is otherwise undetectable.
@@ -521,26 +528,115 @@ attribution table and say so.
 value (copy-pasted from the next line). Harmless at runtime; fix it, because it is
 the kind of thing that makes a reviewer distrust the whole stats block.
 
-### §9.4 Open questions
+### §9.4 Resolutions and remaining questions
 
-1. **Adopt M4?** It changes the paper's structure from three classes to four. For:
-   the taxonomy is the compiler's own, the control is scientifically necessary, and
-   it is nearly free (entry-cost, already emitted). Against: three classes is a
-   cleaner story. *Recommendation: adopt, and present it explicitly as the
-   control.*
-2. **Run the `-rtc` curve?** *Recommendation: yes — 4× the reduced grid, the only
+**Resolved (owner decisions):**
+
+1. ~~**Adopt M4?**~~ **Adopted.** The class stands as the experiment's control, and
+   is now independently attested: the empty-tensor / zero-dimension corner case is
+   a named bug trigger in the torch.compile study
+   (`real-world-bug-coverage.md` §2.2, §4.3). It was opened as a control question;
+   external attestation makes it a coverage claim as well.
+2. ~~**Does the harness express mutations at the `chunkat` tile-coordinate
+   level?**~~ **Yes — answered.** Tile-coordinate mutation is expressible, so
+   **M1.14 is unblocked** and the cost filter is measurable. The 272 suppressed
+   `chunkat` obligations (§1.1) are reachable at `-rtc≥low`.
+3. ~~**Which category hosts M1.15 (`dimof`) and M1.17 (rank-5)?**~~ **Resolved by
+   §6**: M1 gains a `select` category and a rank-5 category. Both specs are
+   retained as gap specs (`C4_NOT_ASSESSED` on the surfaces that cannot express
+   them).
+
+**Still open:**
+
+5. **Run the `-rtc` curve?** *Recommendation: yes — 4× the reduced grid, the only
    way to turn the `never` column into the thesis.*
-3. **Does the harness express mutations at the `chunkat` tile-coordinate level?**
-   M1.14 depends on it; if the harness only mutates element indices, M1.14 is not
-   implementable and the cost filter becomes unmeasurable. **This is the blocking
-   question.**
-4. **Which category hosts M1.15 (`dimof`) and M1.17 (rank-5)?** If none, both are
-   `n/a` on every surface and should be dropped rather than reported.
-5. **Confirm M2's contract statement.** M2.10/M2.13 assert that the checker
+6. **Confirm M2's contract statement.** M2.10/M2.13 assert that the checker
    constrains extents, not layouts. That is a claim about the tool's
    specification, not its implementation, and needs owner confirmation before it
    appears in the paper.
-6. **Can the harness select `-arch` per mutant?** M3.11 needs it (§3.5).
+7. **Can the harness select `-arch` per mutant?** M3.11 needs it (§3.5).
+8. **Does a two-phase (compile-A, then request-B) oracle exist on any surface?**
+   Blocking for the proposed M5 class (§9.5.3).
+
+### §9.5 Coverage audit vs. empirical bug taxonomies
+
+Full analysis: `svn/eurosys27/plan/real-world-bug-coverage.md`. Summary only here,
+because it is a *completeness* argument, not a generation rule.
+
+Two empirical taxonomies now exist for this exact domain and are the completeness
+oracle for the class suite: **TileCodegenBug** (Rathnasuriya et al., ISSTA 2026;
+301 confirmed tile-codegen bugs, six root causes) and **torch.compile silence**
+(Li et al.; 116 confirmed silent-correctness bugs). Diffing the 15 shape- or
+resource-shaped categories against M1–M4 and L1–L10:
+
+| Outcome | Count | Categories |
+|---|---:|---|
+| already covered | 11 | branch predication · IR transformation tile-drop · launch config · thread-block mapping · stride/layout address bugs · offset views · boundary-mask/tail · broadcast-vs-extent · resource sizing · per-arch feature gating · MMA divisibility |
+| **gap** | **3** | index-carrier overflow · descriptor-to-descriptor consistency · decision reuse |
+| out of scope (named) | 4 families | numeric (RC5.1/5.2/5.3, LCG) · concurrency/ordering (RC1.2, RC4.3) · IR determinism (RC2.1) · front-end tracing (GSC non-computational) |
+
+The excluded families are **~38% of the tile-bug corpus by count and ~19% of the
+torch.compile corpus**, all on the two axes v1 §0 already names (numeric
+correctness, concurrency). Quote the weight; do not say "out of scope" bare.
+
+**What this validates (do not re-derive):** M2.10/M2.13 are the best-attested
+shape bug class in both corpora — tile RC4.1 (35 bugs) and torch.compile "Memory
+Layout Conflicts" (14 bugs, split into layout-metadata tracking and missing
+layout-compatibility checks) are both extents-equal / layout-unequal failures,
+i.e. decision-invisible under `semacheck.cpp:1073`'s extent-only comparison. And
+the **top triggering input axis in both studies is the view — non-contiguous /
+transposed / offset — not the value**, which is exactly M1.4/M1.5/M2.10/M2.13.
+Recommend reporting those four as a named **view-family** sub-table in the
+results.
+
+#### §9.5.1 Proposed M1.19 — index-carrier overflow *(pending)*
+
+Real-world: Triton #832 — a valid flattened index exceeding INT_MAX, computed in
+signed int32, overflows to a negative offset → illegal memory access. Every
+existing M1 spec mutates the index **value or bound**; none mutates the index
+**carrier / arithmetic width**, and our shapes are too small to overflow.
+Realizations: large extent near `2³¹/elem`, or forced-narrow carrier with an
+overflowing shape product. A miss is the finding.
+
+#### §9.5.2 Proposed M3.13 — descriptor consistency *(pending)*
+
+Real-world: Triton #2658 — `WSMaterialization` mutates `num-warps` without
+updating tensor layouts, so `∏(warpsPerCta) == num-warps` is violated and
+invalid IR is emitted; no pass validates the invariant. M3 tests
+descriptor-*value bounds*; it never tests descriptor-*to-descriptor agreement*.
+Spec: mutate one of a mutually constrained descriptor pair so each stays
+individually valid but the conjunction is unsatisfiable (layout product ↔
+declared warp/CTA count; declared tile extent ↔ synthesized launch coverage;
+DMA box rank ↔ downstream padded rank).
+
+#### §9.5.3 Proposed M5 — decision reuse, a new class *(pending)*
+
+Real-world, two independent reports: torch.compile **graph caching** bugs (guard
+condition omits input properties **including shapes** → a cached graph is used
+for a shape it was never proven for; the study notes this pipeline is invisible
+to *every* existing fuzzer because they all compile once) and tile RC4.3 (Warp
+#639 — the kernel hash omitted `block_dim`, so a launch at a different block
+dimension reused an artifact built for the earlier one).
+
+Why no existing class reaches it: every mutant in the suite is **one compilation
+of one configuration**. M5 is a *sequence* — decision D is validated for config A,
+then config B shares D's key and D's obligations are never re-checked. Proposed
+specs: M5.1 (compile at S₁, request S₂ with a changed extent under the same key),
+M5.2 (block/warp count W₁ → W₂), M5.3 (layout L₁ → L₂, same extents, M2.13-coupled).
+
+**Adopting M5 gives the paper's miss taxonomy a third mechanism** alongside
+*not-emitted-to-runtime* and *cost-suppressed*: **not-invalidated** — which no
+value of `-rtc` can reach. Blocking question: §9.4 q8 (two-phase oracle). If
+infeasible, report M5 as a **named, cited limitation** rather than dropping it.
+
+#### §9.5.4 Generator requirement (not a spec)
+
+Both studies name the same triggering axes (tile F6; torch.compile
+"operator-induced layout transformations"). The shape sweep **must** include
+**singleton (1)**, **prime**, and **tile_size ± 1** extents; the view sweep
+**must** include **non-contiguous, transposed, and offset** inputs. Without the
+view axis the view-family specs (M1.4/M1.5/M2.10/M2.13) — the best-attested
+class in the literature — are untested in our own experiment.
 
 ## §10 Supersession
 
