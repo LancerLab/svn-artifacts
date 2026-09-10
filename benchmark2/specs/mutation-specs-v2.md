@@ -17,14 +17,19 @@ empirical bug taxonomies** (§9.5). Rationale and evidence:
 `svn/eurosys27/plan/mutation-reachability-audit.md`.
 
 §9.4 records two resolutions: **M4 is adopted** and **tile-coordinate mutation is
-expressible, so M1.14 is unblocked**. §9.5.1–§9.5.3 record the reachability
-verdicts for the three gap specs proposed by the coverage audit: **M1.19 approved**
-(artifact verified present in choreo, and already a latent defect), **M3.13
-approved but narrowed** (one of its three descriptor pairs is derived by
-construction and is a disclosed non-target), and **M5 rejected** (choreo has no
-reuse mechanism to corrupt). §9.5.4 adds a **fourth miss mechanism —
-unrepresentable** — with M2.10/M2.13 as its exemplars. v2.1 remains the generation
-spec pending owner confirmation of the narrowed M3.13 and the M1.19 realization.
+expressible, so M1.14 is unblocked**. §9.5.0 states the **applicability rule** — a
+mutation counts as a test only if the model can be made to hold the corrupted state
+(expressible, independent, survives repair, attributable); otherwise it is **not
+applicable**, with the model prohibition named and cited. §9.5.1–§9.5.3 apply it to
+the three gap specs from the coverage audit: **M1.19 adopted** (realization (b)
+narrow-carrier; already a latent defect), **M3.13 adopted but narrowed** (the
+descriptor-rank pair is *derived* → N/A; only the swizzle/box/alignment triple, and
+only states surviving the repair at `:10271`), and **M5 not applicable** (prohibition:
+*absent feature* — choreo has no reuse mechanism). §9.5.4 adds a **fourth miss
+mechanism — unrepresentable** — with M2.10/M2.13 as its exemplars. The reporting
+denominator is **applicable / not-applicable / out-of-scope**, and N/A mutants are
+never counted as missed. v2.1 is final: the owner's condition is answered, and all
+four open decisions are resolved.
 
 Every generated mutant's `stats.json` **must** carry `spec_version`. A table that
 mixes v1 and v2 rows is otherwise undetectable.
@@ -579,12 +584,43 @@ resource-shaped categories against M1–M4 and L1–L10:
 | Outcome | Count | Categories |
 |---|---:|---|
 | already covered | 11 | branch predication · IR transformation tile-drop · launch config · thread-block mapping · stride/layout address bugs · offset views · boundary-mask/tail · broadcast-vs-extent · resource sizing · per-arch feature gating · MMA divisibility |
-| **gap** | **3** | index-carrier overflow (**M1.19 — approved**) · descriptor-to-descriptor consistency (**M3.13 — approved, narrowed**) · decision reuse (**M5 — rejected, no mechanism in choreo**) |
+| **adopted** | **2** of 3 gaps | index-carrier overflow (**M1.19**) · descriptor-to-descriptor consistency (**M3.13**, narrowed to the swizzle/box/alignment triple) |
+| **not applicable** | **1** | decision reuse (**M5**) — choreo has no reuse mechanism; prohibition: *absent feature* |
 | out of scope (named) | 4 families | numeric (RC5.1/5.2/5.3, LCG) · concurrency/ordering (RC1.2, RC4.3) · IR determinism (RC2.1) · front-end tracing (GSC non-computational) |
 
 The excluded families are **~38% of the tile-bug corpus by count and ~19% of the
 torch.compile corpus**, all on the two axes v1 §0 already names (numeric
 correctness, concurrency). Quote the weight; do not say "out of scope" bare.
+
+### §9.5.0 Applicability rule — what "not applicable" means
+
+A mutation may be counted as a test of the compiler **only if all four hold**:
+
+1. **Expressible** — the corrupted state is constructible through the model's own
+   inputs and interfaces.
+2. **Independent** — the model does not derive the two sides of the corrupted
+   relation from one source.
+3. **Survives repair** — if the model detects and repairs the conflict, the injected
+   state is one the repair does *not* catch.
+4. **Attributable** — a miss would be a defect of the compiler, not of our harness.
+
+Otherwise the mutation is **not applicable (N/A)**: we name the *model prohibition*
+that forbids it, cite the source, and report it in the denominator
+(**applicable / N/A / out-of-scope**) — never as a miss, and never as a hole in the
+suite. N/A is a claim about the programming model, so it is evidence, not an excuse.
+
+| Prohibition | Meaning | Instance |
+|---|---|---|
+| **absent** | the feature does not exist in the model | M5 — no cache / kernel hash / specialization key anywhere in choreo |
+| **derived** | both sides come from one source, so a contradiction is unrepresentable | M3.13 rank pair — `tma_inner_splits_`, one writer (`:10291`) two readers (`:4715`/`:5018`) |
+| **repaired** | the model detects and fixes the conflict | M3.13 swizzle overflow, explicitly split at `cute_codegen.cpp:10271` — *only the sub-case the repair misses is injectable* |
+| **harness-owned** | the corruption would be ours, not the compiler's | M5 as originally framed |
+
+The rule is the dual of the miss taxonomy: a model either **derives** an invariant
+(nothing to mutate, nothing to check) or **assumes** it. Assumed-and-expressible is
+where the suite operates; assumed-and-*in*expressible is where silent bugs live
+(§9.5.4). Stating the rule pre-empts "why did you not test X?" — X is not a state of
+this model.
 
 **What this validates (do not re-derive):** M2.10/M2.13 are the best-attested
 shape bug class in both corpora — tile RC4.1 (35 bugs) and torch.compile "Memory
@@ -596,7 +632,7 @@ transposed / offset — not the value**, which is exactly M1.4/M1.5/M2.10/M2.13.
 Recommend reporting those four as a named **view-family** sub-table in the
 results.
 
-#### §9.5.1 M1.19 — index-carrier overflow — **APPROVED, realizable**
+#### §9.5.1 M1.19 — index-carrier overflow — **ADOPTED, applicable**
 
 Real-world: Triton #832 — a valid flattened index exceeding INT_MAX, computed in
 signed int32, overflows to a negative offset → illegal memory access. Every
@@ -617,15 +653,17 @@ No guard bounds a flat offset (`EmitHostRuntimeCheck` tests `shape()` equality
 only). And dimensions above INT_MAX are **legal**: `__inf__ = 2³²−1`
 (`runtime/choreo.h:222`).
 
-**Realizations:** (a) large-shape — `bos*H*K ≥ 2³¹`; (b) narrow-carrier — a single
-dim in `(2³¹, 2³²)`, legal under `__inf__` but unindexable by the `int` accessor.
-Realization (b) is cheaper. A miss is the finding.
+**Realizations:** (a) large-shape — `bos*H*K ≥ 2³¹` (needs ≥ 4 GiB for fp16);
+(b) narrow-carrier — a single dim in `(2³¹, 2³²)`, legal under `__inf__` but unindexable
+by the `int` accessor. **Selected: (b).** It needs no large allocation, and because
+`__inf__` explicitly permits the extent, the injected shape is a *legal program* — so a
+surviving mutant is unambiguously a compiler defect. A miss is the finding.
 
 **Separate finding.** The `(int)` cast at `:1757` is a **latent defect in the shipped
 compiler**, independent of any injection. Report it as a found defect, not as a
 mutation result.
 
-#### §9.5.2 M3.13 — descriptor consistency — **APPROVED, narrowed**
+#### §9.5.2 M3.13 — descriptor consistency — **ADOPTED, narrowed**
 
 Real-world: Triton #2658 — `WSMaterialization` mutates `num-warps` without updating
 tensor layouts, violating `∏(warpsPerCta) == num-warps`; no pass validates the
@@ -641,11 +679,13 @@ three candidate pairs is admissible:
 | **swizzle width ↔ box inner dim ↔ shared alignment** | **Admissible.** Three independently derived quantities: `swiz_bytes` from `SwizMode` (`:10264`), box inner bytes from `t_shape` (`:10268`), `SharedAlignmentBytes` (`:276`). An explicit repair for the box-vs-swizzle conflict exists (`:10271`) — evidence the conflicting state is reachable. |
 
 **Spec (narrowed):** mutate the swizzle-mode / box-shape / shared-alignment triple so
-each value stays individually legal but the conjunction is unsatisfiable. Record the
-rank pair as an explicit **non-target** with the reason (single source of truth) —
+each value stays individually legal but the conjunction is unsatisfiable, **and the
+injected state survives the repair at `:10271`** (i.e. it must not be the
+`inner_bytes > swiz_bytes` case the compiler already splits). Record the rank pair as an
+explicit **non-target / N/A** (prohibition: *derived*, §9.5.0) with the reason —
 disclosing it pre-empts a reviewer asking why we did not mutate the descriptor rank.
 
-#### §9.5.3 M5 — decision reuse — **REJECTED (mechanism absent)**
+#### §9.5.3 M5 — decision reuse — **NOT APPLICABLE (no mechanism)**
 
 Real-world: torch.compile graph caching (guard omits input shapes →
 a cached graph reused for a shape never proven for it) and tile RC4.3 (Warp #639 —
@@ -658,9 +698,11 @@ template specialization), and the only index/cache-flavoured runtime, `runtime/c
 is **excluded from the build** (`scripts/oss/oss_exclude_paths.txt`). choreo compiles
 per configuration and emits a fresh `runtime_check` block for each.
 
-Consequently a "reuse" mutation would be a corruption of **our harness**, not of the
-compiler under test — a miss would prove nothing about the obligation set. Rejected on
-the owner's criterion. The two-phase oracle question (§9.4 q8) is therefore **moot**.
+Consequently a "reuse" mutation fails **R2** (there is no independent second source to
+contradict) and **R4** (the corrupted artifact would be **our harness**, not the compiler
+under test) of the §9.5.0 rule. Verdict: **not applicable**, prohibition *absent feature*.
+A miss would prove nothing about the obligation set. The two-phase oracle question
+(§9.4 q8) is therefore **moot**.
 
 **Salvage (record, do not promote to a class).** `EmitHostRuntimeCheck`
 (`cute_codegen.cpp:9950`) guards **static** dims (`:9966`) and **unbounded** dims
@@ -714,5 +756,8 @@ class in the literature — are untested in our own experiment.
   results already produced under it. v2.1 is **additive**: no v2.0 spec id changed
   meaning and no v2.0 cell is invalidated. Cells generated under v2.0 remain valid
   and are distinguished by `spec_version`.
-- v2.1 (this file) — governs new generation.
+- v2.1 (this file) — governs new generation. §9.5.0 (**applicability rule**) is
+  normative for *reporting*: a mutation whose corrupted state the model forbids is
+  reported as **not applicable** with the prohibition cited, and is never counted as a
+  miss. §9.5.1–§9.5.3 record the verdicts that follow from it.
 - A future v3 must state which cells it invalidates.
