@@ -1,5 +1,20 @@
 # Mutation specs (M1 / M2 / M3) + per-surface translation
 
+> **FROZEN as v1.0.** This file is the audit trail for every `stats.json`
+> produced up to and including the ASPLOS-era results. Do not edit it.
+>
+> **New generation is governed by `mutation-specs-v2.md` (v2.0)**, which expands
+> M1 to 12 specs, M2 to 9, redesigns M3 around the descriptor/dimension
+> obligation families the compiler actually emits, and reclassifies
+> resource-exhaustion mutants out of M3. See
+> `svn/eurosys27/plan/mutation-supplement-plan.md` for the rationale and
+> `svn/eurosys27/plan/acceptable-e2e-test.md` (condition C1) for the ≥ 35
+> admissible-mutants-per-cell bar.
+>
+> Rationale for v2 in one line: v1's M3 specs are **resource**-oriented while the
+> §7 oracle is **value**-oriented, so 28 of 40 `\sys` M3 mutants were discarded as
+> `noop` and the class's admissible N fell to 12.
+
 > Authoritative, shared by all workers. Generated 2026-09-08 (Phase 0).
 > Mutations are specified **conceptually** (a defect spec), so the *same defect*
 > is re-expressed in each toolchain's own idiom. Equal counts are fixed at spec

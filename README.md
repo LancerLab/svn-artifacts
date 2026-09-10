@@ -1,21 +1,41 @@
 # SVN: Shape Value Numbering — Compiler-Auditor Artifact
 
-> **ASPLOS 2027 note:** for the ASPLOS 2027 paper (*The Compiler as Auditor:
+> **EuroSys 2027 note:** for the EuroSys 2027 paper (*The Compiler as Auditor:
 > Safety Ledgers for AI-Native GPU Kernels*), use
 > ```
 > bash scripts/reproduce_asplos27.sh   # add --skip-build / --skip-gpu as needed
 > ```
 > which regenerates every CSV behind the paper's tables and figures (RQ1–RQ6),
 > re-renders them into `../asplos27/{tables,figures}/`, and prints a
-> number-by-number comparison against the paper. The CGO 2027 pipeline below
-> (`reproduce_all.sh`) is retained for reference; its summary table compares
-> against the older CGO numbers.
+> number-by-number comparison against the paper.
+>
+> ⚠ **Known gap.** This script still renders into `../asplos27/`. The paper's
+> active tree is now **`../eurosys27/`**, so a `reproduce_eurosys27.sh` (or a
+> retarget of this one) is required before submission — acceptance condition C3
+> in `../eurosys27/plan/acceptable-e2e-test.md`. Until then, reproduction writes
+> into a superseded tree.
+>
+> The CGO 2027 pipeline (`reproduce_all.sh`) is retained for reference; its
+> summary table compares against the older CGO numbers.
+>
+> **Evaluation status.** The paper's numbers are currently gated by
+> `../eurosys27/plan/data-integrity-blockers.md` (D0–D7) and
+> `../eurosys27/plan/acceptable-e2e-test.md`. Mutation-generation coverage is
+> being expanded under `benchmark2/specs/mutation-specs-v2.md`; the frozen
+> `benchmark2/specs/mutation-specs.md` (v1.0) remains the spec that all existing
+> `stats.json` were produced under.
 
 This repository is the artifact for the paper:
 
 > **SVN: Shape Value Numbering for Comprehensive and Practical Safety Assessment**
 >
-> Submitted to CGO 2027
+> Submitted to CGO 2027 (rejected)
+
+and, under a reworked framing, for its successor:
+
+> **The Compiler as Auditor: Safety Ledgers for AI-Native GPU Kernels**
+>
+> Target: EuroSys 2027
 
 It contains the benchmark suite, evaluation scripts, and build orchestration
 to reproduce the results (RQ1–RQ4) presented in the paper.
