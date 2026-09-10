@@ -766,12 +766,17 @@ def reproject_one(rec, workdir):
 
 
 def main():
+    global COMPILE_FLAGS
+
     ap = argparse.ArgumentParser()
     ap.add_argument("--jobs", type=int, default=6,
                     help="parallel workers; E1 is a correctness lane so GPUs are "
                          "shared freely (manifest §6)")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--only", default="", help="restrict to one class, e.g. M1")
+    ap.add_argument("--rtc", choices=("none", "entry", "low", "medium", "high", "all"),
+                    help="detector-arm runtime-check level; omitted preserves the "
+                         "compiler default. The oracle arm always uses -rtc=none.")
     ap.add_argument("--manifest", default=MANIFEST_IN)
     ap.add_argument("--policy", default=ORACLE_POLICY)
     ap.add_argument("--out", default=os.path.join(RAW, "e1_mutant_records.json"))
@@ -796,6 +801,9 @@ def main():
     a.out = os.path.abspath(a.out)
     a.manifest = os.path.abspath(a.manifest)
     a.policy = os.path.abspath(a.policy)
+
+    if a.rtc:
+        COMPILE_FLAGS = COMPILE_FLAGS + [f"-rtc={a.rtc}"]
 
     if not os.path.exists(CHOREO):
         print(f"ERROR: choreo binary not found at {CHOREO}", file=sys.stderr)

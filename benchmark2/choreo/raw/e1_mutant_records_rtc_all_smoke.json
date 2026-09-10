@@ -1,0 +1,73 @@
+{
+ "toolchain": "choreo",
+ "toolchain_version": "f2f238fbf380e6121caf361d359ef1cf7d568ee8",
+ "toolchain_identity": {
+  "toolchain": "choreo",
+  "version": "f2f238fbf380e6121caf361d359ef1cf7d568ee8",
+  "version_basis": "mtime<=commit-date",
+  "checkout_head": "1fa4719fcf4bca50f153a18daf05beadd44f87e3",
+  "checkout_branch": "HEAD",
+  "checkout_dirty_source_files": [],
+  "binary": "croqtile/build-release/choreo",
+  "binary_sha1_12": "c3ebb1654d1d",
+  "binary_mtime": 1788937035.0511596,
+  "binary_stale_vs_checkout": true
+ },
+ "produced_by": "minimal",
+ "elapsed_s": 20.4,
+ "gpu_device": "0",
+ "exclusive": false,
+ "pinned_flags": {
+  "compile": [
+   "-gs",
+   "-t",
+   "cute",
+   "-kt",
+   "--max-local-mem-capacity=2000000",
+   "-rtc=all"
+  ],
+  "oracle": [
+   "-gs",
+   "-t",
+   "cute",
+   "-kt",
+   "--max-local-mem-capacity=2000000",
+   "-rtc=none"
+  ]
+ },
+ "records": [
+  {
+   "toolchain": "choreo",
+   "category": "layer_normalization",
+   "class": "M1",
+   "paper_category": "oob",
+   "mutant_id": "M1.s2.ln1.scale",
+   "level": "1",
+   "settings_hash": "8dbff8357c9b",
+   "kernel_hash": "ae22fd957dba",
+   "mutant_hash": "b354d726af4e",
+   "spec": 2,
+   "case": "1_bert_32x512x768_768_768",
+   "calibrated": true,
+   "check_flag": false,
+   "oracle_usable": true,
+   "compile_rc": 0,
+   "oracle_compile_rc": 0,
+   "oracle_run_rc": 134,
+   "oracle_passed": false,
+   "oracle_caught": "oracle",
+   "manifest": "corrupts",
+   "oracle_note": "oracle caught=oracle rc=134",
+   "run_rc": 134,
+   "detector": "oracle",
+   "detector_passed": false,
+   "outcome": "never",
+   "stage": "runtime",
+   "wall_s": 20.44,
+   "log_dir": "benchmark2/choreo/raw/e1_logs_rtc_all_smoke/M1.s2.ln1.scale",
+   "toolchain_version": "f2f238fbf380e6121caf361d359ef1cf7d568ee8",
+   "gpu_device": "0",
+   "exclusive": false
+  }
+ ]
+}
