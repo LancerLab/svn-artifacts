@@ -1,0 +1,18 @@
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s1.cv2.atom12__11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1.co:33.11: warning: unable to find a device function 'k_matmul'.
+            call k_matmul(l1_A.data, l1_B.data, l1_Y, M/#q, Cout/#qq, K + 12);
+            ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s1.cv2.atom12__11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1.co:31.86: warning: 'span_as' is applied to non-contiguous spanned data ([128, 4, 32] {1024, 32, 1}).
+            l1_A = dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(_, q, _).span_as(K, 128) => local;
+                                                                                       ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s1.cv2.atom12__11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1.co:34.60: warning: 'span_as' is applied to non-contiguous spanned data ([1, 4, 4, 32] {32768, 1024, 32, 1}).
+            dma.transp<1, 0> l1_Y => o.chunkat(p#n, qq, q, _).span_as(Cout/#qq, 128);
+                                                             ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s1.cv2.atom12__11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1.co:31.18: warning: dma.copy falls back to naive copy (chunk indexing depends on inner-than-block PV).
+            l1_A = dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(_, q, _).span_as(K, 128) => local;
+                   ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s1.cv2.atom12__11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1.co:32.18: warning: dma.copy falls back to naive copy (unsupported DMA direction).
+            l1_B = dma.copy B.chunkat(qq, _) => local;
+                   ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s1.cv2.atom12__11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1.co:34.11: warning: dma.transp falls back to naive copy (chunk indexing depends on inner-than-block PV).
+            dma.transp<1, 0> l1_Y => o.chunkat(p#n, qq, q, _).span_as(Cout/#qq, 128);
+            ^

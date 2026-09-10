@@ -1,0 +1,10 @@
+Totally 2 errors have been detected.
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s1.cv2.kplus8__11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1.co:33.11: warning: unable to find a device function 'k_matmul'.
+            call k_matmul(l1_A.data, l1_B.data, l1_Y, M/#q, Cout/#qq, K);
+            ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s1.cv2.kplus8__11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1.co:25.19: error: can not apply span_as to reshape from [32, 128, 1, 1](4096) to [32, 136](4352).
+      B = dma.copy w.span_as(Cout, K) => shared;
+                    ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s1.cv2.kplus8__11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1.co:31.50: error: can not apply span_as to reshape from [1, 128, 32, 32](131072) to [136, 32, 32](139264).
+            l1_A = dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(_, q, _).span_as(K, 128) => local;
+                                                   ^

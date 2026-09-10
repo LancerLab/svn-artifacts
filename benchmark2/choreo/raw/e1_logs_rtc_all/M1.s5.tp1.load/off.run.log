@@ -1,0 +1,10 @@
+/tmp/1789028543687144739_138982783473472/choreo_cute.h(679): warning #177-D: variable "tma_atom" was declared but never referenced
+        auto* tma_atom = ((TMAAtom*)atom);
+              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/tmp/1789028543687144739_138982783473472/choreo.h(230): warning #20011-D: calling a __host__ function("__builtin_trap") from a __host__ __device__ function("choreo::choreo_assert") is not allowed
+
+CUDA failure: 700 (an illegal memory access was encountered)
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/raw/e1_logs_rtc_all/M1.s5.tp1.load/off.sh: line 8188: 3057680 Aborted                 (core dumped) /tmp/1789028543687144739_138982783473472/__choreo_cute_M1.s5.tp1.load__1_bert_32x512x768_32x768x512.exe

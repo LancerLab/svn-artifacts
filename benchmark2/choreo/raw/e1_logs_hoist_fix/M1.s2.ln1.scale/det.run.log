@@ -1,0 +1,14 @@
+/tmp/1789030354284029549_131920511743808/choreo.h:221: choreo assertion failed: The 1st index ` (k + 1) ` of element access 'scale' should be less than 768, /home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/layer_normalization/M1.s2.ln1.scale__1_bert_32x512x768_768_768.co:34.38
+/tmp/1789030354284029549_131920511743808/choreo.h:221: choreo assertion failed: The 1st index ` (k + 1) ` of element access 'scale' should be less than 768, /home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/layer_normalization/M1.s2.ln1.scale__1_bert_32x512x768_768_768.co:34.38
+i: 0, j: 0, k: 0
+1.29023 != 0.663176
+/tmp/1789030354284029549_131920511743808/choreo.h:221: choreo assertion failed: values are not equal.
+/tmp/1789030354284029549_131920511743808/choreo_cute.h(679): warning #177-D: variable "tma_atom" was declared but never referenced
+        auto* tma_atom = ((TMAAtom*)atom);
+              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/tmp/1789030354284029549_131920511743808/choreo.h(230): warning #20011-D: calling a __host__ function("__builtin_trap") from a __host__ __device__ function("choreo::choreo_assert") is not allowed
+
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/raw/e1_logs_hoist_fix/M1.s2.ln1.scale/det.sh: line 8274: 3151864 Aborted                 (core dumped) /tmp/1789030354284029549_131920511743808/__choreo_cute_M1.s2.ln1.scale__1_bert_32x512x768_768_768.exe

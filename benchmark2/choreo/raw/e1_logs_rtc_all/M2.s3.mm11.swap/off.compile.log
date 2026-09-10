@@ -1,0 +1,7 @@
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M2/matmul/M2.s3.mm11.swap__11_dynamic_32xSx768_768x768_32xSx768.co:16.13: warning: unable to find a device function 'k_matmul'.
+              call k_matmul(l1_a.chunkat(i,_,_), l1_b.data, l1_out, l1_a.span(1), l1_b.span(0), l1_a.span(2));
+              ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M2/matmul/M2.s3.mm11.swap__11_dynamic_32xSx768_768x768_32xSx768.co:13.30: error: data rank (2) must be consistent with tiling factor count (3).
+            l1_a = dma.copy rhs.chunkat(p#q, m_tile, k_tile) => local;
+                               ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/croqtile/lib/symtab.hpp:375: Assertion failed: symbol `l1_a.span' is not found in scope

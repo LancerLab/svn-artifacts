@@ -1,0 +1,3 @@
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/relu/M1.s3.rl1.write__1_bert_32x512x768_32x512x768.co:127.16: warning: For nested parallel-by, it is better to either explicitly specify all parallelism levels, or none (Choreo to automatically infer the levels).
+        parallel q by 64
+                 ^

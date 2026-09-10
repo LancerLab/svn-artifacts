@@ -1,0 +1,25 @@
+// Symbolic M, K; concrete N = 1280.
+__co__ auto linear(f16 [M, K] lhs, f16 [K, 1280] rhs,
+                   f32 [1280] bias) {
+  f32 [M, 1280] output;
+  parallel {bm, bn} by [cdiv(M, 16), cdiv(1280, 16)]
+      : block {
+    shared f16 [16, 16] lhs_s;
+    shared f16 [16, 16] rhs_s;
+    mc = mma.fill.f32 0.0f;
+    foreach {k} in [cdiv(K, 16)] {
+      dma.copy lhs.subspan(16, 16).at(bm, k) => lhs_s;
+      dma.copy rhs.subspan(16, 16).at(k, bn) => rhs_s;
+      ma = mma.load lhs_s;
+      mb = mma.load rhs_s;
+      mma.row.col mc, ma, mb;
+    }
+    mma.store mc, output.subspan(16, 16).at(bm, bn);
+    foreach {i, j} in [16, 16] {
+      output.at(bm * 16 + i, bn * 16 + j) =
+        output.at(bm * 16 + i, bn * 16 + j)
+        + bias.at(bn * 16 + j);
+    }
+  }
+  return output;
+}

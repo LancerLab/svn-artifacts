@@ -1,0 +1,4 @@
+Totally 1 errors have been detected.
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M2/concat/M2.s4.cc11.out__11_dynamic_32xS1x768_32xS2x768_32xS1pS2x768.co:61.3: error: return type inconsistent: f32 mdspan<4> [32, 4, 768, 1] vs. global f32 mdspan<4> [32, 3, 768, 1]
+    return out;
+    ^

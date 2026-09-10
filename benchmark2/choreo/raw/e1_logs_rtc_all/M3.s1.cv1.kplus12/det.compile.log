@@ -1,0 +1,7 @@
+Totally 1 errors have been detected.
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s1.cv1.kplus12__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:47.11: warning: unable to find a device function 'k_matmul'.
+            call k_matmul(l1_A.data, l1_B.data, l1_Y, M/#q, Cout, 8);
+            ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s1.cv1.kplus12__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:44.21: error: can not apply span_as to reshape from [1024, 512, 1, 1](524288) to [1024, 524](536576).
+            dma.copy w.span_as(Cout, K).chunkat(_, kt) => B_tile;
+                      ^

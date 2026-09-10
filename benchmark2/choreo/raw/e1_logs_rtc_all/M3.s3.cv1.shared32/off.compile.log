@@ -1,0 +1,61 @@
+Totally 7 errors have been detected.
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s3.cv1.shared32__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:47.11: warning: unable to find a device function 'k_matmul'.
+            call k_matmul(l1_A.data, l1_B.data, l1_Y, M/#q, Cout, 32);
+            ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s3.cv1.shared32__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:45.87: warning: 'span_as' may be applied to non-contiguous spanned data ([32, (::CONV2D::attn_h / 4), ::CONV2D::attn_w] {(::CONV2D::attn_h * ::CONV2D::attn_w), ::CONV2D::attn_w, 1}).
+            l1_A = dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(kt, q, _).span_as(8, M/#q) => local;
+                                                                                        ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s3.cv1.shared32__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:49.57: warning: 'span_as' may be applied to non-contiguous spanned data ([1, 1024, (::CONV2D::attn_h / 4), ::CONV2D::attn_w] {((::CONV2D::attn_h * ::CONV2D::attn_w) * 1024), (::CONV2D::attn_h * ::CONV2D::attn_w), ::CONV2D::attn_w, 1}).
+          dma.transp<1, 0> l1_Y => o.chunkat(p#n, _, q, _).span_as(Cout, M/#q);
+                                                          ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s3.cv1.shared32__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:45.18: warning: dma.copy falls back to naive copy (chunk indexing depends on inner-than-block PV).
+            l1_A = dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(kt, q, _).span_as(8, M/#q) => local;
+                   ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s3.cv1.shared32__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:46.18: warning: dma.copy falls back to naive copy (unsupported DMA direction).
+            l1_B = dma.copy B_tile => local;
+                   ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s3.cv1.shared32__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:49.9: warning: dma.transp falls back to naive copy (chunk indexing depends on inner-than-block PV).
+          dma.transp<1, 0> l1_Y => o.chunkat(p#n, _, q, _).span_as(Cout, M/#q);
+          ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s3.cv1.shared32__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:42.9: error: shared memory OUT OF BOUND!
+	In the scope ::CONV2D::paraby_0::within_0::foreach_0::paraby_1::paraby_2::within_1::foreach_1::, compile-time shared memory:
+	Used: 131072 bytes, Limit: 102400 bytes. With variables:
+		::CONV2D::paraby_0::anon_2
+          foreach kt in [K / 32] {
+          ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s3.cv1.shared32__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:42.9: error: shared memory OUT OF BOUND!
+	In the scope ::CONV2D::paraby_0::within_0::foreach_0::paraby_1::paraby_2::within_1::, compile-time shared memory:
+	Used: 131072 bytes, Limit: 102400 bytes. With variables:
+		::CONV2D::paraby_0::anon_2
+          foreach kt in [K / 32] {
+          ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s3.cv1.shared32__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:40.16: error: shared memory OUT OF BOUND!
+	In the scope ::CONV2D::paraby_0::within_0::foreach_0::paraby_1::paraby_2::, compile-time shared memory:
+	Used: 131072 bytes, Limit: 102400 bytes. With variables:
+		::CONV2D::paraby_0::anon_2
+        parallel q by 4  {
+                 ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s3.cv1.shared32__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:40.16: error: shared memory OUT OF BOUND!
+	In the scope ::CONV2D::paraby_0::within_0::foreach_0::paraby_1::, compile-time shared memory:
+	Used: 131072 bytes, Limit: 102400 bytes. With variables:
+		::CONV2D::paraby_0::anon_2
+        parallel q by 4  {
+                 ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s3.cv1.shared32__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:39.5: error: shared memory OUT OF BOUND!
+	In the scope ::CONV2D::paraby_0::within_0::foreach_0::, compile-time shared memory:
+	Used: 131072 bytes, Limit: 102400 bytes. With variables:
+		::CONV2D::paraby_0::anon_2
+      foreach n in [N / #p] {
+      ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s3.cv1.shared32__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:39.5: error: shared memory OUT OF BOUND!
+	In the scope ::CONV2D::paraby_0::within_0::, compile-time shared memory:
+	Used: 131072 bytes, Limit: 102400 bytes. With variables:
+		::CONV2D::paraby_0::anon_2
+      foreach n in [N / #p] {
+      ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/conv2d/M3.s3.cv1.shared32__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co:38.12: error: shared memory OUT OF BOUND!
+	In the scope ::CONV2D::paraby_0::, compile-time shared memory:
+	Used: 131072 bytes, Limit: 102400 bytes. With variables:
+		::CONV2D::paraby_0::anon_2
+    parallel p by 2  {
+             ^

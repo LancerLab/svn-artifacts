@@ -1,0 +1,4 @@
+Totally 1 errors have been detected.
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M2/concat/M2.s2.cc1.tile__1_bert_32x512x768_32x512x768_32x512x1536.co:32.7: error: Type inconsistent between DMA 'from'(shared f32 mdspan<4> [1, 1, 1535, 1]) and 'to'(global f32 mdspan<4> [1, 1, 1536, 1]).
+        dma.copy os => out.chunkat(p#i, j, _, _);
+        ^

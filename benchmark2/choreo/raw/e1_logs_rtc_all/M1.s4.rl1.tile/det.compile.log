@@ -1,0 +1,10 @@
+Totally 2 errors have been detected.
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/relu/M1.s4.rl1.tile__1_bert_32x512x768_32x512x768.co:127.16: warning: For nested parallel-by, it is better to either explicitly specify all parallelism levels, or none (Choreo to automatically infer the levels).
+        parallel q by 64
+                 ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/relu/M1.s4.rl1.tile__1_bert_32x512x768_32x512x768.co:125.13: error: Type inconsistent between DMA 'from'(f32 mdspan<4> [1, 1, 64, 1]) and 'to'(shared f32 mdspan<4> [1, 1, 65, 1]).
+        ifs = dma.copy.async inp.chunkat(p#i, j, k, _) => inp_s;
+              ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/relu/M1.s4.rl1.tile__1_bert_32x512x768_32x512x768.co:129.7: error: Type inconsistent between DMA 'from'(shared f32 mdspan<4> [1, 1, 65, 1]) and 'to'(global f32 mdspan<4> [1, 1, 64, 1]).
+        dma.copy out_s => out.chunkat(p#i, j, k, _);
+        ^

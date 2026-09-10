@@ -1,0 +1,7 @@
+Totally 1 errors have been detected.
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/matmul/M3.s3.mm11.local8__11_dynamic_32xSx768_768x768_32xSx768.co:16.13: warning: unable to find a device function 'k_matmul'.
+              call k_matmul(l1_a.chunkat(i,_,_), l1_b.data, l1_out, l1_a.span(1), l1_b.span(0), l1_a.span(2));
+              ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M3/matmul/M3.s3.mm11.local8__11_dynamic_32xSx768_768x768_32xSx768.co:19.9: error: Type inconsistent between DMA 'from'(local f32 mdspan<3> [1, ::matmul11::S, 1024]) and 'to'(global f32 mdspan<3> [1, ::matmul11::S, 128]).
+          dma.copy l1_out => output.chunkat(p#q, m_tile, n_tile);
+          ^

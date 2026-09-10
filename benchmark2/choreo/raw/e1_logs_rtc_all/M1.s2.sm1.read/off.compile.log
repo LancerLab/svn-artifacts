@@ -1,0 +1,9 @@
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/softmax/M1.s2.sm1.read__1_bert_32x512x768_32x512x768.co:7.18: warning: dma.copy falls back to naive copy (chunk indexing depends on inner-than-block PV).
+        l1_input = dma.copy input.chunkat(i#p, q, _) => shared;
+                   ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/softmax/M1.s2.sm1.read__1_bert_32x512x768_32x512x768.co:27.7: warning: dma.copy falls back to naive copy (chunk indexing depends on inner-than-block PV).
+        dma.copy l1_out => output.chunkat(i#p, q, _);
+        ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/softmax/M1.s2.sm1.read__1_bert_32x512x768_32x512x768.co:5.12: info: In the current kernel `__choreo_device_softmax1`, cudaFuncAttributeMaxDynamicSharedMemorySize is set to `98304` bytes, cause shared memory usage has exceeded the default limit 48KB.
+    parallel p by 32, q by 32 {
+             ^

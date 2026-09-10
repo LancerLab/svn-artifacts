@@ -1,0 +1,12 @@
+i: 0, j: 0, k: 767
+-0.129714 != 0.244648
+/tmp/1789028610739767274_129814852073280/choreo.h:221: choreo assertion failed: values are not equal.
+/tmp/1789028610739767274_129814852073280/choreo_cute.h(679): warning #177-D: variable "tma_atom" was declared but never referenced
+        auto* tma_atom = ((TMAAtom*)atom);
+              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/tmp/1789028610739767274_129814852073280/choreo.h(230): warning #20011-D: calling a __host__ function("__builtin_trap") from a __host__ __device__ function("choreo::choreo_assert") is not allowed
+
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/raw/e1_logs_rtc_all/M2.s1.ln1.scale/off.sh: line 8267: 3060271 Aborted                 (core dumped) /tmp/1789028610739767274_129814852073280/__choreo_cute_M2.s1.ln1.scale__1_bert_32x512x768_768_768.exe

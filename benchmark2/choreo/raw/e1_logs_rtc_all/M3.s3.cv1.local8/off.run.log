@@ -1,0 +1,24 @@
+/tmp/1789029149510184173_124293568771904/__choreo_cute_M3.s3.cv1.local8__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.cu(70): warning #780-D: reference is to parameter "i" (declared at line 35) -- under old for-init scoping rules it would have been variable "i" (declared at line 47)
+            auto __tensor3_i = cute::make_tensor(cute::make_gmem_ptr<float>((float*)i + (attn_h / 4 * (attn_w * __choreo_vtid_x) + (attn_h * attn_w * __iv_kt__elem__0 * 8 + attn_h * attn_w * 512 * (blockIdx.x * 16 + __iv_n__elem__0)))), __layout3_i);
+                                                                                    ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/tmp/1789029149510184173_124293568771904/choreo_cute.h(679): warning #177-D: variable "tma_atom" was declared but never referenced
+        auto* tma_atom = ((TMAAtom*)atom);
+              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/tmp/1789029149510184173_124293568771904/__choreo_cute_M3.s3.cv1.local8__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.cu(70): warning #780-D: reference is to parameter "i" (declared at line 35) -- under old for-init scoping rules it would have been variable "i" (declared at line 47)
+            auto __tensor3_i = cute::make_tensor(cute::make_gmem_ptr<float>((float*)i + (attn_h / 4 * (attn_w * __choreo_vtid_x) + (attn_h * attn_w * __iv_kt__elem__0 * 8 + attn_h * attn_w * 512 * (blockIdx.x * 16 + __iv_n__elem__0)))), __layout3_i);
+                                                                                    ^
+
+/tmp/1789029149510184173_124293568771904/__choreo_cute_M3.s3.cv1.local8__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.cu(130): warning #177-D: variable "__co__local_spm_size" was declared but never referenced
+    unsigned __co__local_spm_size = __co__local_result.heap_size;
+             ^
+
+/tmp/1789029149510184173_124293568771904/choreo.h(230): warning #20011-D: calling a __host__ function("__builtin_trap") from a __host__ __device__ function("choreo::choreo_assert") is not allowed
+
+CUDA failure: 1 (invalid argument)
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/raw/e1_logs_rtc_all/M3.s3.cv1.local8/off.sh: line 8231: 3071703 Aborted                 (core dumped) /tmp/1789029149510184173_124293568771904/__choreo_cute_M3.s3.cv1.local8__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.exe

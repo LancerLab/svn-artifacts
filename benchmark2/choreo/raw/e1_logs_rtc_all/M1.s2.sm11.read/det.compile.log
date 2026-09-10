@@ -1,0 +1,6 @@
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/softmax/M1.s2.sm11.read__11_dynamic_32xSx768_32xSx768.co:11.18: warning: dma.copy falls back to naive copy (chunk indexing depends on inner-than-block PV).
+        l1_input = dma.copy input.chunkat(i#p, _, _) => local;
+                   ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/softmax/M1.s2.sm11.read__11_dynamic_32xSx768_32xSx768.co:31.7: warning: dma.copy falls back to naive copy (chunk indexing depends on inner-than-block PV).
+        dma.copy l1_out => output.chunkat(i#p, _, _);
+        ^

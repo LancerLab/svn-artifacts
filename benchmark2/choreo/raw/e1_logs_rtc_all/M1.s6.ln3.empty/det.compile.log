@@ -1,0 +1,10 @@
+Totally 3 errors have been detected.
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/layer_normalization/M1.s6.ln3.empty__3_attention_32xNx512x64_64_64.co:22.23: error: The mdspan size "0" is invalid!
+          foreach l in [0]
+                        ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/layer_normalization/M1.s6.ln3.empty__3_attention_32xNx512x64_64_64.co:27.23: error: The mdspan size "0" is invalid!
+          foreach l in [0] {
+                        ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/layer_normalization/M1.s6.ln3.empty__3_attention_32xNx512x64_64_64.co:36.23: error: The mdspan size "0" is invalid!
+          foreach l in [0]
+                        ^

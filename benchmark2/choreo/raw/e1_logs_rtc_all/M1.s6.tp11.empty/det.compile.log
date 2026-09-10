@@ -1,0 +1,7 @@
+Totally 1 errors have been detected.
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/transpose/M1.s6.tp11.empty__11_dynamic_32xSx768_32x768xS.co:11.33: error: The mdspan size "0" is invalid!
+      foreach {y, z} in [seq_len, 0] {
+                                  ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/transpose/M1.s6.tp11.empty__11_dynamic_32xSx768_32x768xS.co:16.16: warning: For nested parallel-by, it is better to either explicitly specify all parallelism levels, or none (Choreo to automatically infer the levels).
+        parallel q by 64
+                 ^

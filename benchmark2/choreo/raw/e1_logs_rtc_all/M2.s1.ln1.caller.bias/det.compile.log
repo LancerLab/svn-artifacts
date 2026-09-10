@@ -1,0 +1,9 @@
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M2/layer_normalization/M2.s1.ln1.caller.bias__1_bert_32x512x768_768_768.co:21.38: warning: The implicit type conversion may lose precision: 's32' to 'f32'
+        s_mean.at(0) = s_mean.at(0) / (lhs.span(1) * lhs.span(2));
+                                       ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M2/layer_normalization/M2.s1.ln1.caller.bias__1_bert_32x512x768_768_768.co:29.36: warning: The implicit type conversion may lose precision: 's32' to 'f32'
+        s_var.at(0) = s_var.at(0) / (lhs.span(1) * lhs.span(2));
+                                     ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M2/layer_normalization/M2.s1.ln1.caller.bias__1_bert_32x512x768_768_768.co:31.21: warning: The implicit type conversion may lose precision: 'f64' to 'f32'
+        s_var.at(0) = s_var.at(0) + 0.00001;
+                      ^

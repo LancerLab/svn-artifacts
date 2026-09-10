@@ -1,0 +1,9 @@
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M2/concat/M2.s5.cc1.dup__1_bert_32x512x768_32x512x768_32x512x1536.co:25.12: warning: dma.copy falls back to naive copy (participating thread count is unknown or invalid).
+        af = dma.copy.async a.chunkat(p#i, j, _, _) => as;
+             ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M2/concat/M2.s5.cc1.dup__1_bert_32x512x768_32x512x768_32x512x1536.co:26.12: warning: dma.copy falls back to naive copy (participating thread count is unknown or invalid).
+        bf = dma.copy.async b.chunkat(p#i, j, _, _) => bs;
+             ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M2/concat/M2.s5.cc1.dup__1_bert_32x512x768_32x512x768_32x512x1536.co:32.7: warning: dma.copy falls back to naive copy (participating thread count is unknown or invalid).
+        dma.copy os => out.chunkat(p#i, j, _, _);
+        ^

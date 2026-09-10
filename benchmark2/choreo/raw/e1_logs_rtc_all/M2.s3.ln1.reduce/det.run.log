@@ -1,0 +1,9 @@
+Passed.
+/tmp/1789028628142399410_124989026277184/choreo_cute.h(679): warning #177-D: variable "tma_atom" was declared but never referenced
+        auto* tma_atom = ((TMAAtom*)atom);
+              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/tmp/1789028628142399410_124989026277184/choreo.h(230): warning #20011-D: calling a __host__ function("__builtin_trap") from a __host__ __device__ function("choreo::choreo_assert") is not allowed
+

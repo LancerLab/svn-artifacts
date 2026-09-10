@@ -1,0 +1,19 @@
+/tmp/1789030893147804409_138739142309696/choreo.h:221: choreo assertion failed: The 3rd index ` (q - 1) ` of element access 'out_s' should be greater than or equal to 0, /home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/relu/M1.s3.rl11.write__11_dynamic_32xSx768_32xSx768.co:85.24
+/tmp/1789030893147804409_138739142309696/choreo.h:221: choreo assertion failed: The 3rd index ` (q - 1) ` of element access 'out_s' should be greater than or equal to 0, /home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/relu/M1.s3.rl11.write__11_dynamic_32xSx768_32xSx768.co:85.24
+/tmp/1789030893147804409_138739142309696/choreo.h:221: choreo assertion failed: The 3rd index ` (q - 1) ` of element access 'out_s' should be greater than or equal to 0, /home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/relu/M1.s3.rl11.write__11_dynamic_32xSx768_32xSx768.co:85.24
+/tmp/1789030893147804409_138739142309696/choreo.h:221: choreo assertion failed: The 3rd index ` (q - 1) ` of element access 'out_s' should be greater than or equal to 0, /home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/relu/M1.s3.rl11.write__11_dynamic_32xSx768_32xSx768.co:85.24
+/tmp/1789030893147804409_138739142309696/choreo.h:221: choreo assertion failed: The 3rd index ` (q - 1) ` of element access 'out_s' should be greater than or equal to 0, /home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/relu/M1.s3.rl11.write__11_dynamic_32xSx768_32xSx768.co:85.24
+/tmp/1789030893147804409_138739142309696/choreo.h:221: choreo assertion failed: The 3rd index ` (q - 1) ` of element access 'out_s' should be greater than or equal to 0, /home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/relu/M1.s3.rl11.write__11_dynamic_32xSx768_32xSx768.co:85.24
+/tmp/1789030893147804409_138739142309696/choreo.h:221: choreo assertion failed: The 3rd index ` (q - 1) ` of element access 'out_s' should be greater than or equal to 0, /home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/relu/M1.s3.rl11.write__11_dynamic_32xSx768_32xSx768.co:85.24
+/tmp/1789030893147804409_138739142309696/choreo.h:221: choreo assertion failed: The 3rd index ` (q - 1) ` of element access 'out_s' should be greater than or equal to 0, /home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M1/relu/M1.s3.rl11.write__11_dynamic_32xSx768_32xSx768.co:85.24
+relu(0.39921) != 0.63753
+/tmp/1789030893147804409_138739142309696/choreo.h:221: choreo assertion failed: values are not equal.
+/tmp/1789030893147804409_138739142309696/choreo_cute.h(679): warning #177-D: variable "tma_atom" was declared but never referenced
+        auto* tma_atom = ((TMAAtom*)atom);
+              ^
+
+Remark: The warnings can be suppressed with "-diag-suppress <warning-number>"
+
+/tmp/1789030893147804409_138739142309696/choreo.h(230): warning #20011-D: calling a __host__ function("__builtin_trap") from a __host__ __device__ function("choreo::choreo_assert") is not allowed
+
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/raw/e1_logs_lower_bound_fix/M1.s3.rl11.write/det.sh: line 8300: 3185021 Aborted                 (core dumped) /tmp/1789030893147804409_138739142309696/__choreo_cute_M1.s3.rl11.write__11_dynamic_32xSx768_32xSx768.exe

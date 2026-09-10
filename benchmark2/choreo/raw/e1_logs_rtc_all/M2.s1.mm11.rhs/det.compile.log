@@ -1,0 +1,12 @@
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M2/matmul/M2.s1.mm11.rhs__11_dynamic_32xSx768_768x768_32xSx768.co:16.13: warning: unable to find a device function 'k_matmul'.
+              call k_matmul(l1_a.chunkat(i,_,_), l1_b.data, l1_out, l1_a.span(1), l1_b.span(0), l1_a.span(2));
+              ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M2/matmul/M2.s1.mm11.rhs__11_dynamic_32xSx768_768x768_32xSx768.co:13.18: warning: dma.copy falls back to naive copy (chunk indexing depends on inner-than-block PV).
+            l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile) => local;
+                   ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M2/matmul/M2.s1.mm11.rhs__11_dynamic_32xSx768_768x768_32xSx768.co:14.18: warning: dma.transp falls back to naive copy (only g2s and s2g are eligible for tiled lowering).
+            l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => local;
+                   ^
+/home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/mutants/M2/matmul/M2.s1.mm11.rhs__11_dynamic_32xSx768_768x768_32xSx768.co:19.9: warning: dma.copy falls back to naive copy (chunk indexing depends on inner-than-block PV).
+          dma.copy l1_out => output.chunkat(p#q, m_tile, n_tile);
+          ^
