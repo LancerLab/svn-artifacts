@@ -13,12 +13,18 @@ M2.10–M2.14, M3.7–M3.12, L3–L10, the new class **M4**, the
 empirical bug taxonomies** (§9.5). Rationale and evidence:
 `svn/eurosys27/plan/mutation-redesign.md`,
 `svn/eurosys27/plan/hardware-constraint-inventory.md`,
-`svn/eurosys27/plan/real-world-bug-coverage.md`.
+`svn/eurosys27/plan/real-world-bug-coverage.md`,
+`svn/eurosys27/plan/mutation-reachability-audit.md`.
 
 §9.4 records two resolutions: **M4 is adopted** and **tile-coordinate mutation is
-expressible, so M1.14 is unblocked**. §9.5.1–§9.5.3 propose three further specs
-(M1.19, M3.13, M5) that are **not adopted** — v2.1 remains the generation spec
-until they are accepted.
+expressible, so M1.14 is unblocked**. §9.5.1–§9.5.3 record the reachability
+verdicts for the three gap specs proposed by the coverage audit: **M1.19 approved**
+(artifact verified present in choreo, and already a latent defect), **M3.13
+approved but narrowed** (one of its three descriptor pairs is derived by
+construction and is a disclosed non-target), and **M5 rejected** (choreo has no
+reuse mechanism to corrupt). §9.5.4 adds a **fourth miss mechanism —
+unrepresentable** — with M2.10/M2.13 as its exemplars. v2.1 remains the generation
+spec pending owner confirmation of the narrowed M3.13 and the M1.19 realization.
 
 Every generated mutant's `stats.json` **must** carry `spec_version`. A table that
 mixes v1 and v2 rows is otherwise undetectable.
@@ -555,8 +561,9 @@ the kind of thing that makes a reviewer distrust the whole stats block.
    specification, not its implementation, and needs owner confirmation before it
    appears in the paper.
 7. **Can the harness select `-arch` per mutant?** M3.11 needs it (§3.5).
-8. **Does a two-phase (compile-A, then request-B) oracle exist on any surface?**
-   Blocking for the proposed M5 class (§9.5.3).
+8. ~~**Does a two-phase (compile-A, then request-B) oracle exist on any surface?**~~
+   **Moot** — M5 is rejected because choreo has no reuse mechanism for a two-phase
+   oracle to exercise (§9.5.3).
 
 ### §9.5 Coverage audit vs. empirical bug taxonomies
 
@@ -572,7 +579,7 @@ resource-shaped categories against M1–M4 and L1–L10:
 | Outcome | Count | Categories |
 |---|---:|---|
 | already covered | 11 | branch predication · IR transformation tile-drop · launch config · thread-block mapping · stride/layout address bugs · offset views · boundary-mask/tail · broadcast-vs-extent · resource sizing · per-arch feature gating · MMA divisibility |
-| **gap** | **3** | index-carrier overflow · descriptor-to-descriptor consistency · decision reuse |
+| **gap** | **3** | index-carrier overflow (**M1.19 — approved**) · descriptor-to-descriptor consistency (**M3.13 — approved, narrowed**) · decision reuse (**M5 — rejected, no mechanism in choreo**) |
 | out of scope (named) | 4 families | numeric (RC5.1/5.2/5.3, LCG) · concurrency/ordering (RC1.2, RC4.3) · IR determinism (RC2.1) · front-end tracing (GSC non-computational) |
 
 The excluded families are **~38% of the tile-bug corpus by count and ~19% of the
@@ -589,47 +596,108 @@ transposed / offset — not the value**, which is exactly M1.4/M1.5/M2.10/M2.13.
 Recommend reporting those four as a named **view-family** sub-table in the
 results.
 
-#### §9.5.1 Proposed M1.19 — index-carrier overflow *(pending)*
+#### §9.5.1 M1.19 — index-carrier overflow — **APPROVED, realizable**
 
 Real-world: Triton #832 — a valid flattened index exceeding INT_MAX, computed in
 signed int32, overflows to a negative offset → illegal memory access. Every
 existing M1 spec mutates the index **value or bound**; none mutates the index
-**carrier / arithmetic width**, and our shapes are too small to overflow.
-Realizations: large extent near `2³¹/elem`, or forced-narrow carrier with an
-overflowing shape product. A miss is the finding.
+**carrier / arithmetic width**.
 
-#### §9.5.2 Proposed M3.13 — descriptor consistency *(pending)*
+**Reachability (verified in choreo — see `mutation-reachability-audit.md` §1).** The
+artifact exists and is not derived away:
 
-Real-world: Triton #2658 — `WSMaterialization` mutates `num-warps` without
-updating tensor layouts, so `∏(warpsPerCta) == num-warps` is violated and
-invalid IR is emitted; no pass validates the invariant. M3 tests
-descriptor-*value bounds*; it never tests descriptor-*to-descriptor agreement*.
-Spec: mutate one of a mutually constrained descriptor pair so each stays
-individually valid but the conjunction is unsatisfiable (layout product ↔
-declared warp/CTA count; declared tile extent ↔ synthesized launch coverage;
-DMA box rank ↔ downstream padded rank).
+| Carrier | Evidence |
+|---|---|
+| tile base offset truncated to `int` | `cute_codegen.cpp:1757` emits `(int)(<coord> * <extent>)`, summed in `int` |
+| TMA coordinates | `int32_t coord0/coord1` (`runtime/choreo_cute.h:164`) |
+| TMA box shape | `uint32_t` entries (`cute_codegen.cpp:10296`) |
+| accessor index | `spanned_view::operator[](int)`, `ArrayProxy::operator[](int)` (`runtime/choreo.h:764`) |
 
-#### §9.5.3 Proposed M5 — decision reuse, a new class *(pending)*
+No guard bounds a flat offset (`EmitHostRuntimeCheck` tests `shape()` equality
+only). And dimensions above INT_MAX are **legal**: `__inf__ = 2³²−1`
+(`runtime/choreo.h:222`).
 
-Real-world, two independent reports: torch.compile **graph caching** bugs (guard
-condition omits input properties **including shapes** → a cached graph is used
-for a shape it was never proven for; the study notes this pipeline is invisible
-to *every* existing fuzzer because they all compile once) and tile RC4.3 (Warp
-#639 — the kernel hash omitted `block_dim`, so a launch at a different block
-dimension reused an artifact built for the earlier one).
+**Realizations:** (a) large-shape — `bos*H*K ≥ 2³¹`; (b) narrow-carrier — a single
+dim in `(2³¹, 2³²)`, legal under `__inf__` but unindexable by the `int` accessor.
+Realization (b) is cheaper. A miss is the finding.
 
-Why no existing class reaches it: every mutant in the suite is **one compilation
-of one configuration**. M5 is a *sequence* — decision D is validated for config A,
-then config B shares D's key and D's obligations are never re-checked. Proposed
-specs: M5.1 (compile at S₁, request S₂ with a changed extent under the same key),
-M5.2 (block/warp count W₁ → W₂), M5.3 (layout L₁ → L₂, same extents, M2.13-coupled).
+**Separate finding.** The `(int)` cast at `:1757` is a **latent defect in the shipped
+compiler**, independent of any injection. Report it as a found defect, not as a
+mutation result.
 
-**Adopting M5 gives the paper's miss taxonomy a third mechanism** alongside
-*not-emitted-to-runtime* and *cost-suppressed*: **not-invalidated** — which no
-value of `-rtc` can reach. Blocking question: §9.4 q8 (two-phase oracle). If
-infeasible, report M5 as a **named, cited limitation** rather than dropping it.
+#### §9.5.2 M3.13 — descriptor consistency — **APPROVED, narrowed**
 
-#### §9.5.4 Generator requirement (not a spec)
+Real-world: Triton #2658 — `WSMaterialization` mutates `num-warps` without updating
+tensor layouts, violating `∏(warpsPerCta) == num-warps`; no pass validates the
+invariant.
+
+**Reachability (verified — see `mutation-reachability-audit.md` §2).** Only one of the
+three candidate pairs is admissible:
+
+| Pair | Verdict |
+|---|---|
+| TMA descriptor rank ↔ device coordinate arity | **Non-target — derived.** `tma_inner_splits_` is written once (`cute_codegen.cpp:10291`) and read by *both* device sites (`:4715` load, `:5018` store). A contradiction is unrepresentable; choreo avoids this by construction. |
+| descriptor stride ↔ actual buffer layout | Realizable, but this **is M2.13** — report there, do not double-count. |
+| **swizzle width ↔ box inner dim ↔ shared alignment** | **Admissible.** Three independently derived quantities: `swiz_bytes` from `SwizMode` (`:10264`), box inner bytes from `t_shape` (`:10268`), `SharedAlignmentBytes` (`:276`). An explicit repair for the box-vs-swizzle conflict exists (`:10271`) — evidence the conflicting state is reachable. |
+
+**Spec (narrowed):** mutate the swizzle-mode / box-shape / shared-alignment triple so
+each value stays individually legal but the conjunction is unsatisfiable. Record the
+rank pair as an explicit **non-target** with the reason (single source of truth) —
+disclosing it pre-empts a reviewer asking why we did not mutate the descriptor rank.
+
+#### §9.5.3 M5 — decision reuse — **REJECTED (mechanism absent)**
+
+Real-world: torch.compile graph caching (guard omits input shapes →
+a cached graph reused for a shape never proven for it) and tile RC4.3 (Warp #639 —
+the kernel hash omitted `block_dim`).
+
+**Reachability: NO — see `mutation-reachability-audit.md` §3.** There is no reuse
+mechanism to corrupt: no cache, no kernel hash, no specialization key, no guard
+anywhere in `lib/`, `tools/`, `runtime/`, `co2ir/` (every `specializ` match is a C++
+template specialization), and the only index/cache-flavoured runtime, `runtime/catz`,
+is **excluded from the build** (`scripts/oss/oss_exclude_paths.txt`). choreo compiles
+per configuration and emits a fresh `runtime_check` block for each.
+
+Consequently a "reuse" mutation would be a corruption of **our harness**, not of the
+compiler under test — a miss would prove nothing about the obligation set. Rejected on
+the owner's criterion. The two-phase oracle question (§9.4 q8) is therefore **moot**.
+
+**Salvage (record, do not promote to a class).** `EmitHostRuntimeCheck`
+(`cute_codegen.cpp:9950`) guards **static** dims (`:9966`) and **unbounded** dims
+(`:9974`), but for **symbolic** dims emits only the cross-parameter equality check
+(`VISym` → `ve_entries_map`, `:9981`) — a symbolic dim's own value is never guarded.
+That is a genuine *single-compilation* "not-invalidated" instance and needs no
+two-phase oracle. Report it as a narrowed M5 candidate or as a named limitation.
+
+#### §9.5.4 New miss mechanism: **unrepresentable**
+
+Fell out of the reachability audit and is more consequential than the three proposals
+above. Full write-up: `mutation-reachability-audit.md` §4 and
+`real-world-bug-coverage.md` §8.1.
+
+`spanned_view` (`runtime/choreo.h:764`) holds `T* ptr` and `mdspan<Rank> dims` — **no
+strides** — with a **public** constructor. The generated host prologue guards extents
+only (four `runtime_check(...shape()[i] == 256)`, zero stride checks) while the kernel
+bakes the layout it assumed (`__choreo_tma_0_strides[] = {512}`). The ATen adapter
+`make_spanview(const at::Tensor&)` does guard `is_contiguous()`
+(`runtime/choreo.h:1061`), but the public constructor does not, and the adapter is
+`#ifdef`-gated.
+
+So `spanned_view<T,R>(ptr_into_a_strided_buffer, {256,256})` passes every check and
+yields silently wrong results. Because the obligation **cannot be expressed** in the
+input type, **no `-rtc` value reaches it**:
+
+| Mechanism | Reachable by raising `-rtc`? |
+|---|---|
+| not emitted to runtime | no |
+| cost-suppressed | **yes — this is the curve** |
+| not invalidated | no |
+| **unrepresentable** | **no — not fixable by any threshold** |
+
+M2.10/M2.13 — already the best-attested class in both empirical corpora — are the
+canonical exemplars. This is the direct answer to "why not just raise the threshold?"
+
+#### §9.5.5 Generator requirement (not a spec)
 
 Both studies name the same triggering axes (tile F6; torch.compile
 "operator-induced layout transformations"). The shape sweep **must** include
