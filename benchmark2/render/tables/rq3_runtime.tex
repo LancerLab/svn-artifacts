@@ -1,0 +1,23 @@
+\begin{table}[t]
+\centering\footnotesize
+\caption{Runtime cost and detection latency (S13). E5a residue is structurally zero on device (byte-identical device code) and below the measurement floor on host; E5b is reported as detection asymmetry, not a latency multiplier (R-D1/R-D3).}
+\label{tab:rq3-runtime}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Quantity & Value \\
+\midrule
+\textbf{E5a residue (checks on vs off)} &  \\
+cases measured & 14 \\
+median $\Delta$ & 3.92\% \\
+cases within noise & 14 \\
+negative deltas & 6 \\
+\textbf{E5b detection latency (oracle vs choreo)} &  \\
+admissible pairs & 4 \\
+median ratio (oracle slower) & 84.5$\times$ \\
+oracle-blind (choreo caught, memcheck silent) & 4 \\
+oracle never executed (launch rejected) & 2 \\
+aborted by choreo's own ungated check & 6 \\
+\bottomrule
+\end{tabular}
+\vspace{0.4em}\begin{minipage}{0.98\linewidth}\raggedright\footnotesize Source: \texttt{results/choreo/stats.json} \texttt{S13\_runtime\_and\_latency}.\end{minipage}
+\end{table}

@@ -116,7 +116,7 @@ cmd_collect() { python3 "$LANE/collect_stats.py" collect; }
 cmd_stats()   { python3 "$LANE/collect_stats.py" stats; }
 
 cmd_all() {
-  cmd_setup; cmd_minimal; cmd_e2; cmd_e3; python3 "$LANE/lane.py" s12
+  cmd_setup; cmd_e2; cmd_minimal; cmd_e3; python3 "$LANE/lane.py" s12
   cmd_semcheck; cmd_oracle; cmd_collect; cmd_stats
 }
 

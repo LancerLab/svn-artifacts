@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering\footnotesize
+\caption{Bug-detection matrix by mutation class and toolchain. Compile = refuted statically; Launch = caught at entry before device execution; Never = not detected; n/a = class the surface cannot express. Sanitizer = flagged $\wedge$ exercised mutants (S12).}
+\label{tab:rq2-bugs}
+\begin{tabular}{@{}lrrrrrrr@{}}
+\toprule
+Class & Toolchain & Injected & Compile & Launch & Never & n/a & Sanitizer \\
+\midrule
+M1 & choreo & 30 & 9 & 4 & 17 & 0 & --- \\
+M1 & iree & 0 & 0 & 0 & 0 & 40 & --- \\
+M1 & triton & 27 & 0 & 2 & 25 & 0 & 23/27 \\
+M2 & choreo & 30 & 13 & 7 & 10 & 0 & --- \\
+M2 & iree & 23 & 0 & 19 & 4 & 0 & 0/23 \\
+M2 & triton & 0 & 0 & 0 & 0 & 40 & --- \\
+M3 & choreo & 12 & 2 & 0 & 10 & 0 & --- \\
+M3 & iree & 0 & 0 & 0 & 0 & 40 & --- \\
+M3 & triton & 2 & 2 & 0 & 0 & 0 & 0/2 \\
+\bottomrule
+\end{tabular}
+\vspace{0.4em}\begin{minipage}{0.98\linewidth}\raggedright\footnotesize Classes: M1 = element-access (OOB / stride), M2 = shape-compatibility (dim mismatch), M3 = hardware-constraint (tile / alignment). Source: S1 detection matrices (choreo \texttt{per\_class}, triton/iree top-level) and S12 in each lane's \texttt{stats.json}.\end{minipage}
+\end{table}

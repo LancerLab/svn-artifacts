@@ -10,6 +10,7 @@ stats:   aggregate into results/iree/stats.json the statistics the iree lane
 from __future__ import annotations
 
 import json
+import os
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -17,6 +18,8 @@ ROOT = Path(__file__).resolve().parent.parent       # benchmark2/
 LANE = ROOT / "iree"
 RAW = LANE / "raw"
 RESULTS = ROOT / "results" / "iree"
+
+CUDA_TARGET = os.environ.get("IREE_CUDA_TARGET", "sm_120")
 
 
 def load(name: str) -> list[dict]:
@@ -123,7 +126,7 @@ def cmd_stats():
             "ref_pass": sum(1 for r in kernels if r["ref_check"] == "pass"),
             "full_size_failures": len(full_failures),
         },
-        "note": ("Correctness only, sm_120 (dev build). Kernel gate = structural "
+        "note": (f"Correctness only, {CUDA_TARGET}. Kernel gate = structural "
                  "ref-check. E1 S1: measured M2 entry-shape mutants; M1/M3 n/a "
                  "per §3.3. S12: M2 shape-contract mutants are not memory "
                  "faults, so compute-sanitizer --tool memcheck is silent by "

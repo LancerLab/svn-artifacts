@@ -1,0 +1,22 @@
+\begin{table}[t]
+\centering\footnotesize
+\caption{Before-device detection sensitivity to the runtime-check / hoisting flag matrix (R-D2b). The pinned default is the headline; the `rtc=all` + hoist-disabled arm shows the hoisting defect's recoverable cost. Never-cause breakdown attributes the $n_\mathrm{never}=37$ mutants.}
+\label{tab:rq5-ablation}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Configuration & Result \\
+\midrule
+\textbf{Flag-matrix ablation (before-device sensitivity)} &  \\
+pinned default (rtc default, hoist on) & 35/72 = 48.6111% \\
+rtc=all + hoist disabled & 43/72 = 59.72% \\
+recovered by flags & 8 \\
+\textbf{Never-cause breakdown} &  \\
+C4\_NOT\_ASSESSED (coverage gap) & 19 \\
+HOISTING\_DEFECT (emission policy) & 6 \\
+C5\_OUT\_OF\_SCOPE (value error) & 6 \\
+C3\_LOWER\_BOUND\_OMITTED (gen bug) & 4 \\
+C1\_COST\_FILTER\_SUPPRESSED (emission policy) & 2 \\
+\bottomrule
+\end{tabular}
+\vspace{0.4em}\begin{minipage}{0.98\linewidth}\raggedright\footnotesize Source: \texttt{results/choreo/stats.json} \texttt{S2\_before\_device.never\_attribution}.\end{minipage}
+\end{table}

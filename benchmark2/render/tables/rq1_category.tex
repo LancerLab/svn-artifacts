@@ -1,0 +1,28 @@
+\begin{table}[t]
+\centering\footnotesize
+\caption{Per-category discharge. Gen. = obligations generated (S3); Disch. = statically discharged (S4); ADR = discharge rate; Remainder = obligations left to runtime/budget (S5 residue).}
+\label{tab:rq1-category}
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Category & Kernels & Gen. & Disch. & ADR & Remainder \\
+\midrule
+batch\_norm & 21 & 1,575 & 1,439 & 91.4\% & 136 \\
+concat & 21 & 1,539 & 1,508 & 98.0\% & 31 \\
+conv2d & 21 & 1,406 & 1,259 & 89.5\% & 147 \\
+elemwise\_add & 21 & 1,187 & 1,124 & 94.7\% & 63 \\
+embedding & 20 & 610 & 572 & 93.8\% & 38 \\
+gelu & 21 & 842 & 818 & 97.1\% & 24 \\
+layer\_normalization & 21 & 1,825 & 1,682 & 92.2\% & 143 \\
+matmul & 20 & 1,029 & 976 & 94.8\% & 53 \\
+max\_pool2d & 20 & 2,077 & 1,810 & 87.1\% & 267 \\
+reduce\_mean & 20 & 697 & 665 & 95.4\% & 32 \\
+relu & 21 & 1,102 & 1,074 & 97.5\% & 28 \\
+reshape & 21 & 0 & 0 & --- & 0 \\
+sigmoid & 21 & 833 & 810 & 97.2\% & 23 \\
+softmax & 20 & 1,913 & 1,732 & 90.5\% & 181 \\
+transpose & 21 & 718 & 676 & 94.2\% & 42 \\
+\textbf{Total} & 310 & 17,353 & 16,145 & 93.0\% & 1,208 \\
+\bottomrule
+\end{tabular}
+\vspace{0.4em}\begin{minipage}{0.98\linewidth}\raggedright\footnotesize Source: \texttt{results/choreo/stats.json} S3/S4/S5 and the committed \texttt{results/choreo/kernel.jsonl} register (310 kernels).\end{minipage}
+\end{table}

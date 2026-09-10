@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering\footnotesize
+\caption{Discharge by evaluation form (mechanism split, S6). Interval discharge is 2{,}920 (re-registered from 2{,}837).}
+\label{tab:rq6-mechanism}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Mechanism & Discharged & Share \\
+\midrule
+Constant fold (canonical) & 7872 & 48.8\% \\
+Interval (bounded types) & 2920 & 18.1\% \\
+Direct static checks & 5353 & 33.2\% \\
+\textbf{Total} & 16145 & 100\% \\
+\bottomrule
+\end{tabular}
+\vspace{0.4em}\begin{minipage}{0.98\linewidth}\raggedright\footnotesize Source: \texttt{results/choreo/stats.json} \texttt{S6\_mechanism\_split.per\_outcome.proven}.\end{minipage}
+\end{table}

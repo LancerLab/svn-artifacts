@@ -100,7 +100,7 @@
 {"toolchain": "iree", "category": "embedding", "stem": "5_dynamic_32xN_50000x1024_32xNx1024", "settings_hash": "666bab9695c5", "settings_source_sha1": "7af9d60f1b87", "kernel_hash": "e147df02ef06"}
 {"toolchain": "iree", "category": "embedding", "stem": "6_dynamic_16xN_256x128_16xNx128", "settings_hash": "666bab9695c5", "settings_source_sha1": "0c9b1ef62b13", "kernel_hash": "eab5c504c10a"}
 {"toolchain": "iree", "category": "embedding", "stem": "7_dynamic_128xS_30522x768_128xSx768", "settings_hash": "666bab9695c5", "settings_source_sha1": "aa44d77ac91d", "kernel_hash": "bc2c5b54ef0c"}
-{"toolchain": "iree", "category": "embedding", "stem": "8_dynamic_16xN_512x768_128xSx768", "settings_hash": "666bab9695c5", "settings_source_sha1": "bb2642c6182a", "kernel_hash": "e334f47735f7"}
+{"toolchain": "iree", "category": "embedding", "stem": "8_dynamic_16xN_512x768_128xSx768", "settings_hash": "666bab9695c5", "settings_source_sha1": "bb2642c6182a", "kernel_hash": "da2ed86db581"}
 {"toolchain": "iree", "category": "embedding", "stem": "9_dynamic_32xN_32000x768_32xNx768", "settings_hash": "666bab9695c5", "settings_source_sha1": "937481b9895c", "kernel_hash": "1a8f41bbfe54"}
 {"toolchain": "iree", "category": "gelu", "stem": "10_dynamic_16x512xHxW", "settings_hash": "f08293b4eb9e", "settings_source_sha1": "1933492d44d1", "kernel_hash": "fcdb973a8ee5"}
 {"toolchain": "iree", "category": "gelu", "stem": "11_dynamic_32xSx768", "settings_hash": "f08293b4eb9e", "settings_source_sha1": "db82b0696085", "kernel_hash": "04b72af24946"}

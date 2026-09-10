@@ -179,5 +179,5 @@
     "ref_pass": 619,
     "full_size_failures": 3
   },
-  "note": "Correctness only, sm_120 (dev build). Kernel gate = structural ref-check. E1 S1: measured M2 entry-shape mutants; M1/M3 n/a per \u00a73.3. S12: M2 shape-contract mutants are not memory faults, so compute-sanitizer --tool memcheck is silent by design (plan \u00a73.5)."
+  "note": "Correctness only, sm_86. Kernel gate = structural ref-check. E1 S1: measured M2 entry-shape mutants; M1/M3 n/a per \u00a73.3. S12: M2 shape-contract mutants are not memory faults, so compute-sanitizer --tool memcheck is silent by design (plan \u00a73.5)."
 }
