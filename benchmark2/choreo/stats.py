@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Aggregate `benchmark2/results/choreo/*.jsonl` into `stats.json` (S1-S7, S10, S13).
+"""Aggregate `benchmark2/results/choreo/*.jsonl` into `stats.json`
+(S1-S7, S10, S13, S14).
 
 --------------------------------------------------------------------------
 WHAT THIS IS
@@ -9,6 +10,13 @@ the choreo worker owns S1-S7, S10 and S13, and that "the integrator writes no
 number into main.tex that is not derivable from some worker's stats.json". So
 this file is the last step before a number becomes a paper claim, and its job is
 to make every claim traceable or explicitly untraceable.
+
+S14 is ADDITIVE and is a v2.1 arrival, so it is not in that lane list. It
+registers the path-class model: how many specs choreo was FAIR to ask about,
+and for the rest, the recorded reason it was not asked. It must never feed back
+into S1/S2 -- specs/expansion-workflow.md §7 reserves any change to the
+detection denominator for v3 with owner sign-off, and the frozen E1 baseline
+depends on that.
 
 --------------------------------------------------------------------------
 INPUT: the COLLECTED records, not the raw lane output
@@ -95,6 +103,7 @@ NEEDS = {
     "S3": "obligation", "S4": "obligation", "S5": "obligation",
     "S6": "obligation", "S7": "obligation",
     "S10": "cost", "S13a": "residue", "S13b": "latency",
+    "S14": "mutant",
 }
 
 # plan §6 outcome taxonomy. `never` is the one that matters: S2 asserts it is 0.
@@ -154,8 +163,8 @@ def load_all(results_dir):
     """Load every record type. Missing files yield empty lists, and `present`
     records which files existed at all -- that is what separates "lane not run"
     from "lane ran and found nothing"."""
-    names = ("kernel", "mutant", "obligation", "sanitizer", "expressibility",
-             "remainder", "cost", "residue", "latency")
+    names = ("kernel", "mutant", "spec", "obligation", "sanitizer",
+             "expressibility", "remainder", "cost", "residue", "latency")
     data, present = {}, {}
     for n in names:
         p = os.path.join(results_dir, f"{n}.jsonl")
@@ -1683,6 +1692,477 @@ def s13(residue, latency, present):
 
 
 # --------------------------------------------------------------------------
+# S14 -- path-class register (v2.1)
+# --------------------------------------------------------------------------
+# WHAT THIS IS AND WHY IT IS SEPARATE FROM S1/S2
+#
+# S1 answers "how many mutants did choreo catch". S14 answers "how many mutants
+# was it FAIR to ask about, and for the rest, what is the recorded reason it was
+# not asked". Those are different denominators and conflating them is the defect
+# this statistic exists to prevent: v1 reported "28 mutants with no detection"
+# as a single number, which is unfalsifiable -- a reader cannot tell an
+# unassessable spec from a spec nobody wrote an operator for.
+#
+# The register is two orthogonal axes (specs/expansion-workflow.md §2):
+#   status      does an operator exist for this spec?
+#   admissible  may this spec's cells enter the detection denominator?
+# An inadmissible spec is a VERDICT, not open work, and must name a prohibition
+# (absent | derived | repaired | harness-owned | observation).
+#
+# S1/S2 SEMANTICS ARE UNTOUCHED. specs §7 reserves any change to the detection
+# denominator for v3 with owner sign-off; this block is additive so the frozen
+# E1 baseline stays byte-comparable.
+PATH_CLASSES = ("P1", "P2", "P3", "P4", "L")
+PROHIBITIONS = ("absent", "derived", "repaired", "harness-owned", "observation")
+RTC_LEVELS = ("entry", "low", "medium", "high")
+
+# `cost` in the E2 ledger is the CHEAPEST -rtc level at which an obligation is
+# emitted and checked (`assert_site.cpp:18-20`; buckets `:123-132`; default
+# threshold ENTRY `context.hpp:549`). `enabled` is the observed consequence at
+# the pinned level. So the enabled-count curve is a property of the LEDGER and
+# is derivable without rerunning anything -- which is the whole point of §9.2.
+_RTC_ORDER = {lv: i for i, lv in enumerate(RTC_LEVELS)}
+
+
+def _resolve_spec_id(m):
+    """The spec_id of a mutant record, or None if it cannot be resolved.
+
+    v2.1 manifests carry `spec_id` directly. The FROZEN v1 baseline in
+    results/choreo/mutant.jsonl does not -- it carries the legacy 1-based `spec`
+    index -- so the v1 vocabulary is joined through mutations.V1_SPEC_ID rather
+    than pattern-matched off the mutant_id. Unresolvable records are COUNTED and
+    named, never dropped: a silently shrunk denominator is the failure mode.
+    """
+    sid = m.get("spec_id")
+    if sid:
+        return sid
+    import mutations as _M
+    s = m.get("spec")
+    key = (m.get("class"), s if isinstance(s, int) else
+           (s[0] if isinstance(s, list) and s else None))
+    return _M.V1_SPEC_ID.get(key)
+
+
+def _registry_from_records(specs):
+    """{spec_id: meta} from `spec` design records (collect.py, DESIGN_GRAIN)."""
+    out = {}
+    for s in specs:
+        sid = s.get("spec_id")
+        if not sid:
+            continue
+        out[sid] = {
+            "class": s.get("class") or s.get("cls"),
+            "path_class": s.get("path_class") or s.get("path"),
+            "applicable": s.get("applicable", s.get("admissible")),
+            "prohibition": s.get("prohibition") or "",
+            "status": s.get("status"),
+            "desc": s.get("desc"),
+            "note": s.get("note"),
+        }
+    return out
+
+
+def _registry_from_raw():
+    """Fallback: raw/spec_registry.json, authored by `gen_mutants.py --dry-run`.
+
+    The register is a DESIGN artifact -- written before, and independently of,
+    any run -- so reading it from raw/ when collect.py has not yet re-emitted it
+    as spec.jsonl does not weaken the "stats reads the validated projection"
+    rule the way reading a lane's raw output would. The source is recorded in
+    the output either way so a reader can see which path was taken.
+    """
+    p = os.path.join(RAW, "spec_registry.json")
+    if not os.path.exists(p):
+        return {}, None
+    with open(p) as f:
+        d = json.load(f)
+    recs = d.get("specs", [])
+    # Normalise the registry file's field names onto the schema's.
+    for r in recs:
+        r.setdefault("class", r.get("cls"))
+        r.setdefault("path", r.get("path"))
+    return _registry_from_records(recs), os.path.relpath(p, B2)
+
+
+def s14_path_class(mutants, specs, obligations, present):
+    """The admissible-denominator register, the N/A reasons, and the -rtc curve.
+
+    Emitted in the shape specs/expansion-workflow.md §6 fixed, so `tab:e1-path-
+    class` can be rendered from this block alone.
+    """
+    reg, reg_src = _registry_from_records(specs), "results/choreo/spec.jsonl"
+    if not reg:
+        reg, reg_src = _registry_from_raw()
+    if not reg:
+        r = not_run("E1 path-class register (§5.2; tab:e1-path-class)",
+                    "no spec register: neither results/choreo/spec.jsonl nor "
+                    "raw/spec_registry.json exists. Run `make choreo-screen` "
+                    "(gen_mutants.py --dry-run) then `run.sh collect`.")
+        r["expected_records"] = "mutant,spec"
+        return r
+
+    # ---- axis 1+2, over SPECS: the denominator --------------------------
+    n_applicable = sum(1 for v in reg.values() if v["applicable"])
+    n_not_applicable = sum(1 for v in reg.values() if not v["applicable"])
+    prohibition = collections.Counter(v["prohibition"] for v in reg.values()
+                                      if v["prohibition"])
+    # Printed WITH the path, because "28 N/A" alone is unfalsifiable while
+    # "22 absent + 3 repaired + 3 observation" is checkable against the tree.
+    prohibition_by_path = collections.defaultdict(collections.Counter)
+    for v in reg.values():
+        if not v["applicable"]:
+            prohibition_by_path[v["path_class"] or "?"][
+                v["prohibition"] or "NO-PROHIBITION"] += 1
+
+    # ---- the cell view, over MUTANTS ------------------------------------
+    if not present.get("mutant"):
+        return not_run("E1 path-class register (§5.2; tab:e1-path-class)",
+                       "results/choreo/mutant.jsonl is absent; run "
+                       "`run.sh minimal` first.")
+
+    per_path = collections.defaultdict(collections.Counter)
+    per_spec = collections.defaultdict(collections.Counter)
+    unresolved = []
+    for m in mutants:
+        sid = _resolve_spec_id(m)
+        meta = reg.get(sid)
+        if meta is None:
+            unresolved.append(m.get("mutant_id") or sid)
+            pc = "UNRESOLVED"
+            adm, prob, cls = None, "", m.get("class")
+        else:
+            pc = meta["path_class"]
+            adm, prob, cls = meta["applicable"], meta["prohibition"], meta["class"]
+        per_path[pc]["n_cells"] += 1
+        srow = per_spec[sid or "(unresolved)"]
+        srow["class"] = cls or ""
+        srow["path_class"] = pc
+        srow["prohibition"] = prob
+        srow["n_cells"] += 1
+        # A noop is discarded from the detection denominator (specs §11.1): its
+        # own manifest says it corrupts nothing, so counting it as a detection
+        # would credit choreo with catching a non-bug.
+        if m.get("manifest") == "noop":
+            per_path[pc]["n_discarded_noop"] += 1
+            srow["n_discarded_noop"] += 1
+            continue
+        per_path[pc]["n_injected"] += 1
+        srow["n_injected"] += 1
+        oc = m.get("outcome")
+        if oc in OUTCOMES:
+            per_path[pc][f"n_{oc}"] += 1
+            srow[f"n_{oc}"] += 1
+        # `n_detected` counts EVERY detected cell in this path, admissible or
+        # not, so `reconciliation` can check S14's partition against S2's
+        # n_before_device. The admissible-only subset is a SEPARATE key, because
+        # collapsing the two would make the audit below blind: it looks for
+        # detections on inadmissible cells, which is exactly what a single
+        # gated counter would hide.
+        detected = oc in ("compile", "runtime")
+        if detected:
+            per_path[pc]["n_detected"] += 1
+            srow["n_detected"] += 1
+        if adm:
+            per_path[pc]["n_admissible"] += 1
+            srow["n_admissible"] += 1
+            if detected:
+                per_path[pc]["n_detected_admissible"] += 1
+                srow["n_detected_admissible"] += 1
+            if oc == "never":
+                # Admissible-only `never`. `n_never` above spans BOTH axes, so a
+                # share computed from it can exceed 100% (37 all-path nevers
+                # against 33 admissible misses). This key is the one the miss
+                # share is defined on; `n_never` stays for reconciliation.
+                per_path[pc]["n_never_admissible"] += 1
+                srow["n_never_admissible"] += 1
+
+    # The L row has no detection denominator BY CONSTRUCTION (attribution only),
+    # so it reports its own quantities rather than a misleading 0-detected rate.
+    for pc, c in per_path.items():
+        c["n_detected_pct"] = pct(c.get("n_detected_admissible", 0),
+                                  c.get("n_admissible", 0))
+        # Misses, ON THE SAME POPULATION as n_detected_pct: admissible injected
+        # cells that were not caught. Both terms must be admissible-only or the
+        # ratio is meaningless.
+        c["n_never_share_of_misses"] = pct(
+            c.get("n_never_admissible", 0),
+            c.get("n_admissible", 0) - c.get("n_detected_admissible", 0))
+
+    # ---- AUDIT: does the design claim survive the records? --------------
+    # The register says a spec is inadmissible because its mutation cannot
+    # corrupt anything ("absent"), or because the compiler refuses it rather than
+    # testing it ("repaired"). That is a DESIGN claim. The records carry the
+    # ground truth (`manifest`: corrupts | noop). If the cells of an inadmissible
+    # spec are routinely `corrupts` AND detected, the design claim is wrong and
+    # the spec belongs in the denominator.
+    #
+    # This is reported, never auto-applied: moving a spec back into the
+    # denominator changes S1/S2, which specs §7 reserves for v3 with owner
+    # sign-off, and would invalidate the frozen E1 baseline.
+    audit, contradictions = [], []
+    for sid, srow in per_spec.items():
+        if srow.get("n_admissible") or not srow.get("n_injected"):
+            continue
+        n_det = srow.get("n_detected", 0)
+        n_never = srow.get("n_never", 0)
+        # A cell is only evidence if the manifest itself says it corrupts, which
+        # n_injected already guarantees (noops are excluded before this point).
+        contradicts = n_det > 0
+        row = {
+            "spec_id": sid,
+            "class": srow.get("class"),
+            "path_class": srow.get("path_class"),
+            "prohibition": srow.get("prohibition"),
+            "desc": (reg.get(sid) or {}).get("desc"),
+            "n_injected": srow.get("n_injected", 0),
+            "n_detected": n_det,
+            "n_never": n_never,
+            "contradicts_design_claim": contradicts,
+            "design_note": (reg.get(sid) or {}).get("note"),
+        }
+        audit.append(row)
+        if contradicts:
+            contradictions.append(row)
+    audit_ok = not contradictions
+
+    # ---- reconciliation against S1/S2 -----------------------------------
+    # S14 must partition the SAME cells S2 counts, or one of the two is wrong.
+    # Asserted rather than assumed, because the whole value of a second
+    # denominator is that a reader can check it against the first.
+    tot_cells = sum(c.get("n_cells", 0) for c in per_path.values())
+    tot_inj = sum(c.get("n_injected", 0) for c in per_path.values())
+    tot_noop = sum(c.get("n_discarded_noop", 0) for c in per_path.values())
+    tot_det = sum(c.get("n_detected", 0) for c in per_path.values())
+    tot_det_adm = sum(c.get("n_detected_admissible", 0)
+                      for c in per_path.values())
+    tot_never = sum(c.get("n_never", 0) for c in per_path.values())
+    tot_adm = sum(c.get("n_admissible", 0) for c in per_path.values())
+    # Detections on inadmissible cells are the difference between S2's headline
+    # and the admissible-only rate; naming it is what stops 48.6% being read as
+    # "over the admissible denominator".
+    inadm_det = sum(r["n_detected"] for r in audit)
+    inadm_inj = sum(r["n_injected"] for r in audit)
+
+    # ---- the -rtc enabled-obligation curve ------------------------------
+    # Steepness here is the paper's thesis (specs §9.2): does the runtime-check
+    # COST filter, rather than the absence of checks, own the misses? The ledger
+    # answers the "enabled" half exactly; the "detected" half needs the rtc=all
+    # arm, so it is reported from the recorded probe and left None where no run
+    # exists -- never a fabricated zero.
+    rtc = {"status": "derived_from_ledger",
+           "definition": "enabled = cost <= threshold, per the E2 obligation "
+                         "ledger. No rerun is needed for this column.",
+           "levels": list(RTC_LEVELS),
+           "n_obligations": None,
+           "n_obligations_enabled": {},
+           "delta_vs_entry": {},
+           "by_class": {},
+           "paper_reference": {
+               "source": "specs/mutation-specs-v2.md §9.2",
+               "entry": 34, "low": 47, "medium": 79, "high": 323,
+               "predicted_by_class": {"M1": "1 -> 290 steep",
+                                      "M2": "0 -> 0 flat",
+                                      "M3": "22 -> 22 flat",
+                                      "M4": "11 -> 11 flat"},
+               "note": "PREDICTION, recorded on a different population. The "
+                       "ledger below is the measurement; report the ledger.",
+           }}
+    obls = obligations or []
+    costed = [o for o in obls if o.get("cost")]
+    if costed:
+        by_class = collections.defaultdict(collections.Counter)
+        for o in costed:
+            by_class[o.get("class") or "?"][o["cost"]] += 1
+        allc = collections.Counter()
+        for c in by_class:
+            allc.update(by_class[c])
+
+        def _curve(cnt):
+            run, out = 0, {}
+            for lv in RTC_LEVELS:
+                run += cnt.get(lv, 0)
+                out[lv] = run
+            return out
+
+        base = 0
+        for lv in RTC_LEVELS:
+            base += allc.get(lv, 0)
+            rtc["n_obligations_enabled"][lv] = base
+            rtc["delta_vs_entry"][lv] = base - allc.get(RTC_LEVELS[0], 0)
+        for c in sorted(by_class):
+            rtc["by_class"][c] = _curve(by_class[c])
+        rtc["n_obligations"] = sum(allc.values())
+        e0 = rtc["n_obligations_enabled"][RTC_LEVELS[0]]
+        hi = rtc["n_obligations_enabled"][RTC_LEVELS[-1]]
+        rtc["steepest_class"] = max(
+            rtc["by_class"],
+            key=lambda c: rtc["by_class"][c][RTC_LEVELS[-1]]
+            - rtc["by_class"][c][RTC_LEVELS[0]])
+        sc = rtc["steepest_class"]
+        rtc["cost_filter_note"] = (
+            f"Enabling every obligation costs {hi}/{e0} = "
+            f"{round(hi / e0, 2) if e0 else None}x the default, and the growth "
+            f"is not uniform: {sc} goes {rtc['by_class'][sc][RTC_LEVELS[0]]} -> "
+            f"{rtc['by_class'][sc][RTC_LEVELS[-1]]} while the other classes are "
+            f"flat. That is the thesis's shape, measured from the ledger.")
+
+        # The DETECTION half: measured only at the two recorded arms.
+        entry_det = sum(1 for m in mutants
+                        if m.get("manifest") != "noop"
+                        and m.get("outcome") in ("compile", "runtime"))
+        n_inj = sum(1 for m in mutants if m.get("manifest") != "noop")
+        rtc["n_detected"] = {"entry": entry_det, "low": None, "medium": None,
+                             "high": None}
+        rtc["n_detected_note"] = (
+            "`enabled` is a ledger property and is exact at every level; "
+            "`n_detected` needs a full E1 run per level, so only `entry` is "
+            "measured here. The rtc=all arm exists (see rtc_all_arm) and is "
+            "reported separately rather than interpolated.")
+        rtc["denominator_us"] = f"{entry_det}/{n_inj} at entry (pinned default)"
+
+    # The recorded -rtc=all arm: the CEILING. Kept separate from the levels
+    # above because it is a different experiment (one flag, no sweep) and
+    # because it must not be confused with the hoist-disabled arm -- combining
+    # them would hide a codegen bug behind a flag (R-D2).
+    rtc_all = _read_rtc_all_arm()
+    if rtc_all:
+        t = rtc["n_detected"]
+        t["high (rtc=all arm)"] = rtc_all["n_detected"]
+        rtc["rtc_all_arm"] = rtc_all
+
+    out = {
+        "status": "ok",
+        "feeds": "E1 path-class register (§5.2; new float tab:e1-path-class)",
+        "register_source": reg_src,
+        "denominator": {
+            "n_specs": len(reg),
+            "n_applicable": n_applicable,
+            "n_not_applicable": n_not_applicable,
+            "n_out_of_scope": sum(1 for v in reg.values()
+                                  if v["applicable"] and v["status"] != "implemented"),
+            "rule": "admissible specs (P1/P3/P4 + the L row reported separately) "
+                    "form the detection denominator; an inadmissible spec is a "
+                    "recorded verdict with a named prohibition and is NOT open "
+                    "work (specs §2)",
+        },
+        "prohibition": {k: int(prohibition.get(k, 0)) for k in PROHIBITIONS},
+        "prohibition_by_path": {p: dict(c) for p, c
+                                in sorted(prohibition_by_path.items())},
+        "per_path": {p: {k: (int(v) if isinstance(v, int) else v)
+                         for k, v in sorted(per_path[p].items())}
+                     for p in sorted(per_path)},
+        "per_spec": {k: {kk: vv for kk, vv in sorted(v.items())}
+                     for k, v in sorted(per_spec.items())},
+        "unresolved_spec_cells": sorted(unresolved),
+        "applicability_audit": {
+            "question": "does each inadmissible spec's DESIGN claim survive the "
+                        "record-level ground truth?",
+            "status": "ok" if audit_ok else "CONTRADICTED",
+            "n_inadmissible_specs_with_cells": len(audit),
+            "n_contradicting": len(contradictions),
+            "rows": audit,
+            "note": "A `contradicts_design_claim` row has cells whose own "
+                    "manifest says they corrupt, AND which choreo detected -- so "
+                    "the mutation is testable and the spec belongs in the "
+                    "denominator. This is REPORTED, never auto-applied: moving "
+                    "it changes S1/S2, which specs §7 reserves for v3 with "
+                    "owner sign-off.",
+        },
+        "reconciliation": {
+            "against": "S1_detection_matrix / S2_before_device",
+            "n_cells": tot_cells,
+            "n_injected": tot_inj,
+            "n_discarded_noop": tot_noop,
+            "n_never": tot_never,
+            "n_detected_all_paths": tot_det,
+            "admissible_injected": tot_adm,
+            "admissible_detected": tot_det_adm,
+            "admissible_pct": pct(tot_det_adm, tot_adm),
+            "inadmissible_injected": inadm_inj,
+            "inadmissible_detected": inadm_det,
+            "matches_S1S2": None,
+            "interpretation": (
+                "S2's headline rate divides by ALL injected cells; the "
+                "admissible rate divides only by the cells the register says "
+                "choreo was fair to ask about. Both must be printed: "
+                f"{inadm_det} of S2's detections land on cells the register "
+                "calls inadmissible, so quoting S2's rate as an admissible-"
+                "denominator rate would overstate it."),
+        },
+        "rtc_curve": rtc,
+        "feeds_note": ("S1/S2 semantics are UNCHANGED by this block. specs §7 "
+                       "reserves any change to the detection denominator for v3 "
+                       "with owner sign-off."),
+    }
+    out.update(prov(mutants))
+    return out
+
+
+def reconcile_s14(s14, s1, s2):
+    """Cross-check S14's partition against S1/S2, in place.
+
+    Two statistics over the same cells must agree on the cells. If they do not,
+    one of them is wrong and the integrator has to know which number to trust,
+    so the check is recorded in the JSON rather than left to a reader to notice.
+    """
+    if s14.get("status") != "ok" or s1.get("status") != "ok":
+        return
+    r, t1 = s14["reconciliation"], s1["totals"]
+    checks = {
+        "n_injected": (r["n_injected"], t1.get("n_injected")),
+        "n_discarded_noop": (r["n_discarded_noop"], t1.get("n_discarded_noop")),
+        "n_never": (r["n_never"], t1.get("n_never")),
+        "n_detected_all_paths": (r["n_detected_all_paths"],
+                                 s2.get("n_before_device")),
+    }
+    mismatch = {k: {"s14": a, "s1s2": b} for k, (a, b) in checks.items() if a != b}
+    r["matches_S1S2"] = not mismatch
+    r["checks"] = {k: {"s14": a, "s1s2": b} for k, (a, b) in checks.items()}
+    if mismatch:
+        r["mismatch"] = mismatch
+        r["mismatch_note"] = (
+            "S14 partitions the same cells S1/S2 do, so these must be equal. A "
+            "mismatch means a mutant record carries an unresolvable spec, or the "
+            "register disagrees with the manifest. Do not quote either rate "
+            "until it is resolved.")
+
+
+def _read_rtc_all_arm():
+    """The recorded `-rtc=all` detection arm, or None.
+
+    Returns None rather than a zero when the probe is absent, and reports the
+    arm's own flags so a reader can see it is NOT a level sweep: it is one
+    configuration, and its delta over the default is the cost filter's real
+    upper bound on detection.
+    """
+    p = os.path.join(RAW, "e1_mutant_records_rtc_all.json")
+    if not os.path.exists(p):
+        return None
+    try:
+        with open(p) as f:
+            d = json.load(f)
+    except (ValueError, OSError):
+        return None
+    recs = d.get("records") or []
+    inj = [r for r in recs if r.get("manifest") != "noop"]
+    det = [r for r in inj if r.get("outcome") in ("compile", "runtime")]
+    return {
+        "source": os.path.relpath(p, B2),
+        "pinned_flags": (d.get("pinned_flags") or {}).get("compile"),
+        "n_injected": len(inj),
+        "n_detected": len(det),
+        "pct": pct(len(det), len(inj)),
+        "is_a_sweep": False,
+        "note": "One configuration, not a level sweep. Delta over the pinned "
+                "default is the cost filter's measured upper bound on "
+                "detection. The 43/72 figure in S2's flag matrix is a DIFFERENT "
+                "arm (rtc=all AND --disable-assert-hoist) and must not be quoted "
+                "as the cost filter's effect: 6 of its 8 extra detections come "
+                "from a codegen hoisting defect (R-D2).",
+    }
+
+
+# --------------------------------------------------------------------------
 # main
 # --------------------------------------------------------------------------
 def main():
@@ -1704,18 +2184,23 @@ def main():
     idt = toolchain.identity()
 
     print(f"[choreo] stats: reading {results}")
-    for n in ("kernel", "mutant", "obligation", "cost", "residue", "latency"):
+    for n in ("kernel", "mutant", "spec", "obligation", "cost", "residue",
+              "latency"):
         mark = "present" if present.get(n) else "ABSENT"
         print(f"    {n:<14} {len(data[n]):>7} records   ({mark})")
 
     s1, s2 = s1_s2(data["mutant"], present)
+    s14 = s14_path_class(data["mutant"], data["spec"],
+                         data["obligation"], present)
+    reconcile_s14(s14, s1, s2)
     stats = {
         "toolchain": TOOLCHAIN,
         "toolchain_version": idt["version"],
         "toolchain_identity": idt,
         "produced_by": "stats.py",
         "inputs": {n: len(data[n]) for n in sorted(data)},
-        "lane_owns": ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S10", "S13"],
+        "lane_owns": ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S10",
+                      "S13", "S14"],
         "S1_detection_matrix": s1,
         "S2_before_device": s2,
         "S3_generation_totals": s3(data["obligation"]),
@@ -1725,6 +2210,10 @@ def main():
         "S7_no_interval_counterfactual": s7(data["obligation"]),
         "S10_compile_cost": s10(data["cost"]),
         "S13_runtime_and_latency": s13(data["residue"], data["latency"], present),
+        # S14 is ADDITIVE and reads S1's own records plus the design register.
+        # It must never feed back into S1/S2 (specs §7: denominator changes are
+        # a v3 item).
+        "S14_path_class": s14,
         # S8, S9, S11, S12 belong to other lanes (statistics-manifest.md):
         # S8/S9/S12 to the SOTA workers, S11 to the coordinator. Recorded as
         # absent-on-purpose so the integrator does not read a missing key as a
@@ -2001,6 +2490,112 @@ def report(st):
         if e5b.get("absolute_latency_note"):
             print(f"       *** {e5b['absolute_latency_note']}")
 
+    print(f"\n{line}\nS14  PATH-CLASS REGISTER (v2.1)\n{line}")
+    s14 = st.get("S14_path_class", {})
+    if s14.get("status") != "ok":
+        print(f"  NOT RUN — {s14.get('reason')}")
+    else:
+        d = s14["denominator"]
+        print(f"  specs {d['n_specs']}   admissible {d['n_applicable']}   "
+              f"not applicable {d['n_not_applicable']}   "
+              f"open work {d['n_out_of_scope']}")
+        print(f"  register source: {s14['register_source']}")
+        # The prohibition breakdown is printed WITH the path on purpose. "28 N/A"
+        # is unfalsifiable; "22 absent + 3 repaired + 3 observation" is checkable.
+        print(f"  prohibitions: " + "  ".join(
+            f"{k}={v}" for k, v in s14["prohibition"].items() if v))
+        for p, c in s14["prohibition_by_path"].items():
+            print(f"    {p:<4} " + "  ".join(f"{k}={v}" for k, v in c.items()))
+        print(f"\n  {'path':<6}{'cells':>7}{'adm':>6}{'det':>6}{'never':>7}"
+              f"{'noop':>6}{'det%':>9}   note")
+        for p in PATH_CLASSES + ("UNRESOLVED",):
+            c = s14["per_path"].get(p)
+            if not c:
+                continue
+            if p == "L":
+                note = ("attribution only — never counted in the detection "
+                        "denominator")
+            elif not c.get("n_admissible"):
+                note = "inadmissible (recorded verdict, not open work)"
+            else:
+                note = ""
+            print(f"  {p:<6}{c.get('n_cells',0):>7}{c.get('n_admissible',0):>6}"
+                  f"{c.get('n_detected',0):>6}{c.get('n_never',0):>7}"
+                  f"{c.get('n_discarded_noop',0):>6}"
+                  f"{str(c.get('n_detected_pct')):>9}   {note}")
+        if s14.get("unresolved_spec_cells"):
+            print(f"  *** {len(s14['unresolved_spec_cells'])} cell(s) joined to "
+                  f"NO spec — the denominator is incomplete, not zero: "
+                  f"{', '.join(s14['unresolved_spec_cells'][:6])}")
+
+        rec = s14.get("reconciliation", {})
+        if rec:
+            print(f"\n  reconciliation vs S1/S2: "
+                  f"{'AGREES' if rec.get('matches_S1S2') else '*** MISMATCH ***'}"
+                  f"   (cells {rec.get('n_cells')}, injected "
+                  f"{rec.get('n_injected')}, noop {rec.get('n_discarded_noop')}, "
+                  f"never {rec.get('n_never')})")
+            print(f"    ALL injected:      {rec.get('n_detected_all_paths')}/"
+                  f"{rec.get('n_injected')} detected   <- S2's headline")
+            print(f"    ADMISSIBLE only:   {rec.get('admissible_detected')}/"
+                  f"{rec.get('admissible_injected')} = "
+                  f"{rec.get('admissible_pct')}%   <- the register's denominator")
+            if rec.get("inadmissible_detected"):
+                print(f"    {rec['inadmissible_detected']} of S2's detections are "
+                      f"on cells the register calls INADMISSIBLE "
+                      f"({rec['inadmissible_injected']} injected cells). Quote "
+                      f"whichever rate matches the denominator you name.")
+            if rec.get("mismatch"):
+                print(f"    *** MISMATCH {rec['mismatch']}")
+                print(f"        {rec['mismatch_note']}")
+
+        au = s14.get("applicability_audit", {})
+        if au.get("n_contradicting"):
+            print(f"\n  *** APPLICABILITY AUDIT: {au['n_contradicting']} of "
+                  f"{au['n_inadmissible_specs_with_cells']} inadmissible spec(s) "
+                  f"have cells their OWN MANIFEST says corrupt, and which choreo "
+                  f"DETECTED — so the mutation is testable and the spec belongs "
+                  f"in the denominator:")
+            for r in au.get("rows", []):
+                if not r["contradicts_design_claim"]:
+                    continue
+                print(f"      {r['spec_id']:<8}{r['class']}/{r['path_class']:<3}"
+                      f" prohibition={r['prohibition']:<12}"
+                      f" injected={r['n_injected']} detected={r['n_detected']}"
+                      f"  ({r['desc']})")
+            print(f"      Not auto-applied: moving these changes S1/S2, which "
+                  f"specs §7 reserves for v3 with owner sign-off.")
+        elif au:
+            print(f"\n  applicability audit: all "
+                  f"{au.get('n_inadmissible_specs_with_cells', 0)} inadmissible "
+                  f"spec(s) with cells survive their design claim")
+
+        rtc = s14.get("rtc_curve", {})
+        if rtc.get("n_obligations_enabled"):
+            print(f"\n  -rtc enabled-obligation curve "
+                  f"(derived from the E2 ledger, no rerun needed):")
+            print(f"    {'level':<9}{'enabled':>9}{'delta':>8}"
+                  f"{'detected':>10}")
+            nd = rtc.get("n_detected") or {}
+            for lv in rtc["levels"]:
+                det = nd.get(lv)
+                print(f"    {lv:<9}{rtc['n_obligations_enabled'][lv]:>9}"
+                      f"{rtc['delta_vs_entry'][lv]:>+8}"
+                      f"{(str(det) if det is not None else 'not run'):>10}")
+            for lv, v in (rtc.get("n_detected") or {}).items():
+                if lv not in rtc["levels"] and v is not None:
+                    print(f"    {lv:<9}{'':>9}{'':>8}{v:>10}")
+            print(f"    per class: " + "  ".join(
+                f"{c} {v[rtc['levels'][0]]}->{v[rtc['levels'][-1]]}"
+                for c, v in sorted(rtc["by_class"].items())))
+            if rtc.get("cost_filter_note"):
+                print(f"    *** {rtc['cost_filter_note']}")
+            if rtc.get("rtc_all_arm"):
+                a = rtc["rtc_all_arm"]
+                print(f"    ceiling arm ({a['source']}): "
+                      f"{a['n_detected']}/{a['n_injected']} = {a['pct']}% "
+                      f"detected at -rtc=all")
+                print(f"      *** {a['note']}")
     if st.get("toolchain_warning"):
         print(f"\n{line}\nTOOLCHAIN\n{line}\n  *** {st['toolchain_warning']}")
     print()

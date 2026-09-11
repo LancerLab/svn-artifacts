@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering\footnotesize
+\caption{Marginal cost of enabling runtime checks, by `-rtc` level. The growth is one class: elementwise obligations go 58 to 534 while every other class is flat.}
+\label{tab:e1-rtc-curve}
+\begin{tabular}{@{}lrrrrrrr@{}}
+\toprule
+-rtc level & Enabled & $\Delta$ vs entry & elem & hw & loop & shape & Detected \\
+\midrule
+entry & 675 & --- & 58 & 359 & 223 & 35 & 35/72 \\
+low & 855 & +180 & 238 & 359 & 223 & 35 & --- \\
+medium & 936 & +261 & 319 & 359 & 223 & 35 & --- \\
+high & 1,151 & +476 & 534 & 359 & 223 & 35 & --- \\
+\textbf{ceiling arm (`-rtc=all`)} &  &  &  &  &  &  & 37/72 \\
+\bottomrule
+\end{tabular}
+\vspace{0.4em}\begin{minipage}{0.98\linewidth}\raggedright\footnotesize Source: \texttt{results/choreo/stats.json} \texttt{S14\_path\_class.rtc\_curve}. \texttt{Enabled} = obligations whose cheapest level (the ledger's \texttt{cost}) is at or below the column, so it needs no rerun and is exact at every level; only the \texttt{entry} detection rate is measured, because a detection needs a full E1 run per level. \texttt{---} means not measured, not zero. The ceiling arm is a single configuration, not a level in the sweep, and it is NOT the \texttt{-rtc=all} + \texttt{--disable-assert-hoist} arm of \texttt{tab:rq5-ablation}: 6 of that arm's 8 extra detections come from a codegen hoisting defect, not from the cost filter (R-D2). specs §9.2 predicts 34/47/79/323 on a different population; it is a prediction, and the ledger above is the measurement. Enabling every obligation costs 1151/675 = 1.71x the default, and the growth is not uniform: elem goes 58 -> 534 while the other classes are flat. That is the thesis's shape, measured from the ledger.\end{minipage}
+\end{table}

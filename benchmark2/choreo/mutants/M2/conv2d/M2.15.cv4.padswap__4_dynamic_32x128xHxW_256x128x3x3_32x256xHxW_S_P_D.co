@@ -1,0 +1,52 @@
+#include "choreo.h"
+#include "common.h"
+
+#ifdef __STATIC_SHAPE__
+#define height 38
+#define width 38
+#endif
+
+__co__ auto CONV2D(f32 [32, 128, height, width] i, f32 [256, 128, 3, 3] w, int stride, int padding, int dilation) {
+  N = i.span(0);
+  Cin = i.span(1);
+  H = i.span(2);
+  W = i.span(3);
+  Cout = w.span(0);
+  Kh = w.span(2);
+  Kw = w.span(3);
+  Ho = (H + 2 * padding - dilation * (Kh - 1) - 1) / stride + 1;
+  Wo = (W + 2 * padding - dilation * (Kw - 1) - 1) / stride + 1;
+
+  f32 [N, Cout, Ho, Wo] o;
+
+  // Direct-accumulation convolution (conv2d/9 idiom): no im2col matrix is
+  // materialized in shared memory; padded input plane and 3x3 weight slice
+  // stream through LOCAL memory, Y accumulates in local memory. Threads of
+  // the two parallel-by levels cooperate over (co, n) pairs.
+  parallel p by 2  {
+    parallel q by 4  {
+      foreach {co, n} in [Cout, N / #p / #q] {
+        local f32 [Ho, Wo] Y{0.0f};
+        foreach ci in [Cin] {
+          il = dma.pad<{0, padding, padding, 0}, {0, padding, padding, 0}, {0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => local;
+          ws = dma.copy w.chunkat(co, ci, _, _) => local;
+          foreach {ho, wo} in [Ho, Wo] {
+            f32 sum = 0.0f;
+            foreach {hw, ww} in [Kh, Kw] {
+              hi = ho * stride + hw * dilation;
+              wi = wo * stride + ww * dilation;
+              sum += il.data.at(0, 0, hi, wi) * ws.data.at(0, 0, hw, ww);
+            }
+            Y.at(ho, wo) += sum;
+          }
+        }
+        dma.copy Y.span_as(1, 1, Ho, Wo) => o.chunkat(p#q#n, co, _, _);
+      }
+    }
+  }
+  return o;
+}
+
+int main() {
+  test_dynamic("CONV2D", CONV2D, {32, 128, 30, 30}, {256, 128, 3, 3}, 1, 1, 1);
+}

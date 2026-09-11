@@ -1,16 +1,16 @@
 {
  "toolchain": "choreo",
- "toolchain_version": "f2f238fbf380e6121caf361d359ef1cf7d568ee8",
+ "toolchain_version": "a9758246483bb961a347c8c8500f277045add937",
  "toolchain_identity": {
   "toolchain": "choreo",
-  "version": "f2f238fbf380e6121caf361d359ef1cf7d568ee8",
+  "version": "a9758246483bb961a347c8c8500f277045add937",
   "version_basis": "mtime<=commit-date",
-  "checkout_head": "1fa4719fcf4bca50f153a18daf05beadd44f87e3",
-  "checkout_branch": "HEAD",
+  "checkout_head": "ea937008681827996ded5ccbca9ad2fe7706aee7",
+  "checkout_branch": "svn-artifacts",
   "checkout_dirty_source_files": [],
   "binary": "croqtile/build-release/choreo",
-  "binary_sha1_12": "c3ebb1654d1d",
-  "binary_mtime": 1788937035.0511596,
+  "binary_sha1_12": "424d9c38c30b",
+  "binary_mtime": 1789035991.498727,
   "binary_stale_vs_checkout": true
  },
  "produced_by": "stats.py",
@@ -23,7 +23,8 @@
   "obligation": 17353,
   "remainder": 0,
   "residue": 28,
-  "sanitizer": 0
+  "sanitizer": 0,
+  "spec": 0
  },
  "lane_owns": [
   "S1",
@@ -34,7 +35,8 @@
   "S6",
   "S7",
   "S10",
-  "S13"
+  "S13",
+  "S14"
  ],
  "S1_detection_matrix": {
   "status": "ok",
@@ -2142,11 +2144,422 @@
    ]
   }
  },
+ "S14_path_class": {
+  "status": "ok",
+  "feeds": "E1 path-class register (\u00a75.2; new float tab:e1-path-class)",
+  "register_source": "choreo/raw/spec_registry.json",
+  "denominator": {
+   "n_specs": 72,
+   "n_applicable": 44,
+   "n_not_applicable": 28,
+   "n_out_of_scope": 0,
+   "rule": "admissible specs (P1/P3/P4 + the L row reported separately) form the detection denominator; an inadmissible spec is a recorded verdict with a named prohibition and is NOT open work (specs \u00a72)"
+  },
+  "prohibition": {
+   "absent": 22,
+   "derived": 0,
+   "repaired": 3,
+   "harness-owned": 0,
+   "observation": 3
+  },
+  "prohibition_by_path": {
+   "L": {
+    "observation": 3,
+    "absent": 6
+   },
+   "P1": {
+    "absent": 12
+   },
+   "P2": {
+    "repaired": 3
+   },
+   "P3": {
+    "absent": 3
+   },
+   "P4": {
+    "absent": 1
+   }
+  },
+  "per_path": {
+   "L": {
+    "n_cells": 7,
+    "n_compile": 2,
+    "n_detected": 2,
+    "n_detected_pct": null,
+    "n_discarded_noop": 5,
+    "n_injected": 2,
+    "n_never_share_of_misses": null
+   },
+   "P1": {
+    "n_admissible": 60,
+    "n_cells": 113,
+    "n_compile": 22,
+    "n_detected": 33,
+    "n_detected_admissible": 27,
+    "n_detected_pct": 45.0,
+    "n_discarded_noop": 43,
+    "n_injected": 70,
+    "n_never": 37,
+    "n_never_admissible": 33,
+    "n_never_share_of_misses": 100.0,
+    "n_runtime": 11
+   }
+  },
+  "per_spec": {
+   "L1": {
+    "class": "L",
+    "n_cells": 7,
+    "n_compile": 2,
+    "n_detected": 2,
+    "n_discarded_noop": 5,
+    "n_injected": 2,
+    "path_class": "L",
+    "prohibition": "observation"
+   },
+   "M1.1": {
+    "class": "M1",
+    "n_admissible": 1,
+    "n_cells": 2,
+    "n_discarded_noop": 1,
+    "n_injected": 1,
+    "n_never": 1,
+    "n_never_admissible": 1,
+    "path_class": "P1",
+    "prohibition": ""
+   },
+   "M1.2": {
+    "class": "M1",
+    "n_admissible": 7,
+    "n_cells": 9,
+    "n_detected": 4,
+    "n_detected_admissible": 4,
+    "n_discarded_noop": 2,
+    "n_injected": 7,
+    "n_never": 3,
+    "n_never_admissible": 3,
+    "n_runtime": 4,
+    "path_class": "P1",
+    "prohibition": ""
+   },
+   "M1.3": {
+    "class": "M1",
+    "n_admissible": 6,
+    "n_cells": 7,
+    "n_discarded_noop": 1,
+    "n_injected": 6,
+    "n_never": 6,
+    "n_never_admissible": 6,
+    "path_class": "P1",
+    "prohibition": ""
+   },
+   "M1.4": {
+    "class": "M1",
+    "n_admissible": 3,
+    "n_cells": 3,
+    "n_compile": 3,
+    "n_detected": 3,
+    "n_detected_admissible": 3,
+    "n_injected": 3,
+    "path_class": "P1",
+    "prohibition": ""
+   },
+   "M1.5": {
+    "class": "M1",
+    "n_admissible": 6,
+    "n_cells": 9,
+    "n_discarded_noop": 3,
+    "n_injected": 6,
+    "n_never": 6,
+    "n_never_admissible": 6,
+    "path_class": "P1",
+    "prohibition": ""
+   },
+   "M1.6": {
+    "class": "M1",
+    "n_cells": 10,
+    "n_compile": 6,
+    "n_detected": 6,
+    "n_discarded_noop": 3,
+    "n_injected": 7,
+    "n_never": 1,
+    "path_class": "P1",
+    "prohibition": "absent"
+   },
+   "M2.1": {
+    "class": "M2",
+    "n_admissible": 10,
+    "n_cells": 14,
+    "n_compile": 4,
+    "n_detected": 10,
+    "n_detected_admissible": 10,
+    "n_discarded_noop": 4,
+    "n_injected": 10,
+    "n_runtime": 6,
+    "path_class": "P1",
+    "prohibition": ""
+   },
+   "M2.2": {
+    "class": "M2",
+    "n_admissible": 6,
+    "n_cells": 8,
+    "n_compile": 5,
+    "n_detected": 5,
+    "n_detected_admissible": 5,
+    "n_discarded_noop": 2,
+    "n_injected": 6,
+    "n_never": 1,
+    "n_never_admissible": 1,
+    "path_class": "P1",
+    "prohibition": ""
+   },
+   "M2.3": {
+    "class": "M2",
+    "n_admissible": 2,
+    "n_cells": 4,
+    "n_compile": 1,
+    "n_detected": 1,
+    "n_detected_admissible": 1,
+    "n_discarded_noop": 2,
+    "n_injected": 2,
+    "n_never": 1,
+    "n_never_admissible": 1,
+    "path_class": "P1",
+    "prohibition": ""
+   },
+   "M2.4": {
+    "class": "M2",
+    "n_admissible": 8,
+    "n_cells": 10,
+    "n_compile": 3,
+    "n_detected": 4,
+    "n_detected_admissible": 4,
+    "n_discarded_noop": 2,
+    "n_injected": 8,
+    "n_never": 4,
+    "n_never_admissible": 4,
+    "n_runtime": 1,
+    "path_class": "P1",
+    "prohibition": ""
+   },
+   "M2.5": {
+    "class": "M2",
+    "n_admissible": 4,
+    "n_cells": 4,
+    "n_injected": 4,
+    "n_never": 4,
+    "n_never_admissible": 4,
+    "path_class": "P1",
+    "prohibition": ""
+   },
+   "M3.1": {
+    "class": "M3",
+    "n_admissible": 7,
+    "n_cells": 25,
+    "n_discarded_noop": 18,
+    "n_injected": 7,
+    "n_never": 7,
+    "n_never_admissible": 7,
+    "path_class": "P1",
+    "prohibition": ""
+   },
+   "M3.6": {
+    "class": "M3",
+    "n_cells": 8,
+    "n_discarded_noop": 5,
+    "n_injected": 3,
+    "n_never": 3,
+    "path_class": "P1",
+    "prohibition": "absent"
+   }
+  },
+  "unresolved_spec_cells": [],
+  "applicability_audit": {
+   "question": "does each inadmissible spec's DESIGN claim survive the record-level ground truth?",
+   "status": "CONTRADICTED",
+   "n_inadmissible_specs_with_cells": 3,
+   "n_contradicting": 2,
+   "rows": [
+    {
+     "spec_id": "M1.6",
+     "class": "M1",
+     "path_class": "P1",
+     "prohibition": "absent",
+     "desc": "zero-stride / empty range",
+     "n_injected": 7,
+     "n_detected": 6,
+     "n_never": 1,
+     "contradicts_design_claim": true,
+     "design_note": "noop by construction -- there is no prohibition to enforce, because the range is correctly empty. Retained for the miss audit, excluded from the admissible denominator"
+    },
+    {
+     "spec_id": "M3.6",
+     "class": "M3",
+     "path_class": "P1",
+     "prohibition": "absent",
+     "desc": "leading dim not aligned to descriptor granularity ON A VECTORIZED ACCESS",
+     "n_injected": 3,
+     "n_detected": 0,
+     "n_never": 3,
+     "contradicts_design_claim": false,
+     "design_note": "replaces v1 M3 s2: the v1 realization (lhs1/rhs1/w1/i1) is a noop because the reference k_matmul is SCALAR, so an unaligned scalar load is legal. Retained as a named control until the vectorized realization is written."
+    },
+    {
+     "spec_id": "L1",
+     "class": "L",
+     "path_class": "L",
+     "prohibition": "observation",
+     "desc": "shared-memory tile exceeds the device limit",
+     "n_injected": 2,
+     "n_detected": 2,
+     "n_never": 0,
+     "contradicts_design_claim": true,
+     "design_note": "migrated out of v1 M3 s3 (shared32/64/128, shared512/1024); observed as launch rejected. KEPT VERBATIM: the committed E1 baseline defines this realization, and a reclassification would invalidate the frozen S1/S2. The memcheck Error1 finding under M3.12 argues it should be re-examined in v3"
+    }
+   ],
+   "note": "A `contradicts_design_claim` row has cells whose own manifest says they corrupt, AND which choreo detected -- so the mutation is testable and the spec belongs in the denominator. This is REPORTED, never auto-applied: moving it changes S1/S2, which specs \u00a77 reserves for v3 with owner sign-off."
+  },
+  "reconciliation": {
+   "against": "S1_detection_matrix / S2_before_device",
+   "n_cells": 120,
+   "n_injected": 72,
+   "n_discarded_noop": 48,
+   "n_never": 37,
+   "n_detected_all_paths": 35,
+   "admissible_injected": 60,
+   "admissible_detected": 27,
+   "admissible_pct": 45.0,
+   "inadmissible_injected": 12,
+   "inadmissible_detected": 8,
+   "matches_S1S2": true,
+   "interpretation": "S2's headline rate divides by ALL injected cells; the admissible rate divides only by the cells the register says choreo was fair to ask about. Both must be printed: 8 of S2's detections land on cells the register calls inadmissible, so quoting S2's rate as an admissible-denominator rate would overstate it.",
+   "checks": {
+    "n_injected": {
+     "s14": 72,
+     "s1s2": 72
+    },
+    "n_discarded_noop": {
+     "s14": 48,
+     "s1s2": 48
+    },
+    "n_never": {
+     "s14": 37,
+     "s1s2": 37
+    },
+    "n_detected_all_paths": {
+     "s14": 35,
+     "s1s2": 35
+    }
+   }
+  },
+  "rtc_curve": {
+   "status": "derived_from_ledger",
+   "definition": "enabled = cost <= threshold, per the E2 obligation ledger. No rerun is needed for this column.",
+   "levels": [
+    "entry",
+    "low",
+    "medium",
+    "high"
+   ],
+   "n_obligations": 1151,
+   "n_obligations_enabled": {
+    "entry": 675,
+    "low": 855,
+    "medium": 936,
+    "high": 1151
+   },
+   "delta_vs_entry": {
+    "entry": 0,
+    "low": 180,
+    "medium": 261,
+    "high": 476
+   },
+   "by_class": {
+    "elem": {
+     "entry": 58,
+     "low": 238,
+     "medium": 319,
+     "high": 534
+    },
+    "hw": {
+     "entry": 359,
+     "low": 359,
+     "medium": 359,
+     "high": 359
+    },
+    "loop": {
+     "entry": 223,
+     "low": 223,
+     "medium": 223,
+     "high": 223
+    },
+    "shape": {
+     "entry": 35,
+     "low": 35,
+     "medium": 35,
+     "high": 35
+    }
+   },
+   "paper_reference": {
+    "source": "specs/mutation-specs-v2.md \u00a79.2",
+    "entry": 34,
+    "low": 47,
+    "medium": 79,
+    "high": 323,
+    "predicted_by_class": {
+     "M1": "1 -> 290 steep",
+     "M2": "0 -> 0 flat",
+     "M3": "22 -> 22 flat",
+     "M4": "11 -> 11 flat"
+    },
+    "note": "PREDICTION, recorded on a different population. The ledger below is the measurement; report the ledger."
+   },
+   "steepest_class": "elem",
+   "cost_filter_note": "Enabling every obligation costs 1151/675 = 1.71x the default, and the growth is not uniform: elem goes 58 -> 534 while the other classes are flat. That is the thesis's shape, measured from the ledger.",
+   "n_detected": {
+    "entry": 35,
+    "low": null,
+    "medium": null,
+    "high": null,
+    "high (rtc=all arm)": 37
+   },
+   "n_detected_note": "`enabled` is a ledger property and is exact at every level; `n_detected` needs a full E1 run per level, so only `entry` is measured here. The rtc=all arm exists (see rtc_all_arm) and is reported separately rather than interpolated.",
+   "denominator_us": "35/72 at entry (pinned default)",
+   "rtc_all_arm": {
+    "source": "choreo/raw/e1_mutant_records_rtc_all.json",
+    "pinned_flags": [
+     "-gs",
+     "-t",
+     "cute",
+     "-kt",
+     "--max-local-mem-capacity=2000000",
+     "-rtc=all"
+    ],
+    "n_injected": 72,
+    "n_detected": 37,
+    "pct": 51.3889,
+    "is_a_sweep": false,
+    "note": "One configuration, not a level sweep. Delta over the pinned default is the cost filter's measured upper bound on detection. The 43/72 figure in S2's flag matrix is a DIFFERENT arm (rtc=all AND --disable-assert-hoist) and must not be quoted as the cost filter's effect: 6 of its 8 extra detections come from a codegen hoisting defect (R-D2)."
+   }
+  },
+  "feeds_note": "S1/S2 semantics are UNCHANGED by this block. specs \u00a77 reserves any change to the detection denominator for v3 with owner sign-off.",
+  "settings_hash": [
+   "28fee96c8330",
+   "55b2395980bd",
+   "7abb8bd6e718",
+   "8dbff8357c9b",
+   "ba2aa2b58125",
+   "d59f419be35e",
+   "df847a35dd4b"
+  ],
+  "toolchain_version": [
+   "680533f50d5340346ea1587c116278916f902bc2"
+  ]
+ },
  "not_owned_by_this_lane": {
   "S8": "SOTA expressibility (triton/mlir-linalg/mlir-low/iree)",
   "S9": "SOTA remainder (triton/mlir-linalg/mlir-low/iree)",
   "S11": "integrity register (coordinator)",
   "S12": "sanitizer supplement (SOTA toolchains)"
  },
- "toolchain_warning": "binary predates checkout: records say f2f238fbf380e6121caf361d359ef1cf7d568ee8 (what the binary was built from), checkout HEAD is 1fa4719fcf4bca50f153a18daf05beadd44f87e3. Rebuild and re-run before pinning this version in manifest \u00a75."
+ "toolchain_warning": "binary predates checkout: records say a9758246483bb961a347c8c8500f277045add937 (what the binary was built from), checkout HEAD is ea937008681827996ded5ccbca9ad2fe7706aee7. Rebuild and re-run before pinning this version in manifest \u00a75."
 }

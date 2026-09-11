@@ -43,7 +43,7 @@ LANE_STATS_PATHS = OrderedDict([
 # Statistics each lane owns (statistics-manifest.md). Used only for the merged
 # view; the renderer pulls actual values from stats.json.
 LANE_OWNS = OrderedDict([
-    ("choreo", ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S10", "S13"]),
+    ("choreo", ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S10", "S13", "S14"]),
     ("triton", ["S1", "S8", "S9", "S12"]),
     ("iree",   ["S1", "S8", "S9", "S12"]),
 ])
@@ -199,7 +199,8 @@ def build_summary(stats_by_lane, kernel_counts):
     for key in ("S2_before_device", "S3_generation_totals", "S4_per_operator",
                 "S5_discharge_rate", "S6_mechanism_split",
                 "S7_no_interval_counterfactual", "S10_compile_cost",
-                "S13_runtime_and_latency", "toolchain_identity"):
+                "S13_runtime_and_latency", "S14_path_class",
+                "toolchain_identity"):
         if key in choreo:
             s[key] = choreo[key]
 
@@ -226,6 +227,165 @@ def _tex_table(label, caption, header, rows, note=None):
                    "\\end{minipage}")
     out.append("\\end{table}")
     return "\n".join(out) + "\n"
+
+
+def table_e1_path_class(summary):
+    """tab:e1-path-class — the S14 register: who is in the detection
+    denominator, and the two rates that must never be confused.
+
+    Rows are path classes (P1 is the only one with cells in the frozen v1
+    baseline); the last block carries the register verdicts and the
+    applicability audit, because a denominator is only as good as the record
+    that justifies it."""
+    s14 = summary.get("S14_path_class") or {}
+    per_path = s14.get("per_path") or {}
+    recon = s14.get("reconciliation") or {}
+    audit = s14.get("applicability_audit") or {}
+    denom = s14.get("denominator") or {}
+    prob = s14.get("prohibition") or {}
+    prob_by_path = s14.get("prohibition_by_path") or {}
+
+    if not per_path:
+        return _tex_table(
+            "tab:e1-path-class",
+            "E1 detection by path class (S14). Not available.",
+            ["Path class", "Cells", "Injected", "Applicable", "Detected", "Rate"],
+            [["---", "---", "---", "---", "---", "---"]],
+            note="Source unavailable: `results/choreo/stats.json` has no "
+                 "`S14_path_class`. Run `make choreo-stats`.")
+
+    a_status = audit.get("status") or "not run"
+    a_note = (f"Applicability audit: {a_status} "
+              f"({audit.get('n_contradicting', 0)} of "
+              f"{audit.get('n_inadmissible_specs_with_cells', 0)} inadmissible "
+              "specs with cells are contradicted by the record-level ground "
+              "truth).")
+
+    header = ["Path class", "Cells", "Injected", "Applicable", "Detected",
+              "Rate"]
+    rows = []
+    for pc in ("P1", "P2", "P3", "P4", "L"):
+        c = per_path.get(pc)
+        if not c:
+            continue
+        label = esc(pc)
+        adm = c.get("n_admissible")
+        if pc == "L":
+            # The L row has NO admissible cells, so `n_detected_admissible` is
+            # structurally 0. Printing that would say "nothing was caught" when
+            # in fact 2 cells reported a launch-status change. Show the raw
+            # count and leave the rate empty.
+            label += r" (attribution only)"
+            detected, rate = c.get("n_detected"), "---"
+        else:
+            detected = c.get("n_detected_admissible")
+            rate = pct(c.get("n_detected_pct"))
+        rows.append([label, num(c.get("n_cells")), num(c.get("n_injected")),
+                     num(adm) if adm else "---", num(detected), rate])
+
+    # Register verdicts — the audit trail behind the N/A column.
+    rows.append([r"\textbf{Register verdicts (S14)}", "", "", "", "", ""])
+    na = denom.get("n_not_applicable", 0)
+    rows.append([f"N/A specs: {num(na)}",
+                 f"{num(prob.get('absent', 0))} absent",
+                 f"{num(prob.get('repaired', 0))} repaired",
+                 f"{num(prob.get('harness-owned', 0))} harness",
+                 f"{num(prob.get('observation', 0))} observed",
+                 num(denom.get("n_applicable")) + r" appl."])
+    rows.append([r"\textbf{Two rates, two denominators}", "", "", "", "", ""])
+    rows.append(["all injected (S2)", num(recon.get("n_injected")), "",
+                 num(recon.get("n_injected")), num(recon.get("n_detected_all_paths")),
+                 pct(100.0 * recon.get("n_detected_all_paths", 0) /
+                     recon["n_injected"]) if recon.get("n_injected") else "---"])
+    rows.append(["admissible only (S14)", num(recon.get("admissible_injected")),
+                 "",
+                 num(recon.get("admissible_injected")),
+                 num(recon.get("admissible_detected")),
+                 pct(recon.get("admissible_pct"))])
+
+    note = ("Source: `results/choreo/stats.json` `S14_path_class`. "
+            + a_note + " " + (recon.get("interpretation") or "")
+            + " The `L` row has no admissible cells by construction, so its "
+              "`Detected` figure is a raw count with no denominator. ")
+    return _tex_table(
+        "tab:e1-path-class",
+        "E1 detection by path class (S14). P1 is the fully assessed path; "
+        "P3/P4 are unchecked and warning-only, and L is launch-status, which "
+        "carries no detection denominator by construction. The two rates at "
+        "the bottom are different questions and neither may be quoted under "
+        "the other's denominator.",
+        header, rows, note=note)
+
+
+def table_e1_rtc_curve(summary):
+    """tab:e1-rtc-curve — what enabling more runtime checks actually costs,
+    derived from the E2 obligation ledger (no rerun)."""
+    s14 = summary.get("S14_path_class") or {}
+    rtc = s14.get("rtc_curve") or {}
+    levels = rtc.get("levels") or []
+    enabled = rtc.get("n_obligations_enabled") or {}
+    delta = rtc.get("delta_vs_entry") or {}
+    by_class = rtc.get("by_class") or {}
+    det = rtc.get("n_detected") or {}
+    ref = rtc.get("paper_reference") or {}
+    arm = rtc.get("rtc_all_arm") or {}
+
+    if not enabled:
+        return _tex_table(
+            "tab:e1-rtc-curve",
+            "Runtime-check enablement by `-rtc` level. Not available.",
+            ["Level", "Obligations", "elem", "hw", "loop", "shape", "detected"],
+            [["---"] * 7],
+            note="Source unavailable: `S14_path_class.rtc_curve` is empty. Run "
+                 "`make choreo-e2 && make choreo-stats`.")
+
+    # `n_detected` is measured at entry only; a level with no run must print
+    # `---`, never `0` (a 0 would read as "this level catches nothing").
+    n_inj_all = rtc.get("n_injected") or (arm.get("n_injected") if arm else None)
+    header = ["-rtc level", "Enabled", "$\\Delta$ vs entry"] + \
+             [esc(c) for c in by_class] + ["Detected"]
+    rows = []
+    for lv in levels:
+        row = [esc(lv), num(enabled.get(lv)),
+               ("+" + num(delta.get(lv))) if lv != "entry" else "---"]
+        for c in by_class:
+            row.append(num((by_class.get(c) or {}).get(lv)))
+        if lv == "entry":
+            row.append(f"{num(det.get('entry'))}/{num(n_inj_all)}")
+        else:
+            row.append("---")
+        rows.append(row)
+    if arm:
+        rows.append([r"\textbf{ceiling arm (`-rtc=all`)}", "", "", "", "", "",
+                     "", f"{num(arm.get('n_detected'))}/{num(arm.get('n_injected'))}"])
+    else:
+        rows.append([r"\textbf{ceiling arm (`-rtc=all`)}", "", "", "", "", "",
+                     "", "--- not recorded"])
+    note = ("Source: `results/choreo/stats.json` `S14_path_class.rtc_curve`. "
+            "`Enabled` = obligations whose cheapest level (the ledger's "
+            "`cost`) is at or below the column, so it needs no rerun and is "
+            "exact at every level; only the `entry` detection rate is "
+            "measured, because a detection needs a full E1 run per level. "
+            "`---` means not measured, not zero. The ceiling arm is a single "
+            "configuration, not a level in the sweep, and it is NOT the "
+            "`-rtc=all` + `--disable-assert-hoist` arm of "
+            "`tab:rq5-ablation`: 6 of that arm's 8 extra detections come from a "
+            "codegen hoisting defect, not from the cost filter (R-D2). ")
+    if ref:
+        note += (f"specs §9.2 predicts {ref.get('entry')}/{ref.get('low')}/"
+                 f"{ref.get('medium')}/{ref.get('high')} on a different "
+                 "population; it is a prediction, and the ledger above is the "
+                 "measurement. ")
+    if rtc.get("cost_filter_note"):
+        note += rtc["cost_filter_note"]
+    return _tex_table(
+        "tab:e1-rtc-curve",
+        "Marginal cost of enabling runtime checks, by `-rtc` level. The growth "
+        "is one class: elementwise obligations go "
+        f"{by_class.get('elem', {}).get('entry', 0)} to "
+        f"{by_class.get('elem', {}).get('high', 0)} while every other class is "
+        "flat.",
+        header, rows, note=note)
 
 
 def table_rq1_category(summary):
@@ -403,7 +563,28 @@ def table_rq6_mechanism(summary):
 
 
 def render_tables(summary):
+    # NOTE (open item, escalated): the paper's main.tex \input{}s tables by
+    # EXPERIMENT name (e2_generation, e3_discharge, e4_cost, e5_oracle,
+    # rq2_bugs), while this renderer has historically written RQ names
+    # (rq1_category ... rq6_mechanism). Only rq2_bugs.tex agrees.
+    #
+    # This is NOT a pure naming divergence, so a rename is NOT safe:
+    #   * `e2_generation` and `e5_oracle` are hand-authored qualitative tables
+    #     (yes/part/no expressibility; prose reporting paths). Neither has a
+    #     numeric source in stats.json, so no rename can produce them.
+    #   * `e3_discharge` is a 2-row static/dynamic AGGREGATE over 310 cases;
+    #     rq1_category is a 15-row PER-CATEGORY breakdown. Renaming would
+    #     change what the paper's Table shows, not just its name.
+    #   * `e4_cost` has no renderer source at all.
+    #   * The paper's `rq2_bugs.tex` caption is hand-edited ("oracle-confirmed
+    #     corruptions", "Before-device detection is Compile + Launch") beyond
+    #     what this renderer emits; re-rendering would silently revert it.
+    # So the e1_* tables below follow the paper's convention for NEW material,
+    # and the rq* set is left alone. Reconciling the two sets is a coordinator
+    # call; see specs/expansion-workflow.md §11.
     return OrderedDict([
+        ("e1_path_class.tex", table_e1_path_class(summary)),
+        ("e1_rtc_curve.tex", table_e1_rtc_curve(summary)),
         ("rq1_category.tex", table_rq1_category(summary)),
         ("rq2_bugs.tex", table_rq2_bugs(summary)),
         ("rq3_runtime.tex", table_rq3_runtime(summary)),
@@ -468,6 +649,67 @@ def render_figures(summary, out_dir):
     plt.close(fig)
     written.append(fp)
 
+    # -- fig_e1_path_class.pdf -----------------------------------------------
+    # NAMING: deliberately NOT `fig_e1_detection`. The paper already carries a
+    # hand-written `figures/fig_e1_detection.tex` -- a pgfplots bar chart of
+    # before-device detection by mutation class for FIVE toolchains, including
+    # baselines (MLIR-linalg 34/50, MLIR-low 38/48, IREE 19/23) whose numbers
+    # this renderer has no source for. Same basename + different figure would
+    # let `make paper` drop a misleading `.pdf` next to a `.tex` that
+    # `\input{figures/fig_e1_detection}` resolves to, silently dead. This figure
+    # is the S14 register view instead, so it gets its own name.
+    #
+    # The two panels are the two claims of §5.2: (a) how much of E1's misses is
+    # a denominator question, and (b) that the cost of enabling checks is one
+    # class wide. They belong in one figure because (a) answers "can we afford
+    # to check" only if (b) answers "what does checking cost".
+    s14 = summary.get("S14_path_class") or {}
+    recon = s14.get("reconciliation") or {}
+    rtc = s14.get("rtc_curve") or {}
+    if recon and rtc.get("by_class"):
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.8))
+
+        n_inj = recon.get("n_injected") or 0
+        n_det = recon.get("n_detected_all_paths") or 0
+        arm = rtc.get("rtc_all_arm") or {}
+        n_adm = recon.get("admissible_injected") or 0
+        n_dad = recon.get("admissible_detected") or 0
+
+        labels, rates, colors = [], [], []
+        if n_inj:
+            labels.append("all injected\n(S2 headline)")
+            rates.append(100.0 * n_det / n_inj)
+            colors.append("#4C72B0")
+        if n_adm:
+            labels.append("admissible\n(S14 register)")
+            rates.append(100.0 * n_dad / n_adm)
+            colors.append("#55A868")
+        if arm and arm.get("n_injected"):
+            labels.append("ceiling arm\n(-rtc=all)")
+            rates.append(100.0 * arm["n_detected"] / arm["n_injected"])
+            colors.append("#C44E52")
+        ax1.bar(labels, rates, color=colors, width=0.55)
+        for i, r in enumerate(rates):
+            ax1.text(i, r + 1.0, f"{r:.1f}%", ha="center", fontsize=8)
+        ax1.set_ylabel("detected before device (%)")
+        ax1.set_ylim(0, max(rates + [50]) * 1.25)
+        ax1.set_title("E1 detection under three denominators")
+        ax1.tick_params(axis="x", labelsize=8)
+
+        by_class = rtc["by_class"]
+        for cname, series in by_class.items():
+            ax2.plot(rtc["levels"], [series.get(l) for l in rtc["levels"]],
+                     marker="o", label=cname)
+        ax2.set_ylabel("obligations enabled")
+        ax2.set_xlabel("-rtc level")
+        ax2.set_title("Cost of enabling checks, by obligation class")
+        ax2.legend(fontsize=8)
+        fig.tight_layout()
+        fp = os.path.join(out_dir, "fig_e1_path_class.pdf")
+        fig.savefig(fp)
+        plt.close(fig)
+        written.append(fp)
+
     return written
 
 
@@ -504,6 +746,64 @@ def render_markdown(summary):
     lines.append(f"- S6 mechanism (discharged): {proven}")
     lines.append(f"- S10 compile cost: {pct(s10.get('grand_median_pct'), 3)} front-end vs nvcc")
     lines.append("")
+
+    s14 = summary.get("S14_path_class") or {}
+    if s14:
+        recon = s14.get("reconciliation") or {}
+        denom = s14.get("denominator") or {}
+        audit = s14.get("applicability_audit") or {}
+        rtc = s14.get("rtc_curve") or {}
+        lines.append("## E1 path-class register (S14)")
+        lines.append(f"- register source: `{s14.get('register_source', '?')}`")
+        lines.append(f"- specs {denom.get('n_specs', 0)}: "
+                     f"{denom.get('n_applicable', 0)} applicable, "
+                     f"{denom.get('n_not_applicable', 0)} N/A, "
+                     f"{denom.get('n_out_of_scope', 0)} out of scope")
+        lines.append("")
+        lines.append("| Path class | Cells | Injected | Applicable | Detected | Rate |")
+        lines.append("|---|---|---|---|---|---|")
+        for pc, c in (s14.get("per_path") or {}).items():
+            lines.append(f"| {pc} | {c.get('n_cells', 0)} | "
+                         f"{c.get('n_injected', 0)} | "
+                         f"{c.get('n_admissible', '---')} | "
+                         f"{c.get('n_detected_admissible', '---')} | "
+                         f"{pct(c.get('n_detected_pct'))} |")
+        lines.append("")
+        if recon:
+            lines.append(f"**Reconciliation vs S1/S2: "
+                         f"{'AGREES' if recon.get('matches_S1S2') else 'MISMATCH'}** "
+                         f"(cells {recon.get('n_cells')}, "
+                         f"injected {recon.get('n_injected')}, "
+                         f"noop {recon.get('n_discarded_noop')}, "
+                         f"never {recon.get('n_never')})")
+            lines.append(f"- all injected: {recon.get('n_detected_all_paths')}"
+                         f"/{recon.get('n_injected')} detected (S2's headline)")
+            lines.append(f"- admissible only: {recon.get('admissible_detected')}"
+                         f"/{recon.get('admissible_injected')} = "
+                         f"{pct(recon.get('admissible_pct'))} (the register)")
+            lines.append(f"- {recon.get('inadmissible_detected')} detection(s) "
+                         f"land on inadmissible cells")
+            lines.append("")
+        if audit:
+            lines.append(f"**Applicability audit: {audit.get('status')}** "
+                         f"({audit.get('n_contradicting', 0)} of "
+                         f"{audit.get('n_inadmissible_specs_with_cells', 0)} "
+                         "inadmissible specs with cells contradicted)")
+            for r in audit.get("rows") or []:
+                mark = "**CONTRADICTED**" if r.get("contradicts_design_claim") else "holds"
+                lines.append(f"- `{r.get('spec_id')}` ({r.get('prohibition')}) "
+                             f"injected {r.get('n_injected')} / "
+                             f"detected {r.get('n_detected')} -> {mark}")
+            lines.append("")
+        if rtc:
+            en = rtc.get("n_obligations_enabled") or {}
+            lines.append(f"- `-rtc` enabled: " + " / ".join(
+                f"{lv} {en.get(lv)}" for lv in rtc.get("levels") or []))
+            for cname, series in (rtc.get("by_class") or {}).items():
+                lines.append(f"  - {cname}: " + " -> ".join(
+                    str(series.get(lv)) for lv in rtc.get("levels") or []))
+            lines.append(f"- steepest class: {rtc.get('steepest_class')}")
+            lines.append("")
     return "\n".join(lines)
 
 

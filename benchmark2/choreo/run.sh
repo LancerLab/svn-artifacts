@@ -212,9 +212,15 @@ cmd_minimal() {
   log "minimal (E1): mutation-based bug detection, size=$SIZE"
   log "  croqtile @ $(toolchain_version)"
 
-  # 1. Generate the mutant set (40 per class, specs §0/§4).
+  # 1. Generate the mutant set (specs §0/§4).
+  #    --rtc stamps the level this corpus is run at; specs §9.6.1 makes the
+  #    curve a property of the RUN, so the level must be recorded with the
+  #    corpus rather than inferred later from the detection rate.
   local genargs=()
-  [[ -n "$LEVEL2" ]] && genargs+=(--level2)
+  [[ -n "$LEVEL2" ]]    && genargs+=(--level2)
+  [[ -n "$RTC_LEVEL" ]] && genargs+=(--rtc "$RTC_LEVEL")
+  [[ -n "$N_P1" ]]      && genargs+=(--n-p1 "$N_P1")
+  [[ -n "$N_CELLS" ]]   && genargs+=(--n-cells "$N_CELLS")
   $PY "$HERE/gen_mutants.py" "${genargs[@]}" || die "mutant generation failed"
 
   # 2. Calibrate the specs §7 ground-truth oracle on UNMUTATED bases.
@@ -371,6 +377,32 @@ cmd_never() {
 # ---------------------------------------------------------------------------
 # collect / stats
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# screen (GATE 2) — registry integrity + corpus census, writes no mutant
+# ---------------------------------------------------------------------------
+cmd_screen() {
+  log "screen (GATE 2): registry integrity + corpus census, no mutant written"
+  # specs/expansion-workflow.md §3-§4. Exit codes from gen_mutants.py:
+  #   0 ok | 1 a mutation edit did not match (bad operator) | 2 open work
+  # (an ADMISSIBLE spec with no operator) or an unresolvable spec. Both non-zero
+  # codes are gate failures, so the code is propagated rather than swallowed --
+  # a malformed edit silently yields ZERO mutants, and `0 skipped` is the only
+  # thing that reveals it.
+  local genargs=(--dry-run --report --fail-on-pending)
+  [[ -n "$LEVEL2" ]]    && genargs+=(--level2)
+  [[ -n "$RTC_LEVEL" ]] && genargs+=(--rtc "$RTC_LEVEL")
+  [[ -n "$N_P1" ]]      && genargs+=(--n-p1 "$N_P1")
+  [[ -n "$N_CELLS" ]]   && genargs+=(--n-cells "$N_CELLS")
+  local rc=0
+  $PY "$HERE/gen_mutants.py" "${genargs[@]}" || rc=$?
+  if (( rc == 0 )); then
+    log "screen: PASS (registry consistent, corpus census clean)"
+  else
+    log "screen: FAIL (rc=$rc) -- fix before generating the corpus"
+  fi
+  return $rc
+}
+
 cmd_collect() {
   log "collect: raw -> schema-conformant records"
   $PY "$HERE/collect.py" --size "$SIZE" || die "collect failed"
@@ -401,11 +433,15 @@ cmd_all() {
 
 usage() {
   cat >&2 <<EOF
-usage: $0 {setup|minimal|e2|e3|e4|e5|e5b|never|collect|stats|all} [options]
+usage: $0 {setup|screen|minimal|e2|e3|e4|e5|e5b|never|collect|stats|all} [options]
 
 options:
   --small | --full     record size label (default: --small)
   --device <i>         GPU index (default: $DEVICE)
+  --rtc <level>        E1 corpus: run at this -rtc level, entry|low|medium|high
+                       (specs §9.6.1: the curve is a property of the RUN)
+  --n-p1 <N>           E1 corpus: P1 budget per class (default: 40)
+  --n-cells <N>        E1 corpus: injections per cell for P3/P4/L (default: 1)
   --level2             minimal: also generate the level-2 widening (specs §5)
   --only <X>           minimal: restrict to M1|M2|M3
                        never:   comma-separated mutant ids
@@ -417,6 +453,8 @@ options:
 
 lanes:
   setup     pin croqtile HEAD + verify the binary and the pinned flags
+  screen    GATE 2: registry integrity + corpus census, writes NO mutant
+            (specs/expansion-workflow.md §3-§4). Run this BEFORE \`minimal\`.
   minimal   E1 mutation-based detection (correctness lane, exclusive=false)
   e2        obligation ledger, 15 categories (S3-S6)
   e3        remainder / unconditional guards (S7)
@@ -440,6 +478,11 @@ LIMIT=""
 JOBS="${JOBS:-6}"
 RECALIBRATE=""
 EXECUTE=""
+# E1 corpus knobs, threaded from the Makefile / environment (specs §4). Empty
+# means "leave gen_mutants.py's defaults alone".
+RTC_LEVEL="${RTC:-}"
+N_P1="${N_P1:-}"
+N_CELLS="${N_CELLS:-}"
 
 SUB="${1:-}"
 [[ -z "$SUB" || "$SUB" == "-h" || "$SUB" == "--help" ]] && { usage; exit 1; }
@@ -450,6 +493,12 @@ while (( $# )); do
     --small)       SIZE="small";;
     --full)        SIZE="full";;
     --level2)      LEVEL2=1;;
+    --rtc)         RTC_LEVEL="${2:?--rtc needs a value}"; shift;;
+    --rtc=*)       RTC_LEVEL="${1#*=}";;
+    --n-p1)        N_P1="${2:?--n-p1 needs a value}"; shift;;
+    --n-p1=*)      N_P1="${1#*=}";;
+    --n-cells)     N_CELLS="${2:?--n-cells needs a value}"; shift;;
+    --n-cells=*)   N_CELLS="${1#*=}";;
     --recalibrate) RECALIBRATE=1;;
     --execute)     EXECUTE=1;;
     --only)        ONLY="${2:?--only needs a value}"; shift;;
@@ -466,9 +515,18 @@ while (( $# )); do
   shift
 done
 
+# Fail fast on a bad -rtc level rather than after the corpus has been generated:
+# the level is stamped into every record, so a typo would poison the run.
+case "$RTC_LEVEL" in
+  ""|entry|low|medium|high) ;;
+  *) echo "ERROR: --rtc must be entry|low|medium|high (got '$RTC_LEVEL')" >&2
+     usage; exit 1;;
+esac
+
 mkdir -p "$RAW" "$RESULTS"
 case "$SUB" in
   setup)   cmd_setup;;
+  screen)  cmd_screen;;
   minimal) cmd_minimal;;
   e2)      cmd_e2;;
   e3)      cmd_e3;;

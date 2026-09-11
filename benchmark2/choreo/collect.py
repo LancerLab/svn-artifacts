@@ -61,6 +61,7 @@ RESULTS = os.path.join(B2, "results", "choreo")
 SCHEMA = os.path.join(B2, "schema", "record-schema.json")
 
 TOOLCHAIN = "choreo"
+SPEC_VERSION = "v2.1"
 
 # The three provenance fields every record must carry (manifest.md).
 PROVENANCE = ("settings_hash", "kernel_hash", "toolchain_version")
@@ -70,6 +71,13 @@ PROVENANCE = ("settings_hash", "kernel_hash", "toolchain_version")
 # gap, and validate() must not reject it.
 CATEGORY_GRAIN = {"cost", "remainder"}
 
+# Record types that are DESIGN records, not observations. A `spec` record is one
+# line of SPEC_REGISTRY: it states what the suite claims to test and whether
+# that claim is expressible at all. It exists BEFORE any run, which is precisely
+# its purpose -- an N/A verdict has no mutant to hang on, so the provenance rule
+# ("which run produced this number?") does not apply to it.
+DESIGN_GRAIN = {"spec"}
+
 # Sources, in the order they are read. A missing source is normal (lanes run at
 # different times) and is reported, not fatal — unless --require says otherwise.
 # Documentation of which raw file feeds which record type; main() reads them
@@ -78,6 +86,7 @@ CATEGORY_GRAIN = {"cost", "remainder"}
 # universe that stats.py's s4()/s5() iterate. See from_e1_mutants.
 SOURCES = [
     ("mutant", "e1_mutant_records.json"),
+    ("spec", "spec_registry.json"),
     ("kernel", "e2_ledger.json"),
     ("obligation", "e2_ledger.json"),
     ("cost", "e4_compile_cost.json"),
@@ -144,6 +153,8 @@ def validate(rtype, rec, spec, errors):
         if f in rec and rec[f] is not None and rec[f] not in allowed:
             errors.append(f"{rtype}: field `{f}`={rec[f]!r} not in enum "
                           f"{allowed} (id={rid})")
+    if rtype in DESIGN_GRAIN:
+        return
     for f in PROVENANCE:
         if f not in rec:
             errors.append(f"{rtype}: missing provenance field `{f}` (id={rid})")
@@ -231,7 +242,21 @@ def from_e1_mutants(data, ver, never_causes=None):
     """
     mutants = []
     rows = data.get("records", data if isinstance(data, list) else [])
+    # spec_version is a property of the MANIFEST (one generation run), not of a
+    # mutant, so it is read once here and stamped onto every row.
+    spec_version = data.get("spec_version") if isinstance(data, dict) else None
     for r in rows:
+        # ---- v2.1 verdict, REQUIRED (specs/expansion-workflow.md §2) ------
+        # A v1.0 manifest has none of these. Rather than emit a mixed corpus in
+        # which some rows are path-classified and some are not -- which would
+        # make S14 silently partial -- refuse it here, at the boundary, with the
+        # fix in the message.
+        if r.get("spec_id") is None:
+            raise ValueError(
+                "manifest for %r carries no `spec_id`: it predates the v2.1 "
+                "path-class vocabulary. Regenerate with `gen_mutants.py` "
+                "(it always stamps as_meta()). Refusing to emit a partially "
+                "classified register." % (r.get("mutant_id"),))
         m = {
             "toolchain": TOOLCHAIN,
             "category": r.get("category"),
@@ -242,6 +267,17 @@ def from_e1_mutants(data, ver, never_causes=None):
             "outcome": r.get("outcome"),
             "stage": r.get("stage"),
             "manifest": r.get("manifest"),
+            "spec_id": r.get("spec_id"),
+            "path_class": r.get("path_class"),
+            "prohibition": r.get("prohibition") or "",
+            # `applicable` is the serialization of `admissible`, renamed so the
+            # record cannot be confused with the in-process `admissible` flag.
+            # `admissible` is the per-MUTANT verdict; `spec_admissible` is the
+            # spec's. A mutant may be inadmissible (a realized noop) even when
+            # its spec is admissible, so the mutant's own verdict is the one
+            # S14's denominator needs.
+            "applicable": r.get("admissible", r.get("spec_admissible")),
+            "spec_version": r.get("spec_version") or spec_version or SPEC_VERSION,
         }
         m.update(base_provenance(r, ver))
         # `oracle_caught` is carried alongside `detector` for the same reason:
@@ -274,6 +310,37 @@ def from_e1_mutants(data, ver, never_causes=None):
                     m["never_cause_reason"] = c["reason"]
         mutants.append(m)
     return mutants, []
+
+
+def from_spec_registry(data, ver=None):
+    """`raw/spec_registry.json` → `spec` records (one line per SPEC_REGISTRY entry).
+
+    WHY THIS RECORD TYPE EXISTS. Every other record type is keyed on an
+    observation. An N/A verdict has no observation -- that is what N/A means --
+    so without this type the 28 exclusions are invisible in the register and the
+    denominator (44 applicable / 28 N/A) is unfalsifiable. With it, a reader can
+    audit the exclusion itself: `prohibition` says *why*, and for `absent` the
+    `note` names the missing surface.
+
+    It also makes `S14_path_class.per_spec` complete. A spec with no mutants
+    would otherwise be silently missing from that table, which is exactly the
+    failure mode the v2.1 cell floor was introduced to prevent at the mutant
+    level.
+    """
+    out = []
+    for s in data.get("specs", []):
+        out.append({
+            "spec_id": s.get("spec_id"),
+            "class": s.get("cls") or s.get("class"),
+            "path_class": s.get("path"),
+            "applicable": s.get("admissible"),
+            "prohibition": s.get("prohibition") or "",
+            "status": s.get("status"),
+            "desc": s.get("desc"),
+            "note": s.get("note"),
+            "spec_version": data.get("spec_version") or SPEC_VERSION,
+        })
+    return out
 
 
 def from_e2(data, ver):
@@ -426,6 +493,14 @@ def main():
         buckets["kernel"].extend(k)   # always empty; kept so the tuple shape is stable
     else:
         absent.append("e1_mutant_records.json (E1 not run)")
+
+    # ---- spec registry → spec (design records; independent of any run) ----
+    sr = read_json(os.path.join(a.raw, "spec_registry.json"))
+    if sr:
+        present.append("spec_registry.json")
+        buckets["spec"].extend(from_spec_registry(sr, ver))
+    else:
+        absent.append("spec_registry.json (screen not run)")
 
     # ---- E2 → kernel + obligation ----
     if e2:

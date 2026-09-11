@@ -1,6 +1,6 @@
 {
-  "$comment": "benchmark2 raw-record schema (one JSON object per observation line). Pinned 2026-09-08 (Phase 0). Every record carries settings_hash + kernel_hash + toolchain version from manifest.md.",
-  "version": "1.0",
+  "$comment": "benchmark2 raw-record schema (one JSON object per observation line). Pinned 2026-09-08 (Phase 0). Every record carries settings_hash + kernel_hash + toolchain version from manifest.md. v1.1 (2026-09-11) is ADDITIVE: new mutant fields/enums and the new `spec` record type for the v2.1 path-class vocabulary. No existing field changed meaning, so v1.0 records stay valid (schema/PATCH-v2.1.md).",
+  "version": "1.1",
   "records": {
     "kernel": {
       "fields": ["toolchain", "category", "settings_hash", "kernel_hash", "size", "gpu_device", "exclusive", "compile", "run", "ref_check"],
@@ -14,16 +14,33 @@
       "produced_by": ["minimal", "e2"]
     },
     "mutant": {
-      "fields": ["toolchain", "category", "class", "paper_category", "mutant_id", "level", "outcome", "stage", "manifest"],
+      "fields": ["toolchain", "category", "class", "paper_category", "mutant_id", "level", "outcome", "stage", "manifest", "spec_id", "path_class", "prohibition", "applicable", "spec_version"],
       "enums": {
-        "class": ["M1", "M2", "M3"],
+        "class": ["M1", "M2", "M3", "M4", "L"],
         "paper_category": ["dim-mismatch", "oob", "wrong-shape", "stride", "hw"],
         "level": ["1", "2"],
         "outcome": ["compile", "runtime", "never", "n/a"],
         "stage": ["compile", "runtime", "none"],
-        "manifest": ["corrupts", "noop"]
+        "manifest": ["corrupts", "noop"],
+        "path_class": ["P1", "P2", "P3", "P4", "L"],
+        "prohibition": ["", "absent", "derived", "repaired", "harness-owned", "observation"],
+        "applicable": ["true", "false"],
+        "spec_version": ["v2.1"]
       },
       "produced_by": ["minimal", "minimal --level2"]
+    },
+    "spec": {
+      "$comment": "One line per SPEC_REGISTRY entry, incl. specs with no mutants. exists so an N/A verdict is auditable without a mutant to hang it on (schema/PATCH-v2.1.md).",
+      "fields": ["spec_id", "class", "path_class", "applicable", "prohibition", "status", "desc", "note", "spec_version"],
+      "enums": {
+        "class": ["M1", "M2", "M3", "M4", "L"],
+        "path_class": ["P1", "P2", "P3", "P4", "L"],
+        "applicable": ["true", "false"],
+        "prohibition": ["", "absent", "derived", "repaired", "harness-owned", "observation"],
+        "status": ["implemented", "pending"],
+        "spec_version": ["v2.1"]
+      },
+      "produced_by": ["screen"]
     },
     "sanitizer": {
       "fields": ["toolchain", "category", "class", "mutant_id", "flagged", "fault", "exercised"],

@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering\footnotesize
+\caption{E1 detection by path class (S14). P1 is the fully assessed path; P3/P4 are unchecked and warning-only, and L is launch-status, which carries no detection denominator by construction. The two rates at the bottom are different questions and neither may be quoted under the other's denominator.}
+\label{tab:e1-path-class}
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Path class & Cells & Injected & Applicable & Detected & Rate \\
+\midrule
+P1 & 113 & 70 & 60 & 27 & 45.0\% \\
+L (attribution only) & 7 & 2 & --- & 2 & --- \\
+\textbf{Register verdicts (S14)} &  &  &  &  &  \\
+N/A specs: 28 & 22 absent & 3 repaired & 0 harness & 3 observed & 44 appl. \\
+\textbf{Two rates, two denominators} &  &  &  &  &  \\
+all injected (S2) & 72 &  & 72 & 35 & 48.6\% \\
+admissible only (S14) & 60 &  & 60 & 27 & 45.0\% \\
+\bottomrule
+\end{tabular}
+\vspace{0.4em}\begin{minipage}{0.98\linewidth}\raggedright\footnotesize Source: \texttt{results/choreo/stats.json} \texttt{S14\_path\_class}. Applicability audit: CONTRADICTED (2 of 3 inadmissible specs with cells are contradicted by the record-level ground truth). S2's headline rate divides by ALL injected cells; the admissible rate divides only by the cells the register says choreo was fair to ask about. Both must be printed: 8 of S2's detections land on cells the register calls inadmissible, so quoting S2's rate as an admissible-denominator rate would overstate it. The \texttt{L} row has no admissible cells by construction, so its \texttt{Detected} figure is a raw count with no denominator. \end{minipage}
+\end{table}

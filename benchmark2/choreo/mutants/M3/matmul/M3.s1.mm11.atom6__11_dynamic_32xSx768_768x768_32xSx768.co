@@ -5,8 +5,12 @@
 // case11: [32, S, 768] + [768, 768] --> [32, S, 768] (Dynamic)
 __co__ auto matmul11(f32 [32, S, 768] lhs, f32 [768, 768] rhs) {
   f32 [lhs.span(0), lhs.span(1), rhs.span(1)] output;
+  // [1, 6, 6] tiles leave l1_out and l1_a at 1*S*128*4 = 256 KB each (S=512),
+  // 576 KB per thread in total, over the 256 KB CUDA local-memory ceiling.
+  // [1, 32, 32] -- the tiling already used by case 9 -- gives 48 KB each plus
+  // a 2 KB rhs tile, ~98 KB per thread.
   parallel p by 4, q by 8 {
-    with index = {m_tile, n_tile, k_tile} in [1, 6, 6] {
+    with index = {m_tile, n_tile, k_tile} in [1, 32, 32] {
       foreach m_tile, n_tile {
         local f32[output.span(0)/#p/#q, output.span(1)/#m_tile, output.span(2)/#n_tile] l1_out {0.0f};
         foreach k_tile {

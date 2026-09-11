@@ -498,3 +498,144 @@ is **accepted as-is** — all four owner decisions are already resolved in-repo.
 `mlir-linalg`/`mlir-low` **S1/S8/S9/S12 result outputs are still pending** (only
 the shared harness has landed; there is no `results/mlir-*` yet). Flag when those
 lanes push so they get the same homework check.
+
+---
+
+# Round 2 — raised 2026-09-11 (EuroSys 2027 cycle) by the benchmark2 expansion
+
+Raised by `specs/expansion-workflow.md` §10.1, produced by `S14_path_class` in
+`stats.py`. These are **not** new measurements: `S14` joins the *frozen* E1
+baseline (`results/choreo/mutant.jsonl`, 120 cells) to the v2.1 path-class
+register, so the numbers below are read off data that has not changed.
+
+Context for both: `S14` divides E1 into two axes — **path class** (P1/P3/P4
+mutatable, P2/N-A not) and **admissibility** (does the spec have a prohibition
+choreo was fair to ask it to enforce?). `prohibition_by_path` today reads
+`P1:absent×12`, `P2:repaired×3`, `P3:absent×3`, `P4:absent×1`,
+`L:observation×3 + absent×6`. The applicability audit then asks, **per
+inadmissible spec**, whether its own design claim survives the record-level
+ground truth. Both decisions below are that audit firing: reported, never
+auto-applied, because §7 reserves a spec move for the owner.
+
+---
+
+## D8 — `M1.6`'s "noop by construction" is false, and correcting it moves the headline rate  ⚠ BLOCKING
+
+### What the register says
+`M1.6` — *zero-stride / empty range* — carries `prohibition: absent` with the
+design note *"noop by construction — there is no prohibition to enforce, because
+the range is correctly empty."* On that basis it is **excluded from the
+admissible denominator**: `n_admissible = 0`.
+
+### What the records say
+From `S14_path_class.per_spec.M1.6`:
+
+| | n |
+|---|---:|
+| cells | 10 |
+| discarded as noop | 3 |
+| **injected** | **7** |
+| **detected (all at compile)** | **6** |
+| never | 1 |
+
+So the "noop" claim is true for **3 of its 10 cells** and false for the **7 that
+were actually injected**. Six of those seven are `corrupts` *and* choreo caught
+them — the strongest possible statement that the mutation is testable. A spec
+whose cells choreo detects is not a spec choreo was unfair to be asked about.
+
+### Why this is material, not bookkeeping
+The admissible denominator is the paper's headline E1 denominator. Moving `M1.6`
+into it:
+
+| | injected | detected | rate |
+|---|---:|---:|---:|
+| as registered (admissible only) | 60 | 27 | **45.00 %** |
+| with `M1.6` admitted | 67 | 33 | **49.25 %** |
+
+That is **+4.25 points** on the number §5.2 reports, from a single spec. The
+`S2` all-injected rate (35/72 = 48.61 %) does not move, so the *gap between the
+two rates* — the thing that motivated printing both — narrows from 3.61 to
+**−0.64 points**. If `M1.6` is admitted, the "admissible-only rate is lower"
+framing stops being true.
+
+### Decision required
+1. **D8a — admit `M1.6`**, drop the `absent` prohibition, and re-report the
+   admissible rate as 33/67 (49.25 %). Changes `S14` only, on a frozen baseline.
+2. **D8b — keep `M1.6` excluded**, but **replace the design note**: the claim
+   "noop by construction" is contradicted by 6/7 detections and must not stand in
+   the register as written. Something like *"3/10 cells are noop; the remaining 7
+   are realizable and 6 were detected — excluded from the denominator pending a
+   v3 re-registration."* Costs nothing, removes a false statement.
+3. **D8c — defer to v3**, but then §5.2 must **not** quote the admissible rate as
+   a fair-denominator rate without the footnote that one inadmissible spec with a
+   contradicting claim is inside it.
+
+**Recommendation: D8b now (it is a text fix and unblocks prose today), with D8a
+as the v3 action.** D8a changes a headline number four days before the abstract
+deadline; D8b removes the misstatement at zero risk.
+
+---
+
+## D9 — `L1`'s realization is P2 (statically repaired), not `observation`
+
+### What the register says
+`L1` — *shared-memory tile exceeds the device limit* — carries path class `L`
+("launch-status, attribution only", excluded from the denominator by
+construction) and `prohibition: observation`. Its design note records that it was
+migrated out of v1 `M3 s3` (`shared32/64/128`, `shared512/1024`) and *"observed as
+launch rejected"*.
+
+### What the records say
+From `S14_path_class.per_spec.L1`:
+
+| | n |
+|---|---:|
+| cells | 7 |
+| discarded as noop | 5 |
+| injected | 2 |
+| **detected — and `n_compile = 2`** | **2** |
+
+Both injected cells were caught **at compile time**, not at launch. That is the
+`P2` shape: `lib/memcheck.hpp`'s `CheckCtMemUsage` raises `Error1` when
+`ct_tot_mem_usage[sto] > mem_usage_limit[sto]`, so the compiler **refuses the
+program** and the row is registered as a prohibition *repaired*, i.e. N/A. An
+`observation` class and a `repaired` class are different claims about the tool:
+one says choreo watches it happen, the other says choreo prevents it happening.
+
+Note this is the **same mechanism** already recorded under `M3.12`, whose design
+note cites the `Error1` finding. Two specs are now known to hit it.
+
+### Impact
+Smaller than D8 and in the safe direction: `L` is not in the admissible
+denominator (`per_path.L.n_admissible = 0`), so **the admissible rate does not
+move**. What changes is the *attribution* of 2 of the 35 before-device detections
+— from "launch-status observation" to "static repair" — and the count of specs
+whose obligation is discharged by a hard error rather than a report.
+
+### Decision required
+1. **D9a — reclassify `L1` as `P2` / `repaired`** for v3. Its cells then join the
+   `P2:repaired×3` family and leave the `L` attribution.
+2. **D9b — keep `L1` as `L` verbatim** (what the register does today) and record
+   in the paper that the `L` class contains one spec whose committed realization
+   is compile-time-repaired, i.e. the class is not pure.
+3. **D9c — split `L1`**: keep the shared-memory-over-limit *observation* and add
+   the compile-time-repaired realization as a separate `P2` spec.
+
+**Recommendation: D9b for this cycle, D9c for v3.** The register's own note
+already gives the reason — *"KEPT VERBATIM: the committed E1 baseline defines
+this realization, and a reclassification would invalidate the frozen S1/S2"* —
+and D9a would move cells between path classes on a baseline we have chosen not to
+re-measure.
+
+---
+
+## What needs no decision
+
+- `S14`'s reconciliation against `S1`/`S2` **AGREES** on all four checks
+  (cells 120, injected 72, discarded-noop 48, never 37, detected 35). The register
+  adds a denominator; it does not revise the published matrix.
+- `unresolved_spec_cells` is **empty** — every cell in the frozen baseline maps to
+  a v2.1 spec id.
+- The `-rtc` enabled curve (entry 675 → high 1,151) is derivable from the
+  committed obligation ledger and needs no rerun.
+
