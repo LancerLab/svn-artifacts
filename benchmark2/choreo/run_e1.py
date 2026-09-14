@@ -528,7 +528,10 @@ def classify_one(rec, workdir, keep_logs=True, policy=None):
     # base fails, in which case no manifest verdict can be trusted.
     pol = (policy or {}).get(f"{rec['category']}/{rec['case']}")
     if pol is None:
-        # No calibration yet: fall back to the static gate list but say so.
+        # No calibration for this base. Fall back to the static gate list, and
+        # record that this cell's usability is an ASSUMPTION rather than a
+        # measurement. main() warns once per uncovered base before the run; do
+        # not also print per cell, or a 137-cell run buries the warning.
         gated = rec["category"] in GATED_CHECK
         usable = True
         out["calibrated"] = False
@@ -802,6 +805,12 @@ def main():
                          "compiler default. The oracle arm always uses -rtc=none.")
     ap.add_argument("--manifest", default=MANIFEST_IN)
     ap.add_argument("--policy", default=ORACLE_POLICY)
+    ap.add_argument("--strict-policy", action="store_true",
+                    help="refuse to run if --policy does not calibrate every "
+                         "base case in the manifest. Without this, an uncovered "
+                         "base silently defaults to oracle_usable=True, which "
+                         "moves its mutants into the denominator and changes "
+                         "the headline rate with no error and no log line.")
     ap.add_argument("--out", default=os.path.join(RAW, "e1_mutant_records.json"))
     ap.add_argument("--workdir", default=os.path.join(RAW, "e1_logs"))
     ap.add_argument("--device", default=os.environ.get("CUDA_VISIBLE_DEVICES", "0"),
@@ -931,10 +940,41 @@ def main():
         bad = [k for k, v in policy.items() if not v["oracle_usable"]]
         print(f"[choreo] oracle policy: {len(policy)} cases, "
               f"{len(bad)} with an unusable reference")
+        # A policy that does not cover every base in the manifest is how the
+        # 2026-09-14 denominator drift happened: calibrate_oracle.py had been
+        # re-run over the v2.1 manifest (16 bases) but its output was never
+        # committed, so raw/oracle_policy.json still held 14 bases. classify_one
+        # falls back to `usable = True` for a base it cannot find, which SILENTLY
+        # moves those mutants from undecidable back into the denominator -- 10
+        # cells in that case. Nothing failed, nothing was printed, and the two
+        # corpora differed by 10 cells and 1.6 points of rate for no visible
+        # reason. Report the gap loudly, and let --strict-policy refuse it.
+        want = {f"{r['category']}/{r['case']}" for r in recs}
+        uncovered = sorted(want - set(policy))
+        if uncovered:
+            print(f"[choreo] *** ORACLE POLICY INCOMPLETE: {len(uncovered)} of "
+                  f"{len(want)} base cases have no calibration ***",
+                  file=sys.stderr)
+            for k in uncovered:
+                print(f"[choreo]     UNCALIBRATED {k}", file=sys.stderr)
+            n_cells = sum(1 for r in recs
+                          if f"{r['category']}/{r['case']}" in uncovered)
+            print(f"[choreo]     {n_cells} mutants will default to "
+                  f"oracle_usable=True — that is an ASSUMPTION, not a "
+                  f"measurement. Re-run calibrate_oracle.py over this "
+                  f"manifest.", file=sys.stderr)
+            if a.strict_policy:
+                print("[choreo] --strict-policy: refusing to continue",
+                      file=sys.stderr)
+                return 3
     else:
         print(f"[choreo] WARNING: no {os.path.relpath(a.policy, REPO)} — run "
               f"calibrate_oracle.py first; manifest verdicts will be guesses",
               file=sys.stderr)
+        if a.strict_policy:
+            print("[choreo] --strict-policy: refusing to continue",
+                  file=sys.stderr)
+            return 3
 
     print(f"[choreo] E1: classifying {len(recs)} mutants with {a.jobs} workers "
           f"(croqtile @ {ver or 'unknown'})")

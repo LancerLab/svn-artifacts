@@ -58,6 +58,14 @@ and rebuilds WITHOUT committing, the binary is newer than HEAD and is reported
 as HEAD. That is why `checkout_dirty` is recorded too — a dirty tree means the
 binary may correspond to no commit at all.
 
+STALENESS IS A SEPARATE QUESTION FROM VERSION, and it is decided by source
+mtimes, not commit dates. See `newest_source_mtime` for the false alarm that
+made this distinction necessary: comparing the binary against HEAD's committer
+date flags a binary that was built from the checkout and committed one minute
+later. `binary_stale_vs_checkout` therefore only means "some build input is
+newer than the binary"; a mere version-label disagreement is reported on its
+own, as `version_label_disagrees_with_head`.
+
 --------------------------------------------------------------------------
 WHY NOT JUST REBUILD
 --------------------------------------------------------------------------
@@ -156,6 +164,54 @@ def binary_mtime():
         return None
 
 
+# The checkout's build inputs. These are the ONLY things whose mtime can prove
+# a binary is out of date, because they are what the build reads.
+SOURCE_DIRS = ("lib", "include", "src", "tools", "specs")
+SOURCE_EXT = (".cpp", ".cc", ".cxx", ".c", ".hpp", ".h", ".hxx",
+              ".y", ".l", ".py")
+
+
+def newest_source_mtime():
+    """Newest mtime among the checkout's build inputs, or None if unreadable.
+
+    THIS is the sound staleness evidence, and it took a false alarm to notice.
+    The first version of this module compared the binary's mtime against HEAD's
+    COMMITTER DATE (`mt < head_ct`). That is not the same question: an author
+    who builds at 18:26 and commits at 18:27 produces a commit that postdates
+    its own binary, and the test then reported a perfectly current binary as
+    stale. Observed live on 2026-09-14 with ea937008 -- "choreo: reject
+    non-partitioning chunkat tiles", where the checkout already held the new
+    check while the run was built, and the run really did emit the new
+    rejection message while simultaneously being flagged stale.
+
+    A file mtime is causal instead of correlational: if no build input is newer
+    than the binary, the binary cannot be missing a source change, no matter
+    when the commit object was written.
+    """
+    newest = None
+    for d in SOURCE_DIRS:
+        root = os.path.join(CROQTILE, d)
+        if not os.path.isdir(root):
+            continue
+        for dirpath, dirnames, filenames in os.walk(root):
+            # Generated trees are not inputs; walking them also picks up
+            # build/ inside a source dir on some layouts.
+            dirnames[:] = [x for x in dirnames
+                           if x not in ("build", "build-release",
+                                        "build-debug", "extern",
+                                        ".git", "__pycache__")]
+            for fn in filenames:
+                if not fn.endswith(SOURCE_EXT):
+                    continue
+                try:
+                    m = os.path.getmtime(os.path.join(dirpath, fn))
+                except OSError:
+                    continue
+                if newest is None or m > newest:
+                    newest = m
+    return newest
+
+
 def binary_source_commit():
     """Newest commit whose committer date <= the binary's mtime.
 
@@ -230,12 +286,37 @@ def identity(refresh=False):
     head_ct = head_commit_epoch()
     dirty = checkout_dirty()
 
-    # `stale` is the actionable flag: the checkout has moved on and the binary
-    # has not been rebuilt, so the pinned version in manifest §5 no longer
-    # describes what will actually run.
-    stale = bool(head and src and head != src)
-    if not stale and mt is not None and head_ct is not None:
+    # --- staleness ---------------------------------------------------------
+    # `stale` must mean one thing only: the binary is missing a source change,
+    # so the pin in manifest §5 does not describe what will run. Two candidate
+    # signals, deliberately NOT merged, because they have different strengths:
+    #
+    #   binary_predates_source  DECISIVE. Some build input is newer than the
+    #                           binary, so the binary cannot contain it.
+    #   version_disagrees       ADVISORY. The mtime-inferred source commit
+    #                           differs from HEAD. The inference is a heuristic
+    #                           over commit dates, and a build-then-commit
+    #                           sequence makes it wrong in the false-positive
+    #                           direction (see newest_source_mtime). Reporting
+    #                           this as `stale` is what produced a spurious
+    #                           "BINARY IS STALE" on a current binary.
+    newest_src = newest_source_mtime()
+    binary_predates_source = (mt is not None and newest_src is not None
+                              and mt < newest_src)
+    version_disagrees = bool(head and src and head != src)
+
+    if newest_src is not None:
+        stale = binary_predates_source
+        stale_basis = "source-mtime"
+    elif mt is not None and head_ct is not None:
+        # No readable sources (partial checkout, or an unbuilt tree). Fall back
+        # to the commit date, and SAY it is the weaker test: this branch is the
+        # one that over-reports.
         stale = mt < head_ct
+        stale_basis = "commit-date-fallback"
+    else:
+        stale = False
+        stale_basis = "unknown"
 
     _IDENTITY_CACHE = {
         "toolchain": "choreo",
@@ -248,6 +329,11 @@ def identity(refresh=False):
         "binary_sha1_12": binary_sha1_12(),
         "binary_mtime": mt,
         "binary_stale_vs_checkout": stale,
+        "binary_stale_basis": stale_basis,
+        "binary_predates_source": binary_predates_source,
+        "binary_newest_source_mtime": newest_src,
+        # Advisory: the version LABEL may understate HEAD. Not staleness.
+        "version_label_disagrees_with_head": version_disagrees,
     }
     return _IDENTITY_CACHE
 
@@ -278,8 +364,11 @@ def describe(idt=None, stream=sys.stderr):
         print("[choreo]       the binary may correspond to NO commit; the "
               "version above is an upper bound.", file=stream)
     if idt["binary_stale_vs_checkout"]:
-        print("[choreo]   *** BINARY IS STALE: it predates the checked-out "
-              "commit. ***", file=stream)
+        print("[choreo]   *** BINARY IS STALE: a build input is NEWER than the "
+              "binary ***", file=stream)
+        print(f"[choreo]       newest source {_fmt(idt['binary_newest_source_mtime'])}"
+              f" > binary {_fmt(idt['binary_mtime'])} "
+              f"(test basis: {idt['binary_stale_basis']})", file=stream)
         print(f"[choreo]       records will say {idt['version']} because that "
               f"is what the binary was built from,", file=stream)
         print(f"[choreo]       NOT {idt['checkout_head']} (the checkout). "
@@ -288,6 +377,23 @@ def describe(idt=None, stream=sys.stderr):
               "timing lane is mid-run:", file=stream)
         print("[choreo]       build-release/choreo is a shared path and a "
               "rebuild also breaks host-quiet.", file=stream)
+    elif idt["version_label_disagrees_with_head"]:
+        # Not staleness: the binary is current with every build input, but the
+        # commit-date heuristic in binary_source_commit() cannot prove it. Say
+        # so, because reporting this as staleness sends the reader looking for
+        # a rebuild that is not needed. The label is kept rather than promoted
+        # to HEAD: no source is newer than the binary, but that cannot rule out
+        # a checkout that moved through commits touching only files outside
+        # SOURCE_DIRS -- which is exactly the drift this module exists to
+        # catch. So the label stays a conservative lower bound.
+        print(f"[choreo]   note: version label {idt['version']} is older than "
+              f"HEAD {idt['checkout_head']},", file=stream)
+        print("[choreo]       but NO build input is newer than the binary, so "
+              "this is not staleness. The label is", file=stream)
+        print("[choreo]       an mtime-inferred lower bound: it understates "
+              "HEAD when a build lands before its", file=stream)
+        print("[choreo]       own commit. No rebuild needed; the pin is "
+              "conservative, not wrong.", file=stream)
     return idt
 
 
