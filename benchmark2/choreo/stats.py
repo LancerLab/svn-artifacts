@@ -244,10 +244,26 @@ def s1_s2(mutants, present):
     # A mutant is only countable if its ground truth is decided. specs §7 makes
     # the oracle mandatory for every `never` and every `runtime` outcome; an
     # undecidable manifest means the row cannot be interpreted at all.
+    #
+    # `oracle_usable is False` is a THIRD state and must not be folded into
+    # either of the other two. It means the UNMUTATED base fails its OWN
+    # reference check, so a clean oracle run proves nothing about the mutation:
+    # there is no manifest verdict in either direction. Counting such a row as
+    # `n_discarded_noop` would report it as evidence that the mutation does not
+    # corrupt output, when the truth is that we could not measure it -- and the
+    # discard count is quoted in §5.2. It is counted as `n_undecidable` and
+    # excluded from n_injected, exactly like a noop, but reported apart so
+    # "provably does not corrupt" and "not measurable" stay distinguishable.
+    # A `corrupts` verdict on an unusable base gets the same treatment: the
+    # verdict is void, not an injection.
     rows = collections.defaultdict(lambda: collections.Counter())
     undecidable = []
     for m in mutants:
         cls = m.get("class")
+        if m.get("oracle_usable") is False:
+            rows[cls]["n_undecidable"] += 1
+            undecidable.append(m.get("mutant_id"))
+            continue
         if m.get("manifest") == "noop":
             rows[cls]["n_discarded_noop"] += 1
             continue
@@ -301,6 +317,14 @@ def s1_s2(mutants, present):
         "n_never": never,
         "n_na": t.get("n_na", 0),
         "n_discarded_noop": t.get("n_discarded_noop", 0),
+        "n_undecidable": t.get("n_undecidable", 0),
+        "undecidable_means": (
+            "the unmutated base fails its own reference check, so no manifest "
+            "verdict exists for this cell. Excluded from n_injected like a "
+            "noop, but NOT evidence that the mutation does not corrupt "
+            "output -- it is unmeasured. Never add it to "
+            "n_discarded_noop: that would report a measurement failure as a "
+            "clean negative."),
         "pct_before_device": pct(before_device, t["n_injected"]),
         # RETIRED by R-D2, kept only so the old artifact stays comparable and so
         # the ruling's effect is auditable. This is NOT the acceptance criterion
@@ -1866,9 +1890,31 @@ def s14_path_class(mutants, specs, obligations, present):
         srow["path_class"] = pc
         srow["prohibition"] = prob
         srow["n_cells"] += 1
+        # Cells whose class is not a detection class (e.g. L, LaunchStatus:
+        # admissible=false, prohibition=observation) are excluded from S1/S2 by
+        # design, but S14 counts every cell. They are tallied and SKIPPED, so
+        # the buckets below partition exactly the cells S1/S2 count and the
+        # reconciliation compares like-for-like instead of reporting a mismatch
+        # that is really a definition.
+        #
+        # The test uses the MUTANT's own class, not the registry's: S1/S2 group
+        # by `m["class"]`, and a handful of M3 mutants carry a registry
+        # spec_id (L1/L2) whose spec class is "L". Testing the registry's class
+        # would move those rows out of the compared set on one side only and
+        # re-introduce the mismatch from the other direction.
+        if m.get("class") not in CLASSES:
+            per_path[pc]["n_cells_non_detection"] += 1
+            srow["n_cells_non_detection"] += 1
+            continue
         # A noop is discarded from the detection denominator (specs §11.1): its
         # own manifest says it corrupts nothing, so counting it as a detection
-        # would credit choreo with catching a non-bug.
+        # would credit choreo with catching a non-bug. An UNDECIDABLE cell
+        # (unusable reference base) is discarded too but counted apart, for the
+        # reason spelled out in s1_s2 -- see `n_undecidable` there.
+        if m.get("oracle_usable") is False:
+            per_path[pc]["n_undecidable"] += 1
+            srow["n_undecidable"] += 1
+            continue
         if m.get("manifest") == "noop":
             per_path[pc]["n_discarded_noop"] += 1
             srow["n_discarded_noop"] += 1
@@ -1956,9 +2002,20 @@ def s14_path_class(mutants, specs, obligations, present):
     # S14 must partition the SAME cells S2 counts, or one of the two is wrong.
     # Asserted rather than assumed, because the whole value of a second
     # denominator is that a reader can check it against the first.
+    #
+    # "The same cells" is not "every cell": S1/S2 iterate `CLASSES`, which is a
+    # SUBSET (a LaunchStatus cell is not a detection class and belongs in no
+    # detection denominator), while S14 registers every cell it resolves. The
+    # non-detection cells are therefore subtracted on BOTH sides. Without that,
+    # the check compares two definitions and reports a mismatch that no data
+    # change can fix -- which is exactly how a real mismatch would get ignored.
     tot_cells = sum(c.get("n_cells", 0) for c in per_path.values())
+    tot_non_det = sum(c.get("n_cells_non_detection", 0)
+                      for c in per_path.values())
+    tot_cells_det = tot_cells - tot_non_det
     tot_inj = sum(c.get("n_injected", 0) for c in per_path.values())
     tot_noop = sum(c.get("n_discarded_noop", 0) for c in per_path.values())
+    tot_undec = sum(c.get("n_undecidable", 0) for c in per_path.values())
     tot_det = sum(c.get("n_detected", 0) for c in per_path.values())
     tot_det_adm = sum(c.get("n_detected_admissible", 0)
                       for c in per_path.values())
@@ -2098,8 +2155,11 @@ def s14_path_class(mutants, specs, obligations, present):
         "reconciliation": {
             "against": "S1_detection_matrix / S2_before_device",
             "n_cells": tot_cells,
+            "n_cells_non_detection": tot_non_det,
+            "n_cells_compared": tot_cells_det,
             "n_injected": tot_inj,
             "n_discarded_noop": tot_noop,
+            "n_undecidable": tot_undec,
             "n_never": tot_never,
             "n_detected_all_paths": tot_det,
             "admissible_injected": tot_adm,
@@ -2138,11 +2198,21 @@ def reconcile_s14(s14, s1, s2):
     checks = {
         "n_injected": (r["n_injected"], t1.get("n_injected")),
         "n_discarded_noop": (r["n_discarded_noop"], t1.get("n_discarded_noop")),
+        "n_undecidable": (r["n_undecidable"], t1.get("n_undecidable")),
         "n_never": (r["n_never"], t1.get("n_never")),
         "n_detected_all_paths": (r["n_detected_all_paths"],
                                  s2.get("n_before_device")),
     }
     mismatch = {k: {"s14": a, "s1s2": b} for k, (a, b) in checks.items() if a != b}
+    # The partition must also be COMPLETE, not merely agree on the keys both
+    # sides happen to carry: injected + noop + undecidable has to consume every
+    # compared cell. A bucket that silently loses rows would otherwise pass.
+    consumed = (r["n_injected"] + r["n_discarded_noop"] + r["n_undecidable"])
+    r["n_cells_unaccounted"] = r["n_cells_compared"] - consumed
+    if r["n_cells_unaccounted"]:
+        mismatch["n_cells_unaccounted"] = {
+            "n_cells_compared": r["n_cells_compared"],
+            "injected+noop+undecidable": consumed}
     r["matches_S1S2"] = not mismatch
     r["checks"] = {k: {"s14": a, "s1s2": b} for k, (a, b) in checks.items()}
     if mismatch:
@@ -2287,17 +2357,23 @@ def report(st):
     if s1.get("status") != "ok":
         print(f"  NOT RUN — {s1.get('reason')}")
     else:
-        hdr = f"  {'class':<6}{'injected':>10}{'compile':>9}{'runtime':>9}{'never':>7}{'n/a':>6}{'noop':>6}"
+        hdr = f"  {'class':<6}{'injected':>10}{'compile':>9}{'runtime':>9}{'never':>7}{'n/a':>6}{'noop':>6}{'undec':>6}"
         print(hdr)
         for cls in CLASSES:
             d = s1["per_class"].get(cls, {})
             print(f"  {cls:<6}{d.get('n_injected',0):>10}{d.get('n_compile',0):>9}"
                   f"{d.get('n_runtime',0):>9}{d.get('n_never',0):>7}"
-                  f"{d.get('n_na',0):>6}{d.get('n_discarded_noop',0):>6}")
+                  f"{d.get('n_na',0):>6}{d.get('n_discarded_noop',0):>6}"
+                  f"{d.get('n_undecidable',0):>6}")
         t = s1["totals"]
         print(f"  {'ALL':<6}{t.get('n_injected',0):>10}{t.get('n_compile',0):>9}"
               f"{t.get('n_runtime',0):>9}{t.get('n_never',0):>7}"
-              f"{t.get('n_na',0):>6}{t.get('n_discarded_noop',0):>6}")
+              f"{t.get('n_na',0):>6}{t.get('n_discarded_noop',0):>6}"
+              f"{t.get('n_undecidable',0):>6}")
+        print("  `noop` = the mutant provably corrupts nothing; `undec` = the "
+              "unmutated base fails its OWN reference\n"
+              "  check, so no manifest verdict exists. Both leave the "
+              "denominator; only `noop` is a negative result.")
         s2 = st["S2_before_device"]
         print(f"\n  S2 before-device: {s2['n_before_device']}/{s2['n_injected']} "
               f"= {s2['pct_before_device']}%")
@@ -2534,7 +2610,7 @@ def report(st):
         for p, c in s14["prohibition_by_path"].items():
             print(f"    {p:<4} " + "  ".join(f"{k}={v}" for k, v in c.items()))
         print(f"\n  {'path':<6}{'cells':>7}{'adm':>6}{'det':>6}{'never':>7}"
-              f"{'noop':>6}{'det%':>9}   note")
+              f"{'noop':>6}{'undec':>6}{'det%':>9}   note")
         for p in PATH_CLASSES + ("UNRESOLVED",):
             c = s14["per_path"].get(p)
             if not c:
@@ -2549,6 +2625,7 @@ def report(st):
             print(f"  {p:<6}{c.get('n_cells',0):>7}{c.get('n_admissible',0):>6}"
                   f"{c.get('n_detected',0):>6}{c.get('n_never',0):>7}"
                   f"{c.get('n_discarded_noop',0):>6}"
+                  f"{c.get('n_undecidable',0):>6}"
                   f"{str(c.get('n_detected_pct')):>9}   {note}")
         if s14.get("unresolved_spec_cells"):
             print(f"  *** {len(s14['unresolved_spec_cells'])} cell(s) joined to "
