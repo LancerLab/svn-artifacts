@@ -1658,6 +1658,173 @@ M4 += [
         "dma.copy l1_Y => Y.chunkat(q#_q, qq * 0);")),
 ]
 
+# ---- M4 depth -----------------------------------------------------------
+# The four iteration-validity states, realized across the rest of M4's minimal
+# set (conv2d / relu / transpose) so that "M4 is flat" is a measured property
+# of the class rather than an artifact of a few hand-picked edits.
+#
+# M4 is the COST-FILTER CONTROL. Every mutant below leaves a legal-or-refused
+# iteration space whose body never executes (M4.1/M4.2/M4.3) or whose writes
+# all collide on one tile (M4.5). The expected verdict is therefore ENTRY cost
+# and "not attributed": if any of these shows a curve, the cost filter is
+# broken, which is exactly what the control is for. None of them can be
+# repaired by a value check, so none is a coverage claim.
+M4 += [
+    # M4.1 -- an extent in the loop nest mutated to 0.
+    _m("M4.1.cv14.zeroextent", "M4", 1, "stride", "conv2d",
+       "14_mobilenet_128x32x112x112_32x32x3x3_128x32x112x112_S_P_D",
+       "with-in mdspan extent mutated to 0 on the padded-input view",
+       ("with {i, j} in [Hpad, Wpad]", "with {i, j} in [0, Wpad]")),
+    _m("M4.1.cv16.zeroextent", "M4", 1, "stride", "conv2d",
+       "16_resnet_64x3x224x224_64x3x7x7_64x64x112x112_S_P_D",
+       "with-in mdspan extent mutated to 0 on a strided 7x7 view",
+       ("with {i, j} in [Hpad/2, Wpad/2]",
+        "with {i, j} in [0, Wpad/2]")),
+    _m("M4.1.cv18.zeroextent", "M4", 1, "stride", "conv2d",
+       "18_unet_16x64x128x128_128x64x3x3_16x128x128x128_S_P_D",
+       "with-in mdspan extent mutated to 0 on the down-sampled view",
+       ("with {i, j} in [Hpad, Wpad]", "with {i, j} in [0, Wpad]")),
+    _m("M4.1.cv21.zeroextent", "M4", 1, "stride", "conv2d",
+       "21_vit_32x768x14x14_1000x768x7x7_32x1000x7x7_S_P_D",
+       "with-in mdspan extent mutated to 0 on the patchified-input view",
+       ("with {i, j} in [Hpad, Wpad]", "with {i, j} in [0, Wpad]")),
+    _m("M4.1.cv6.zeroextent", "M4", 1, "stride", "conv2d",
+       "6_dynamic_64x64x56x56_128x64x3x3_64x128x56x56_S_P_D",
+       "with-in mdspan extent mutated to 0 on a 3x3 dynamic-shape case",
+       ("with {i, j} in [Hpad, Wpad]", "with {i, j} in [0, Wpad]")),
+    _m("M4.1.cv8.zeroextent", "M4", 1, "stride", "conv2d",
+       "8_dynamic_64x256x28x28_Cx256x3x3_64xCx28x28_S_P_D",
+       "with-in mdspan extent mutated to 0 on a symbolic-channel case",
+       ("with {i, j} in [Hpad, Wpad]", "with {i, j} in [0, Wpad]")),
+    _m("M4.1.cv19.zeroextent", "M4", 1, "stride", "conv2d",
+       "19_vit_32x3x224x224_768x3x16x16_32x768x14x14_16_0_1",
+       "with-in mdspan extent mutated to 0 on the 14x14 patch grid",
+       ("with {x, y} in [Ho/14, Wo]", "with {x, y} in [0, Wo]")),
+    _m("M4.1.cv1.zeroextent", "M4", 1, "stride", "conv2d",
+       _C1, "element-loop extent mutated to 0 on the attention 1x1 path",
+       ("foreach n in [N / #p]", "foreach n in [0]")),
+    _m("M4.1.cv2.zeroextent", "M4", 1, "stride", "conv2d",
+       "2_dynamic_Nx64x56x56_128x64x3x3_Nx128x56x56_S_P_D",
+       "outer tile extent mutated to 0 on a dynamic-batch case",
+       ("foreach {co, n} in [Cout, N / #p / #q]",
+        "foreach {co, n} in [0, N / #p / #q]")),
+    _m("M4.1.rl2.zeroextent", "M4", 1, "stride", "relu",
+       "2_cnn_128x128x28x28_128x128x28x28",
+       "element-loop extent mutated to 0 on a rank-4 relu",
+       ("foreach {i, j, k, l} in [I / #p, J, K, 7]",
+        "foreach {i, j, k, l} in [0, J, K, 7]")),
+    _m("M4.1.tp1.zeroextent", "M4", 1, "stride", "transpose",
+       "1_bert_32x512x768_32x768x512",
+       "transpose element-loop extent mutated to 0",
+       ("foreach {y, z} in [512, 12]", "foreach {y, z} in [0, 12]")),
+    _m("M4.1.tp14.zeroextent", "M4", 1, "stride", "transpose",
+       "14_efficientnet_64x1280x7x7_64x7x7x1280",
+       "extent mutated to 0 on the span-derived leading dimension",
+       ("foreach {x, y} in [i.span(0)/#p/#q, i.span(1)]",
+        "foreach {x, y} in [0, i.span(1)]")),
+]
+
+M4 += [
+    # M4.2 -- a parallel-by bound mutated to 0 or negative.
+    _m("M4.2.cv11.zero", "M4", 2, "stride", "conv2d",
+       "11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1",
+       "parallelby bound mutated to 0 on a static 1x1 case",
+       ("parallel q by 8  {", "parallel q by 0  {")),
+    _m("M4.2.cv13.zero", "M4", 2, "stride", "conv2d",
+       "13_static_32x192x28x28_64x192x1x1_32x64x28x28_1_0_1",
+       "parallelby bound mutated to 0 where the bound is not a power of two",
+       ("parallel q by 7  {", "parallel q by 0  {")),
+    _m("M4.2.cv19.zero", "M4", 2, "stride", "conv2d",
+       "19_vit_32x3x224x224_768x3x16x16_32x768x14x14_16_0_1",
+       "parallelby bound mutated to 0 on the patch-grid conv",
+       ("parallel q by 14  {", "parallel q by 0  {")),
+    _m("M4.2.cv2.neg", "M4", 2, "stride", "conv2d",
+       "2_dynamic_Nx64x56x56_128x64x3x3_Nx128x56x56_S_P_D",
+       "parallelby bound mutated to negative on a dynamic-batch case",
+       ("parallel q by 4  {", "parallel q by -4  {")),
+    _m("M4.2.cv3.zero", "M4", 2, "stride", "conv2d",
+       "3_dynamic_16x256xHxW_256x256x3x3_16x256xHxW_S_P_D",
+       "parallelby bound mutated to 0 where every extent is symbolic",
+       ("parallel q by 4  {", "parallel q by 0  {")),
+    _m("M4.2.cv16.zero", "M4", 2, "stride", "conv2d",
+       "16_resnet_64x3x224x224_64x3x7x7_64x64x112x112_S_P_D",
+       "OUTER parallelby bound mutated to 0, so the whole block goes away",
+       ("parallel p by 1  {", "parallel p by 0  {")),
+    _m("M4.2.rl2.neg", "M4", 2, "stride", "relu",
+       "2_cnn_128x128x28x28_128x128x28x28",
+       "parallelby bound mutated to negative on a rank-4 relu",
+       ("parallel q by 4", "parallel q by -4")),
+    _m("M4.2.rl9.zero", "M4", 2, "stride", "relu",
+       "9_dynamic_64x128xHxW_64x128xHxW",
+       "parallelby bound mutated to 0 on a dynamic-shape relu",
+       ("parallel q by 2", "parallel q by 0")),
+    _m("M4.2.rl19.zero", "M4", 2, "stride", "relu",
+       "19_transformer_32x512x2048_32x512x2048",
+       "parallelby bound mutated to 0 on the largest relu case",
+       ("parallel q by 64", "parallel q by 0")),
+    _m("M4.2.tp1.neg", "M4", 2, "stride", "transpose",
+       "1_bert_32x512x768_32x768x512",
+       "parallelby bound mutated to negative on the transpose inner loop",
+       ("parallel q by 64", "parallel q by -64")),
+    _m("M4.2.tp14.zero", "M4", 2, "stride", "transpose",
+       "14_efficientnet_64x1280x7x7_64x7x7x1280",
+       "parallelby bound mutated to 0 on the dma.transp case",
+       ("parallel q by 4  {", "parallel q by 0  {")),
+    _m("M4.2.tp17.zero", "M4", 2, "stride", "transpose",
+       "17_mobilenet_128xx96x112x112_128x112x112x96",
+       "parallelby bound mutated to 0 on a rank-5 transpose",
+       ("parallel q by 16", "parallel q by 0")),
+]
+
+M4 += [
+    # M4.3 -- a bound that is symbolic and vanishes only at runtime.
+    _m("M4.3.cv1.symzero", "M4", 3, "stride", "conv2d",
+       _C1, "loop bound spelled N - N: statically a real bound, zero at "
+            "runtime",
+       ("foreach n in [N / #p]", "foreach n in [N - N]")),
+    _m("M4.3.cv4.symzero", "M4", 3, "stride", "conv2d",
+       "4_dynamic_32x128xHxW_256x128x3x3_32x256xHxW_S_P_D",
+       "channel loop bound cancelled to zero at runtime",
+       ("foreach {co, n} in [Cout, N / #p / #q]",
+        "foreach {co, n} in [Cout - Cout, N / #p / #q]")),
+    _m("M4.3.cv5.symzero", "M4", 3, "stride", "conv2d",
+       "5_dynamic_128xCx112x112_64xCx1x1_128x64x112x112_1_0_1",
+       "symbolic batch loop bound that vanishes at runtime",
+       ("foreach n in [N / #p]", "foreach n in [N - N]")),
+    _m("M4.3.rl2.symzero", "M4", 3, "stride", "relu",
+       "2_cnn_128x128x28x28_128x128x28x28",
+       "symbolic leading bound cancelled on a rank-4 relu",
+       ("foreach {i, j, k, l} in [I / #p, J, K, 7]",
+        "foreach {i, j, k, l} in [I - I, J, K, 7]")),
+    _m("M4.3.tp11.symzero", "M4", 3, "stride", "transpose",
+       "11_dynamic_32xSx768_32x768xS",
+       "symbolic sequence-length bound cancelled on the transpose path",
+       ("foreach {y, z} in [seq_len, 12]",
+        "foreach {y, z} in [seq_len - seq_len, 12]")),
+]
+
+M4 += [
+    # M4.5 -- stride/step zero: every iteration maps onto the same tile.
+    _m("M4.5.tp2.zerostep", "M4", 5, "stride", "transpose",
+       "2_cnn_128x128x28x28_128x28x28x128",
+       "output index of the transposed store multiplied by 0: all "
+       "iterations write row 0",
+       ("o.chunkat(p, z, w, y);", "o.chunkat(p, z, w, y * 0);")),
+    _m("M4.5.tp11.zerostep", "M4", 5, "stride", "transpose",
+       "11_dynamic_32xSx768_32x768xS",
+       "transposed output index multiplied by 0 on the dynamic path",
+       ("o.chunkat(p, z, y);", "o.chunkat(p, z, y * 0);")),
+    _m("M4.5.tp12.zerostep", "M4", 5, "stride", "transpose",
+       "12_dynamic_64xSx256_Sx64x256",
+       "leading transposed output index multiplied by 0",
+       ("o.chunkat(y, p, z);", "o.chunkat(y * 0, p, z);")),
+    _m("M4.5.rl2.zerostep", "M4", 5, "stride", "relu",
+       "2_cnn_128x128x28x28_128x128x28x28",
+       "element index of the relu write-back multiplied by 0, so a single "
+       "output element is overwritten N times",
+       ("out.chunkat(p#i, j, k, l);", "out.chunkat(p#i, j, k, l * 0);")),
+]
+
 # ---- M2.15 pad_low <-> pad_high swapped (length preserved) ---------------
 # The check at semacheck.cpp:1076-1100 SUMs the pad fields, so it is blind to
 # placement. Exchanging pad_low and pad_high per axis leaves the total (and
