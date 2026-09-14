@@ -757,11 +757,34 @@ def reproject_one(rec, workdir):
             "manifest undecidable: unmutated base fails its own reference check "
             "(see raw/oracle_policy.json)")
 
+    # `classify_one` VOIDS a verdict when a harness/environment fault is visible
+    # (`infra_error` -> outcome "n/a"). Re-projection must apply the SAME rule or
+    # a void verdict silently becomes a clean `never` -- and `never` is a MISS,
+    # so the re-projected register would report a detection failure where the
+    # original reported no verdict at all. Worse, the accompanying manifest can
+    # flip to `noop` (the fault makes the oracle arm look like a clean pass),
+    # which would DROP the row from the denominator instead of flagging it.
+    # Both arms are checked, in the same order `classify_one` uses.
+    infra = (infra_failure(read("off.run.log") or "")
+             or infra_failure(read("det.run.log") or ""))
+
     out["manifest"] = manifest
     out["oracle_note"] = note
     out["outcome"] = outcome
     out["stage"] = stage
     out["detector"] = detector
+
+    if infra:
+        out["infra_error"] = infra
+        out["outcome"] = "n/a"
+        out["note"] = f"infrastructure failure, verdict void: {infra}"
+        # Restore the manifest the RUN recorded, unconditionally. When a fault
+        # stops an arm from really executing, the log reader above sees a
+        # truncated log and can read it as a clean pass -- which would flip the
+        # row to `noop` and DROP it from the denominator, hiding the void
+        # verdict instead of reporting it. The recorded value is the only
+        # trustworthy one under a fault.
+        out["manifest"] = rec.get("manifest", manifest)
     return out
 
 
@@ -792,6 +815,13 @@ def main():
                          "classify_log: it costs no nvcc, does not disturb the "
                          "GPU, and makes the before/after diff exact. Reads the "
                          "existing --out file and rewrites it in place.")
+    ap.add_argument("--stamp-only", action="store_true",
+                    help="add only the v2.1 path-class fields (spec_id, "
+                         "path_class, prohibition, admissible, "
+                         "spec_admissible, spec_version) to an existing --out "
+                         "file, leaving every verdict untouched. Use this, not "
+                         "--reproject, to make an old record file collectable: "
+                         "re-projection can change a verdict, stamping cannot.")
     a = ap.parse_args()
 
     # MUST be absolute: run() executes choreo with cwd=REPO, so a relative
@@ -817,8 +847,77 @@ def main():
     if a.limit:
         recs = recs[:a.limit]
 
+    # ---- v2.1 path-class verdict, copied from the manifest ---------------
+    # collect.py REFUSES a row whose `spec_id` is None (see its
+    # from_e1_mutants docstring): it will not emit a partially path-classified
+    # register, because that would make S14 silently partial. The manifest is
+    # the sole authority for these fields -- a mutant row is one generation
+    # run's output -- so they are copied here, at the single point where a
+    # record is finalized, instead of being re-derived (or guessed) downstream.
+    # `admissible` is the per-MUTANT verdict and `spec_admissible` the SPEC's;
+    # a mutant may be a realized noop even when its spec is admissible, and it
+    # is the mutant's own verdict that S14's denominator needs.
+    #
+    # This is applied in BOTH write paths (classify and --reproject) and to the
+    # harness-exception fallback row, so a partially classified artifact can no
+    # longer reach the collector from any code path.
+    spec_version = data.get("spec_version")
+    man_by_id = {r["mutant_id"]: r for r in data["mutants"]}
+    V21_FIELDS = ("spec_id", "path_class", "prohibition", "admissible",
+                  "spec_admissible", "spec_version")
+
+    def stamp(row):
+        """Add any missing v2.1 field from the manifest row. Idempotent."""
+        src = man_by_id.get(row.get("mutant_id"))
+        if src is None:
+            return row
+        for k in V21_FIELDS:
+            if row.get(k) is None:
+                v = src.get(k)
+                if k == "prohibition":
+                    v = v or ""
+                if k == "spec_version":
+                    v = v or spec_version
+                if v is not None:
+                    row[k] = v
+        return row
+
     os.makedirs(a.workdir, exist_ok=True)
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
+
+    # ---- --stamp-only: backfill the v2.1 fields, re-derive NOTHING -------
+    # `--reproject` re-reads the retained logs, which is the right thing after
+    # editing `classify_log` but the WRONG thing for a provenance backfill: a
+    # log reader cannot reconstruct every in-process verdict (an infra-voided
+    # `n/a`, for one), so re-deriving can silently move rows between outcomes.
+    # This mode touches ONLY the fields collect.py requires, leaving every
+    # verdict exactly as the run recorded it.
+    if a.stamp_only:
+        if not os.path.exists(a.out):
+            print(f"ERROR: --stamp-only needs an existing record file at "
+                  f"{a.out}", file=sys.stderr)
+            return 2
+        prev = json.load(open(a.out))
+        if isinstance(prev, dict):
+            rows = prev.get("records") or prev.get("results") or []
+        else:
+            rows = prev
+        n_changed = 0
+        for row in rows:
+            before = {k: row.get(k) for k in V21_FIELDS}
+            stamp(row)
+            if any(row.get(k) != before[k] for k in V21_FIELDS):
+                n_changed += 1
+        payload = dict(prev) if isinstance(prev, dict) else {}
+        payload.pop("results", None)
+        payload["records"] = rows
+        payload["stamped"] = True
+        with open(a.out, "w") as f:
+            json.dump(payload, f, indent=1)
+        print(f"\n[choreo] stamped {n_changed}/{len(rows)} records with the "
+              f"v2.1 path-class fields -> {os.path.relpath(a.out, REPO)}")
+        print(f"[choreo] verdict fields untouched (stamp-only mode)")
+        return 0
     # Print the full identity block (binary sha/mtime vs checkout HEAD) so a
     # stale-binary mismatch is visible in the run log, not just buried in the
     # records. `ver` is the binary's source commit — what the data actually came
@@ -873,7 +972,7 @@ def main():
             if new.get("reproject_error"):
                 print(f"  [WARN] {new['mutant_id']}: {new['reproject_error']}",
                       file=sys.stderr)
-            results.append(new)
+            results.append(stamp(new))
         results.sort(key=lambda x: (x["class"], x["category"], x["mutant_id"]))
         # Preserve the original envelope (produced_by, elapsed_s, gpu_device,
         # exclusive, pinned_flags) so downstream readers see no schema drift, and
@@ -910,7 +1009,7 @@ def main():
             # exclusive=false. No cost/residue/latency record is produced here.
             res["gpu_device"] = str(a.device)
             res["exclusive"] = False
-            results.append(res)
+            results.append(stamp(res))
             print(f"  [{i:>3}/{len(recs)}] {res['mutant_id']:<26} "
                   f"outcome={res['outcome']:<8} stage={res['stage']:<8} "
                   f"manifest={res['manifest']:<9} detector={res.get('detector','-')}",
@@ -932,7 +1031,10 @@ def main():
           f"{os.path.relpath(a.out, REPO)}  ({round(time.time()-t0,1)}s)")
     print(f"\n{'class':<6}{'compile':>9}{'runtime':>9}{'never':>7}{'n/a':>6}"
           f"{'corrupts':>10}{'noop':>6}")
-    for cls in ("M1", "M2", "M3"):
+    # Reported per class PRESENT in the run, not a hardcoded M1/M2/M3: a class
+    # added to the manifest must show up in the run's own summary, or a gap in
+    # the corpus is invisible at the one moment it is cheap to notice.
+    for cls in sorted({r["class"] for r in results}):
         sub = [r for r in results if r["class"] == cls]
         c = collections.Counter(r["outcome"] for r in sub)
         mf = collections.Counter(r["manifest"] for r in sub)

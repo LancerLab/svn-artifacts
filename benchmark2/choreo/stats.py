@@ -108,7 +108,15 @@ NEEDS = {
 
 # plan §6 outcome taxonomy. `never` is the one that matters: S2 asserts it is 0.
 OUTCOMES = ("compile", "runtime", "never", "n/a")
-CLASSES = ("M1", "M2", "M3")
+# Every mutation class that carries a detection DENOMINATOR. M4 (LoopBound) is a
+# real class with admissible specs, but no compared toolchain is scored on it:
+# the SOTA surfaces that could hold a loop-bound defect have static shapes and
+# therefore cannot express a bound that is zero only at runtime. It is listed
+# here so the matrix carries its row, and named in CONTROL_CLASSES so the §5.2
+# headline rate can exclude it EXPLICITLY -- an empty per_class key would have
+# dropped the row silently, which is the failure mode S14 exists to prevent.
+CLASSES = ("M1", "M2", "M3", "M4")
+CONTROL_CLASSES = ("M4",)
 OBL_CLASSES = ("elem", "shape", "loop", "hw")
 OBL_OUTCOMES = ("proven", "refuted", "runtime", "budgeted")
 MECHANISMS = ("canonical", "interval", "direct")
@@ -308,6 +316,25 @@ def s1_s2(mutants, present):
             for cls in CLASSES if cls in s1["per_class"]
         },
     }
+    # The §5.2 headline rate is quoted over the classes a compared toolchain is
+    # actually scored on. M4 is the LoopBound control: it exists precisely to
+    # show that the `never` residue is NOT explained by the -rtc cost filter
+    # (LoopBound is the one obligation class already emitted at entry cost), so
+    # it has no comparator to be scored against. Folding it into the headline
+    # would inflate the rate with a class nothing else can be measured on. Both
+    # numbers are emitted so the choice is visible and reversible; the control
+    # rows stay in S1 and in the float either way.
+    ctrl = [c for c in CLASSES if c in CONTROL_CLASSES]
+    scored = [c for c in CLASSES if c not in CONTROL_CLASSES]
+    n_inj_scored = sum(s1["per_class"][c]["n_injected"] for c in scored
+                       if c in s1["per_class"])
+    n_bd_scored = sum(s1["per_class"][c].get("n_compile", 0)
+                      + s1["per_class"][c].get("n_runtime", 0)
+                      for c in scored if c in s1["per_class"])
+    s2["control_classes"] = ctrl
+    s2["n_injected_excluding_control"] = int(n_inj_scored)
+    s2["n_before_device_excluding_control"] = int(n_bd_scored)
+    s2["pct_before_device_excluding_control"] = pct(n_bd_scored, n_inj_scored)
     s2.update(prov(mutants))
 
     # ---- R-D2: the criterion that replaced `never = 0` ------------------

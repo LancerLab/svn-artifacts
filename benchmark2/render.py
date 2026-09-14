@@ -84,6 +84,11 @@ BASELINE_ROW_ORDER = ["triton", "mlir-linalg", "mlir-low", "iree"]
 # all-n/a cell is (0 injected, 40 n/a) -- pure absence with no detection signal
 # -- so the table keeps one witness per class instead of three identical rows.
 NA_WITNESS = {"M1": "iree", "M2": "triton", "M3": "iree"}
+# NB deliberately no "M4" key. `n/a` is a MEASURED verdict -- the lane ran the
+# class and its surface cannot express the defect. No compared lane has ever
+# been run against M4, so an `n/a` witness here would dress an unmeasured gap up
+# as a measured one. The table reports M4 as uncompared instead (see
+# `NOT_COMPARED_CLASSES` below).
 
 # Artifacts the venue paper actually consumes (`\input{}` / `\includegraphics`,
 # read from svn/eurosys27/main.tex). `make paper` copies ONLY these.
@@ -111,7 +116,13 @@ CANONICAL_CATEGORIES = [
     "reshape", "sigmoid", "softmax", "transpose",
 ]
 
-MUTATION_CLASSES = ["M1", "M2", "M3"]
+MUTATION_CLASSES = ["M1", "M2", "M3", "M4"]
+
+# Classes a paper-side headline may want to quote separately from the scored
+# ones. M4 is the LoopBound control: it is measured on choreo only, because it
+# exists to test whether the `never` residue is explained by the -rtc cost
+# filter, not to rank choreo against another toolchain.
+CONTROL_CLASSES = ["M4"]
 
 
 def num(x):
@@ -1038,7 +1049,7 @@ def table_rq2_bugs(summary):
         rec = (s1.get(lane) or {}).get(cls)
         return rec if isinstance(rec, dict) else None
 
-    rows, omitted = [], []
+    rows, omitted, uncompared = [], [], []
     for cls in MUTATION_CLASSES:
         cls_rows = []
 
@@ -1066,6 +1077,14 @@ def table_rq2_bugs(summary):
         for lane in kept:
             if lane not in present:
                 omitted.append(f"{cls}/{LANE_DISPLAY.get(lane, lane)}")
+        if not present and cls in CONTROL_CLASSES:
+            # Every compared lane is missing this class ENTIRELY. A missing cell
+            # is not an `n/a` cell: `n/a` means the surface was measured and
+            # cannot express the defect, while a missing cell means the lane was
+            # never run against the class. Reporting them the same way would let
+            # a coverage gap read as a capability limit. Named here so the
+            # float says so in prose rather than in an invented 0-row.
+            uncompared.append(cls)
         rows.extend(cls_rows)
         if cls != MUTATION_CLASSES[-1]:
             rows.append(r"\midrule")
@@ -1111,6 +1130,13 @@ def table_rq2_bugs(summary):
     else:
         note += "One `n/a` witness per class stands in for the registered " \
                 "cells that carry no detection signal."
+    if uncompared:
+        note += (" Class " + ", ".join(esc(c) for c in uncompared) + " is "
+                 "measured on choreo alone: no compared toolchain has a cell "
+                 "for it, so its row has no `n/a` witness -- the class is "
+                 "UNCOMPARED, which is not the same as a measured `n/a`. It is "
+                 "the control class for the residue argument "
+                 "(\\S5.4), not a point in the detection ranking.")
     if san_bits:
         elide += san_bits
     return _tex_table(
