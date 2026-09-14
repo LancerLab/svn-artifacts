@@ -1,5 +1,5 @@
 # ============================================================================
-# benchmark2 Makefile — ASPLOS 2027 artifact orchestration.
+# benchmark2 Makefile — EuroSys 2027 artifact orchestration.
 #
 # Ties the per-lane `run.sh` harnesses together: run each experiment, collect
 # per-lane statistics, then merge them into the paper's tables/figures.
@@ -15,7 +15,9 @@
 #   make stats          - re-run collect+stats for every ready lane
 #   make render         - merge stats.json -> render/ (summary + tables + figures)
 #   make tables|figures - only the tables / figures
-#   make paper          - copy render output into the paper workspace (../eurosys27)
+#   make drift          - re-check the paper's prose against the statistics
+#   make paper-check    - diff render/ against the paper, copy nothing
+#   make paper          - copy the paper's floats into ../eurosys27 (guarded)
 #   make clean          - remove render/ output (lane results are NOT touched)
 #
 # Experiment knobs (any target; passed to the lane harnesses via the env):
@@ -33,9 +35,12 @@
 #   LIMIT=<N>    classify only the first N mutants (smoke test)
 #
 # Ready lanes: iree, triton, choreo.
-# NOT ready yet (excluded on purpose): mlir-linalg, mlir-low, tilelang — they
-# have no results/ outputs yet (see homework-check.md "Out of scope"). When they
-# push, add them to LANES below and to render.py's LANE_STATS_PATHS.
+# mlir-linalg and mlir-low also carry committed results/<lane>/stats.json, so
+# render.py LOADS them (LANE_STATS_PATHS) and the E1 matrix reproduces the
+# paper's 15 rows; they are simply not runnable here (no run.sh harness, no
+# extern deps). tilelang has no results/ at all and stays in NOT_READY.
+# The four lanes' corpora are frozen and must be JOINED to the paper's
+# vocabulary, never re-collected — see the `collect` warning below.
 # ============================================================================
 
 SHELL := /bin/bash
@@ -68,8 +73,6 @@ export LIMIT
 LANES := iree triton choreo
 
 RENDER_DIR ?= $(ROOT)/render
-TABLES_DIR := $(RENDER_DIR)/tables
-FIGURES_DIR := $(RENDER_DIR)/figures
 
 # Stats the renderer reads (probed by render.py; missing lanes are reported,
 # not fatal): results/{iree,choreo}/stats.json and triton/results/stats.json.
@@ -147,7 +150,7 @@ stats:   iree-stats   triton-stats   choreo-stats
 # ---------------------------------------------------------------------------
 # Render (merge stats.json -> summary + tables + figures)
 # ---------------------------------------------------------------------------
-.PHONY: render summary tables figures
+.PHONY: render summary tables figures drift
 
 summary:
 	$(PY) $(ROOT)/render.py --summary --out $(RENDER_DIR)
@@ -158,17 +161,35 @@ tables:
 figures:
 	$(PY) $(ROOT)/render.py --figures --out $(RENDER_DIR)
 
-render: summary tables figures
+# Re-check every numeric claim in the paper's prose against the committed
+# statistics and rewrite render/PROSE-DRIFT.md. Needs the paper workspace.
+drift:
+	$(PY) $(ROOT)/render.py --drift --paper-dir $(PAPER) --out $(RENDER_DIR)
+
+render: summary tables figures drift
 
 # ---------------------------------------------------------------------------
 # Paper sync (opt-in): copy render output into the paper workspace.
+#
+# Only the floats main.tex actually \input{}s are copied, and only after a
+# diff. render.py also emits six reference-only floats (e1_*, rq1/rq3/rq5/rq6)
+# and three generated PDFs; those stay here, otherwise the venue accumulates
+# files nothing reads -- and figures/fig_e1_detection.tex would collide with
+# tables/e1_detection.tex over the tab:e1-detection label.
+#
+# The sync refuses to overwrite a venue float with uncommitted changes, so the
+# paper's own edits stay separable with `git checkout`.
 # ---------------------------------------------------------------------------
-.PHONY: paper
+PAPER_SYNC := $(ROOT)/sync_paper.sh
+
+.PHONY: paper paper-check
+
+# Diff-only: shows NEW / SAME / CHANGED per float and copies nothing.
+paper-check: render
+	@bash $(PAPER_SYNC) $(PAPER) --dry-run
+
 paper: render
-	mkdir -p $(PAPER)/tables $(PAPER)/figures
-	cp $(TABLES_DIR)/*.tex   $(PAPER)/tables/
-	cp $(FIGURES_DIR)/*.pdf  $(PAPER)/figures/
-	@echo "[paper] copied render output into $(PAPER)/{tables,figures}/"
+	@bash $(PAPER_SYNC) $(PAPER)
 
 # ---------------------------------------------------------------------------
 # Top-level

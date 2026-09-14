@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-09-11T17:00:31",
+  "generated_at": "2026-09-11T19:22:57",
   "lanes_ready": [
     "choreo",
+    "mlir-linalg",
+    "mlir-low",
     "iree",
     "triton"
   ],
   "lanes_missing": [
-    "mlir-linalg",
-    "mlir-low",
     "tilelang"
   ],
   "lane_ownership": {
@@ -23,13 +23,25 @@
       "S13",
       "S14"
     ],
-    "triton": [
+    "mlir-linalg": [
+      "S1",
+      "S8",
+      "S9",
+      "S12"
+    ],
+    "mlir-low": [
       "S1",
       "S8",
       "S9",
       "S12"
     ],
     "iree": [
+      "S1",
+      "S8",
+      "S9",
+      "S12"
+    ],
+    "triton": [
       "S1",
       "S8",
       "S9",
@@ -58,6 +70,52 @@
         "n_runtime": 0,
         "n_never": 10,
         "n_na": 0
+      }
+    },
+    "mlir-linalg": {
+      "M1": {
+        "n_injected": 0,
+        "n_compile": 0,
+        "n_runtime": 0,
+        "n_never": 0,
+        "n_na": 40
+      },
+      "M2": {
+        "n_injected": 50,
+        "n_compile": 34,
+        "n_runtime": 0,
+        "n_never": 10,
+        "n_na": 6
+      },
+      "M3": {
+        "n_injected": 0,
+        "n_compile": 0,
+        "n_runtime": 0,
+        "n_never": 0,
+        "n_na": 40
+      }
+    },
+    "mlir-low": {
+      "M1": {
+        "n_injected": 48,
+        "n_compile": 0,
+        "n_runtime": 38,
+        "n_never": 10,
+        "n_na": 0
+      },
+      "M2": {
+        "n_injected": 0,
+        "n_compile": 0,
+        "n_runtime": 0,
+        "n_never": 0,
+        "n_na": 40
+      },
+      "M3": {
+        "n_injected": 0,
+        "n_compile": 0,
+        "n_runtime": 0,
+        "n_never": 0,
+        "n_na": 40
       }
     },
     "iree": {
@@ -109,6 +167,93 @@
   },
   "S12_sanitizer_supplement": {
     "choreo": {},
+    "mlir-linalg": {
+      "M2": {
+        "flagged_and_exercised": 0,
+        "total": 54,
+        "flagged": 0,
+        "exercised": 20,
+        "not_instrumented": 0,
+        "rejected_before_run": 34,
+        "misses": {
+          "M2.5/dynamic": {
+            "n": 10,
+            "instrumented_min": 23,
+            "instrumented_max": 44
+          },
+          "M2.5/static": {
+            "n": 10,
+            "instrumented_min": 23,
+            "instrumented_max": 44
+          }
+        },
+        "miss_note": "each of these ran with real ASan coverage (instrumented > 0) and still produced no report: the injected defect corrupts the result WITHOUT any access leaving its allocation, so no memory checker can see it. This residue \u2014 not the flagged count \u2014 is what S12 measures."
+      },
+      "M1": {
+        "flagged_and_exercised": 0,
+        "total": 0,
+        "flagged": 0,
+        "exercised": 0,
+        "not_instrumented": 0,
+        "rejected_before_run": 0,
+        "note": "no expressible mutant on this surface => nothing to sanitize"
+      },
+      "M3": {
+        "flagged_and_exercised": 0,
+        "total": 0,
+        "flagged": 0,
+        "exercised": 0,
+        "not_instrumented": 0,
+        "rejected_before_run": 0,
+        "note": "no expressible mutant on this surface => nothing to sanitize"
+      }
+    },
+    "mlir-low": {
+      "M1": {
+        "flagged_and_exercised": 38,
+        "total": 48,
+        "flagged": 38,
+        "exercised": 48,
+        "not_instrumented": 0,
+        "rejected_before_run": 0,
+        "misses": {
+          "M1.4/dynamic": {
+            "n": 2,
+            "instrumented_min": 7,
+            "instrumented_max": 7
+          },
+          "M1.6/dynamic": {
+            "n": 4,
+            "instrumented_min": 7,
+            "instrumented_max": 13
+          },
+          "M1.6/static": {
+            "n": 4,
+            "instrumented_min": 7,
+            "instrumented_max": 13
+          }
+        },
+        "miss_note": "each of these ran with real ASan coverage (instrumented > 0) and still produced no report: the injected defect corrupts the result WITHOUT any access leaving its allocation, so no memory checker can see it. This residue \u2014 not the flagged count \u2014 is what S12 measures."
+      },
+      "M2": {
+        "flagged_and_exercised": 0,
+        "total": 0,
+        "flagged": 0,
+        "exercised": 0,
+        "not_instrumented": 0,
+        "rejected_before_run": 0,
+        "note": "no expressible mutant on this surface => nothing to sanitize"
+      },
+      "M3": {
+        "flagged_and_exercised": 0,
+        "total": 0,
+        "flagged": 0,
+        "exercised": 0,
+        "not_instrumented": 0,
+        "rejected_before_run": 0,
+        "note": "no expressible mutant on this surface => nothing to sanitize"
+      }
+    },
     "iree": {
       "M2": {
         "flagged_and_exercised": 0,
@@ -130,6 +275,50 @@
     }
   },
   "S8_expressibility": {
+    "mlir-linalg": {
+      "elem": {
+        "yes": 7,
+        "partial": 0,
+        "no": 0
+      },
+      "shape": {
+        "yes": 5,
+        "partial": 0,
+        "no": 2
+      },
+      "loop": {
+        "yes": 0,
+        "partial": 0,
+        "no": 7
+      },
+      "hw": {
+        "yes": 0,
+        "partial": 0,
+        "no": 7
+      }
+    },
+    "mlir-low": {
+      "elem": {
+        "yes": 4,
+        "partial": 0,
+        "no": 0
+      },
+      "shape": {
+        "yes": 0,
+        "partial": 0,
+        "no": 4
+      },
+      "loop": {
+        "yes": 0,
+        "partial": 0,
+        "no": 4
+      },
+      "hw": {
+        "yes": 0,
+        "partial": 0,
+        "no": 4
+      }
+    },
     "iree": {
       "elem": {
         "yes": 0,
@@ -176,6 +365,31 @@
     }
   },
   "S9_remainder": {
+    "mlir-linalg": {
+      "per_category": {
+        "concat": 36,
+        "elemwise_add": 10,
+        "layer_normalization": 48,
+        "matmul": 14,
+        "relu": 6,
+        "softmax": 30,
+        "transpose": 6
+      },
+      "total": 150,
+      "criterion_ref": "RTV-generated cf.assert at loc(kernel); loc(oracle) guards excluded (folding them in inflated S9 by ~17% overall, ~67% on relu)",
+      "note": "never summed with the other MLIR lane's remainder (mutation-specs.md \u00a77): the low lane's kernels are hand-tiled with an explicit boundary guard, so their guard structure is not comparable"
+    },
+    "mlir-low": {
+      "per_category": {
+        "layer_normalization": 42,
+        "relu": 20,
+        "softmax": 26,
+        "transpose": 20
+      },
+      "total": 108,
+      "criterion_ref": "RTV-generated cf.assert at loc(kernel); loc(oracle) guards excluded (folding them in inflated S9 by ~17% overall, ~67% on relu)",
+      "note": "never summed with the other MLIR lane's remainder (mutation-specs.md \u00a77): the low lane's kernels are hand-tiled with an explicit boundary guard, so their guard structure is not comparable"
+    },
     "iree": {
       "per_category": {
         "batch_norm": 11,

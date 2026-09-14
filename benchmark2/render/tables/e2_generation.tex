@@ -1,0 +1,24 @@
+\begin{table}[t]
+\centering\footnotesize
+\caption{E2 generation expressibility by obligation class. \textbf{yes} = the toolchain can state the obligation at a level where it could be discharged; part = only partially (some constructs); no = the surface cannot express the class.}
+\label{tab:e2-generation}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+Pipeline & In-bound & Shape & Iteration & Hardware \\
+\midrule
+\textbf{Choreo ledger} & \textbf{yes} & \textbf{yes} & \textbf{yes} & \textbf{yes} \\
+Triton & part & no & part & part \\
+MLIR-linalg & no & part & no & no \\
+MLIR-low & part & no & no & no \\
+IREE & no & part & no & no \\
+\midrule
+\textit{Measured basis (S8): yes/partial/no constructs} &  &  &  &  \\
+\textit{Choreo ledger} & \textit{9,073 ob.} & \textit{4,477 ob.} & \textit{326 ob.} & \textit{3,477 ob.} \\
+Triton & 15/0/0 & 0/0/15 & 15/0/0 & 0/15/0 \\
+MLIR-linalg & 7/0/0 & 5/0/2 & 0/0/7 & 0/0/7 \\
+MLIR-low & 4/0/0 & 0/0/4 & 0/0/4 & 0/0/4 \\
+IREE & 0/15/0 & 14/0/1 & 0/0/15 & 0/0/15 \\
+\bottomrule
+\end{tabular}
+\vspace{0.4em}\begin{minipage}{0.98\linewidth}\raggedright\footnotesize The second block is the measured basis (\texttt{S8\_expressibility} per lane; \texttt{S3 per\_class} for the ledger). S8 and the classification agree on 11 of 16 cells. Every difference is the classification claiming less than S8 names, because S8 measures whether a class can be NAMED and the caption asks whether it can be DISCHARGED. Full per-cell detail in \texttt{render/PROSE-DRIFT.md}. \end{minipage}
+\end{table}

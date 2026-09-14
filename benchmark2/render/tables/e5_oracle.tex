@@ -1,0 +1,28 @@
+\begin{table}[t]
+\centering\footnotesize
+\caption{E5 reporting paths for a failing residual assessment. The first block is structural; the second records the measured asymmetry and the time to report, which is dominated by process startup rather than by the check.}
+\label{tab:e5-oracle}
+\begin{tabular}{@{}lp{0.6\columnwidth}@{}}
+\toprule
+Quantity & Reporting path \\
+\midrule
+\sys reporting point & An entry assessment can reject the launch before any device execution. \\
+Dynamic-oracle reporting point & Instrumented execution must first reach an observed fault. \\
+Structural distinction & The report originates at launch versus after device execution begins; no latency ratio is reported. \\
+\midrule
+\textbf{Measured asymmetry (S13.E5b)} &  \\
+mutants compared & 16 \\
+\sys decided, oracle blind & 4 of 16 \\
+oracle never reached the fault (launch rejected) & 2 of 16 \\
+oracle died with no report & 0 \\
+run aborted by \sys's own ungated check & 6 of 16 \\
+both detected & 4 of 16 \\
+\midrule
+\textbf{Time to report (median, S13.E5b)} &  \\
+\sys entry check & 0.51\ s (16 arms) \\
+compute-sanitizer, interior & 60.16\ s (4 arms) \\
+paired ratio (confounded) & 84$\times$ over 4 of 16 pairs \\
+\bottomrule
+\end{tabular}
+\vspace{0.4em}\begin{minipage}{0.98\linewidth}\raggedright\footnotesize The first three rows state where a report can originate; the remaining rows are the measured consequence. Source: \texttt{S13\_runtime\_and\_latency.E5b} in \texttt{results/choreo/stats.json}. Absolute times are dominated by a shared process-startup and CUDA-context-init constant of roughly 0.5 s on each arm, so they must not be read as the cost of the check itself. Pair-population caveats: \texttt{render/PROSE-DRIFT.md}.\end{minipage}
+\end{table}

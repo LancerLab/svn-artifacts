@@ -1,0 +1,30 @@
+\begin{table}[t]
+\centering\footnotesize
+\caption{E4 cost of the assessment and residual-check configurations. Compile-time figures are front-end versus \texttt{nvcc}; runtime figures are checks-on versus checks-off and each lies inside its own arm's repeat-to-repeat spread, so they bound the cost rather than resolve it.}
+\label{tab:e4-cost}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Measurement & Result \\
+\midrule
+\textbf{Compile-time cost (S10)} &  \\
+quantity & front-end $-$ \texttt{nvcc} compile $+$ link \\
+median overhead & 0.13\% \\
+categories measured & 15 \\
+categories in bucket & $<$0.5\%: 15 \\
+\textit{reproduces the old RQ4 figure?} & no \\
+\midrule
+\textbf{Residual-check cost, on vs off (S13.E5a)} &  \\
+cases measured & 14 \\
+median $\Delta$ (host wall) & 3.92\% \\
+cases inside their own rep spread & 14 of 14 \\
+negative $\Delta$ (checks-on faster) & 6 of 14 \\
+static-shape cases measured & 0 \\
+\midrule
+\textbf{Corpus (S5)} &  \\
+dynamic-shape cases & 159 \\
+static-shape cases & 151 \\
+all cases & 310 \\
+\bottomrule
+\end{tabular}
+\vspace{0.4em}\begin{minipage}{0.98\linewidth}\raggedright\footnotesize Source: \texttt{S10\_compile\_cost} and \texttt{S13\_runtime\_and\_latency.E5a} in \texttt{results/choreo/stats.json}; corpus from \texttt{S5\_discharge\_rate}. The blocks are not each other's denominator: S10 is a compiler-throughput ratio against \texttt{nvcc}, S13.E5a is a wall-clock delta between a checks-on and a checks-off arm. All 14 deltas are inside their own arm's repeat-to-repeat spread, so the median is a bound, not an estimate. Provenance and the figures this float does not carry: \texttt{render/PROSE-DRIFT.md}.\end{minipage}
+\end{table}

@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering\footnotesize
+\caption{E3 static discharge on the registered 310-case Choreo suite.}
+\label{tab:e3-discharge}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Cases & Generated & Discharged & Rate & Residue \\
+\midrule
+Static shape (151) & 8,156 & 8,156 & 100.0\% & 0 \\
+Dynamic shape (159) & 9,197 & 7,989 & 86.9\% & 1,208 \\
+\midrule
+\textbf{All cases (310)} & \textbf{17,353} & \textbf{16,145} & \textbf{93.0\%} & \textbf{1,208} \\
+\bottomrule
+\end{tabular}
+\vspace{0.4em}\begin{minipage}{0.98\linewidth}\raggedright\footnotesize Source: \texttt{results/choreo/stats.json} \texttt{S5\_discharge\_rate} (static/dynamic/all) and \texttt{S4\_per\_operator.totals}. Residue splits into 675 hoisted entry checks and 533 budgeted device-side checks. The 21 zero-obligation cases contribute nothing to the generated column and are inside the all-cases row.\end{minipage}
+\end{table}
