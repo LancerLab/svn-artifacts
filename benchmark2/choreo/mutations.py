@@ -17,11 +17,14 @@ names source text that actually exists in the kernel it targets, and a skip is a
 real defect in this file rather than an expected mismatch.
 
 Ground rules (specs v2.1 §0, §6, §7):
-  * 5 classes: M1 element-access, M2 shape-compatibility, M3 hardware-constraint,
-    M4 iteration-validity, L launch-status.
+  * 4 classes: M1 element-access, M2 shape-compatibility, M3 hardware/target
+    constraint, M4 iteration-validity.
   * Every spec names a **path class** (§9.6): P1 assessed, P2 hard-error,
-    P3 unchecked, P4 warning-only. L specs are `path_class="L"` — they are
-    attribution-only and never enter an admissible denominator (§4).
+    P3 unchecked, P4 warning-only, L launch-status. "L" is a PATH, not a
+    class: it is attribution-only and never enters an admissible denominator
+    (§4). The launch/target-limit specs that carry it live in M3.17-M3.26 --
+    the former standalone `L` class was FOLDED INTO M3, because a launch-
+    geometry / resource / feature-gating limit IS a target constraint.
   * A transform that does not change the source is a `noop` and is rejected.
   * Counts are reached by enumerating defect *magnitudes* within a spec (e.g.
     K % 16 with residues 2/4/6/8/12), never by inventing defects outside §1-§4.
@@ -78,15 +81,15 @@ BASE_CASES = {
 #
 # M4 and L are v2.1. M4 is generated inside the SAME four kernels as M1-M3
 # because an iteration-space defect is only meaningful in a body that already
-# carries obligations; L rides on conv2d because that is where the block and
-# shared extents are explicit.
+# carries obligations. The target-limit specs (M3.17-M3.26, formerly class L)
+# ride on conv2d because that is where the block and shared extents are
+# explicit -- and conv2d is already in M3's minimal set, so they land at level 1.
 MINIMAL_SET = {
     "M1": ["layer_normalization", "softmax", "relu", "transpose"],
     "M2": ["layer_normalization", "matmul", "concat", "conv2d", "relu",
            "softmax"],
     "M3": ["matmul", "conv2d"],
     "M4": ["conv2d", "relu", "transpose"],
-    "L": ["conv2d"],
 }
 
 # Level-2 widening order (specs §5), applied only after level-1 is green.
@@ -95,7 +98,6 @@ LEVEL2_SET = {
     "M2": ["elemwise_add"],
     "M3": ["batch_norm"],
     "M4": [],
-    "L": [],
 }
 
 
@@ -125,9 +127,9 @@ LEVEL2_SET = {
 #
 # TWO ORTHOGONAL AXES. `status` records whether an operator EXISTS; `admissible`
 # records whether the spec may enter the denominator. They are deliberately not
-# merged: M1.6/M3.6/M4.4/L1/L2/L4 ARE generated (their non-detection is the
-# point) yet stay out of the denominator, so collapsing the two would either
-# lose the controls or inflate the denominator.
+# merged: M1.6/M3.6/M4.4/M3.17/M3.18/M3.20 ARE generated (their non-detection
+# is the point) yet stay out of the denominator, so collapsing the two would
+# either lose the controls or inflate the denominator.
 #
 # status is the honest state of the implementation:
 #   "implemented" the spec has >=1 operator in this file
@@ -391,11 +393,16 @@ SPEC_REGISTRY = {
                        "oracle has regressed"),
     "M4.5": _spec("M4", "P1", "stride/step = 0 in an iteration"),
 
-    # ---- L launch-status (10 specs, specs §4) ---------------------------
-    # Attribution-only: these never enter an admissible denominator. Their value
-    # is that they grow the never-attribution table, showing that a miss is
-    # usually a REJECTED LAUNCH rather than a wrong answer.
-    "L1": _spec("L", "L", "shared-memory tile exceeds the device limit",
+    # ---- M3.17-M3.26 target limits (were class L) ------------------------
+    # FOLDED INTO M3: the standalone `L launch-status` class was merged here,
+    # because a launch-geometry (K3), per-SM-resource (K4) or feature-gating
+    # (K5) limit IS a target hardware/software constraint. The "L" *path* is
+    # retained: these never enter an admissible denominator. Their value is
+    # that they grow the never-attribution table, showing that a miss is
+    # usually a REJECTED LAUNCH rather than a wrong answer. The class axis
+    # stays M1-M4 (there is NO M5): the launch/rejection outcome is reported by
+    # the E5 dynamic-oracle experiment, not as a mutation class.
+    "M3.17": _spec("M3", "L", "shared-memory tile exceeds the device limit",
                 admissible=False, prohibition="observation",
                 status="implemented",
                 note="migrated out of v1 M3 s3 (shared32/64/128, "
@@ -404,47 +411,59 @@ SPEC_REGISTRY = {
                      "realization, and a reclassification would invalidate "
                      "the frozen S1/S2. The memcheck Error1 finding under "
                      "M3.12 argues it should be re-examined in v3"),
-    "L2": _spec("L", "L", "thread-block / cluster extent exceeds the device "
+    "M3.18": _spec("M3", "L", "thread-block / cluster extent exceeds the device "
                           "limit", admissible=False,
                 prohibition="observation", status="implemented",
                 note="hosts v1 M3 s3's per-thread accumulator oversize "
                      "(local8/local16): same observation channel (launch "
                      "rejected), the §4 text names block/cluster extent. "
                      "KEPT VERBATIM for the same reason as L1"),
-    "L3": _spec("L", "L", "__launch_bounds__ understated vs actual block size",
-                admissible=False, prohibition="absent",
-                note="MISSING SURFACE: no case in the suite writes "
-                     "__launch_bounds__"),
-    "L4": _spec("L", "L", "block extent not a multiple of 32 / of 128",
+    "M3.19": _spec("M3", "P2", "__launch_bounds__ understated vs actual block "
+                "size", admissible=False, prohibition="repaired",
+                note="was L3, upgraded absent -> repaired on direct evidence: "
+                     "`choreo -gs -t cute -arch=sm_86` on "
+                     "tests/gpu/codegen/cute/launch_bounds.co reports `error: "
+                     "[[launch_bounds]] maxThreadsPerBlock (8) is less than "
+                     "the computed thread count (64).` The model DERIVES the "
+                     "required extent and refuses any understatement, so there "
+                     "is no test to run (P2). The suite still never writes the "
+                     "attribute, but that is no longer the operative reason"),
+    "M3.20": _spec("M3", "L", "block extent not a multiple of 32 / of 128",
                 admissible=False, prohibition="observation",
                 note="the one L spec with an operator: the block extent is "
                      "source-visible (`parallel p by N`), so this class is "
                      "exercised end to end"),
-    "L5": _spec("L", "P2", "shared tile exceeds per-SM capacity",
+    "M3.21": _spec("M3", "P2", "shared tile exceeds per-SM capacity",
                 admissible=False, prohibition="repaired",
                 note="RECLASSIFIED: the v2.1 L-class membership assumed the "
                      "launch-rejected channel, but the check the compiler "
                      "actually performs is memcheck.hpp:106-123 CheckCtMemUsage "
                      "-> Error1, a hard compile-time refusal (P2). Same "
                      "mechanism as M3.12, one step past the limit"),
-    "L6": _spec("L", "L", "WGMMA used below sm_90", admissible=False,
-                prohibition="absent",
-                note="MISSING SURFACE: no case in the suite emits an explicit "
-                     "WGMMA"),
-    "L7": _spec("L", "L", "shared operand used outside WGMMA", admissible=False,
+    "M3.22": _spec("M3", "P2", "WGMMA used below sm_90", admissible=False,
+                prohibition="repaired",
+                note="was L6, upgraded absent -> repaired on direct evidence: "
+                     "`choreo -gs -t cute -arch=sm_86` on "
+                     "tests/gpu/end2end/wgmma_ss.co reports `error: group-4 "
+                     "level is not supported by the target architecture: "
+                     "sm_86.` (x14); the same file compiles clean under "
+                     "`-arch=sm_90a`. This is the K5 feature-gating discharge: "
+                     "the compiler refuses the feature below sm_90, so there "
+                     "is no test to run (P2)"),
+    "M3.23": _spec("M3", "L", "shared operand used outside WGMMA", admissible=False,
                 prohibition="absent",
                 note="MISSING SURFACE: no WGMMA in the suite, so 'outside "
                      "WGMMA' has no referent"),
-    "L8": _spec("L", "L", "unsupported MMA configuration", admissible=False,
+    "M3.24": _spec("M3", "L", "unsupported MMA configuration", admissible=False,
                 prohibition="absent",
                 note="MISSING SURFACE: no explicit MMA in the suite -- the "
                      "reference k_matmul is a scalar helper, not a tensor-"
                      "core intrinsic"),
-    "L9": _spec("L", "L", "mma.scale operand is not an accumulator",
+    "M3.25": _spec("M3", "L", "mma.scale operand is not an accumulator",
                 admissible=False, prohibition="absent",
                 note="MISSING SURFACE: no mma.scale in the DSL surface the "
                      "suite uses"),
-    "L10": _spec("L", "L", "cluster extent > 8 (non-portable)", admissible=False,
+    "M3.26": _spec("M3", "L", "cluster extent > 8 (non-portable)", admissible=False,
                  prohibition="absent",
                  note="MISSING SURFACE: no case in the suite declares a "
                       "cluster"),
@@ -452,9 +471,10 @@ SPEC_REGISTRY = {
 
 # The v1 spec integers still carried by every operator (specs v1 §1-§3) map 1:1
 # onto v2.1 ids for M1 and M2, and onto a REVISED target for M3:
-#   M3 s1 -> M3.1  (retained verbatim)
-#   M3 s2 -> M3.6  (noop; the vectorized realization is M3.6)
-#   M3 s3 -> L1/L2 (resource-exhaustion, reclassified OUT of M3 -- specs §3.0)
+#   M3 s1 -> M3.1   (retained verbatim)
+#   M3 s2 -> M3.6   (noop; the vectorized realization is M3.6)
+#   M3 s3 -> M3.17/M3.18 (resource-exhaustion on the launch-status path; the
+#                former L1/L2 -- shared -> M3.17, per-thread local -> M3.18)
 # Prefer an explicit `spec_id=` on new operators; this table exists so the v1
 # corpus stays attributable without rewriting 117 call sites.
 V1_SPEC_ID = {
@@ -462,7 +482,7 @@ V1_SPEC_ID = {
     ("M1", 4): "M1.4", ("M1", 5): "M1.5", ("M1", 6): "M1.6",
     ("M2", 1): "M2.1", ("M2", 2): "M2.2", ("M2", 3): "M2.3",
     ("M2", 4): "M2.4", ("M2", 5): "M2.5",
-    ("M3", 1): "M3.1", ("M3", 2): "M3.6", ("M3", 3): "L1",
+    ("M3", 1): "M3.1", ("M3", 2): "M3.6", ("M3", 3): "M3.17",
 }
 
 
@@ -502,10 +522,10 @@ class Mut:
         # the M3 splits); else the identity "cls.spec", which is what every
         # spec added after v2.1 uses.
         sid = (spec_id or V1_SPEC_ID.get((cls, spec)) or "%s.%s" % (cls, spec))
-        # v1 M3 s3 is resource-exhaustion reclassified out of M3 (specs §3.0).
-        # The observation channel splits it: shared -> L1, per-thread -> L2.
-        if sid == "L1" and "local" in mid:
-            sid = "L2"
+        # v1 M3 s3 is resource-exhaustion on the launch-status path. The
+        # observation channel splits it: shared -> M3.17, per-thread -> M3.18.
+        if sid == "M3.17" and "local" in mid:
+            sid = "M3.18"
         self.spec_id = sid
         meta = SPEC_REGISTRY.get(sid) if sid else None
         if meta is None:
@@ -1680,23 +1700,20 @@ M2 += [
         "shared f32 [2, 1, 64, 1] inp_s, out_s;")),
 ]
 
-# ---- L launch status: inadmissible by construction -----------------------
-# One operator for the strongest cell (L4, block extent not a multiple of 32)
-# so the class is exercised end to end; the rest stay `pending` and are listed
-# by the GATE 2 cross-check. `spec_id` must be explicit: the class letter is
-# not the spec-number prefix.
-L = []
-L += [
-    _m("L4.cv1.block3", "L", 4, "hw", "conv2d",
+# ---- M3.17-M3.26 target limits: inadmissible by construction -------------
+# One operator for the strongest cell (M3.20, block extent not a multiple of
+# 32) so the launch-status path is exercised end to end; the rest stay
+# `pending`/`na` and are listed by the GATE 2 cross-check.
+M3 += [
+    _m("M3.20.cv1.block3", "M3", 20, "hw", "conv2d",
        _C1,
-       "block extent not a multiple of 32: a launch-status failure, not an "
+       "block extent not a multiple of 32: a target-limit failure, not an "
        "obligation -- exercises the observation channel and is excluded from "
        "every admissible denominator",
-       ("parallel p by 2  {", "parallel p by 3  {"), spec_id="L4"),
+       ("parallel p by 2  {", "parallel p by 3  {"), spec_id="M3.20"),
 ]
 
 ALL["M4"] = M4
-ALL["L"] = L
 
 
 # ===========================================================================
@@ -1736,8 +1753,8 @@ for _sid, _meta in SPEC_REGISTRY.items():
     # -- axis 2: may the spec enter the admissible denominator? -----------
     # P2 (the compiler repairs the state) and the noop controls are
     # inadmissible *by classification*, whether or not an operator exists --
-    # which is why this cannot be folded into `status`: M1.6/M3.6/M4.4/L1/L2/L4
-    # are generated on purpose.
+    # which is why this cannot be folded into `status`:
+    # M1.6/M3.6/M4.4/M3.17/M3.18/M3.20 are generated on purpose.
     if _meta["path"] == "P2" or _sid in NOOP_BY_CONSTRUCTION:
         _meta["admissible"] = False
 

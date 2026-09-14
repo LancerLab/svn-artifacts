@@ -12,21 +12,18 @@
    "false": 28
   },
   "prohibition_counts": {
-   "absent": 22,
-   "repaired": 3,
+   "absent": 20,
+   "repaired": 5,
    "observation": 3
   },
   "path_counts": {
    "P1": 49,
    "P3": 10,
-   "P2": 3,
+   "P2": 5,
    "P4": 1,
-   "L": 9
+   "L": 7
   },
   "implemented": [
-   "L1",
-   "L2",
-   "L4",
    "M1.1",
    "M1.10",
    "M1.11",
@@ -67,6 +64,9 @@
    "M3.14",
    "M3.15",
    "M3.16",
+   "M3.17",
+   "M3.18",
+   "M3.20",
    "M3.6",
    "M3.9",
    "M4.1",
@@ -122,13 +122,6 @@
   ],
   "pending": [],
   "unwritten": [
-   "L10",
-   "L3",
-   "L5",
-   "L6",
-   "L7",
-   "L8",
-   "L9",
    "M1.15",
    "M1.16",
    "M1.17",
@@ -138,7 +131,14 @@
    "M3.11",
    "M3.12",
    "M3.13",
+   "M3.19",
    "M3.2",
+   "M3.21",
+   "M3.22",
+   "M3.23",
+   "M3.24",
+   "M3.25",
+   "M3.26",
    "M3.3",
    "M3.4",
    "M3.5",
@@ -147,16 +147,6 @@
    "M4.4"
   ],
   "na": [
-   "L1",
-   "L10",
-   "L2",
-   "L3",
-   "L4",
-   "L5",
-   "L6",
-   "L7",
-   "L8",
-   "L9",
    "M1.15",
    "M1.16",
    "M1.17",
@@ -167,7 +157,17 @@
    "M3.11",
    "M3.12",
    "M3.13",
+   "M3.17",
+   "M3.18",
+   "M3.19",
    "M3.2",
+   "M3.20",
+   "M3.21",
+   "M3.22",
+   "M3.23",
+   "M3.24",
+   "M3.25",
+   "M3.26",
    "M3.3",
    "M3.4",
    "M3.5",
@@ -177,18 +177,7 @@
    "M4.4"
   ],
   "na_by_reason": {
-   "observation": [
-    "L1",
-    "L2",
-    "L4"
-   ],
    "absent": [
-    "L10",
-    "L3",
-    "L6",
-    "L7",
-    "L8",
-    "L9",
     "M1.15",
     "M1.16",
     "M1.17",
@@ -198,6 +187,10 @@
     "M3.11",
     "M3.13",
     "M3.2",
+    "M3.23",
+    "M3.24",
+    "M3.25",
+    "M3.26",
     "M3.3",
     "M3.4",
     "M3.5",
@@ -207,120 +200,26 @@
     "M4.4"
    ],
    "repaired": [
-    "L5",
     "M2.12",
-    "M3.12"
+    "M3.12",
+    "M3.19",
+    "M3.21",
+    "M3.22"
+   ],
+   "observation": [
+    "M3.17",
+    "M3.18",
+    "M3.20"
    ]
   },
   "n_operators": {
-   "L": 1,
    "M1": 73,
    "M2": 64,
-   "M3": 51,
+   "M3": 52,
    "M4": 7
   }
  },
  "specs": [
-  {
-   "spec_id": "L1",
-   "cls": "L",
-   "path": "L",
-   "admissible": false,
-   "prohibition": "observation",
-   "status": "implemented",
-   "desc": "shared-memory tile exceeds the device limit",
-   "note": "migrated out of v1 M3 s3 (shared32/64/128, shared512/1024); observed as launch rejected. KEPT VERBATIM: the committed E1 baseline defines this realization, and a reclassification would invalidate the frozen S1/S2. The memcheck Error1 finding under M3.12 argues it should be re-examined in v3"
-  },
-  {
-   "spec_id": "L10",
-   "cls": "L",
-   "path": "L",
-   "admissible": false,
-   "prohibition": "absent",
-   "status": "pending",
-   "desc": "cluster extent > 8 (non-portable)",
-   "note": "MISSING SURFACE: no case in the suite declares a cluster"
-  },
-  {
-   "spec_id": "L2",
-   "cls": "L",
-   "path": "L",
-   "admissible": false,
-   "prohibition": "observation",
-   "status": "implemented",
-   "desc": "thread-block / cluster extent exceeds the device limit",
-   "note": "hosts v1 M3 s3's per-thread accumulator oversize (local8/local16): same observation channel (launch rejected), the \u00a74 text names block/cluster extent. KEPT VERBATIM for the same reason as L1"
-  },
-  {
-   "spec_id": "L3",
-   "cls": "L",
-   "path": "L",
-   "admissible": false,
-   "prohibition": "absent",
-   "status": "pending",
-   "desc": "__launch_bounds__ understated vs actual block size",
-   "note": "MISSING SURFACE: no case in the suite writes __launch_bounds__"
-  },
-  {
-   "spec_id": "L4",
-   "cls": "L",
-   "path": "L",
-   "admissible": false,
-   "prohibition": "observation",
-   "status": "implemented",
-   "desc": "block extent not a multiple of 32 / of 128",
-   "note": "the one L spec with an operator: the block extent is source-visible (`parallel p by N`), so this class is exercised end to end"
-  },
-  {
-   "spec_id": "L5",
-   "cls": "L",
-   "path": "P2",
-   "admissible": false,
-   "prohibition": "repaired",
-   "status": "pending",
-   "desc": "shared tile exceeds per-SM capacity",
-   "note": "RECLASSIFIED: the v2.1 L-class membership assumed the launch-rejected channel, but the check the compiler actually performs is memcheck.hpp:106-123 CheckCtMemUsage -> Error1, a hard compile-time refusal (P2). Same mechanism as M3.12, one step past the limit"
-  },
-  {
-   "spec_id": "L6",
-   "cls": "L",
-   "path": "L",
-   "admissible": false,
-   "prohibition": "absent",
-   "status": "pending",
-   "desc": "WGMMA used below sm_90",
-   "note": "MISSING SURFACE: no case in the suite emits an explicit WGMMA"
-  },
-  {
-   "spec_id": "L7",
-   "cls": "L",
-   "path": "L",
-   "admissible": false,
-   "prohibition": "absent",
-   "status": "pending",
-   "desc": "shared operand used outside WGMMA",
-   "note": "MISSING SURFACE: no WGMMA in the suite, so 'outside WGMMA' has no referent"
-  },
-  {
-   "spec_id": "L8",
-   "cls": "L",
-   "path": "L",
-   "admissible": false,
-   "prohibition": "absent",
-   "status": "pending",
-   "desc": "unsupported MMA configuration",
-   "note": "MISSING SURFACE: no explicit MMA in the suite -- the reference k_matmul is a scalar helper, not a tensor-core intrinsic"
-  },
-  {
-   "spec_id": "L9",
-   "cls": "L",
-   "path": "L",
-   "admissible": false,
-   "prohibition": "absent",
-   "status": "pending",
-   "desc": "mma.scale operand is not an accumulator",
-   "note": "MISSING SURFACE: no mma.scale in the DSL surface the suite uses"
-  },
   {
    "spec_id": "M1.1",
    "cls": "M1",
@@ -812,6 +711,36 @@
    "note": "gpu_adapt.hpp:640 `// TODO: emit runtime assessment` (defect F3)"
   },
   {
+   "spec_id": "M3.17",
+   "cls": "M3",
+   "path": "L",
+   "admissible": false,
+   "prohibition": "observation",
+   "status": "implemented",
+   "desc": "shared-memory tile exceeds the device limit",
+   "note": "migrated out of v1 M3 s3 (shared32/64/128, shared512/1024); observed as launch rejected. KEPT VERBATIM: the committed E1 baseline defines this realization, and a reclassification would invalidate the frozen S1/S2. The memcheck Error1 finding under M3.12 argues it should be re-examined in v3"
+  },
+  {
+   "spec_id": "M3.18",
+   "cls": "M3",
+   "path": "L",
+   "admissible": false,
+   "prohibition": "observation",
+   "status": "implemented",
+   "desc": "thread-block / cluster extent exceeds the device limit",
+   "note": "hosts v1 M3 s3's per-thread accumulator oversize (local8/local16): same observation channel (launch rejected), the \u00a74 text names block/cluster extent. KEPT VERBATIM for the same reason as L1"
+  },
+  {
+   "spec_id": "M3.19",
+   "cls": "M3",
+   "path": "P2",
+   "admissible": false,
+   "prohibition": "repaired",
+   "status": "pending",
+   "desc": "__launch_bounds__ understated vs actual block size",
+   "note": "was L3, upgraded absent -> repaired on direct evidence: `choreo -gs -t cute -arch=sm_86` on tests/gpu/codegen/cute/launch_bounds.co reports `error: [[launch_bounds]] maxThreadsPerBlock (8) is less than the computed thread count (64).` The model DERIVES the required extent and refuses any understatement, so there is no test to run (P2). The suite still never writes the attribute, but that is no longer the operative reason"
+  },
+  {
    "spec_id": "M3.2",
    "cls": "M3",
    "path": "P1",
@@ -820,6 +749,76 @@
    "status": "pending",
    "desc": "descriptor dimension >= 2^24 (family A)",
    "note": "specs \u00a73.3 requires the bound be violated by a STRIDE, not a length (a length would allocate). The source suite has no strided-view surface, and a descriptor extent can only come from `.span_as`, whose ElementCount check (M2.16, defect F6) fires first -- so a naive realization measures M2.16, not M3.2. MISSING SURFACE: a strided view"
+  },
+  {
+   "spec_id": "M3.20",
+   "cls": "M3",
+   "path": "L",
+   "admissible": false,
+   "prohibition": "observation",
+   "status": "implemented",
+   "desc": "block extent not a multiple of 32 / of 128",
+   "note": "the one L spec with an operator: the block extent is source-visible (`parallel p by N`), so this class is exercised end to end"
+  },
+  {
+   "spec_id": "M3.21",
+   "cls": "M3",
+   "path": "P2",
+   "admissible": false,
+   "prohibition": "repaired",
+   "status": "pending",
+   "desc": "shared tile exceeds per-SM capacity",
+   "note": "RECLASSIFIED: the v2.1 L-class membership assumed the launch-rejected channel, but the check the compiler actually performs is memcheck.hpp:106-123 CheckCtMemUsage -> Error1, a hard compile-time refusal (P2). Same mechanism as M3.12, one step past the limit"
+  },
+  {
+   "spec_id": "M3.22",
+   "cls": "M3",
+   "path": "P2",
+   "admissible": false,
+   "prohibition": "repaired",
+   "status": "pending",
+   "desc": "WGMMA used below sm_90",
+   "note": "was L6, upgraded absent -> repaired on direct evidence: `choreo -gs -t cute -arch=sm_86` on tests/gpu/end2end/wgmma_ss.co reports `error: group-4 level is not supported by the target architecture: sm_86.` (x14); the same file compiles clean under `-arch=sm_90a`. This is the K5 feature-gating discharge: the compiler refuses the feature below sm_90, so there is no test to run (P2)"
+  },
+  {
+   "spec_id": "M3.23",
+   "cls": "M3",
+   "path": "L",
+   "admissible": false,
+   "prohibition": "absent",
+   "status": "pending",
+   "desc": "shared operand used outside WGMMA",
+   "note": "MISSING SURFACE: no WGMMA in the suite, so 'outside WGMMA' has no referent"
+  },
+  {
+   "spec_id": "M3.24",
+   "cls": "M3",
+   "path": "L",
+   "admissible": false,
+   "prohibition": "absent",
+   "status": "pending",
+   "desc": "unsupported MMA configuration",
+   "note": "MISSING SURFACE: no explicit MMA in the suite -- the reference k_matmul is a scalar helper, not a tensor-core intrinsic"
+  },
+  {
+   "spec_id": "M3.25",
+   "cls": "M3",
+   "path": "L",
+   "admissible": false,
+   "prohibition": "absent",
+   "status": "pending",
+   "desc": "mma.scale operand is not an accumulator",
+   "note": "MISSING SURFACE: no mma.scale in the DSL surface the suite uses"
+  },
+  {
+   "spec_id": "M3.26",
+   "cls": "M3",
+   "path": "L",
+   "admissible": false,
+   "prohibition": "absent",
+   "status": "pending",
+   "desc": "cluster extent > 8 (non-portable)",
+   "note": "MISSING SURFACE: no case in the suite declares a cluster"
   },
   {
    "spec_id": "M3.3",
