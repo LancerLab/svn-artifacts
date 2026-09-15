@@ -4,7 +4,10 @@
 __co__ auto matmul15(f32 [16, 1024, 1536] lhs, f32 [1536, 6144] rhs) {
   f32 [lhs.span(0), lhs.span(1), rhs.span(1)] output;
   parallel p by 4, q by 4 {
-    with index = {m_tile, n_tile, k_tile} in [128, 768, 1] {
+    // k_tile=1 staged a [1, 8, 1536] l1_a slice = 48 KB per thread (192 KB of
+    // shared per block); k_tile=16 keeps the union of per-thread slices at
+    // 12 KB plus a 3 KB block-common l1_b, within the on-chip budget.
+    with index = {m_tile, n_tile, k_tile} in [128, 768, 16] {
       foreach m_tile, n_tile {
         local f32[output.span(0)/#p/#q, output.span(1)/#m_tile, output.span(2)/#n_tile] l1_out {0.0f};
         foreach k_tile {
