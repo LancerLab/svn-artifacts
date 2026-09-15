@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -18,6 +19,19 @@ ROOT = Path(__file__).resolve().parent.parent       # benchmark2/
 LANE = ROOT / "iree"
 RAW = LANE / "raw"
 RESULTS = ROOT / "results" / "iree"
+
+# The mutation-class axis is NOT restated here. This file used to hold a
+# two-entry fallback, (("M1", "element-access"), ("M3", "hardware-constraint")),
+# which decided on its own which classes the lane had run -- and which therefore
+# never mentioned M4 at all. The effect was that M4 was absent from this lane's
+# detection matrix with nothing saying whether that meant "run and inexpressible"
+# or "never run". schema/class-axis.json is the one definition; the classes, the
+# n/a reasons and the uncompared declaration all come from it.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from schema import class_axis as AX                             # noqa: E402
+
+LANE_NAME = "iree"
 
 CUDA_TARGET = os.environ.get("IREE_CUDA_TARGET", "sm_120")
 
@@ -56,8 +70,11 @@ def cmd_stats():
         s8.setdefault(key, {"yes": 0, "partial": 0, "no": 0})
         s8[key][r["expressible"]] += 1
 
-    # S1 detection matrix (3 classes). M1/M3 have no expressible mutant on the
-    # IREE linalg entry surface, so their spec N=40 mutants are n/a (R4).
+    # S1 detection matrix. Classes the lane RUNS and cannot express are emitted
+    # as n/a with n_na = n_target_per_class (R4) -- a measured verdict about the
+    # surface. Classes the lane was NEVER RUN against get no cell at all and are
+    # declared in S1_declared_uncompared, because a missing cell and an n/a cell
+    # mean different things and a reader must be able to tell them apart.
     s1 = {}
     for r in mutants:
         row = s1.setdefault(r["class"], {
@@ -65,12 +82,33 @@ def cmd_stats():
             "n_never": 0, "n_na": 0})
         row["n_injected"] += 1
         row[f"n_{r['outcome']}"] += 1
-    for cls, why in (("M1", "element-access"), ("M3", "hardware-constraint")):
+    for cls in AX.lane_where(LANE_NAME, "n/a"):
+        why = AX.na_reason(LANE_NAME, cls)
         s1.setdefault(cls, {
             "n_injected": 0, "n_compile": 0, "n_runtime": 0,
-            "n_never": 0, "n_na": 40,
-            "note": f"no expressible {why} mutant on the iree linalg entry "
-                    "surface (§3.3); all spec N=40 mutants => n/a (R4)"})
+            "n_never": 0, "n_na": AX.n_target_per_class(),
+            "note": f"no expressible {cls} mutant on the iree linalg entry "
+                    f"surface; all spec N={AX.n_target_per_class()} mutants "
+                    f"=> n/a (R4). {why}"})
+    uncompared = AX.uncompared_classes(LANE_NAME)
+    for cls in uncompared:
+        # An n/a row must not exist for a class nobody ran; if the corpus ever
+        # starts carrying records for one, that is a change in scope and this
+        # must fail rather than silently report a measurement.
+        if cls in s1:
+            raise AssertionError(
+                f"{LANE_NAME}: {cls} is declared `uncompared` in "
+                f"schema/class-axis.json but mutants.jsonl carries records for "
+                f"it; either the lane ran it (update the axis) or the records "
+                f"are mislabelled")
+    s1_declared_uncompared = {
+        "classes": sorted(uncompared),
+        "reason": AX.uncompared_reason(),
+        "note": ("No cell is emitted for these classes. A missing cell is NOT "
+                 "an n/a cell: `n/a` means this surface was measured and cannot "
+                 "express the defect, while a missing cell means the lane was "
+                 "never run against the class."),
+    } if uncompared else {}
 
     # S12: compute-sanitizer supplement (measured, not "pending")
     s12 = {}
@@ -105,6 +143,13 @@ def cmd_stats():
     stats = {
         "toolchain": "iree",
         "S1_detection": s1,
+        "S1_declared_uncompared": s1_declared_uncompared,
+        "S1_class_axis": {
+            "source": "schema/class-axis.json",
+            "axis_version": AX.axis()["axis_version"],
+            "mutation_classes": AX.mutation_classes(),
+            "status": AX.lane_status(LANE_NAME),
+        },
         "S8_expressibility": {cls: v for cls, v in sorted(s8.items())},
         "S9_remainder": {
             "per_category": {c: v["unconditional_guards"] for c, v in sorted(s9.items())},
@@ -128,13 +173,15 @@ def cmd_stats():
         },
         "note": (f"Correctness only, {CUDA_TARGET}. Kernel gate = structural "
                  "ref-check. E1 S1: measured M2 entry-shape mutants; M1/M3 n/a "
-                 "per §3.3. S12: M2 shape-contract mutants are not memory "
-                 "faults, so compute-sanitizer --tool memcheck is silent by "
-                 "design (plan §3.5)."),
+                 "per the class axis; M4 uncompared (never run, so no cell). "
+                 "S12: M2 shape-contract mutants are not memory faults, so "
+                 "compute-sanitizer --tool memcheck is silent by design "
+                 "(plan §3.5)."),
     }
     (RESULTS / "stats.json").write_text(json.dumps(stats, indent=2) + "\n")
     print(json.dumps(stats["totals"]))
     print(f"[iree/stats] S1 M2: {s1.get('M2')}; S12: {s12}; "
+          f"uncompared: {sorted(uncompared)}; "
           f"full-size failures: {len(full_failures)}")
 
 

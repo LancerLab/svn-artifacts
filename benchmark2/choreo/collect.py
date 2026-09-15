@@ -60,6 +60,14 @@ RAW = os.path.join(HERE, "raw")
 RESULTS = os.path.join(B2, "results", "choreo")
 SCHEMA = os.path.join(B2, "schema", "record-schema.json")
 
+# `schema/records.py` owns the required-field rule. It is NOT local: the rule is
+# "base fields plus the fields the record's RELEASE adds", and this lane writes
+# v2.1 while the SOTA lanes' committed corpora are v1. Re-deriving the rule here
+# is what let this file and three others disagree about what `fields` means.
+if B2 not in sys.path:
+    sys.path.insert(0, B2)
+from schema import records as RS                       # noqa: E402
+
 TOOLCHAIN = "choreo"
 SPEC_VERSION = "v2.1"
 
@@ -139,10 +147,14 @@ def record_id(rec):
 def validate(rtype, rec, spec, errors):
     """Check one record against its spec, appending human-readable errors.
 
+    The required-field list comes from `schema/records.py`, not from
+    `spec["fields"]`: this lane writes v2.1 and the SOTA lanes' committed
+    corpora are v1, so which fields are required depends on the record.
+
     Returns nothing: the caller compares len(errors) before and after to decide
     whether this specific record was rejected.
     """
-    fields = spec["fields"]
+    fields = RS.required_fields(rtype, rec)
     enums = spec.get("enums", {})
     rid = record_id(rec)
 
@@ -153,6 +165,11 @@ def validate(rtype, rec, spec, errors):
         if f in rec and rec[f] is not None and rec[f] not in allowed:
             errors.append(f"{rtype}: field `{f}`={rec[f]!r} not in enum "
                           f"{allowed} (id={rid})")
+    if RS.version_declaration_required(rtype) and \
+            RS.spec_version_of(rec) not in RS.SPEC_VERSIONS:
+        errors.append(f"{rtype}: must declare `spec_version` in "
+                      f"{list(RS.SPEC_VERSIONS)}, got "
+                      f"{rec.get('spec_version')!r} (id={rid})")
     if rtype in DESIGN_GRAIN:
         return
     for f in PROVENANCE:

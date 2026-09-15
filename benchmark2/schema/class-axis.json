@@ -1,0 +1,384 @@
+{
+  "axis_version": "v2.1",
+  "updated": "2026-09-15",
+  "purpose": "The ONE definition of the mutation-class axis. Every consumer (record-schema.json enums, choreo/stats.py, render.py, mlir-shared/lane.py, iree/collect_stats.py, triton/collect.py) derives from this file instead of restating the list. schema/check_class_axis.py fails the build on drift.",
+  "mutation_classes": [
+    "M1",
+    "M2",
+    "M3",
+    "M4"
+  ],
+  "obligation_classes": [
+    "elem",
+    "shape",
+    "loop",
+    "hw"
+  ],
+  "path_classes": [
+    "P1",
+    "P2",
+    "P3",
+    "P4",
+    "L"
+  ],
+  "class_statuses": [
+    "measured",
+    "n/a",
+    "uncompared",
+    "not_ready"
+  ],
+  "status_meaning": {
+    "measured": "the lane ran the class and has cells for it in S1",
+    "n/a": "the lane ran the class and its surface cannot express the defect. This is a MEASURED verdict, and it carries a reason. n_na = n_target_per_class.",
+    "uncompared": "the class is out of scope for this lane, so the lane emits NO cell for it. A missing cell is NOT an n/a cell: `n/a` says the surface was measured and cannot express the defect, while a missing cell says the lane was never run against the class. Conflating them would let a coverage gap read as a capability limit.",
+    "not_ready": "the lane has published no results/ at all"
+  },
+  "n_target_per_class": 40,
+  "canonical_stats_key": {
+    "key": "S1_detection",
+    "note": "The key the MERGED view (render.py -> stats-merged.json) and the paper tables use. Lane-local stats.json files are not yet uniform -- choreo and triton write S1_detection_matrix because their S1 block is nested under `per_class`, mlir-linalg/mlir-low/iree write S1_detection flat -- and render.py normalizes both into this key. The per-lane spelling is recorded in lanes.<lane>.stats_key so the difference is enumerated and checked rather than accidental. New lanes must write this key."
+  },
+  "classes": [
+    {
+      "id": "M1",
+      "obligation": "elem",
+      "name": "element-access",
+      "obligation_type": "ElementAccess",
+      "specs_doc": "specs/mutation-specs-v2.md 1",
+      "measured_by": [
+        "choreo",
+        "triton",
+        "mlir-low"
+      ],
+      "spec_ids": "M1.1-M1.21"
+    },
+    {
+      "id": "M2",
+      "obligation": "shape",
+      "name": "shape-compatibility",
+      "obligation_type": "ShapeCompatibility",
+      "specs_doc": "specs/mutation-specs-v2.md 2",
+      "measured_by": [
+        "choreo",
+        "mlir-linalg",
+        "iree"
+      ],
+      "spec_ids": "M2.1-M2.21"
+    },
+    {
+      "id": "M3",
+      "obligation": "hw",
+      "name": "hardware/target constraint",
+      "obligation_type": "HardwareConstraint",
+      "specs_doc": "specs/mutation-specs-v2.md 3",
+      "measured_by": [
+        "choreo",
+        "triton"
+      ],
+      "spec_ids": "M3.1-M3.26",
+      "note": "Since 2026-09-14 this class ALSO carries the launch-geometry, per-SM-resource and feature-gating limits at M3.17-M3.26. The former standalone `L` class was folded IN here, because a launch/resource/feature limit IS a target constraint. `L` survives only as a path class (attribution-only). See specs/mutation-specs-v2.md 4."
+    },
+    {
+      "id": "M4",
+      "obligation": "loop",
+      "name": "iteration-validity",
+      "obligation_type": "LoopBound",
+      "specs_doc": "specs/mutation-specs-v2.md 9.1",
+      "measured_by": [
+        "choreo"
+      ],
+      "spec_ids": "M4.1-M4.5",
+      "role": "control",
+      "comparison": "host-only",
+      "note": "M4 is the COST-FILTER CONTROL, not a point in the detection ranking. LoopBound is the one obligation family already emitted at ENTRY cost, so it has no alternative explanation for a miss: a missed M4 mutant is a genuine unsoundness, and a caught one calibrates the harness. M4.4 is a deliberate noop control (excluded from the denominator); counting it as admissible means the oracle regressed. Because it is a host-side control it is measured on choreo alone -- every compared SOTA lane is `uncompared`, NOT `n/a`."
+    }
+  ],
+  "not_classes": [
+    {
+      "id": "L",
+      "kind": "path",
+      "meaning": "launch-status PATH class (attribution-only). Never a mutation class and never enters an admissible denominator. Stored in the `path_class` field, whose enum still admits it.",
+      "guard": "No `class` enum may contain \"L\"."
+    },
+    {
+      "id": "M5",
+      "kind": "rejected-proposal",
+      "meaning": "Proposed `decision reuse` (cache/guard/specialization-key corruption). Ruled NOT APPLICABLE in specs/mutation-specs-v2.md 9.5.3 -- there is no reuse mechanism in the pinned build to corrupt. It is not a mutation class and has no operators.",
+      "guard": "If a reviewer asks for M5, point at 9.5.3; do not add a class."
+    }
+  ],
+  "orthogonal_axes": {
+    "paper_category": {
+      "enum": [
+        "dim-mismatch",
+        "oob",
+        "wrong-shape",
+        "stride",
+        "hw"
+      ],
+      "note": "The published bug taxonomy. It is NOT the class axis and is NOT injective against it: M1 maps to {oob, stride, wrong-shape}, M2 to {dim-mismatch, wrong-shape}, M3 to {dim-mismatch, stride, hw}, M4 to {stride}. Grouping a table by paper_category merges M1 and M4. Group by `class` when the class is the question."
+    },
+    "path_class": {
+      "enum": [
+        "P1",
+        "P2",
+        "P3",
+        "P4",
+        "L"
+      ],
+      "note": "Check-path classification (specs/mutation-specs-v2.md 9.6). Orthogonal to the class axis: it says whether a defect is assessed, a hard error, unchecked, warning-only, or a launch-status reject."
+    }
+  },
+  "lanes": {
+    "choreo": {
+      "display": "\\textbf{\\sys}",
+      "status": {
+        "M1": "measured",
+        "M2": "measured",
+        "M3": "measured",
+        "M4": "measured"
+      },
+      "stats_key": "S1_detection_matrix",
+      "stats_paths": [
+        "results/choreo/stats.json"
+      ],
+      "spec_version": {
+        "port": "Regenerate raw/e1_mutant_records.json from the v2.1 manifest (run_e1.py --strict-policy), then collect.py and stats.py.",
+        "corpus": "v2.1",
+        "corpus_paths": [
+          {
+            "path": "choreo/raw/mutant_manifest.json",
+            "kind": "plan",
+            "release": "v2.1",
+            "v21_fields_present": [
+              "path_class",
+              "prohibition",
+              "spec_id",
+              "spec_version"
+            ]
+          },
+          {
+            "path": "choreo/raw/e1_mutant_records.json",
+            "kind": "records",
+            "release": "v1",
+            "v21_fields_present": []
+          },
+          {
+            "path": "results/choreo/mutant.jsonl",
+            "kind": "records",
+            "release": "v1",
+            "v21_fields_present": []
+          }
+        ],
+        "note": "This lane TARGETS v2.1 and does not hold one yet. Three files, three honest states. (1) raw/mutant_manifest.json is the PLAN: it carries spec_id, path_class, prohibition and spec_version on all 170 mutants. It does not carry `applicable` because a plan records the in-process Python attribute `admissible` -- and `admissible` is the per-mutant verdict while `spec_admissible` is the spec's. A plan is not a record. (2) raw/e1_mutant_records.json is the RAW run output (run_e1.py) and is v1. (3) results/choreo/mutant.jsonl is the COLLECTED output and is also v1, because it was collected 2026-09-10, one day before the vocabulary landed. `applicable` is minted by collect.py itself: collect.py:296 reads r.get('admissible', r.get('spec_admissible')) and serializes it under the name `applicable`, precisely so a reader cannot confuse it with the in-process flag. So `applicable` is not a field any corpus is missing -- it is a field only the COLLECTOR can write, and it appears in results/choreo/mutant.jsonl the moment the pipeline is re-run. Until then no lane holds a v2.1 mutant corpus; that is the outstanding port, and it is why the release label alone cannot certify one."
+      },
+      "owns": [
+        "S1",
+        "S2",
+        "S3",
+        "S4",
+        "S5",
+        "S6",
+        "S7",
+        "S10",
+        "S13",
+        "S14"
+      ],
+      "ready": true
+    },
+    "triton": {
+      "display": "Triton",
+      "status": {
+        "M1": "measured",
+        "M2": "n/a",
+        "M3": "measured",
+        "M4": "uncompared"
+      },
+      "stats_key": "S1_detection_matrix",
+      "stats_paths": [
+        "triton/results/stats.json",
+        "results/triton/stats.json"
+      ],
+      "spec_version": {
+        "port": "benchmark2 SOTA spec-v2.1 port -- a spec register plus v2.1 stamping in triton/driver.py, then re-run the lane. Changes no verdict; only what a record can express.",
+        "corpus": "v1",
+        "corpus_paths": [
+          {
+            "path": "triton/raw/mutants.jsonl",
+            "kind": "records",
+            "release": "v1",
+            "v21_fields_present": []
+          }
+        ],
+        "note": "Collected 2026-09-10, one day before the v2.1 path-class vocabulary landed. The records validate at v1 and cannot be read for the path axis. The release label says which fields a record CAN BE READ FOR; it is not a date. A corpus holding spec_id but none of the other four v2.1 fields is therefore the normal shape of this lane, not a half-finished migration."
+      },
+      "owns": [
+        "S1",
+        "S8",
+        "S9",
+        "S12"
+      ],
+      "ready": true
+    },
+    "mlir-linalg": {
+      "display": "MLIR-linalg",
+      "status": {
+        "M1": "n/a",
+        "M2": "measured",
+        "M3": "n/a",
+        "M4": "uncompared"
+      },
+      "stats_key": "S1_detection",
+      "stats_paths": [
+        "results/mlir-linalg/stats.json"
+      ],
+      "spec_version": {
+        "port": "benchmark2 SOTA spec-v2.1 port -- per-lane spec registers plus v2.1 stamping in mlir-shared/mutate.py, then re-run the lane. Changes no verdict; only what a record can express.",
+        "corpus": "v1",
+        "corpus_paths": [
+          {
+            "path": "mlir-linalg/raw/mutants.jsonl",
+            "kind": "records",
+            "release": "v1",
+            "v21_fields_present": [
+              "spec_id"
+            ]
+          }
+        ],
+        "note": "Collected 2026-09-10, one day before the v2.1 path-class vocabulary landed. The records validate at v1 and cannot be read for the path axis. The release label says which fields a record CAN BE READ FOR; it is not a date. A corpus holding spec_id but none of the other four v2.1 fields is therefore the normal shape of this lane, not a half-finished migration. The corpus DOES carry `spec_id` on all 120 records, using the same M2.n register ids as the v2.1 manifest, so the spec-register column is already v2.1 vocab. Only the three path fields are missing. That is why the release is `v1` while one v2.1 field is present: the label states what the corpus can be READ FOR, and the register alone cannot be read for the path axis."
+      },
+      "owns": [
+        "S1",
+        "S8",
+        "S9",
+        "S12"
+      ],
+      "ready": true
+    },
+    "mlir-low": {
+      "display": "MLIR-low",
+      "status": {
+        "M1": "measured",
+        "M2": "n/a",
+        "M3": "n/a",
+        "M4": "uncompared"
+      },
+      "stats_key": "S1_detection",
+      "stats_paths": [
+        "results/mlir-low/stats.json"
+      ],
+      "spec_version": {
+        "port": "benchmark2 SOTA spec-v2.1 port -- per-lane spec registers plus v2.1 stamping in mlir-shared/mutate.py, then re-run the lane. Changes no verdict; only what a record can express.",
+        "corpus": "v1",
+        "corpus_paths": [
+          {
+            "path": "mlir-low/raw/mutants.jsonl",
+            "kind": "records",
+            "release": "v1",
+            "v21_fields_present": [
+              "spec_id"
+            ]
+          }
+        ],
+        "note": "Collected 2026-09-10, one day before the v2.1 path-class vocabulary landed. The records validate at v1 and cannot be read for the path axis. The release label says which fields a record CAN BE READ FOR; it is not a date. A corpus holding spec_id but none of the other four v2.1 fields is therefore the normal shape of this lane, not a half-finished migration. The corpus DOES carry `spec_id` on all 96 records, using the same M1.n register ids as the v2.1 manifest, so the spec-register column is already v2.1 vocab. Only the three path fields are missing. That is why the release is `v1` while one v2.1 field is present: the label states what the corpus can be READ FOR, and the register alone cannot be read for the path axis."
+      },
+      "owns": [
+        "S1",
+        "S8",
+        "S9",
+        "S12"
+      ],
+      "ready": true
+    },
+    "iree": {
+      "display": "IREE",
+      "status": {
+        "M1": "n/a",
+        "M2": "measured",
+        "M3": "n/a",
+        "M4": "uncompared"
+      },
+      "stats_key": "S1_detection",
+      "stats_paths": [
+        "results/iree/stats.json"
+      ],
+      "spec_version": {
+        "port": "benchmark2 SOTA spec-v2.1 port -- per-lane spec registers plus v2.1 stamping in iree/mutant_oracle.py and iree/gen_kernels.py, then re-run the lane. Changes no verdict; only what a record can express.",
+        "corpus": "v1",
+        "corpus_paths": [
+          {
+            "path": "iree/raw/mutants.jsonl",
+            "kind": "records",
+            "release": "v1",
+            "v21_fields_present": []
+          }
+        ],
+        "note": "Collected 2026-09-10, one day before the v2.1 path-class vocabulary landed. No record carries any of spec_id, path_class, prohibition, applicable or spec_version, so the corpus validates at v1 and cannot be read for the path axis. The lane also omitted the v1 field `stage`; that was a missing writer line, not a missing measurement. `stage` is a total projection of `outcome` (schema/records.py STAGE_FOR_OUTCOME, 245/245 agreement measured across three lanes), so it was repaired exactly and this lane is now fully v1-conformant."
+      },
+      "owns": [
+        "S1",
+        "S8",
+        "S9",
+        "S12"
+      ],
+      "ready": true
+    },
+    "tilelang": {
+      "display": "TileLang",
+      "status": {
+        "M1": "not_ready",
+        "M2": "not_ready",
+        "M3": "not_ready",
+        "M4": "not_ready"
+      },
+      "stats_key": null,
+      "stats_paths": [
+        "results/tilelang/stats.json"
+      ],
+      "spec_version": {
+        "port": "TileLang is not_ready, so it is not covered by the v2.1 port: a corpus has to exist before a release can mean anything.",
+        "corpus": "v1",
+        "corpus_paths": [
+          {
+            "path": "tilelang/raw/mutants.jsonl",
+            "kind": "records",
+            "release": "v1",
+            "v21_fields_present": []
+          }
+        ],
+        "note": "This lane is `not_ready`: 2 records and no verdict. What it has declares v1, like the other SOTA lanes, but the lane is out of scope for the S1 comparison until it has a corpus of its own."
+      },
+      "owns": [
+        "S1",
+        "S8",
+        "S9",
+        "S12"
+      ],
+      "ready": false
+    }
+  },
+  "na_reasons": {
+    "triton": {
+      "M2": "no cross-tensor shape contract on the Triton surface: extents are the programmer's problem, so a rank/extent disagreement is not expressible (mutation-specs-v2.md 5)"
+    },
+    "mlir-linalg": {
+      "M1": "no element-access defect is expressible on the tensor/linalg entry surface: there are no addressable memory locations before lowering (mutation-specs-v2.md 5)",
+      "M3": "hardware-constraint defects need a device target; this lane is a CPU JIT with no hardware contract to violate (mutation-specs-v2.md 5, measured)"
+    },
+    "mlir-low": {
+      "M2": "no cross-tensor shape contract exists on the memref/affine surface: shapes are already concrete buffer descriptors, so a rank/extent disagreement is not expressible (mutation-specs-v2.md 5)",
+      "M3": "hardware-constraint defects need a device target; this lane is a CPU JIT with no hardware contract to violate (mutation-specs-v2.md 5, measured)"
+    },
+    "iree": {
+      "M1": "no interior access at the IREE entry surface: a mutant has no expressible form because the shape is the only thing the entry check can see (mutation-specs-v2.md 5)",
+      "M3": "no mma/tma/alignment construct on the IREE entry surface (mutation-specs-v2.md 5)"
+    }
+  },
+  "uncompared_key": {
+    "key": "S1_declared_uncompared",
+    "shape": "{classes: [<class id>...], reason: <str>, note: <str>}",
+    "note": "Every lane writes this key alongside its S1 block, listing the classes it was never run against, so a class missing from S1 is a STATED scope decision rather than a missing loop iteration. An empty object means the lane has no uncompared class. schema/check_class_axis.py asserts classes[] equals the axis's uncompared set for that lane."
+  },
+  "uncompared_reason": "LoopBound control class: measured on choreo alone, because it exists to test whether the `never` residue is explained by the -rtc cost filter rather than to rank one toolchain against another. No compared toolchain has been run against M4, so this lane emits NO cell for it -- a missing cell is not an `n/a` cell (`n/a` is a measured verdict). See schema/class-axis.json `status_meaning` and render.py.",
+  "NON_ADDITIVE_v1_1": "v1.1 frozen records with class == \"L\" must be remapped to \"M3\" (M3.17-M3.26). The committed E1 baseline (results/choreo/mutant.jsonl, 120 records) is M1/M2/M3 only and needs no remap."
+}

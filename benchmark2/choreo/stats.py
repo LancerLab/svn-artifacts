@@ -108,16 +108,36 @@ NEEDS = {
 
 # plan §6 outcome taxonomy. `never` is the one that matters: S2 asserts it is 0.
 OUTCOMES = ("compile", "runtime", "never", "n/a")
-# Every mutation class that carries a detection DENOMINATOR. M4 (LoopBound) is a
-# real class with admissible specs, but no compared toolchain is scored on it:
-# the SOTA surfaces that could hold a loop-bound defect have static shapes and
-# therefore cannot express a bound that is zero only at runtime. It is listed
-# here so the matrix carries its row, and named in CONTROL_CLASSES so the §5.2
-# headline rate can exclude it EXPLICITLY -- an empty per_class key would have
-# dropped the row silently, which is the failure mode S14 exists to prevent.
-CLASSES = ("M1", "M2", "M3", "M4")
-CONTROL_CLASSES = ("M4",)
-OBL_CLASSES = ("elem", "shape", "loop", "hw")
+
+# ---------------------------------------------------------------------------
+# The class axis is NOT restated here.
+# ---------------------------------------------------------------------------
+# schema/class-axis.json is the one definition. These four names were literals
+# until 2026-09-15, and that is exactly how the axis drifted: the SOTA lanes
+# kept a 3-class tuple from the pre-revision spec and M4 went missing from their
+# detection matrices without anyone noticing, because a missing class and an
+# `n/a` class render identically but mean different things. Import the axis
+# instead of typing it, and schema/check_class_axis.py fails the build on drift.
+if B2 not in sys.path:
+    sys.path.insert(0, B2)
+from schema import class_axis as AX                          # noqa: E402
+
+# Every mutation class that carries a detection DENOMINATOR.
+#
+# M4 (LoopBound) is a real class with 40 admissible specs, but it is the
+# COST-FILTER CONTROL: it is measured on choreo alone, and every compared SOTA
+# lane is `uncompared` on it -- not `n/a` (see AX.status_meaning). The
+# distinction is load-bearing. `n/a` would say those surfaces were run and
+# cannot express the defect, which is a claim about tilelang/triton/MLIR/IREE
+# that nobody has measured.
+#
+# It stays in CLASSES so the S1 matrix carries its row, and is named in
+# CONTROL_CLASSES so the §5.2 headline rate excludes it EXPLICITLY -- an empty
+# per_class key would drop the row silently, which is the failure mode S14
+# exists to prevent.
+CLASSES = tuple(AX.mutation_classes())
+CONTROL_CLASSES = tuple(AX.control_classes())
+OBL_CLASSES = tuple(AX.obligation_classes())
 OBL_OUTCOMES = ("proven", "refuted", "runtime", "budgeted")
 MECHANISMS = ("canonical", "interval", "direct")
 
@@ -1763,7 +1783,12 @@ def s13(residue, latency, present):
 # S1/S2 SEMANTICS ARE UNTOUCHED. specs §7 reserves any change to the detection
 # denominator for v3 with owner sign-off; this block is additive so the frozen
 # E1 baseline stays byte-comparable.
-PATH_CLASSES = ("P1", "P2", "P3", "P4", "L")
+#
+# `L` is a PATH, not a class: it appears here and in no `class` enum. The 2026-09-14
+# revision moved the launch-status operators OUT of the class axis and into M3
+# (M3.17-M3.26) while keeping their P2 attribution, so a record's `class` is M3
+# and its `path_class` may be L. From the axis, not restated -- see AX.path_classes().
+PATH_CLASSES = tuple(AX.path_classes())
 PROHIBITIONS = ("absent", "derived", "repaired", "harness-owned", "observation")
 RTC_LEVELS = ("entry", "low", "medium", "high")
 
@@ -1890,18 +1915,19 @@ def s14_path_class(mutants, specs, obligations, present):
         srow["path_class"] = pc
         srow["prohibition"] = prob
         srow["n_cells"] += 1
-        # Cells whose class is not a detection class (e.g. L, LaunchStatus:
-        # admissible=false, prohibition=observation) are excluded from S1/S2 by
+        # Cells whose class is not a detection class are excluded from S1/S2 by
         # design, but S14 counts every cell. They are tallied and SKIPPED, so
         # the buckets below partition exactly the cells S1/S2 count and the
         # reconciliation compares like-for-like instead of reporting a mismatch
         # that is really a definition.
         #
         # The test uses the MUTANT's own class, not the registry's: S1/S2 group
-        # by `m["class"]`, and a handful of M3 mutants carry a registry
-        # spec_id (L1/L2) whose spec class is "L". Testing the registry's class
-        # would move those rows out of the compared set on one side only and
-        # re-introduce the mismatch from the other direction.
+        # by `m["class"]`. Since the 2026-09-14 fold there is no such thing as a
+        # non-detection CLASS -- the launch-status specs are M3.17-M3.26 and
+        # their records carry class "M3" with path_class "L" -- so this branch is
+        # now reachable only by a record from a pre-fold v1.1 corpus, which
+        # class-axis.json's NON_ADDITIVE_v1_1 block remaps to M3 on load. It is
+        # kept as the assertion that the remap happened.
         if m.get("class") not in CLASSES:
             per_path[pc]["n_cells_non_detection"] += 1
             srow["n_cells_non_detection"] += 1

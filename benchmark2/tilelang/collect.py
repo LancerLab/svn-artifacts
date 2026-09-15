@@ -12,6 +12,10 @@ RAW = HERE / "raw"
 RES = HERE / "results"
 B2 = HERE.parent
 
+if str(B2) not in sys.path:
+    sys.path.insert(0, str(B2))
+from schema import records as RS                       # noqa: E402
+
 
 def load_jsonl(p: Path):
     if not p.exists():
@@ -20,18 +24,13 @@ def load_jsonl(p: Path):
 
 
 def validate(rec: dict, kind: str) -> list[str]:
-    schema = json.loads((B2 / "schema" / "record-schema.json").read_text())
-    spec = schema["records"].get(kind)
-    if not spec:
-        return [f"unknown record kind {kind}"]
-    errs = []
-    for f in spec["fields"]:
-        if f not in rec:
-            errs.append(f"missing field {f}")
-    for f, allowed in spec.get("enums", {}).items():
-        if f in rec and str(rec[f]) not in allowed:
-            errs.append(f"{f}={rec[f]} not in {allowed}")
-    return errs
+    """Delegates to schema/records.py -- the ONE record validator.
+
+    This file used to carry its own copy. See that module's docstring for why a
+    local copy of the required-field rule cannot be right: the rule depends on
+    the record's release.
+    """
+    return RS.validate(rec, kind)
 
 
 def main():

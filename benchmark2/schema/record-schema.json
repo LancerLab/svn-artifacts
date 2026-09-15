@@ -1,91 +1,339 @@
 {
-  "$comment": "benchmark2 raw-record schema (one JSON object per observation line). Pinned 2026-09-08 (Phase 0). Every record carries settings_hash + kernel_hash + toolchain version from manifest.md. v1.1 (2026-09-11) is ADDITIVE: new mutant fields/enums and the new `spec` record type for the v2.1 path-class vocabulary. No existing field changed meaning, so v1.0 records stay valid (schema/PATCH-v2.1.md). CHANGED 2026-09-14: the standalone `L` mutation class is FOLDED INTO `M3` (launch/target limits M3.17-M3.26); the mutant/spec `class` enum now drops `L`. NON-ADDITIVE: any v1.1 record whose class is `L` must be remapped to `M3`. `path_class` still admits `L` (it is a PATH, not a class).",
-  "version": "1.1",
+  "$comment": "benchmark2 raw-record schema (one JSON object per observation line). Pinned 2026-09-08 (Phase 0). Every record carries settings_hash + kernel_hash + toolchain version from manifest.md. v1.1 (2026-09-11) adds the v2.1 path-class vocabulary and the `spec` record type. That patch IS additive, and this file now says so in a way validate() can honour: required fields are split into `fields` (required of every record) and `fields_since` (required only of records whose `spec_version` names that release). Before 2026-09-15 the v2.1 fields sat in `fields` too, which made every pre-v2.1 record INVALID -- contradicting schema/PATCH-v2.1.md. CHANGED 2026-09-14: the standalone `L` mutation class is FOLDED INTO `M3` (launch/target limits M3.17-M3.26); the mutant/spec `class` enum drops `L`. NON-ADDITIVE: any v1.1 record whose class is `L` must be remapped to `M3`. `path_class` still admits `L` (it is a PATH, not a class). See schema/class-axis.json.",
+  "version": "1.2",
   "records": {
     "kernel": {
-      "fields": ["toolchain", "category", "settings_hash", "kernel_hash", "size", "gpu_device", "exclusive", "compile", "run", "ref_check"],
+      "fields": [
+        "toolchain",
+        "category",
+        "settings_hash",
+        "kernel_hash",
+        "size",
+        "gpu_device",
+        "exclusive",
+        "compile",
+        "run",
+        "ref_check"
+      ],
       "enums": {
-        "size": ["small", "full"],
-        "exclusive": ["true", "false"],
-        "compile": ["ok", "fail", "detected"],
-        "run": ["ok", "crash"],
-        "ref_check": ["pass", "fail"]
+        "size": [
+          "small",
+          "full"
+        ],
+        "exclusive": [
+          "true",
+          "false"
+        ],
+        "compile": [
+          "ok",
+          "fail",
+          "detected"
+        ],
+        "run": [
+          "ok",
+          "crash"
+        ],
+        "ref_check": [
+          "pass",
+          "fail"
+        ]
       },
-      "produced_by": ["minimal", "e2"]
+      "produced_by": [
+        "minimal",
+        "e2"
+      ]
     },
     "mutant": {
-      "fields": ["toolchain", "category", "class", "paper_category", "mutant_id", "level", "outcome", "stage", "manifest", "spec_id", "path_class", "prohibition", "applicable", "spec_version"],
+      "fields": [
+        "toolchain",
+        "category",
+        "class",
+        "paper_category",
+        "mutant_id",
+        "level",
+        "outcome",
+        "stage",
+        "manifest"
+      ],
       "enums": {
-        "class": ["M1", "M2", "M3", "M4"],
-        "paper_category": ["dim-mismatch", "oob", "wrong-shape", "stride", "hw"],
-        "level": ["1", "2"],
-        "outcome": ["compile", "runtime", "never", "n/a"],
-        "stage": ["compile", "runtime", "none"],
-        "manifest": ["corrupts", "noop"],
-        "path_class": ["P1", "P2", "P3", "P4", "L"],
-        "prohibition": ["", "absent", "derived", "repaired", "harness-owned", "observation"],
-        "applicable": ["true", "false"],
-        "spec_version": ["v2.1"]
+        "class": [
+          "M1",
+          "M2",
+          "M3",
+          "M4"
+        ],
+        "paper_category": [
+          "dim-mismatch",
+          "oob",
+          "wrong-shape",
+          "stride",
+          "hw"
+        ],
+        "level": [
+          "1",
+          "2"
+        ],
+        "outcome": [
+          "compile",
+          "runtime",
+          "never",
+          "n/a"
+        ],
+        "stage": [
+          "compile",
+          "runtime",
+          "none"
+        ],
+        "manifest": [
+          "corrupts",
+          "noop"
+        ],
+        "path_class": [
+          "P1",
+          "P2",
+          "P3",
+          "P4",
+          "L"
+        ],
+        "prohibition": [
+          "",
+          "absent",
+          "derived",
+          "repaired",
+          "harness-owned",
+          "observation"
+        ],
+        "applicable": [
+          "true",
+          "false"
+        ],
+        "spec_version": [
+          "v1",
+          "v2.1"
+        ]
       },
-      "produced_by": ["minimal", "minimal --level2"]
+      "produced_by": [
+        "minimal",
+        "minimal --level2"
+      ],
+      "fields_since": {
+        "v2.1": [
+          "spec_id",
+          "path_class",
+          "prohibition",
+          "applicable",
+          "spec_version"
+        ]
+      }
     },
     "spec": {
-      "$comment": "One line per SPEC_REGISTRY entry, incl. specs with no mutants. exists so an N/A verdict is auditable without a mutant to hang it on (schema/PATCH-v2.1.md).",
-      "fields": ["spec_id", "class", "path_class", "applicable", "prohibition", "status", "desc", "note", "spec_version"],
+      "$comment": "One line per SPEC_REGISTRY entry, incl. specs with no mutants. exists so an N/A verdict is auditable without a mutant to hang it on (schema/PATCH-v2.1.md). Spec records exist only under v2.1, so `spec_version` is required of them -- see records.require_version_declaration.",
+      "fields": [
+        "spec_id",
+        "class",
+        "path_class",
+        "applicable",
+        "prohibition",
+        "status",
+        "desc",
+        "note",
+        "spec_version"
+      ],
       "enums": {
-        "class": ["M1", "M2", "M3", "M4"],
-        "path_class": ["P1", "P2", "P3", "P4", "L"],
-        "applicable": ["true", "false"],
-        "prohibition": ["", "absent", "derived", "repaired", "harness-owned", "observation"],
-        "status": ["implemented", "pending"],
-        "spec_version": ["v2.1"]
+        "class": [
+          "M1",
+          "M2",
+          "M3",
+          "M4"
+        ],
+        "path_class": [
+          "P1",
+          "P2",
+          "P3",
+          "P4",
+          "L"
+        ],
+        "applicable": [
+          "true",
+          "false"
+        ],
+        "prohibition": [
+          "",
+          "absent",
+          "derived",
+          "repaired",
+          "harness-owned",
+          "observation"
+        ],
+        "status": [
+          "implemented",
+          "pending"
+        ],
+        "spec_version": [
+          "v2.1"
+        ]
       },
-      "produced_by": ["screen"]
+      "produced_by": [
+        "screen"
+      ]
     },
     "sanitizer": {
-      "fields": ["toolchain", "category", "class", "mutant_id", "flagged", "fault", "exercised"],
+      "fields": [
+        "toolchain",
+        "category",
+        "class",
+        "mutant_id",
+        "flagged",
+        "fault",
+        "exercised"
+      ],
       "enums": {
-        "flagged": ["true", "false"],
-        "fault": ["oob", "uninit", "misaligned", "none"],
-        "exercised": ["true", "false"]
+        "flagged": [
+          "true",
+          "false"
+        ],
+        "fault": [
+          "oob",
+          "uninit",
+          "misaligned",
+          "none"
+        ],
+        "exercised": [
+          "true",
+          "false"
+        ]
       },
-      "produced_by": ["minimal (SOTA targets only, --tool memcheck)"]
+      "produced_by": [
+        "minimal (SOTA targets only, --tool memcheck)"
+      ]
     },
     "obligation": {
-      "fields": ["toolchain", "category", "kernel_id", "obligation_id", "class", "outcome", "mechanism"],
+      "fields": [
+        "toolchain",
+        "category",
+        "kernel_id",
+        "obligation_id",
+        "class",
+        "outcome",
+        "mechanism"
+      ],
       "enums": {
-        "class": ["elem", "shape", "loop", "hw"],
-        "outcome": ["proven", "refuted", "runtime", "budgeted"],
-        "mechanism": ["canonical", "interval", "direct"]
+        "class": [
+          "elem",
+          "shape",
+          "loop",
+          "hw"
+        ],
+        "outcome": [
+          "proven",
+          "refuted",
+          "runtime",
+          "budgeted"
+        ],
+        "mechanism": [
+          "canonical",
+          "interval",
+          "direct"
+        ]
       },
-      "produced_by": ["e2", "e3 (choreo)"]
+      "produced_by": [
+        "e2",
+        "e3 (choreo)"
+      ]
     },
     "expressibility": {
-      "fields": ["toolchain", "category", "class", "expressible"],
-      "enums": { "expressible": ["yes", "no", "partial"] },
-      "produced_by": ["e2 (SOTA)"]
+      "fields": [
+        "toolchain",
+        "category",
+        "class",
+        "expressible"
+      ],
+      "enums": {
+        "expressible": [
+          "yes",
+          "no",
+          "partial"
+        ]
+      },
+      "produced_by": [
+        "e2 (SOTA)"
+      ]
     },
     "remainder": {
-      "fields": ["toolchain", "category", "unconditional_guards", "criterion_ref"],
-      "produced_by": ["e3 (SOTA)"]
+      "fields": [
+        "toolchain",
+        "category",
+        "unconditional_guards",
+        "criterion_ref"
+      ],
+      "produced_by": [
+        "e3 (SOTA)"
+      ]
     },
     "cost": {
-      "fields": ["toolchain", "category", "compile_overhead_pct", "bucket"],
-      "produced_by": ["e4 (choreo)"]
+      "fields": [
+        "toolchain",
+        "category",
+        "compile_overhead_pct",
+        "bucket"
+      ],
+      "produced_by": [
+        "e4 (choreo)"
+      ]
     },
     "residue": {
-      "fields": ["toolchain", "category", "checks", "runtime_ms", "gpu_device", "exclusive"],
-      "enums": { "checks": ["on", "off"], "exclusive": ["true", "false"] },
-      "produced_by": ["e5 (E5a, choreo)"]
+      "fields": [
+        "toolchain",
+        "category",
+        "checks",
+        "runtime_ms",
+        "gpu_device",
+        "exclusive"
+      ],
+      "enums": {
+        "checks": [
+          "on",
+          "off"
+        ],
+        "exclusive": [
+          "true",
+          "false"
+        ]
+      },
+      "produced_by": [
+        "e5 (E5a, choreo)"
+      ]
     },
     "latency": {
-      "fields": ["detector", "category", "mutant_id", "check_loc", "time_to_report_us", "gpu_device", "exclusive"],
+      "fields": [
+        "detector",
+        "category",
+        "mutant_id",
+        "check_loc",
+        "time_to_report_us",
+        "gpu_device",
+        "exclusive"
+      ],
       "enums": {
-        "detector": ["choreo-entry", "compute-sanitizer"],
-        "check_loc": ["entry", "interior"],
-        "exclusive": ["true", "false"]
+        "detector": [
+          "choreo-entry",
+          "compute-sanitizer"
+        ],
+        "check_loc": [
+          "entry",
+          "interior"
+        ],
+        "exclusive": [
+          "true",
+          "false"
+        ]
       },
-      "produced_by": ["e5 (E5b, choreo)"]
-    }
+      "produced_by": [
+        "e5 (E5b, choreo)"
+      ]
+    },
+    "require_version_declaration": [
+      "spec"
+    ]
   }
 }

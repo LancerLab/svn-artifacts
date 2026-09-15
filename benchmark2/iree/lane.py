@@ -21,11 +21,20 @@ import math
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent            # benchmark2/
 LANE = ROOT / "iree"
 RAW = LANE / "raw"
+
+# `stage` is a required field of a mutant record and this lane never wrote it.
+# It is a projection of `outcome` (schema/records.py STAGE_FOR_OUTCOME), so the
+# value was always available and the omission leaves the lane's S1 rows
+# unreadable per stage. The rule is imported rather than restated here.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from schema import records as RS                       # noqa: E402
 KERNELS = LANE / "kernels"
 IREE_BIN = Path(os.environ.get(
     "IREE_BIN_DIR", "/home/gxf/.tools/iree-dev-20260908-venv/bin"))
@@ -505,7 +514,8 @@ def cmd_minimal(level2: bool = False):
                     "kernel": base["kernel"],
                     "class": "M2", "paper_category": "dim-mismatch",
                     "mutant_id": mid, "level": ("2" if cat in LEVEL2_SPECS else "1"),
-                    "outcome": outcome, "manifest": manifest,
+                    "outcome": outcome, "stage": RS.stage_for(outcome),
+                    "manifest": manifest,
                     "kernel_hash": meta.get("kernel_hash", ""),
                 }
                 recs.append(rec)

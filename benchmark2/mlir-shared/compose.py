@@ -191,7 +191,7 @@ class Mutation:
       two variants produce two records and two measurements.
     """
 
-    klass: str  # "M1" | "M2" | "M3"
+    klass: str  # an id from schema/class-axis.json `classes[]` (M1..M4)
     spec: int
     name: str
     paper_category: str  # dim-mismatch | oob | wrong-shape | stride

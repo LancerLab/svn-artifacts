@@ -34,7 +34,7 @@
       "n_runtime": 0,
       "n_never": 0,
       "n_na": 40,
-      "note": "no expressible M2 mutant on this surface; all spec N=40 mutants => n/a. no cross-tensor shape contract exists on the memref/affine surface: shapes are already concrete buffer descriptors, so a rank/extent disagreement is not expressible (mutation-specs.md \u00a74)"
+      "note": "no expressible M2 mutant on this surface; all spec N=40 mutants => n/a. no cross-tensor shape contract exists on the memref/affine surface: shapes are already concrete buffer descriptors, so a rank/extent disagreement is not expressible (mutation-specs-v2.md 5)"
     },
     "M3": {
       "n_injected": 0,
@@ -42,8 +42,32 @@
       "n_runtime": 0,
       "n_never": 0,
       "n_na": 40,
-      "note": "no expressible M3 mutant on this surface; all spec N=40 mutants => n/a. hardware-constraint defects need a device target; this lane is a CPU JIT with no hardware contract to violate (mutation-specs.md \u00a74.1, measured)"
+      "note": "no expressible M3 mutant on this surface; all spec N=40 mutants => n/a. hardware-constraint defects need a device target; this lane is a CPU JIT with no hardware contract to violate (mutation-specs-v2.md 5, measured)"
     }
+  },
+  "S1_declared_uncompared": {
+    "classes": [
+      "M4"
+    ],
+    "reason": "LoopBound control class: measured on choreo alone, because it exists to test whether the `never` residue is explained by the -rtc cost filter rather than to rank one toolchain against another. No compared toolchain has been run against M4, so this lane emits NO cell for it -- a missing cell is not an `n/a` cell (`n/a` is a measured verdict). See schema/class-axis.json `status_meaning` and render.py.",
+    "note": "No cell is emitted for these classes. A missing cell is NOT an n/a cell: `n/a` means this surface was measured and cannot express the defect, while a missing cell means the lane was never run against the class."
+  },
+  "S1_class_axis": {
+    "source": "schema/class-axis.json",
+    "axis_version": "v2.1",
+    "mutation_classes": [
+      "M1",
+      "M2",
+      "M3",
+      "M4"
+    ],
+    "status": {
+      "M1": "measured",
+      "M2": "n/a",
+      "M3": "n/a",
+      "M4": "uncompared"
+    },
+    "note": "The per-class status this lane claims. `measured` classes have real cells in S1_detection; `n/a` classes have cells with n_na = N_TARGET_PER_CLASS; `uncompared` classes have NO cell and are listed in S1_declared_uncompared. A reader must be able to tell an unmeasured gap from a measured capability limit."
   },
   "S8_expressibility": {
     "elem": {

@@ -91,6 +91,38 @@ import mlirbench as B
 import mutate as M
 
 # --------------------------------------------------------------------------
+# The mutation-class axis is NOT restated here.
+# --------------------------------------------------------------------------
+# This file used to iterate a literal ("M1", "M2", "M3") in three places, left
+# over from the pre-revision spec. The effect was that M4 was absent from these
+# lanes' detection matrices WITHOUT ANYTHING SAYING SO -- and an absent class is
+# not the same claim as an `n/a` class. `n/a` means the lane was run and its
+# surface cannot express the defect; absence may mean exactly that, or it may
+# mean nobody looked. schema/class-axis.json is the one definition of which it
+# is, `AX.lane_status("mlir-linalg")` gives this lane's verdict per class, and
+# schema/check_class_axis.py fails the build if this module drifts from it.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from schema import class_axis as AX                             # noqa: E402
+
+# Helpers that resolve this file's SHARED surface table against the axis, so
+# the two surfaces (`linalg` -> lane `mlir-linalg`, `low` -> lane `mlir-low`)
+# cannot disagree with the axis about which class is n/a and which is
+# uncompared.
+MUTATION_CLASSES = AX.mutation_classes()
+
+
+def _na_classes(lane: str) -> tuple[str, ...]:
+    """Classes this lane RAN and cannot express. Each gets an n/a row."""
+    return tuple(AX.lane_where(lane, "n/a"))
+
+
+def _uncompared_classes(lane: str) -> tuple[str, ...]:
+    """Classes this lane was never run against. Each gets NO row, and is
+    declared in `S1_declared_uncompared` instead."""
+    return tuple(AX.lane_where(lane, "uncompared"))
+
+# --------------------------------------------------------------------------
 # Surface table — the ONLY place the two lanes differ
 # --------------------------------------------------------------------------
 
@@ -102,6 +134,7 @@ SURFACES = {
     "linalg": {
         "toolchain": "mlir-linalg",
         "surface": "linalg",
+        "lane": "mlir-linalg",
         "emitter": E.emit_kernel,
         "categories": ["matmul", "relu", "softmax", "transpose", "concat",
                        "layer_normalization", "elemwise_add"],
@@ -123,22 +156,21 @@ SURFACES = {
         "specs": C.M2_SPECS,
         "spec_ids": C.M2_SPEC_IDS,
         "level_of": C.LEVEL_OF,
-        # What this surface cannot express at all, and why. Each entry becomes an
-        # S1 row with n_na = N_TARGET_PER_CLASS rather than a fabricated 0 —
-        # homework-check I2: "a class the surface cannot express must be counted
-        # as n/a, not 0".
-        "na_classes": {
-            "M1": ("no element-access defect is expressible on the tensor/linalg "
-                   "entry surface: there are no addressable memory locations "
-                   "before lowering (mutation-specs.md §4)"),
-            "M3": ("hardware-constraint defects need a device target; this lane "
-                   "is a CPU JIT with no hardware contract to violate "
-                   "(mutation-specs.md §4.1, measured)"),
-        },
+        # What this surface cannot express at all, and WHY -- is not recorded
+        # here. The reason prose lives once, in schema/class-axis.json's
+        # `na_reasons[lane][class]`, and is read back with AX.na_reason(). It
+        # used to be a dict in this file, hand-worded per surface, and the two
+        # surfaces had drifted into different wording for the same M3 reason.
+        # The class SET is AX.lane_where(lane, "n/a") for the same reason.
+        #
+        # M4 is absent by design and is NOT an n/a: this lane was never run
+        # against it, which is `uncompared` (see `_uncompared_classes`), and it
+        # gets no row at all rather than a fabricated 0.
     },
     "low": {
         "toolchain": "mlir-low",
         "surface": "low",
+        "lane": "mlir-low",
         "emitter": L.emit_kernel_low,
         "categories": list(L.LOW_CATS),
         # On this surface the M1 battery and the composed set coincide:
@@ -155,17 +187,28 @@ SURFACES = {
         # additions (max_pool2d, conv2d, embedding, batch_norm) have no
         # low-level emitter yet — see the breadth note in stats.json.
         "level_of": {c: "1" for c in L.LOW_CATS},
-        "na_classes": {
-            "M2": ("no cross-tensor shape contract exists on the memref/affine "
-                   "surface: shapes are already concrete buffer descriptors, so "
-                   "a rank/extent disagreement is not expressible "
-                   "(mutation-specs.md §4)"),
-            "M3": ("hardware-constraint defects need a device target; this lane "
-                   "is a CPU JIT with no hardware contract to violate "
-                   "(mutation-specs.md §4.1, measured)"),
-        },
+        # n/a reasons come from the axis here too; see the note on the linalg
+        # surface above.
     },
 }
+
+# Every class the axis holds at `n/a` must have a reason recorded in the axis,
+# and every class it holds at `uncompared` must have none. Asserted at import
+# so a lane cannot silently grow a class it never ran.
+for _key, _cfg in SURFACES.items():
+    _lane = _cfg["lane"]
+    for _cls in _na_classes(_lane):
+        if not AX.na_reason(_lane, _cls).strip():
+            raise AssertionError(
+                f"surface {_key!r}: class {_cls} is n/a but "
+                f"schema/class-axis.json records no reason for it")
+    if not _uncompared_classes(_lane):
+        raise AssertionError(
+            f"surface {_key!r}: lane {_lane!r} is held at `measured`/`n/a` for "
+            f"every class, so this file's uncompared handling is dead code")
+    fwd = {c["id"]: c["obligation"] for c in AX.axis()["classes"]}
+    if not set(MUTATION_CLASSES) <= set(fwd):
+        raise AssertionError("the class axis is missing an obligation mapping")
 
 # manifest §1 counts 15 categories. These lanes compose 7 (linalg) and 4 (low).
 # The user's ruling: ship green at the composed subset and document the breadth
@@ -999,6 +1042,7 @@ class Lane:
                  r.get("spec_id", r["mutant_id"]))].append(r["outcome"])
 
         s1: dict[str, dict] = {}
+        uncompared: list[str] = []
         measured = {rtv: Counter() for rtv in ("off", "on")}
         for (cls, rtv, _cat, _shape, _spec), outs in inj.items():
             measured[rtv][_reduce_injection(outs)] += 1
@@ -1011,7 +1055,7 @@ class Lane:
                     "n_na": tally.get("n/a", 0)}
 
         n_inj_on = sum(measured["on"].values())
-        for cls in ("M1", "M2", "M3"):
+        for cls in MUTATION_CLASSES:
             if cls == klass:
                 r = row(measured["on"], n_inj_on)
                 r["by_rtv"] = {"off": row(measured["off"],
@@ -1028,8 +1072,8 @@ class Lane:
                     f"INJECTIONS (spec level), not records: {len(mutants)} "
                     f"mutant records reduce to {n_inj_on} injections.")
                 s1[cls] = r
-            else:
-                why = self.cfg["na_classes"].get(cls, "not expressible")
+            elif cls in _na_classes(self.cfg["lane"]):
+                why = AX.na_reason(self.cfg["lane"], cls)
                 # homework-check I2: a class the surface cannot express must be
                 # counted as n/a with n_na = N, never reported as 0 while the
                 # note claims n/a.
@@ -1038,10 +1082,31 @@ class Lane:
                            "note": f"no expressible {cls} mutant on this "
                                    f"surface; all spec N="
                                    f"{C.N_TARGET_PER_CLASS} mutants => n/a. {why}"}
+            else:
+                # UNCOMPARED, not n/a. This lane has never been run against the
+                # class, so emitting a cell -- even a zero -- would report an
+                # unmeasured gap as a measurement, and calling it `n/a` would
+                # report it as a measured capability limit. No cell; the class
+                # is declared in `S1_declared_uncompared` below so the omission
+                # is a stated scope decision rather than a missing iteration.
+                uncompared.append(cls)
+
+        # S1's counterpart to `AWP`'s all-n/a row: the classes this lane was
+        # never run against, named rather than left out. `n/a` and `uncompared`
+        # differ (see AX.status_meaning) and a reader must not have to infer
+        # which one a missing key means.
+        s1_declared_uncompared = {
+            "classes": sorted(uncompared),
+            "reason": AX.uncompared_reason(),
+            "note": ("No cell is emitted for these classes. A missing cell is "
+                     "NOT an n/a cell: `n/a` means this surface was measured and "
+                     "cannot express the defect, while a missing cell means the "
+                     "lane was never run against the class."),
+        } if uncompared else {}
 
         # ---- S8: 4 obligation classes x {yes, partial, no} ----------------
         s8 = {cls: {"yes": 0, "partial": 0, "no": 0}
-              for cls in ("elem", "shape", "loop", "hw")}
+              for cls in AX.obligation_classes()}
         for r in expr:
             s8[r["class"]][r["expressible"]] += 1
 
@@ -1095,7 +1160,15 @@ class Lane:
                     d["not_instrumented"] += 1
                 else:
                     d["rejected_before_run"] += 1
-        for cls in ("M1", "M2", "M3"):
+        for cls in MUTATION_CLASSES:
+            # Only classes this lane RAN can contribute a sanitizer row.
+            # `uncompared` classes are skipped here for the same reason S1
+            # emits no cell for them: "nothing to sanitize" would read as a
+            # measured zero. This is the third place the literal 3-class tuple
+            # used to be, and the one that mattered most -- an ASan row of
+            # (0 flagged, 0 exercised) is indistinguishable from a clean lane.
+            if cls in uncompared:
+                continue
             s12.setdefault(cls, {"flagged_and_exercised": 0, "total": 0,
                                  "flagged": 0, "exercised": 0,
                                  "not_instrumented": 0,
@@ -1198,6 +1271,19 @@ class Lane:
             "surface": self.surface,
             "device": "cpu (JIT on host; no GPU dependency)",
             "S1_detection": s1,
+            "S1_declared_uncompared": s1_declared_uncompared,
+            "S1_class_axis": {
+                "source": "schema/class-axis.json",
+                "axis_version": AX.axis()["axis_version"],
+                "mutation_classes": MUTATION_CLASSES,
+                "status": AX.lane_status(self.cfg["lane"]),
+                "note": ("The per-class status this lane claims. `measured` "
+                         "classes have real cells in S1_detection; `n/a` classes "
+                         "have cells with n_na = N_TARGET_PER_CLASS; "
+                         "`uncompared` classes have NO cell and are listed in "
+                         "S1_declared_uncompared. A reader must be able to tell "
+                         "an unmeasured gap from a measured capability limit."),
+            },
             "S8_expressibility": s8,
             "S9_remainder": {
                 "per_category": {c: s9_per[c] for c in sorted(s9_per)},

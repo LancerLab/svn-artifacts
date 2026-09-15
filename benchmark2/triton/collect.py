@@ -13,6 +13,18 @@ RAW = HERE / "raw"
 RES = HERE / "results"
 B2 = HERE.parent
 
+# The mutation-class axis is NOT restated here. This file used to hold a bare
+# `s1.setdefault("M2", ...)` fallback, which decided on its own which classes the
+# lane had run -- and therefore never mentioned M4 at all, leaving it absent from
+# the detection matrix with nothing saying whether that meant "run and
+# inexpressible" or "never run". schema/class-axis.json is the one definition.
+if str(B2) not in sys.path:
+    sys.path.insert(0, str(B2))
+from schema import class_axis as AX                    # noqa: E402
+from schema import records as RS                       # noqa: E402
+
+LANE_NAME = "triton"
+
 
 def load_jsonl(p: Path):
     if not p.exists():
@@ -21,18 +33,13 @@ def load_jsonl(p: Path):
 
 
 def validate(rec: dict, kind: str) -> list[str]:
-    schema = json.loads((B2 / "schema" / "record-schema.json").read_text())
-    spec = schema["records"].get(kind)
-    if not spec:
-        return [f"unknown record kind {kind}"]
-    errs = []
-    for f in spec["fields"]:
-        if f not in rec:
-            errs.append(f"missing field {f}")
-    for f, allowed in spec.get("enums", {}).items():
-        if f in rec and str(rec[f]) not in allowed:
-            errs.append(f"{f}={rec[f]} not in {allowed}")
-    return errs
+    """Delegates to schema/records.py -- the ONE record validator.
+
+    This file used to carry its own copy, which read `spec["fields"]` as
+    required of every record and therefore rejected this lane's whole committed
+    corpus (collected before v2.1) as invalid. See schema/records.py.
+    """
+    return RS.validate(rec, kind)
 
 
 def main():
@@ -99,10 +106,36 @@ def main():
               "n_never": v.get("never", 0),
               "n_na": v.get("n/a", 0)}
           for c, v in by_class.items()}
-    # T1: Triton has no cross-tensor contract, so all spec M2 (N=40) are n/a.
-    s1.setdefault("M2", {"n_injected": 0, "n_compile": 0, "n_runtime": 0,
-                         "n_never": 0, "n_na": 40,
-                         "note": "no cross-tensor contract (§3.3)"})
+    # Classes this lane RAN and cannot express -> n/a with n_na = N_TARGET.
+    # `M2` here is not a literal choice made by this file: it is
+    # AX.lane_where("triton", "n/a"), and the reason is read back from the axis
+    # rather than paraphrased, so the lane and the axis cannot disagree.
+    for cls in AX.lane_where(LANE_NAME, "n/a"):
+        s1.setdefault(cls, {
+            "n_injected": 0, "n_compile": 0, "n_runtime": 0,
+            "n_never": 0, "n_na": AX.n_target_per_class(),
+            "note": (f"no expressible {cls} mutant on this surface; all spec "
+                     f"N={AX.n_target_per_class()} mutants => n/a. "
+                     f"{AX.na_reason(LANE_NAME, cls)}")})
+
+    # Classes this lane was NEVER RUN against get no cell at all, and are
+    # declared instead. An absent class and an n/a class mean different things.
+    uncompared = AX.uncompared_classes(LANE_NAME)
+    for cls in uncompared:
+        if cls in s1:
+            raise AssertionError(
+                f"{LANE_NAME}: {cls} is declared `uncompared` in "
+                f"schema/class-axis.json but raw/mutants.jsonl carries records "
+                f"for it; either the lane ran it (update the axis) or the "
+                f"records are mislabelled")
+    s1_declared_uncompared = {
+        "classes": sorted(uncompared),
+        "reason": AX.uncompared_reason(),
+        "note": ("No cell is emitted for these classes. A missing cell is NOT "
+                 "an n/a cell: `n/a` means this surface was measured and cannot "
+                 "express the defect, while a missing cell means the lane was "
+                 "never run against the class."),
+    } if uncompared else {}
 
     # T4: S8 = 4-class × {yes, partial, no} counts (schema + IREE shape).
     s8 = {}
@@ -113,6 +146,13 @@ def main():
 
     stats = {"toolchain": "triton",
              "S1_detection_matrix": s1,
+             "S1_declared_uncompared": s1_declared_uncompared,
+             "S1_class_axis": {
+                 "source": "schema/class-axis.json",
+                 "axis_version": AX.axis()["axis_version"],
+                 "mutation_classes": AX.mutation_classes(),
+                 "status": AX.lane_status(LANE_NAME),
+             },
              "S8_expressibility": {c: v for c, v in sorted(s8.items())},
              "S9_remainder": "n/a (no generated checks)",
              "S12_sanitizer_supplement": s12}

@@ -33,28 +33,28 @@ from collections import OrderedDict
 HERE = os.path.dirname(os.path.abspath(__file__))  # benchmark2/
 
 # ---------------------------------------------------------------------------
-# Lane registry. "ready" lanes are those whose `run.sh stats` has produced a
-# committed stats.json. Paths are relative to benchmark2/.
-# NOTE the triton lane writes under triton/results/ (not results/triton/) —
-# the integrator normalizes this discrepancy; both paths are probed.
+# The lane registry and the class axis both come from schema/class-axis.json.
+#
+# They used to be restated here, in choreo/stats.py and in all four SOTA lanes,
+# and that is how the axis drifted: the lanes kept a 3-class tuple from the
+# pre-revision spec while this file moved to 4, so M4 went missing from every
+# SOTA detection matrix. A missing class and an `n/a` class render identically
+# but mean different things. schema/check_class_axis.py fails the build if this
+# module and the axis disagree.
 # ---------------------------------------------------------------------------
-LANE_STATS_PATHS = OrderedDict([
-    ("choreo",      ["results/choreo/stats.json"]),
-    ("mlir-linalg", ["results/mlir-linalg/stats.json"]),
-    ("mlir-low",    ["results/mlir-low/stats.json"]),
-    ("iree",        ["results/iree/stats.json"]),
-    ("triton",      ["triton/results/stats.json", "results/triton/stats.json"]),
-])
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+from schema import class_axis as AX                            # noqa: E402
+
+# Lane -> candidate `stats.json` paths, relative to benchmark2/, in probe order.
+# A lane may legitimately write more than one place (triton does).
+LANE_STATS_PATHS = OrderedDict(
+    (lane, AX.lane_stats_paths(lane)) for lane in AX.ready_lanes())
 
 # Statistics each lane owns (statistics-manifest.md). Used only for the merged
 # view; the renderer pulls actual values from stats.json.
-LANE_OWNS = OrderedDict([
-    ("choreo",      ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S10", "S13", "S14"]),
-    ("mlir-linalg", ["S1", "S8", "S9", "S12"]),
-    ("mlir-low",    ["S1", "S8", "S9", "S12"]),
-    ("iree",        ["S1", "S8", "S9", "S12"]),
-    ("triton",      ["S1", "S8", "S9", "S12"]),
-])
+LANE_OWNS = OrderedDict(
+    (lane, AX.lane_owns(lane)) for lane in AX.ready_lanes())
 
 # Lanes that have pushed no `results/` at all.
 #
@@ -64,17 +64,12 @@ LANE_OWNS = OrderedDict([
 # MLIR-low 38/48) and `tab:e2-generation` (both rows). Excluding them silently
 # dropped two of the five compared toolchains from every generated table, which
 # is why the rendered `rq2_bugs.tex` had three toolchains to the paper's five.
-NOT_READY = ["tilelang"]  # pending results/
+NOT_READY = list(AX.not_ready_lanes())          # tilelang, pending results/
 
 # Paper display name per toolchain. `\sys` is the macro main.tex uses for
 # choreo; the baselines keep their product names.
-LANE_DISPLAY = OrderedDict([
-    ("choreo",      r"\textbf{\sys}"),
-    ("triton",      "Triton"),
-    ("mlir-linalg", "MLIR-linalg"),
-    ("mlir-low",    "MLIR-low"),
-    ("iree",        "IREE"),
-])
+LANE_DISPLAY = OrderedDict(
+    (lane, AX.lane_display(lane)) for lane in AX.ready_lanes())
 
 # Baseline row order in `tab:rq2-bugs` after the `\sys` row. Chosen to
 # reproduce the paper's hand-written float; it carries no data.
@@ -87,8 +82,11 @@ NA_WITNESS = {"M1": "iree", "M2": "triton", "M3": "iree"}
 # NB deliberately no "M4" key. `n/a` is a MEASURED verdict -- the lane ran the
 # class and its surface cannot express the defect. No compared lane has ever
 # been run against M4, so an `n/a` witness here would dress an unmeasured gap up
-# as a measured one. The table reports M4 as uncompared instead (see
-# `NOT_COMPARED_CLASSES` below).
+# as a measured one. The table reports M4 as uncompared instead.
+#
+# The choice of witness per class is editorial (any lane holding that class at
+# `n/a` would do) but it is not free-form: schema/check_class_axis.py asserts
+# every entry names a lane the axis actually holds at `n/a` for that class.
 
 # Artifacts the venue paper actually consumes (`\input{}` / `\includegraphics`,
 # read from svn/eurosys27/main.tex). `make paper` copies ONLY these.
@@ -116,13 +114,13 @@ CANONICAL_CATEGORIES = [
     "reshape", "sigmoid", "softmax", "transpose",
 ]
 
-MUTATION_CLASSES = ["M1", "M2", "M3", "M4"]
+MUTATION_CLASSES = AX.mutation_classes()
 
 # Classes a paper-side headline may want to quote separately from the scored
 # ones. M4 is the LoopBound control: it is measured on choreo only, because it
 # exists to test whether the `never` residue is explained by the -rtc cost
 # filter, not to rank choreo against another toolchain.
-CONTROL_CLASSES = ["M4"]
+CONTROL_CLASSES = AX.control_classes()
 
 
 def num(x):

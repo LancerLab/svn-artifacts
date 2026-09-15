@@ -41,6 +41,15 @@ import tempfile
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 
+# `schema/records.py` is the ONE record validator (see its module docstring for
+# why there used to be four). This file reaches it rather than re-deriving the
+# rule, because the rule is not "the fields listed under `fields`": a record's
+# required set depends on its RELEASE, and a v1 record must stay valid.
+_B2 = Path(__file__).resolve().parent.parent                   # benchmark2/
+if str(_B2) not in sys.path:
+    sys.path.insert(0, str(_B2))
+from schema import records as _records                         # noqa: E402
+
 # --------------------------------------------------------------------------
 # Toolchain (pinned in benchmark2/manifest.md §5.1)
 # --------------------------------------------------------------------------
@@ -980,25 +989,19 @@ def settings_hash(category: str, benchmark2: Path) -> str:
 # source of truth.
 
 
-def validate(record: dict, kind: str, schema: dict) -> list[str]:
-    """Validate a record against schema/record-schema.json. Returns errors."""
-    errs = []
-    spec = schema.get("records", {}).get(kind)
-    if spec is None:
-        return [f"unknown record kind {kind!r}"]
-    for f in spec.get("fields", []):
-        if f not in record:
-            errs.append(f"{kind}: missing field {f!r}")
-    for f, allowed in spec.get("enums", {}).items():
-        if f in record and str(record[f]) not in set(allowed):
-            errs.append(
-                f"{kind}: field {f!r}={record[f]!r} not in {sorted(allowed)}"
-            )
-    return errs
+def validate(record: dict, kind: str, schema: dict | None = None) -> list[str]:
+    """Validate a record against schema/record-schema.json. Returns errors.
+
+    `schema` is accepted and ignored: it is retained only so the existing
+    `RecordWriter` call site keeps working. Validating against a caller's own
+    parsed copy is how this function came to disagree with the other three
+    validators about what `fields` means (see schema/records.py).
+    """
+    return _records.validate(record, kind)
 
 
 def load_schema(benchmark2: Path) -> dict:
-    return json.loads((benchmark2 / "schema" / "record-schema.json").read_text())
+    return _records.load_schema(benchmark2)
 
 
 class RecordWriter:
