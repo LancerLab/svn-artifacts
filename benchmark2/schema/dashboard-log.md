@@ -9,6 +9,23 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ## 2026-09-19
 
+- **The guard baseline is 49, and four of those findings are real M2/M3 debt.**
+  The count moved 44 → 49, which looks like a regression and is not. Commit
+  `1161cee` added the `mutants.edits-apply` guard; it immediately found five
+  operators whose literal `old` string no longer exists in their base kernel,
+  because the base source moved in the corpus turnover. All five target
+  `11_dynamic_32xSx768_768x768_32xSx768.co`: `M2.s3.mm11.swap` (spec `M2.3`,
+  M2-a), `M2.s2.mm11.tiles` (`M2.2`, M2-a), `M2.13.mm11.affine` (`M2.13`,
+  M2-e), `M3.s1.mm11.ktile31` (`M3.1`, M3-a), `M3.s2.mm11.rhs1` (`M3.6`,
+  M3-e). **Four are admissible and counted, so the M2 and M3 instance counts
+  in this dashboard are optimistic by four** (M2 by three, M3 by one); the
+  fifth sits in `M3-e`, which is already `0 of 8` admissible, so it overstates
+  nothing. **Proved:** `make guards` at `1161cee~1` → 14 findings, i.e. the
+  growth is guard instrumentation, not graded findings; `make test-guards` →
+  27/27 controls pass at 49. **The audit did not get worse; the instrument got
+  sharper.** Recorded in `DASHBOARD.md`'s handoff, not fixed — M2/M3 are
+  deferred. `plan/m1-m4-handoff/HANDOFF.md` §2.5 and §6.6.
+
 - **A missing lane input no longer renders as a measured zero.** No number
   moved on a checkout that has the data. Cloning `gxf/croq-paper-plan` +
   `LancerLab/svn-artifacts` and running `make dashboard` produced
