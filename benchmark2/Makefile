@@ -16,6 +16,10 @@
 #   make render         - merge stats.json -> render/ (summary + tables + figures)
 #   make tables|figures - only the tables / figures
 #   make drift          - re-check the paper's prose against the statistics
+#   make guards         - run every schema/check_class_axis.py guard
+#   make test-guards    - prove every one of those guards can fail
+#   make dashboard      - regenerate DASHBOARD.md (read-only progress view)
+#   make worklist       - regenerate the class handoff worklist (read-only)
 #   make paper-check    - diff render/ against the paper, copy nothing
 #   make paper          - copy the paper's floats into ../eurosys27 (guarded)
 #   make clean          - remove render/ output (lane results are NOT touched)
@@ -107,6 +111,73 @@ $(foreach s,setup screen minimal e2 e3 e4 e5 e5b never collect stats all,$(eval 
 # ---------------------------------------------------------------------------
 .PHONY: screen
 screen: choreo-screen
+
+# ---------------------------------------------------------------------------
+# Guard integrity -- the axis checker and its control harness.
+#
+# `guards` runs the checker; `test-guards` mutates one input at a time and
+# requires each guard to refuse it, restoring byte-identically in between. The
+# controls are the reason to trust a green `guards`: a guard that cannot fail
+# and a guard that passes look the same, so `test-guards` asserts that every id
+# in `check_class_axis.py --list` has a control or a stated reason to lack one.
+# Run both; `guards` alone cannot tell you it is still checking anything.
+# ---------------------------------------------------------------------------
+.PHONY: guards test-guards
+guards:
+	$(PY) $(ROOT)/schema/check_class_axis.py
+
+test-guards:
+	$(PY) $(ROOT)/schema/test_guards.py
+
+# ---------------------------------------------------------------------------
+# Dashboard -- the progress view.
+#
+# Read-only projection of what is on disk: families x classes x lanes with
+# planned/instance counts, declaration health (`R_f`/`R_a`), the tracked
+# blockers, and the dated progress log from `schema/dashboard-log.md`.
+#
+# It NEVER writes into a corpus, manifest or results file, so it is safe to run
+# at any time, including mid-generation. Regenerate it after every change that
+# moves a number, and add an entry to `schema/dashboard-log.md` so the history
+# survives.
+#
+# Output defaults to the LIVE venue directory ($(PAPER)/DASHBOARD.md, i.e.
+# ../eurosys27/). `asplos27` is the pre-retarget snapshot and must not be
+# written to. Override with `make dashboard OUT=/some/path.md`.
+# ---------------------------------------------------------------------------
+.PHONY: dashboard
+OUT ?= $(PAPER)/DASHBOARD.md
+OUT_WORKLIST ?= $(PAPER)/plan/m1-m4-handoff/worklist.csv
+dashboard:
+	$(PY) $(ROOT)/schema/gen_dashboard.py $(OUT)
+
+# ---------------------------------------------------------------------------
+# Worklist -- the per-family assignment sheet for a class handoff.
+#
+# One row per (lane, class, family) with the instance gap, a `fill_plan` that
+# opens kernels rather than padding counts (because N = 4 kernels x 2
+# realisations, so a family is never a flat count of eight), and a `blocker`
+# naming the spec-level reason a family cannot move.
+#
+# The `state` column is the one to read first:
+#   in-scope                  assignable work
+#   UNCOMPARED-conflict       in the taxonomy's scope but `uncompared` on the
+#                             class axis -- a conflict between two instruments,
+#                             NOT a gap. Resolve before assigning.
+#   unattributed(no spec_id)  the lane's rows carry no spec_id, so no family can
+#                             be assigned. Fix the collector, not the corpus.
+#   carved-out(<why>)         a stated lane_scope exclusion
+#   out-of-scope              the lane does not run this class
+#
+# Read-only, same guarantees as `dashboard`. Output defaults into the LIVE
+# venue directory, next to the docs the handoff cites
+# ($(PAPER)/plan/m1-m4-handoff/worklist.csv). Override with
+# `make worklist OUT=/some/path.csv`. Scope is set in the generator
+# (`CLASSES`, `LANES`) so the same script emits the M2/M3 handoff later.
+# ---------------------------------------------------------------------------
+.PHONY: worklist
+worklist:
+	$(PY) $(ROOT)/schema/gen_worklist.py $(OUT_WORKLIST)
 
 # ---------------------------------------------------------------------------
 # Lane-level: full pipeline

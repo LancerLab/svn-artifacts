@@ -49,3 +49,6 @@ latex/**/manuscript.pdf
 *.swo
 *~
 .DS_Store
+
+# Local scratch
+benchmark/choreo/local

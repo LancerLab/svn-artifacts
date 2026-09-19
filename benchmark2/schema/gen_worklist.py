@@ -1,0 +1,293 @@
+#!/usr/bin/env python3
+"""Emit the M1/M4 handoff worklist as CSV -- one row per (lane, class, family).
+
+Read-only, like `gen_dashboard.py`: it never writes into a corpus, manifest or
+results file. It projects what is on disk into a spreadsheet a worker can own.
+
+The interesting column is `fill_plan`. `N = 8` is not a lump: it decomposes as
+`N_KERNELS (4) x N_REALISATIONS (2)`, so a family at 6 is not "3/4 done", it is
+missing a whole kernel. `fill_plan` names the kernels to add and how many
+instances each needs, in the order that keeps the kernel spread even.
+
+    python3 schema/gen_worklist.py [out.csv]
+"""
+
+from __future__ import annotations
+
+import csv
+import json
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
+BASE = Path(__file__).resolve().parent.parent
+SCHEMA = BASE / "schema"
+sys.path.insert(0, str(SCHEMA))
+sys.path.insert(0, str(BASE))
+
+import method_taxonomy as T  # noqa: E402
+
+try:
+    from choreo import mutations as MUT
+except Exception:  # pragma: no cover
+    MUT = None
+
+OUT_DEFAULT = (Path("/home/garfee/croq-paper-plan/svn/eurosys27")
+               / "plan" / "m1-m4-handoff" / "worklist.csv")
+
+CLASSES = ["M1", "M4"]
+LANES = ["choreo", "triton", "mlir-low", "mlir-linalg", "iree"]
+
+
+def load(path: Path, default=None):
+    if not path.is_file():
+        return default
+    text = path.read_text()
+    if path.suffix == ".jsonl":
+        return [json.loads(l) for l in text.splitlines() if l.strip()]
+    return json.loads(text)
+
+
+TAX = load(SCHEMA / "method-taxonomy.json", {})
+FAM = TAX.get("families", {})
+IN_SCOPE = TAX.get("in_scope_lanes", {})
+LANE_SCOPE = TAX.get("lane_scope", {})
+N = T.N_PER_FAMILY
+N_K = T.N_KERNELS
+N_R = T.N_REALISATIONS
+MINIMAL = MUT.MINIMAL_SET if MUT else {}
+SPEC_FAM = {s: f for f, r in FAM.items() for s in r.get("spec_ids", [])}
+REGISTRY = MUT.SPEC_REGISTRY if MUT else {}
+
+# The class axis is the SECOND instrument. It states, per lane, whether a class
+# is `measured`, `n/a`, `uncompared` or `not_ready`. A class that the method
+# taxonomy puts in scope but the class axis holds at `uncompared` is a conflict
+# between the two instruments, not a shortfall -- report it as such.
+AX = load(SCHEMA / "class-axis.json", {})
+AX_STATUS = {lane: dict(v.get("status", {}))
+             for lane, v in (AX.get("lanes") or {}).items()}
+AX_UNCMP = AX.get("uncompared_reason", "")
+
+
+def generatable(sid):
+    m = REGISTRY.get(sid)
+    return bool(m) and (m.get("status") == "implemented"
+                        and m.get("path") != "P2"
+                        and m.get("prohibition") != "repaired")
+
+
+def spec_health(family):
+    specs = FAM.get(family, {}).get("spec_ids", [])
+    rf = sum(1 for s in specs if generatable(s))
+    ra = sum(1 for s in specs if generatable(s)
+             and REGISTRY.get(s, {}).get("admissible"))
+    return len(specs), rf, ra
+
+
+def missing_surface():
+    """spec_id -> the MISSING SURFACE sentence, for the blocker column."""
+    out = {}
+    for sid, r in REGISTRY.items():
+        n = r.get("note", "") or ""
+        if r.get("status") != "implemented" and "MISSING SURFACE" in n:
+            out[sid] = n.split("MISSING SURFACE:")[-1].strip()
+    return out
+
+
+MSURF = missing_surface()
+
+# ------------------------------------------------------------------ corpora
+
+# choreo -- the only lane with a mutant_manifest.json, and therefore the only
+# lane whose per-family depth the `m{1,4}.<family>.instances` guards enforce.
+choreo_manifest = load(BASE / "choreo" / "raw" / "mutant_manifest.json", {})
+depth = defaultdict(Counter)
+for m in choreo_manifest.get("mutants", []):
+    f = SPEC_FAM.get(m.get("spec_id"))
+    if f:
+        depth[f][m.get("category")] += 1
+choreo_fam = Counter({f: sum(c.values()) for f, c in depth.items()})
+
+# every other lane -- instance counts by (class, family) where the rows carry
+# spec_id, else by class only. Rows are deduplicated the way the dashboard
+# does, because the mlir lanes run each mutant twice (rtv off/on).
+lane_cls = {L: Counter() for L in LANES}
+lane_fam = {L: Counter() for L in LANES}
+lane_rows = {L: 0 for L in LANES}
+for L in LANES:
+    if L == "choreo":
+        lane_cls[L] = Counter()
+        for f, n in choreo_fam.items():
+            lane_cls[L][T._FAM[f]["class"]] += n
+        lane_fam[L] = choreo_fam
+        lane_rows[L] = len(choreo_manifest.get("mutants", []))
+        continue
+    rows = load(BASE / L / "raw" / "mutants.jsonl", [])
+    lane_rows[L] = len(rows)
+    seen = set()
+    for r in rows:
+        key = (r.get("spec_id"), r.get("category"), r.get("shape"), r.get("kernel"))
+        if key in seen:
+            continue
+        seen.add(key)
+        f = SPEC_FAM.get(r.get("spec_id"))
+        if f:
+            lane_fam[L][f] += 1
+            lane_cls[L][T._FAM[f]["class"]] += 1
+        else:
+            # No spec_id: the row can be attributed to a class but not a
+            # family. Record it so the shortfall is not silently overstated.
+            lane_cls[L][r.get("class") or "?"] += 1
+
+
+# ------------------------------------------------------------------ fill plan
+
+
+def fill_plan(cls, have: Counter, total: int) -> str:
+    """Which kernels to add, in the order that evens the spread.
+
+    `N = N_KERNELS x N_REALISATIONS`: every kernel should reach N_R instances
+    before a new kernel is started, and a family needs N_KERNELS kernels. So
+    fill the present-but-thin kernels first, then open new ones.
+    """
+    if total >= N:
+        return ""
+    want = N
+    order = list(MINIMAL.get(cls, []))
+    steps = []
+    cur = dict(have)
+    for k in sorted(order, key=lambda k: cur.get(k, 0)):
+        if sum(cur.values()) >= want:
+            break
+        c = cur.get(k, 0)
+        if c >= N_R:
+            continue
+        add = min(N_R - c, want - sum(cur.values()))
+        if add <= 0:
+            continue
+        steps.append("%s+%d" % (k, add))
+        cur[k] = c + add
+    return " ".join(steps)
+
+
+def blocker(cls, family, rf, ra):
+    if rf == 0:
+        return ("R_f=0: no generatable spec_id. Needs a NEW spec, not operators. "
+                "Design call.")
+    if ra == 0:
+        return ("R_a=0: declarations exist but none is admissible, so nothing "
+                "can enter the denominator. Design call.")
+    if cls == "M1" and family in ("M1-d", "M1-g"):
+        gaps = [s for s, why in MSURF.items()
+                if SPEC_FAM.get(s) == family and s not in FAM.get(family, {})
+                .get("spec_ids", [])]
+        pend = [s for s in FAM.get(family, {}).get("spec_ids", [])
+                if REGISTRY.get(s, {}).get("status") != "implemented"]
+        if pend:
+            return ("pending spec(s) %s blocked on MISSING SURFACE: %s"
+                    % (", ".join(pend),
+                       MSURF.get(pend[0], "see registry note")))
+    return ""
+
+
+rows = []
+for cls in CLASSES:
+    fams = sorted(f for f in FAM if FAM[f]["class"] == cls)
+    for lane in LANES:
+        ax = (AX_STATUS.get(lane, {}) or {}).get(cls)
+        # The lane has instances of this class but no family can be assigned,
+        # because its rows carry no spec_id. Reporting 0 for every family would
+        # understate the lane's real position, so say so instead.
+        unattributed = (lane not in ("choreo",) and not lane_fam[lane]
+                        and lane_cls[lane].get(cls, 0) > 0)
+        for f in fams:
+            if not T.runs_class(lane, cls):
+                state = "out-of-scope"
+            elif ax == "uncompared":
+                # in the taxonomy's scope, absent from the axis. A conflict.
+                state = "UNCOMPARED-conflict"
+            elif unattributed:
+                state = "unattributed(no spec_id)"
+            elif LANE_SCOPE.get(lane, {}).get(f):
+                state = "carved-out(%s)" % LANE_SCOPE[lane][f]
+            else:
+                state = "in-scope"
+
+            nspec, rf, ra = spec_health(f)
+            have = lane_fam[lane].get(f, 0)
+            if state != "in-scope":
+                short = 0
+            else:
+                short = max(0, N - have)
+            rows.append({
+                "lane": lane,
+                "class": cls,
+                "family": f,
+                "family_name": FAM[f].get("name", ""),
+                "state": state,
+                "specs": nspec,
+                "R_f": rf,
+                "R_a": ra,
+                "have": have,
+                "need": N if state == "in-scope" else 0,
+                "short": short,
+                "unattributed_rows": (
+                    "" if state == "in-scope" and lane not in lane_fam
+                    else ""),
+                "fill_plan": fill_plan(cls, depth.get(f, {}), have)
+                             if lane == "choreo" else "",
+                "blocker": (blocker(cls, f, rf, ra) if short else "") or
+                           ("in_scope_lanes[%s] lists this lane but "
+                            "class-axis holds it at `uncompared` (declared "
+                            "scope decision, not a gap). Resolve the two "
+                            "instruments before assigning work."
+                            % cls if state == "UNCOMPARED-conflict" else
+                            "lane has %d %s instance(s) but its raw rows carry "
+                            "no spec_id, so no family can be assigned. First "
+                            "task: emit spec_id (and family) on every row, "
+                            "then re-derive this column."
+                            % (lane_cls[lane].get(cls, 0), cls)
+                            if state.startswith("unattributed") else ""),
+                "guarded": "yes" if (lane == "choreo" and state == "in-scope")
+                           else "no",
+            })
+
+
+def main():
+    out = Path(sys.argv[1]) if len(sys.argv) > 1 else OUT_DEFAULT
+    out.parent.mkdir(parents=True, exist_ok=True)
+    cols = ["lane", "class", "family", "family_name", "state", "specs", "R_f",
+            "R_a", "have", "need", "short", "fill_plan", "blocker", "guarded"]
+    with out.open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=cols)
+        w.writeheader()
+        for r in rows:
+            w.writerow({k: r[k] for k in cols})
+
+    tot = defaultdict(int)
+    conflict = defaultdict(int)
+    unattr = defaultdict(int)
+    for r in rows:
+        if r["state"] == "in-scope":
+            tot[r["lane"]] += r["short"]
+        elif r["state"] == "UNCOMPARED-conflict":
+            conflict[r["lane"]] += 1
+        elif r["state"].startswith("unattributed"):
+            unattr[r["lane"]] += 1
+    print("wrote %s (%d rows)" % (out, len(rows)))
+    print("in-scope shortfall: " + ", ".join(
+        "%s=%d" % (l, tot[l]) for l in LANES if tot[l]) +
+        "  TOTAL=%d" % sum(tot.values()))
+    if conflict:
+        print("taxonomy-in-scope but class-axis `uncompared` (CONFLICT, not "
+              "work): " +
+              ", ".join("%s=%d families" % (l, n)
+                        for l, n in conflict.items()))
+    if unattr:
+        print("BLOCKED, cannot be assigned: no spec_id on the lane's rows: " +
+              ", ".join("%s=%d families" % (l, n)
+                        for l, n in unattr.items()))
+
+
+if __name__ == "__main__":
+    main()
