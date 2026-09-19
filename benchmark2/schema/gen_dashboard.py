@@ -170,6 +170,25 @@ for f, n in choreo_fam.items():
 # ------------------------------------------------- family lanes (triton/iree)
 
 fam_rows = {L: load_jsonl(BASE / L / "raw" / "mutants.jsonl") for L in LANES}
+# `benchmark2/iree/.gitignore` ignores `raw/` -- 561 MB of results -- so iree's
+# instance list is simply absent from a fresh clone. `load_jsonl` returns [] for
+# a missing file, which is indistinguishable from a lane that measured nothing:
+# the dashboard would print `iree 0/32` with a gap marker, inventing a shortfall
+# out of an absent file. Track absence explicitly and label it, so a reader can
+# tell "measured zero" from "not in this checkout". Only iree is affected --
+# triton, mlir-low and mlir-linalg commit their `raw/mutants.jsonl`.
+# Each lane's material source. `choreo` has no `raw/mutants.jsonl` by design --
+# its instances come from the manifest -- so the map is explicit per lane rather
+# than a shared filename pattern; assuming `raw/mutants.jsonl` everywhere would
+# report choreo as absent and turn its real numbers into `n/a`.
+SOURCES = {
+    "choreo": BASE / "choreo" / "raw" / "mutant_manifest.json",
+    "triton": BASE / "triton" / "raw" / "mutants.jsonl",
+    "mlir-low": BASE / "mlir-low" / "raw" / "mutants.jsonl",
+    "mlir-linalg": BASE / "mlir-linalg" / "raw" / "mutants.jsonl",
+    "iree": BASE / "iree" / "raw" / "mutants.jsonl",
+}
+fam_missing = {L: not SOURCES[L].is_file() for L in LANES}
 # triton/iree rows carry `class` but no `spec_id`, so no family attribution.
 fam_lane_cls = {L: Counter(r.get("class") for r in fam_rows[L])
                 for L in ("triton", "iree")}
@@ -288,6 +307,10 @@ def main():
             model, inst = "family", len(fam_rows[lane])
             rows = MEASURED_TODAY.get(lane, len(fam_rows[lane]))
         d = tgt - inst
+        if fam_missing.get(lane):
+            w("| `%s` | %s | %s | %d | n/a | n/a | **no data in this checkout** |" %
+              (lane, model, "/".join(cls), tgt))
+            continue
         dd = "**%d to go**" % d if d > 0 else ("done" if d == 0 else "+%d" % -d)
         w("| `%s` | %s | %s | %d | %d | %d | %s |" %
           (lane, model, "/".join(cls), tgt, inst, rows, dd))
@@ -296,6 +319,17 @@ def main():
       "They diverge because the mlir lanes run each mutant **twice** (rtv "
       "`off`/`on`): 96 rows = 48 instances, 120 rows = 50. **Do not read "
       "`rows` as coverage.**")
+    _missing = [l for l in LANES if fam_missing.get(l)]
+    if _missing:
+        w("")
+        w("**`n/a` is not zero.** %s: %s %s absent, and the omission matches "
+          "`.gitignore` -- the raw results are hundreds of MB. A `0` would be a "
+          "claim about the lane; `n/a` is the absence of one. The lane's real "
+          "number needs a checkout that has the raw results."
+          % (", ".join("`%s`" % l for l in _missing),
+             ", ".join("`%s`" % SOURCES[l].relative_to(BASE.parent).as_posix()
+                       for l in _missing),
+             "is" if len(_missing) == 1 else "are"))
     w("")
     _mism = [l for l in LANES if model_total(l) != TARGETS.get(l, 0)]
     if _mism:
@@ -330,6 +364,9 @@ def main():
                 n = m["by_cls"].get(cls, 0)
                 cells.append(mark(n, cell))
             else:
+                if fam_missing.get(lane):
+                    cells.append("n/a")
+                    continue
                 plan = sum(planned(lane, f) for f in fams)
                 cells.append(mark(fam_lane_cls[lane].get(cls, 0), plan))
         w("| **%s** | %d | %s |" % (cls, cell, " | ".join(cells)))
@@ -338,7 +375,9 @@ def main():
       "`mlir-low`.** `mlir-low`'s M4 is 8/56 \u2014 and it is `M4-d` only, "
       "arriving via `M1.6`, which the registry re-homed into M4. `mlir-low` "
       "has no other M4 family and no other class; `mlir-linalg` has no M4 at "
-      "all. `triton` has 2 of 48 M3 and 0 of 56 M4; `iree` 0 of 56 M4.")
+      "all. `triton` has 2 of 48 M3 and 0 of 56 M4; " +
+      ("`iree` 0 of 56 M4." if not fam_missing.get("iree") else
+       "`iree`'s M4 is unverified here -- see the `n/a` note above."))
     w("")
     w("**A lane is not its census label.** `mlir-low`'s census says "
       "`class: M1`, but 8 of its 48 instances are class M4 (`M1.6` "

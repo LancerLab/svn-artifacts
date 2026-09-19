@@ -9,6 +9,25 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ## 2026-09-19
 
+- **A missing lane input no longer renders as a measured zero.** No number
+  moved on a checkout that has the data. Cloning `gxf/croq-paper-plan` +
+  `LancerLab/svn-artifacts` and running `make dashboard` produced
+  `iree | 88 | 0 | 0 | **88 to go**` and `M2 iree 0/32 ❌` — numbers that were
+  **not measured anywhere**, on the one artifact a colleague is told to read.
+  Cause: `benchmark2/iree/.gitignore` ignores `raw/`, so
+  `benchmark2/iree/raw/mutants.jsonl` is untracked while triton/mlir-low/
+  mlir-linalg commit theirs; `load_jsonl` returns `[]` for an absent file, which
+  is indistinguishable from a lane that measured nothing. The generator now
+  resolves each lane's *own* source (`SOURCES` — `choreo` legitimately has no
+  `raw/mutants.jsonl`, it reads `mutant_manifest.json`, so a shared filename
+  pattern would have wrongly blanked choreo's real 107) and, when a source is
+  absent, prints `n/a` + `no data in this checkout` instead of `0`, withholds
+  the `❌` that implies a measured shortfall, adds a **"`n/a` is not zero"**
+  note naming the ignored path, and makes the M4 prose claim about `iree`
+  conditional. **Proved:** same generator, two checkouts — data present: 128
+  lines, `iree 23`, `M2 iree 23/32`; data absent: 130 lines, `iree n/a`.
+  Guard-neutral (49 findings either way; 27/27 controls pass).
+
 - **Both generators' fallback output path is derived, not hardcoded.** No number
   moved. `gen_worklist.py` and `gen_dashboard.py` each carried an absolute
   `/home/garfee/...` default, so the M1/M4 handoff's *documented* command
