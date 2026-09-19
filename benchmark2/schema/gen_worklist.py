@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Emit the M1/M4 handoff worklist as CSV -- one row per (lane, class, family).
+"""Emit the M1-M4 handoff worklist as CSV -- one row per (lane, class, family).
 
 Read-only, like `gen_dashboard.py`: it never writes into a corpus, manifest or
 results file. It projects what is on disk into a spreadsheet a worker can own.
@@ -8,6 +8,11 @@ The interesting column is `fill_plan`. `N = 8` is not a lump: it decomposes as
 `N_KERNELS (4) x N_REALISATIONS (2)`, so a family at 6 is not "3/4 done", it is
 missing a whole kernel. `fill_plan` names the kernels to add and how many
 instances each needs, in the order that keeps the kernel spread even.
+
+All four classes are in scope. M2 and M3 were absent until now, which made the
+worklist read as "M1 and M4 are the work" -- and, worse, hid the fact that M3's
+coverage set holds 2 kernels where `N` needs 4, so part of M3's shortfall is not
+assignable work at all. `blocker` states that ceiling per row.
 
     python3 schema/gen_worklist.py [out.csv]
 """
@@ -44,7 +49,7 @@ except Exception:  # pragma: no cover
 PAPER_DEFAULT = BASE.parent.parent / "eurosys27"
 OUT_DEFAULT = PAPER_DEFAULT / "plan" / "m1-m4-handoff" / "worklist.csv"
 
-CLASSES = ["M1", "M4"]
+CLASSES = ["M1", "M2", "M3", "M4"]
 LANES = ["choreo", "triton", "mlir-low", "mlir-linalg", "iree"]
 
 
@@ -179,13 +184,46 @@ def fill_plan(cls, have: Counter, total: int) -> str:
     return " ".join(steps)
 
 
+def kernel_ceiling(cls) -> int:
+    """The most instances a family of `cls` can hold, given its coverage set.
+
+    `N` is not a lump: it decomposes as `N_KERNELS (4) x N_REALISATIONS (2)`,
+    and `select()` caps every `(family, category)` pair at `N_REALISATIONS`. So
+    a class whose coverage set holds fewer than `N_KERNELS` kernels cannot reach
+    `N` however many operators are written -- the ceiling is a property of the
+    COVERAGE SET, not of the corpus, and no amount of work on operators lifts
+    it. M3 is the live case: `MINIMAL_SET["M3"]` is `[matmul, conv2d]`, so its
+    per-family ceiling is 4 and its class ceiling is 32, not 64.
+
+    Saying this in the `blocker` column is the point. Without it a `short` of
+    50 reads as 50 assignable instances, and the worker finds the wall instead
+    of being told about it.
+    """
+    return len(MINIMAL.get(cls, [])) * N_R
+
+
 def blocker(cls, family, rf, ra):
+    parts = []
+    if kernel_ceiling(cls) < N:
+        order = list(MINIMAL.get(cls, []))
+        parts.append(
+            "CEILING: %s's coverage set holds %d kernel(s) (%s), but N=%d "
+            "decomposes as %d kernels x %d realisations, and select() caps "
+            "every (family, kernel) at %d. So this family cannot exceed %d "
+            "and %s's class cell cannot exceed %d, however many operators are "
+            "written -- the ceiling is in the COVERAGE SET, not the corpus. "
+            "Closing this row needs MINIMAL_SET[%s] widened (mutations.py) or "
+            "an accepted, stated deviation. Do NOT report %d."
+            % (cls, len(order), ", ".join(order), N, N_K, N_R, N_R,
+               kernel_ceiling(cls), cls,
+               len([f for f in FAM if FAM[f]["class"] == cls])
+               * kernel_ceiling(cls), cls, N))
     if rf == 0:
-        return ("R_f=0: no generatable spec_id. Needs a NEW spec, not operators. "
-                "Design call.")
-    if ra == 0:
-        return ("R_a=0: declarations exist but none is admissible, so nothing "
-                "can enter the denominator. Design call.")
+        parts.append("R_f=0: no generatable spec_id. Needs a NEW spec, not "
+                     "operators. Design call.")
+    elif ra == 0:
+        parts.append("R_a=0: declarations exist but none is admissible, so "
+                     "nothing can enter the denominator. Design call.")
     if cls == "M1" and family in ("M1-d", "M1-g"):
         gaps = [s for s, why in MSURF.items()
                 if SPEC_FAM.get(s) == family and s not in FAM.get(family, {})
@@ -193,10 +231,20 @@ def blocker(cls, family, rf, ra):
         pend = [s for s in FAM.get(family, {}).get("spec_ids", [])
                 if REGISTRY.get(s, {}).get("status") != "implemented"]
         if pend:
-            return ("pending spec(s) %s blocked on MISSING SURFACE: %s"
-                    % (", ".join(pend),
-                       MSURF.get(pend[0], "see registry note")))
-    return ""
+            parts.append("pending spec(s) %s blocked on MISSING SURFACE: %s"
+                         % (", ".join(pend),
+                            MSURF.get(pend[0], "see registry note")))
+    if not parts:
+        # Nothing structural stands in the way: the row is short on operators
+        # and `fill_plan` says which kernels they go on. Say so, so an empty
+        # blocker is never mistaken for "no plan".
+        bad = [s for s in FAM.get(family, {}).get("spec_ids", [])
+               if not generatable(s)]
+        if bad:
+            parts.append("declared spec(s) %s have no generatable operator, "
+                         "so the family's ceiling is below N until they do."
+                         % ", ".join(bad))
+    return " ".join(parts)
 
 
 rows = []

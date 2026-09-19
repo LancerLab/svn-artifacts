@@ -7,6 +7,48 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ---
 
+## 2026-09-19 (rev. 2) — the worklist now covers M1–M4, and M3 has a ceiling
+
+- **`make worklist`: 75 → 155 rows. `in-scope shortfall` 97 → 233.** The
+  generator's `CLASSES` was `["M1", "M4"]`, matching a handoff that shipped
+  `m1.md`/`m4.md` and called M2/M3 "deferred". Extending it to all four classes
+  found that **half the taxonomy was outside the worklist**, and that one of the
+  two missing classes cannot be worked at all.
+- **The finding: a class shortfall has two ceilings, and only one is authorable.**
+  The *candidate* ceiling is how many `(spec_id, category)` operators exist.
+  The *coverage-set* ceiling is `len(MINIMAL_SET[cls]) x N_REALISATIONS` —
+  `select()` caps every `(family, category)` at `N_REALISATIONS`, so a class
+  offering fewer than `N_KERNELS` kernels cannot reach `N` however many
+  operators are written.
+  - **`M2`: authorable.** `MINIMAL_SET["M2"]` holds 6 kernels where `N` needs 4,
+    and `m2.cell` is `ok`. But `have 26 = reachable 26`: the class is saturated
+    at its *existing operator supply*, so a CPU re-run emits the same 26 and the
+    38-instance gap is closed by **writing operators**. "Burn CPU for M2" is a
+    no-op.
+  - **`M3`: not authorable.** `MINIMAL_SET["M3"] = [matmul, conv2d]` — 2 kernels
+    where `N` needs 4. Per-family ceiling **4**, class ceiling **32**. `have 14 /
+    reachable 14 / 32`. **Three numbers must not be conflated: declared 64,
+    declared-coverage 48, realisable 32.** And 32 is itself below
+    `admissible_floor_per_class = 35`, so M3 fails the floor by construction —
+    `floor_rationale` rules out lowering `N` for exactly this reason.
+- **`gen_worklist.py` changes:** (a) `CLASSES` covers all four; (b) new
+  `kernel_ceiling(cls)`; (c) `blocker()` accumulates reasons instead of
+  early-returning, and states the ceiling verbatim with *"Do NOT report 8"*, so a
+  `short` of 50 is never read as 50 assignable instances. **No guard consumes
+  `worklist.csv`** — this changes the report, not the audit.
+- **Numbers that moved:** rows 75 → 155; total shortfall 97 → 233 (of M3's 50,
+  **18** reachable). **Numbers that did not:** `make guards` is still **44**,
+  group-level FAILs still **32**, corpus still 107 mutants, and every family
+  depth is unchanged (`M2-a 7`, `M2-e 2`, `M3-a 4`, `M3-e 4`). A wider report is
+  not a worse audit.
+- **Also established, and worth keeping:** `m2.cell` `ok`, `m3.cell` FAIL,
+  `m1.cell`/`m4.cell` `ok`; all 8 `m2.*` and all 8 `m3.*` instance guards are
+  red, as are 6 of 7 `m4.*`. And **only `choreo` emits
+  `raw/mutant_manifest.json`**, so every other lane's family depth is reported by
+  `worklist.csv` and enforced by nothing.
+- **Still open:** the `kind: "plan"` detail (below), and M3's cell — a design
+  call, not a work item.
+
 ## 2026-09-19 (final)
 
 - **`corpus.declared-files`: 46 → 44. The v2.1 declaration is now a measurement,
