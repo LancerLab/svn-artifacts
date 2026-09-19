@@ -147,3 +147,20 @@ Keep each entry to: what changed, what number moved, what it proved.
   negative-controlled.
 - Established that `MINIMAL_SET["M3"]` names only 2 categories, so M3's cell is
   64 declared but far fewer reachable.
+
+## 2026-09-19
+
+- Repaired `mutants.edits-apply` after the benchmark-case migration for the
+  shared-memory compiler fix (croqtile PR #23): 5 operators on matmul case 11
+  (`M2.s2.mm11.tiles`, `M2.s3.mm11.swap`, `M2.13.mm11.affine`,
+  `M3.s1.mm11.ktile31`, `M3.s2.mm11.rhs1`) had literal `old` strings keyed to
+  the pre-migration source (`=> local`, `[1, 32, 32]` tiling). Edit strings
+  re-sited onto the migrated source (`=> shared`, `[32, 32, 32]`), mutation
+  semantics unchanged.
+- Corpus 107 -> 107 mutants (regenerated, not re-collected).
+- `make guards`: 47 findings (was 50 on arrival; handoff baseline was 44 —
+  the +6 predate this sitting and are upstream churn since the handoff).
+  New from this sitting: none.
+- `make test-guards`: 27 controls pass. GREEN.
+- Not from this sitting, flagged for the coordinator: upstream baseline drift
+  44 -> 47 between handoff issuance and this sitting.

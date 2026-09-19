@@ -952,13 +952,13 @@ M2 = [
     _m("M2.s3.mm11.swap", "M2", 3, "dim-mismatch", "matmul",
        "11_dynamic_32xSx768_768x768_32xSx768",
        "operand swap: DMA the wrong tensor into the lhs tile",
-       ("l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile) => local;",
-        "l1_a = dma.copy rhs.chunkat(p#q, m_tile, k_tile) => local;")),
+       ("l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile) => shared;",
+        "l1_a = dma.copy rhs.chunkat(p#q, m_tile, k_tile) => shared;")),
     _m("M2.s2.mm11.tiles", "M2", 2, "dim-mismatch", "matmul",
        "11_dynamic_32xSx768_768x768_32xSx768",
        "tile count disagrees with the tiled extent on the n dimension",
-       ("with index = {m_tile, n_tile, k_tile} in [1, 32, 32] {",
-        "with index = {m_tile, n_tile, k_tile} in [1, 33, 32] {")),
+       ("with index = {m_tile, n_tile, k_tile} in [32, 32, 32] {",
+        "with index = {m_tile, n_tile, k_tile} in [32, 33, 32] {")),
     _m("M2.s4.mm11.local", "M2", 4, "wrong-shape", "matmul",
        "11_dynamic_32xSx768_768x768_32xSx768",
        "local accumulator declared with a wrong middle extent",
@@ -1083,13 +1083,13 @@ M3.append(_m("M3.s1.mm11.ktile31", "M3", 1, "dim-mismatch", "matmul",
              "K = span(2)/31 is not statically atom-divisible, so the "
              "divisibility obligation never reaches runtime -- the dynamic "
              "twin of M3.s1.mm1.atom*6, which is caught statically",
-             ("with index = {m_tile, n_tile, k_tile} in [1, 32, 32] {",
-              "with index = {m_tile, n_tile, k_tile} in [1, 32, 31] {")))
+             ("with index = {m_tile, n_tile, k_tile} in [32, 32, 32] {",
+              "with index = {m_tile, n_tile, k_tile} in [32, 32, 31] {")))
 M3.append(_m("M3.s2.mm11.rhs1", "M3", 2, "stride", "matmul",
              "11_dynamic_32xSx768_768x768_32xSx768",
              "misaligned tensor-core base: rhs DMA chunk offset by 1",
-             ("l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => local;",
-              "l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile + 1) => local;")))
+             ("l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => shared;",
+              "l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile + 1) => shared;")))
 M3.append(_m("M3.s3.mm11.local8", "M3", 3, "dim-mismatch", "matmul",
              "11_dynamic_32xSx768_768x768_32xSx768",
              "per-thread accumulator tile 8x over the per-thread budget",
@@ -1497,8 +1497,8 @@ M2 += [
     _m("M2.13.mm11.affine", "M2", 13, "wrong-shape", "matmul",
        "11_dynamic_32xSx768_768x768_32xSx768",
        "shape-equal / layout-unequal on the dynamic operand pair",
-       ("l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => local;",
-        "l1_b = dma.transp<1,0> rhs.chunkat(n_tile, k_tile) => local;")),
+       ("l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => shared;",
+        "l1_b = dma.transp<1,0> rhs.chunkat(n_tile, k_tile) => shared;")),
 ]
 
 # ---- M2.14 contraction-dim mismatch masked by a square operand ------------

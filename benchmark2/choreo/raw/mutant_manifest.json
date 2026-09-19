@@ -2664,14 +2664,14 @@
    "level": 1,
    "base_path": "benchmark/choreo/matmul/11_dynamic_32xSx768_768x768_32xSx768.co",
    "mutant_path": "benchmark2/choreo/mutants/M2/matmul/M2.19.mm11.symdma__11_dynamic_32xSx768_768x768_32xSx768.co",
-   "kernel_hash": "cb0af43da815",
-   "mutant_hash": "a91664d35db7",
+   "kernel_hash": "65eb76a26d75",
+   "mutant_hash": "3d611264220e",
    "settings_hash": "ba2aa2b58125",
    "local_headers": [
     "common.hpp"
    ],
    "desc": "DMA source/destination disagreement where the extent is symbolic, so the hard error at semacheck.cpp:1140-1145 is escaped",
-   "diff": "--- a/matmul/11_dynamic_32xSx768_768x768_32xSx768.co\n+++ b/matmul/11_dynamic_32xSx768_768x768_32xSx768.co\n@@ -21,5 +21,5 @@\n           }\n         }\n-        dma.copy l1_out => output.chunkat(p#q, m_tile, n_tile);\n+        dma.copy l1_out => output.chunkat(p#q, m_tile + 1, n_tile);\n       }\n     }\n",
+   "diff": "--- a/matmul/11_dynamic_32xSx768_768x768_32xSx768.co\n+++ b/matmul/11_dynamic_32xSx768_768x768_32xSx768.co\n@@ -22,5 +22,5 @@\n           }\n         }\n-        dma.copy l1_out => output.chunkat(p#q, m_tile, n_tile);\n+        dma.copy l1_out => output.chunkat(p#q, m_tile + 1, n_tile);\n       }\n     }\n",
    "spec_version": "v2.1",
    "spec_id": "M2.19",
    "path_class": "P3",
