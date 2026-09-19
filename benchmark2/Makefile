@@ -148,8 +148,26 @@ test-guards:
 .PHONY: dashboard
 OUT ?= $(PAPER)/DASHBOARD.md
 OUT_WORKLIST ?= $(PAPER)/plan/m1-m4-handoff/worklist.csv
+OUT_FILL ?= $(PAPER)/plan/m1-m4-handoff/FILL-DASHBOARD.md
 dashboard:
 	$(PY) $(ROOT)/schema/gen_dashboard.py $(OUT)
+
+# ---------------------------------------------------------------------------
+# Fill dashboard -- planned vs implemented, per (lane, class, family).
+#
+# `dashboard` answers "which classes are behind". This answers the next
+# question down -- which family, in which lane, is short and by how much --
+# which is what decides whether the next hour goes into an operator or into a
+# kernel. It reads `worklist.csv` and the taxonomy's scope model, so it cannot
+# disagree with `dashboard` about a lane's plan.
+#
+# Read-only. Regenerate after any corpus change; it is a projection, never a
+# hand-maintained table. Override with `make fill-dashboard
+# OUT_FILL=/some/path.md`.
+# ---------------------------------------------------------------------------
+.PHONY: fill-dashboard
+fill-dashboard:
+	$(PY) $(ROOT)/schema/gen_fill_dashboard.py $(OUT_WORKLIST) $(OUT_FILL)
 
 # ---------------------------------------------------------------------------
 # Worklist -- the per-family assignment sheet for a class handoff.
