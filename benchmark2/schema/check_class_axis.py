@@ -643,10 +643,12 @@ def g8_corpus_release() -> list[str]:
     field set of the file it points at.
 
     The declaration is PER FILE, not per lane, because `choreo`'s two files
-    genuinely differ -- its manifest is v2.1 and carries four of the five v2.1
-    fields, while `raw/e1_mutant_records.json` is still the v1 baseline. A
-    lane-level list averaged those into one false statement, which is what the
-    first version of this declaration did.
+    genuinely differ in KIND -- its manifest is a PLAN (it carries spec_id,
+    path_class, prohibition and spec_version, but a plan records the in-process
+    `admissible` and has no `applicable`), while `raw/e1_mutant_records.json`
+    is the RECORD output and carries all five fields. A lane-level list
+    averaged those into one false statement, which is what the first version of
+    this declaration did.
 
     A file may sit BELOW the lane's target release. That is real work, not a
     pass, so it is allowed only when `port` names it. A PARTIAL v2.1 port (the

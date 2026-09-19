@@ -872,8 +872,17 @@ def main():
     # longer reach the collector from any code path.
     spec_version = data.get("spec_version")
     man_by_id = {r["mutant_id"]: r for r in data["mutants"]}
+    # `applicable` is the RECORD's name for the per-mutant verdict, and it is one
+    # of the five fields of the v2.1 RECORD vocabulary that
+    # `schema/records.py:versioned_fields("mutant")` checks:
+    # (applicable, path_class, prohibition, spec_id, spec_version).
+    # The manifest is a PLAN and carries `admissible` instead, so `applicable`
+    # cannot be copied from it -- it is minted, exactly as collect.py:296 mints
+    # it into the collected output. Without it a raw corpus attains four of the
+    # five fields while stamping `spec_version: v2.1`, i.e. a partial port
+    # wearing a full-port label, which `corpus.declared-files` rightly rejects.
     V21_FIELDS = ("spec_id", "path_class", "prohibition", "admissible",
-                  "spec_admissible", "spec_version")
+                  "spec_admissible", "spec_version", "applicable")
 
     def stamp(row):
         """Add any missing v2.1 field from the manifest row. Idempotent."""
@@ -889,6 +898,15 @@ def main():
                     v = v or spec_version
                 if v is not None:
                     row[k] = v
+        # Minted, not copied: the manifest has no `applicable`. Same rule as
+        # collect.py:296 -- the per-MUTANT verdict if the run recorded one, else
+        # the SPEC's verdict. Never re-derived from the outcomes.
+        if row.get("applicable") is None:
+            v = row.get("admissible")
+            if v is None:
+                v = row.get("spec_admissible")
+            if v is not None:
+                row["applicable"] = v
         return row
 
     os.makedirs(a.workdir, exist_ok=True)

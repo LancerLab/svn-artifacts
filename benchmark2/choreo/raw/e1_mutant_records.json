@@ -76,7 +76,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -110,7 +111,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -147,7 +149,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -186,7 +189,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -225,7 +229,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -264,7 +269,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -303,7 +309,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -342,7 +349,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -376,7 +384,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -413,7 +422,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -452,7 +462,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -491,7 +502,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -530,7 +542,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -569,7 +582,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -608,7 +622,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -647,7 +662,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -686,7 +702,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -721,7 +738,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -756,7 +774,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -797,7 +816,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -832,7 +852,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -867,7 +888,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -902,7 +924,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -943,7 +966,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -980,7 +1004,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1019,7 +1044,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1058,7 +1084,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1092,7 +1119,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1126,7 +1154,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1165,7 +1194,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1204,7 +1234,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1243,7 +1274,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1282,7 +1314,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1321,7 +1354,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1355,7 +1389,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1394,7 +1429,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1428,7 +1464,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1462,7 +1499,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1496,7 +1534,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1535,7 +1574,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1574,7 +1614,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1613,7 +1654,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1654,7 +1696,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1695,7 +1738,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1735,7 +1779,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1774,7 +1819,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1813,7 +1859,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1852,7 +1899,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1892,7 +1940,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1931,7 +1980,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -1970,7 +2020,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2004,7 +2055,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2043,7 +2095,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2084,7 +2137,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2118,7 +2172,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2152,7 +2207,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2186,7 +2242,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2223,7 +2280,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2262,7 +2320,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2301,7 +2360,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2336,7 +2396,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2371,7 +2432,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2406,7 +2468,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2447,7 +2510,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2488,7 +2552,8 @@
    "prohibition": "observation",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -2529,7 +2594,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2564,7 +2630,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2599,7 +2666,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2640,7 +2708,8 @@
    "prohibition": "absent",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -2681,7 +2750,8 @@
    "prohibition": "absent",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -2721,7 +2791,8 @@
    "prohibition": "observation",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -2756,7 +2827,8 @@
    "prohibition": "observation",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -2790,7 +2862,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2829,7 +2902,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2868,7 +2942,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -2907,7 +2982,8 @@
    "prohibition": "absent",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -2946,7 +3022,8 @@
    "prohibition": "absent",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -2985,7 +3062,8 @@
    "prohibition": "observation",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -3020,7 +3098,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3055,7 +3134,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3090,7 +3170,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3125,7 +3206,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3166,7 +3248,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3201,7 +3284,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3235,7 +3319,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3269,7 +3354,8 @@
    "prohibition": "absent",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -3308,7 +3394,8 @@
    "prohibition": "absent",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -3342,7 +3429,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3376,7 +3464,8 @@
    "prohibition": "absent",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -3410,7 +3499,8 @@
    "prohibition": "absent",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -3444,7 +3534,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3478,7 +3569,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3512,7 +3604,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3551,7 +3644,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3585,7 +3679,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3620,7 +3715,8 @@
    "prohibition": "absent",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -3655,7 +3751,8 @@
    "prohibition": "absent",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -3694,7 +3791,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3728,7 +3826,8 @@
    "prohibition": "absent",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -3762,7 +3861,8 @@
    "prohibition": "absent",
    "admissible": false,
    "spec_admissible": false,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": false
   },
   {
    "toolchain": "choreo",
@@ -3796,7 +3896,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3830,7 +3931,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3864,7 +3966,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3898,7 +4001,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3937,7 +4041,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -3976,7 +4081,8 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   },
   {
    "toolchain": "choreo",
@@ -4010,7 +4116,9 @@
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,
-   "spec_version": "v2.1"
+   "spec_version": "v2.1",
+   "applicable": true
   }
- ]
+ ],
+ "stamped": true
 }

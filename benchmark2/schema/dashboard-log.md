@@ -7,6 +7,36 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ---
 
+## 2026-09-19 (final)
+
+- **`corpus.declared-files`: 46 → 44. The v2.1 declaration is now a measurement,
+  not a label.** `run_e1.py`'s `V21_FIELDS` stopped at `spec_version` and never
+  minted `applicable` — the fifth field of the *record* vocabulary
+  (`records.versioned_fields("mutant")`), and the one field the manifest (a
+  PLAN) cannot supply, because a plan carries the in-process `admissible`
+  instead. So `996087b`'s regenerated corpus held four of five fields while
+  stamping `spec_version: v2.1`: a partial port wearing a full-port label, which
+  is exactly what the gate refuses. `stamp()` now mints `applicable` from the
+  per-mutant `admissible`, else the spec's `spec_admissible` — the rule
+  `collect.py:296` already used — and `python3 choreo/run_e1.py --stamp-only`
+  backfilled all 107 rows. CPU only; that mode re-derives nothing.
+  **Numbers that moved:** findings 46 → 44, `corpus.declared-files` details
+  `3 → 1`. Group-level FAILs stay **32** — the group lost two details and kept a
+  third, so a group delta need not show up in the group *count* either.
+  **Proved:** reading the file rather than the label — 107/107 rows carry
+  `applicable`, it agrees with the fallback rule on all 107, and **every
+  non-v2.1 field is identical to a pre-edit copy** (zero verdict drift), so no
+  M2/M3 number can have moved. Also proved that relabelling alone cannot work: a
+  stamped partial port fails *whichever* release it declares.
+  **Also fixed:** the axis note claimed the manifest carries its four plan fields
+  on "all 170 mutants" — the measured count is **107**. A wrong literal, in the
+  note that documents the measurement.
+  **Still open, pre-existing, owner's call:** the gate cannot read
+  `choreo/raw/mutant_manifest.json`, because `g8_corpus_release` only understands
+  `kind: "records"` while the manifest is honestly declared `kind: "plan"`. That
+  is the one remaining detail in the group. Teaching the gate the `plan` shape,
+  or dropping the plan from `corpus_paths`, would take the baseline to 43.
+
 ## 2026-09-19 (later)
 
 - **`996087b` closed five `mutants.edits-apply` findings and opened two

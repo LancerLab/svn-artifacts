@@ -143,7 +143,7 @@
         "results/choreo/stats.json"
       ],
       "spec_version": {
-        "port": "Regenerate raw/e1_mutant_records.json from the v2.1 manifest (run_e1.py --strict-policy), then collect.py and stats.py.",
+        "port": "raw/e1_mutant_records.json holds v2.1 as of 996087b plus the `applicable` mint in run_e1.py `stamp()`; what remains is collect.py and stats.py over it, which is what carries `applicable` into results/choreo/mutant.jsonl.",
         "corpus": "v2.1",
         "corpus_paths": [
           {
@@ -160,8 +160,14 @@
           {
             "path": "choreo/raw/e1_mutant_records.json",
             "kind": "records",
-            "release": "v1",
-            "v21_fields_present": []
+            "release": "v2.1",
+            "v21_fields_present": [
+              "applicable",
+              "path_class",
+              "prohibition",
+              "spec_id",
+              "spec_version"
+            ]
           },
           {
             "path": "results/choreo/mutant.jsonl",
@@ -170,7 +176,7 @@
             "v21_fields_present": []
           }
         ],
-        "note": "This lane TARGETS v2.1 and does not hold one yet. Three files, three honest states. (1) raw/mutant_manifest.json is the PLAN: it carries spec_id, path_class, prohibition and spec_version on all 170 mutants. It does not carry `applicable` because a plan records the in-process Python attribute `admissible` -- and `admissible` is the per-mutant verdict while `spec_admissible` is the spec's. A plan is not a record. (2) raw/e1_mutant_records.json is the RAW run output (run_e1.py) and is v1. (3) results/choreo/mutant.jsonl is the COLLECTED output and is also v1, because it was collected 2026-09-10, one day before the vocabulary landed. `applicable` is minted by collect.py itself: collect.py:296 reads r.get('admissible', r.get('spec_admissible')) and serializes it under the name `applicable`, precisely so a reader cannot confuse it with the in-process flag. So `applicable` is not a field any corpus is missing -- it is a field only the COLLECTOR can write, and it appears in results/choreo/mutant.jsonl the moment the pipeline is re-run. Until then no lane holds a v2.1 mutant corpus; that is the outstanding port, and it is why the release label alone cannot certify one."
+        "note": "This lane TARGETS v2.1 and holds one on its raw run output. Three files, three honest states. (1) raw/mutant_manifest.json is the PLAN: it carries spec_id, path_class, prohibition and spec_version on all 107 mutants. It does not carry `applicable` because a plan records the in-process Python attribute `admissible` -- and `admissible` is the per-mutant verdict while `spec_admissible` is the spec's. A plan is not a record. (2) raw/e1_mutant_records.json is the RAW run output (run_e1.py). 996087b regenerated it and stamped `spec_version: v2.1`, but run_e1.py's V21_FIELDS stopped at spec_version and never minted `applicable`, so the file held four of the five RECORD fields under a full-port label -- the partial port `corpus.declared-files` rightly rejects. run_e1.py now mints `applicable` in `stamp()` the same way collect.py:296 does (the per-mutant `admissible`, else the spec's), and `--stamp-only` backfilled all 107 rows with zero verdict drift: five of five fields, verified by reading the file rather than by trusting the label. (3) results/choreo/mutant.jsonl is the COLLECTED output and is still v1 -- it holds no spec_version field at all, because it was collected 2026-09-10, one day before the vocabulary landed. The port is therefore done on the raw side and outstanding on the collected side: collect.py and stats.py still have to be re-run before any figure is read from results/choreo/mutant.jsonl at v2.1."
       },
       "owns": [
         "S1",
