@@ -2,13 +2,13 @@
  "toolchain": "choreo",
  "spec_version": "v2.1",
  "summary": {
-  "n_specs": 72,
+  "n_specs": 73,
   "status_counts": {
-   "implemented": 49,
+   "implemented": 50,
    "pending": 23
   },
   "admissible_counts": {
-   "true": 44,
+   "true": 45,
    "false": 28
   },
   "prohibition_counts": {
@@ -17,7 +17,7 @@
    "observation": 3
   },
   "path_counts": {
-   "P1": 49,
+   "P1": 50,
    "P3": 10,
    "P2": 5,
    "P4": 1,
@@ -72,7 +72,8 @@
    "M4.1",
    "M4.2",
    "M4.3",
-   "M4.5"
+   "M4.5",
+   "M4.6"
   ],
   "admissible": [
    "M1.1",
@@ -118,7 +119,8 @@
    "M4.1",
    "M4.2",
    "M4.3",
-   "M4.5"
+   "M4.5",
+   "M4.6"
   ],
   "pending": [],
   "unwritten": [
@@ -213,10 +215,10 @@
    ]
   },
   "n_operators": {
-   "M1": 73,
+   "M1": 60,
    "M2": 64,
-   "M3": 52,
-   "M4": 40
+   "M3": 53,
+   "M4": 53
   }
  },
  "specs": [
@@ -392,23 +394,23 @@
   },
   {
    "spec_id": "M1.6",
-   "cls": "M1",
+   "cls": "M4",
    "path": "P1",
    "admissible": false,
    "prohibition": "absent",
    "status": "implemented",
    "desc": "zero-stride / empty range",
-   "note": "noop by construction -- there is no prohibition to enforce, because the range is correctly empty. Retained for the miss audit, excluded from the admissible denominator"
+   "note": "class is M4, not M1: the edit is on an M1 index surface but the defect is M4's 'empty space', so the operator counts in M4's cell (family M4-d) while the spec_id keeps its M1 spelling. noop by construction -- there is no prohibition to enforce, because the range is correctly empty. Retained for the miss audit, excluded from the admissible denominator"
   },
   {
    "spec_id": "M1.7",
-   "cls": "M1",
+   "cls": "M4",
    "path": "P1",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
    "desc": "reversed loop bound (upper < lower) -> overrun instead of empty",
-   "note": ""
+   "note": "class is M4, not M1: same re-homing as M1.6 -- the defect is M4's 'reversed bound' (family M4-e), so the operator must not be counted in M1's cell"
   },
   {
    "spec_id": "M1.8",
@@ -907,7 +909,7 @@
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
-   "desc": "parallelby bound mutated to 0 or negative",
+   "desc": "parallelby bound mutated to 0 (a legal but empty iteration space)",
    "note": ""
   },
   {
@@ -939,6 +941,16 @@
    "status": "implemented",
    "desc": "stride/step = 0 in an iteration",
    "note": ""
+  },
+  {
+   "spec_id": "M4.6",
+   "cls": "M4",
+   "path": "P1",
+   "admissible": true,
+   "prohibition": "",
+   "status": "implemented",
+   "desc": "parallelby bound mutated to negative -- invalid, so unlike an empty space it must be rejected",
+   "note": "split out of M4.2 so one operator is not evidence for two families: M4-a (zero bound) and M4-b (negative bound) have different oracle expectations, and while they shared a spec_id M4.2 was the sole realisation of M4-b and one of M4-a's two (defect D1)"
   }
  ]
 }

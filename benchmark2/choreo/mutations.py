@@ -89,7 +89,15 @@ MINIMAL_SET = {
     "M2": ["layer_normalization", "matmul", "concat", "conv2d", "relu",
            "softmax"],
     "M3": ["matmul", "conv2d"],
-    "M4": ["conv2d", "relu", "transpose"],
+    # layer_normalization and softmax are here because M1.6 (empty range /
+    # zero stride) is registered as class M4, and its instances live on those
+    # categories. Stage 1 of selection is a floor per (spec_id, category): a
+    # declared spec that produces NO instance in its own class is indistinguish-
+    # able from a forgotten spec, so the class must cover every category its
+    # specs are realisable on. Before the re-homing these 7 operators sat in
+    # M1's cell, where the categories were already covered -- which is exactly
+    # why the gap stayed invisible until `cls` became authoritative.
+    "M4": ["conv2d", "relu", "transpose", "layer_normalization", "softmax"],
 }
 
 # Level-2 widening order (specs §5), applied only after level-1 is green.
@@ -161,15 +169,22 @@ SPEC_REGISTRY = {
     "M1.4": _spec("M1", "P1", "transposed / non-contiguous stride",
                   status="implemented"),
     "M1.5": _spec("M1", "P1", "offset-view overrun", status="implemented"),
-    "M1.6": _spec("M1", "P1", "zero-stride / empty range",
+    "M1.6": _spec("M4", "P1", "zero-stride / empty range",
                   admissible=False, prohibition="absent",
                   status="implemented",
-                  note="noop by construction -- there is no prohibition to "
+                  note="class is M4, not M1: the edit is on an M1 index "
+                       "surface but the defect is M4's 'empty space', so "
+                       "the operator counts in M4's cell (family M4-d) "
+                       "while the spec_id keeps its M1 spelling. "
+                       "noop by construction -- there is no prohibition to "
                        "enforce, because the range is correctly empty. "
                        "Retained for the miss audit, excluded from the "
                        "admissible denominator"),
-    "M1.7": _spec("M1", "P1", "reversed loop bound (upper < lower) -> overrun "
-                              "instead of empty"),
+    "M1.7": _spec("M4", "P1", "reversed loop bound (upper < lower) -> overrun "
+                              "instead of empty",
+                  note="class is M4, not M1: same re-homing as M1.6 -- the "
+                       "defect is M4's 'reversed bound' (family M4-e), so "
+                       "the operator must not be counted in M1's cell"),
     "M1.8": _spec("M1", "P1", "stride scaling (stride x 2)"),
     "M1.9": _spec("M1", "P1", "base offset applied WITHOUT shrinking the extent"),
     "M1.10": _spec("M1", "P1", "tile-boundary rounding (floor vs ceil on the "
@@ -381,7 +396,16 @@ SPEC_REGISTRY = {
     # ---- M4 iteration-validity (5 specs, specs §9.1) --------------------
     "M4.1": _spec("M4", "P1", "with-in mdspan dim mutated to 0 -- control",
                   note="LoopBound, forced to ENTRY cost, enabled 11/11"),
-    "M4.2": _spec("M4", "P1", "parallelby bound mutated to 0 or negative"),
+    "M4.2": _spec("M4", "P1", "parallelby bound mutated to 0 (a legal but "
+                           "empty iteration space)", status="implemented"),
+    "M4.6": _spec("M4", "P1", "parallelby bound mutated to negative -- "
+                           "invalid, so unlike an empty space it must be "
+                           "rejected", status="implemented",
+                  note="split out of M4.2 so one operator is not evidence for "
+                       "two families: M4-a (zero bound) and M4-b (negative "
+                       "bound) have different oracle expectations, and while "
+                       "they shared a spec_id M4.2 was the sole realisation "
+                       "of M4-b and one of M4-a's two (defect D1)"),
     "M4.3": _spec("M4", "P1", "parallelby bound symbolic and zero only at "
                               "runtime"),
     "M4.4": _spec("M4", "P1", "bound > 0 but the iteration space is empty "
@@ -479,7 +503,18 @@ SPEC_REGISTRY = {
 # corpus stays attributable without rewriting 117 call sites.
 V1_SPEC_ID = {
     ("M1", 1): "M1.1", ("M1", 2): "M1.2", ("M1", 3): "M1.3",
-    ("M1", 4): "M1.4", ("M1", 5): "M1.5", ("M1", 6): "M1.6",
+    ("M1", 4): "M1.4", ("M1", 5): "M1.5",
+    # v1 M1 s6/s7 are re-homed to class M4. The edit is on an M1 index
+    # surface, but the defect is M4's bound semantics ("empty space",
+    # "reversed bound"), so their operators must be counted in M4's cell --
+    # cf. `families.M4-d` / `families.M4-e` and `reassigned` in
+    # method-taxonomy.json. This map is keyed on the cls ARGUMENT, which is
+    # exactly why the key moves to M4 while the spec_id keeps its M1
+    # spelling. Leaving the key at ("M1", 6) would make the 13 operators
+    # fall through to the identity fallback "M4.6", which is now the
+    # negative-bound spec: one operator would become evidence for the wrong
+    # family.
+    ("M4", 6): "M1.6", ("M4", 7): "M1.7",
     ("M2", 1): "M2.1", ("M2", 2): "M2.2", ("M2", 3): "M2.3",
     ("M2", 4): "M2.4", ("M2", 5): "M2.5",
     ("M3", 1): "M3.1", ("M3", 2): "M3.6", ("M3", 3): "M3.17",
@@ -599,11 +634,11 @@ M1 = [
        "1_bert_32x512x768_768_768",
        "offset view: advance the chunked parallel index past the last block",
        ("lhs.at(p#n, j, k)", "lhs.at(p#n + 1, j, k)")),
-    _m("M1.s6.ln1.empty", "M1", 6, "stride", "layer_normalization",
+    _m("M1.s6.ln1.empty", "M4", 6, "stride", "layer_normalization",
        "1_bert_32x512x768_768_768",
        "empty iteration range (iteration-validity residue)",
        ("foreach {j, k} in [J, K]", "foreach {j, k} in [J, 0]")),
-    _m("M1.s6.ln1.zerostride", "M1", 6, "stride", "layer_normalization",
+    _m("M1.s6.ln1.zerostride", "M4", 6, "stride", "layer_normalization",
        "1_bert_32x512x768_768_768",
        "zero-stride access: collapse the varying k index to a constant",
        ("lhs.at(p#n, j, k)", "lhs.at(p#n, j, 0)")),
@@ -625,7 +660,7 @@ M1 = [
        "3_attention_32xNx512x64_64_64",
        "dropped boundary guard: advance a dynamic loop index past its extent",
        ("lhs.at(p#n, j, k, l)", "lhs.at(p#n, j + 1, k, l)")),
-    _m("M1.s6.ln3.empty", "M1", 6, "stride", "layer_normalization",
+    _m("M1.s6.ln3.empty", "M4", 6, "stride", "layer_normalization",
        "3_attention_32xNx512x64_64_64",
        "empty reduction range over the dynamic extent",
        ("foreach l in [L]", "foreach l in [0]")),
@@ -633,7 +668,7 @@ M1 = [
        "3_attention_32xNx512x64_64_64",
        "offset view on the output chunk index",
        ("out.at(p#n, j, k, l)", "out.at(p#n + 1, j, k, l)")),
-    _m("M1.s6.ln3.overrange", "M1", 6, "stride", "layer_normalization",
+    _m("M1.s6.ln3.overrange", "M4", 6, "stride", "layer_normalization",
        "3_attention_32xNx512x64_64_64",
        "iteration range one past the symbolic extent",
        ("foreach {j, k} in [N0, K]", "foreach {j, k} in [N0, K + 1]")),
@@ -647,7 +682,7 @@ M1 = [
        "1_bert_32x512x768_32x512x768",
        "negative row index into the shared output tile",
        ("l1_out.at(0, j, k)", "l1_out.at(0, j - 1, k)")),
-    _m("M1.s6.sm1.empty", "M1", 6, "stride", "softmax",
+    _m("M1.s6.sm1.empty", "M4", 6, "stride", "softmax",
        "1_bert_32x512x768_32x512x768",
        "empty reduction range",
        ("foreach {k} in [l1_input.span(2)]", "foreach {k} in [0]")),
@@ -656,7 +691,7 @@ M1 = [
        "offset write-back chunk overruns the output tensor",
        ("dma.copy l1_out => output.chunkat(i#p, q, _)",
         "dma.copy l1_out => output.chunkat(i#p + 1, q, _)")),
-    _m("M1.s6.sm1.zerostride", "M1", 6, "stride", "softmax",
+    _m("M1.s6.sm1.zerostride", "M4", 6, "stride", "softmax",
        "1_bert_32x512x768_32x512x768",
        "zero-stride access: collapse the reduction index",
        ("l1_input.data.at(0, j, k)", "l1_input.data.at(0, j, 0)")),
@@ -670,15 +705,15 @@ M1 = [
        "11_dynamic_32xSx768_32xSx768",
        "offset view on the output row index",
        ("l1_out.at(0, j, k)", "l1_out.at(0, j + 1, k)")),
-    _m("M1.s6.sm11.empty", "M1", 6, "stride", "softmax",
+    _m("M1.s6.sm11.empty", "M4", 6, "stride", "softmax",
        "11_dynamic_32xSx768_32xSx768",
        "empty reduction range",
        ("foreach {k} in [l1_input.span(2)]", "foreach {k} in [0]")),
     _m("M1.s5.sm11.store", "M1", 5, "oob", "softmax",
        "11_dynamic_32xSx768_32xSx768",
        "offset write-back chunk overruns the output tensor",
-       ("dma.copy l1_out => output.chunkat(i#p, _, _)",
-        "dma.copy l1_out => output.chunkat(i#p + 1, _, _)")),
+       ("dma.copy l1_out => output.chunkat(i#p, q, _)",
+        "dma.copy l1_out => output.chunkat(i#p + 1, q, _)")),
     _m("M1.s1.sm11.mask", "M1", 1, "oob", "softmax",
        "11_dynamic_32xSx768_32xSx768",
        "dropped boundary guard on the row loop over the dynamic extent",
@@ -693,7 +728,7 @@ M1 = [
        "1_bert_32x512x768_32x512x768",
        "negative index on the shared output tile",
        ("out_s.at(0, 0, q, 0) =", "out_s.at(0, 0, q - 1, 0) =")),
-    _m("M1.s6.rl1.empty", "M1", 6, "stride", "relu",
+    _m("M1.s6.rl1.empty", "M4", 6, "stride", "relu",
        "1_bert_32x512x768_32x512x768",
        "empty tile range on the innermost foreach",
        ("foreach {i, j, k} in [I / #p, J, 12]", "foreach {i, j, k} in [I / #p, J, 0]")),
@@ -720,7 +755,7 @@ M1 = [
        "11_dynamic_32xSx768_32xSx768",
        "negative index on the shared output tile",
        ("out_s.at(0, 0, q, 0) =", "out_s.at(0, 0, q - 1, 0) =")),
-    _m("M1.s6.rl11.empty", "M1", 6, "stride", "relu",
+    _m("M1.s6.rl11.empty", "M4", 6, "stride", "relu",
        "11_dynamic_32xSx768_32xSx768",
        "empty tile range on the innermost foreach",
        ("foreach {i, j, k} in [I / #p, NUM_HEADS, 12]",
@@ -744,7 +779,7 @@ M1 = [
        "1_bert_32x512x768_32x768x512",
        "negative index on the shared destination tile",
        ("os.at(0, q, 0)", "os.at(0, q - 1, 0)")),
-    _m("M1.s6.tp1.empty", "M1", 6, "stride", "transpose",
+    _m("M1.s6.tp1.empty", "M4", 6, "stride", "transpose",
        "1_bert_32x512x768_32x768x512",
        "empty inner tile range",
        ("foreach {y, z} in [512, 12]", "foreach {y, z} in [512, 0]")),
@@ -775,7 +810,7 @@ M1 = [
        "11_dynamic_32xSx768_32x768xS",
        "negative index on the shared destination tile",
        ("os.at(0, q, 0)", "os.at(0, q - 1, 0)")),
-    _m("M1.s6.tp11.empty", "M1", 6, "stride", "transpose",
+    _m("M1.s6.tp11.empty", "M4", 6, "stride", "transpose",
        "11_dynamic_32xSx768_32x768xS",
        "empty inner tile range over the dynamic extent",
        ("foreach {y, z} in [seq_len, 12]", "foreach {y, z} in [seq_len, 0]")),
@@ -922,8 +957,8 @@ M2 = [
     _m("M2.s2.mm11.tiles", "M2", 2, "dim-mismatch", "matmul",
        "11_dynamic_32xSx768_768x768_32xSx768",
        "tile count disagrees with the tiled extent on the n dimension",
-       ("with index = {m_tile, n_tile, k_tile} in [1, 6, 6] {",
-        "with index = {m_tile, n_tile, k_tile} in [1, 6, 7] {")),
+       ("with index = {m_tile, n_tile, k_tile} in [1, 32, 32] {",
+        "with index = {m_tile, n_tile, k_tile} in [1, 33, 32] {")),
     _m("M2.s4.mm11.local", "M2", 4, "wrong-shape", "matmul",
        "11_dynamic_32xSx768_768x768_32xSx768",
        "local accumulator declared with a wrong middle extent",
@@ -1124,14 +1159,16 @@ for _cin in (512, 1024):
     M3.append(_m(f"M3.s3.cv2.shared{_cin}", "M3", 3, "dim-mismatch", "conv2d", _C2,
                  f"full weight matrix 32 x {_cin} f32 = {32 * _cin * 4 // 1024} KB held in "
                  f"shared, over the 48 KB device limit",
-                 ("f32 [32, 128, 1, 1] w", f"f32 [32, {_cin}, 1, 1] w"),
-                 ("auto w = choreo::make_spandata<choreo::f32>(32, 128, 1, 1);",
-                  f"auto w = choreo::make_spandata<choreo::f32>(32, {_cin}, 1, 1);")))
+                 ("f32 [32, 128, 1, 1] w", f"f32 [32, {_cin}, 1, 1] w")))
 
-ALL = {"M1": M1, "M2": M2, "M3": M3}
+# `ALL` is assembled once every class list exists -- see the grouping pass
+# after `M4`. It is deliberately NOT built here, because the class a mutant
+# counts in is `Mut.cls`, not the list it happens to be declared in, and the
+# two disagree for the 13 re-homed M1.6/M1.7 operators.
 
 
 def transforms_for(cls):
+    """The operators that count in `cls`'s cell. `ALL` is built after M4."""
     return ALL[cls]
 
 
@@ -1164,13 +1201,13 @@ def categories_for(cls, level2=False):
 
 # ---- M1.7 reversed loop bound -> overrun, not empty -----------------------
 M1 += [
-    _m("M1.7.rl1.revbound", "M1", 7, "stride", "relu",
+    _m("M1.7.rl1.revbound", "M4", 7, "stride", "relu",
        "1_bert_32x512x768_32x512x768",
        "reversed loop extent: the outer takes the innermost bound, so the "
        "tile index overruns instead of the tail being correctly empty",
        ("foreach {i, j, k} in [I / #p, J, 12]",
         "foreach {i, j, k} in [12, J, I / #p]")),
-    _m("M1.7.tp11.revbound", "M1", 7, "stride", "transpose",
+    _m("M1.7.tp11.revbound", "M4", 7, "stride", "transpose",
        "11_dynamic_32xSx768_32x768xS",
        "reversed loop extent on the dynamic inner tile",
        ("foreach {y, z} in [seq_len, 12]", "foreach {y, z} in [12, seq_len]")),
@@ -1284,8 +1321,8 @@ M1 += [
     _m("M1.14.sm11.store", "M1", 14, "oob", "softmax",
        "11_dynamic_32xSx768_32xSx768",
        "tile-coordinate overrun on the dynamic write-back chunk",
-       ("dma.copy l1_out => output.chunkat(i#p, _, _)",
-        "dma.copy l1_out => output.chunkat(i#p + 1, _, _)")),
+       ("dma.copy l1_out => output.chunkat(i#p, q, _)",
+        "dma.copy l1_out => output.chunkat(i#p + 1, q, _)")),
     _m("M1.14.rl1.load", "M1", 14, "oob", "relu",
        "1_bert_32x512x768_32x512x768",
        "tile-coordinate overrun on the async DMA source chunk",
@@ -1522,6 +1559,21 @@ M2 += [
 # ---- M3.14 linear .copy with a dim >= 2^24 -- the check is ABSENT ---------
 # gpu_adapt.hpp:320 `// linear copy` ... `// omitted`. The other six cells of
 # the DMA matrix call CheckDimSize; this one does not (defect F1). P3.
+#
+# M3-b is the ONLY M3 family whose budget is not already exhausted, and P3
+# gives ONE instance per (spec x category) cell (`ceiling()` returns N_CELLS,
+# not N_REALISATIONS, when `needs_rtc_curve` is false). So the family's whole
+# remaining headroom is "the F1 cell on M3's second allowed category":
+#
+#   M3.14 x {matmul, conv2d} + M3.15 x {conv2d} = 3, and cat_used["conv2d"]
+#   is then 2 == N_REALISATIONS, which closes the family.
+#
+# The ceiling is 3, not 8, and that is a fact about the suite rather than
+# about this file: `dma.pad` (M3.15) appears in conv2d and nowhere else, and
+# MINIMAL_SET["M3"] is {matmul, conv2d}, so `kernel_component = 4` cannot be
+# reached in M3 by any amount of operator writing. The two realisations below
+# are the same missing CheckDimSize reached through the im2col path and the
+# plain-tile path respectively -- one defect, two lowering entry points.
 M3 += [
     _m("M3.14.mm1.linearcopy", "M3", 14, "dim-mismatch", "matmul",
        "1_bert_32x512x768_768x768_32x512x768",
@@ -1529,6 +1581,14 @@ M3 += [
        "DMA-matrix cell that carries no CheckDimSize call",
        ("l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile) => local;",
         "l1_a = dma.copy lhs.chunkat(p#q, m_tile, 16777216) => local;")),
+    _m("M3.14.cv1.linearcopy", "M3", 14, "dim-mismatch", "conv2d",
+       _C1,
+       "same absent CheckDimSize cell reached through the im2col linear copy: "
+       "the K-tile index is a 2^24 stride into a tensor whose K extent is 512",
+       ("l1_A = dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo)"
+        ".chunkat(kt, q, _).span_as(8, M/#q) => local;",
+        "l1_A = dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo)"
+        ".chunkat(16777216, q, _).span_as(8, M/#q) => local;")),
 ]
 
 # ---- M3.15 .pad with a dim >= 2^24 -- the pad path never checks -----------
@@ -1626,9 +1686,10 @@ M4 += [
        "parallelby bound mutated to 0: a legal empty iteration space that "
        "still carries the whole body's obligations",
        ("parallel q by 8  {", "parallel q by 0  {")),
-    _m("M4.2.cv1.negative", "M4", 2, "stride", "conv2d",
-       _C1, "parallelby bound mutated to negative",
-       ("parallel p by 2  {", "parallel p by -2  {")),
+    _m("M4.6.cv1.negative", "M4", 2, "stride", "conv2d",
+       _C1, "parallelby bound mutated to negative -- an invalid bound that "
+            "must be rejected, unlike the legal-empty M4.2 zero cases",
+       ("parallel p by 2  {", "parallel p by -2  {"), spec_id="M4.6"),
 ]
 
 M4 += [
@@ -1725,7 +1786,9 @@ M4 += [
 ]
 
 M4 += [
-    # M4.2 -- a parallel-by bound mutated to 0 or negative.
+    # M4.2 -- a parallel-by bound mutated to 0. ZERO ONLY: the negative cases
+    # live under M4.6, because "the space is legal but empty" and "the bound is
+    # invalid" are different defects with different oracle expectations.
     _m("M4.2.cv11.zero", "M4", 2, "stride", "conv2d",
        "11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1",
        "parallelby bound mutated to 0 on a static 1x1 case",
@@ -1738,10 +1801,10 @@ M4 += [
        "19_vit_32x3x224x224_768x3x16x16_32x768x14x14_16_0_1",
        "parallelby bound mutated to 0 on the patch-grid conv",
        ("parallel q by 14  {", "parallel q by 0  {")),
-    _m("M4.2.cv2.neg", "M4", 2, "stride", "conv2d",
+    _m("M4.6.cv2.neg", "M4", 2, "stride", "conv2d",
        "2_dynamic_Nx64x56x56_128x64x3x3_Nx128x56x56_S_P_D",
        "parallelby bound mutated to negative on a dynamic-batch case",
-       ("parallel q by 4  {", "parallel q by -4  {")),
+       ("parallel q by 4  {", "parallel q by -4  {"), spec_id="M4.6"),
     _m("M4.2.cv3.zero", "M4", 2, "stride", "conv2d",
        "3_dynamic_16x256xHxW_256x256x3x3_16x256xHxW_S_P_D",
        "parallelby bound mutated to 0 where every extent is symbolic",
@@ -1750,10 +1813,10 @@ M4 += [
        "16_resnet_64x3x224x224_64x3x7x7_64x64x112x112_S_P_D",
        "OUTER parallelby bound mutated to 0, so the whole block goes away",
        ("parallel p by 1  {", "parallel p by 0  {")),
-    _m("M4.2.rl2.neg", "M4", 2, "stride", "relu",
+    _m("M4.6.rl2.neg", "M4", 2, "stride", "relu",
        "2_cnn_128x128x28x28_128x128x28x28",
        "parallelby bound mutated to negative on a rank-4 relu",
-       ("parallel q by 4", "parallel q by -4")),
+       ("parallel q by 4", "parallel q by -4"), spec_id="M4.6"),
     _m("M4.2.rl9.zero", "M4", 2, "stride", "relu",
        "9_dynamic_64x128xHxW_64x128xHxW",
        "parallelby bound mutated to 0 on a dynamic-shape relu",
@@ -1762,10 +1825,10 @@ M4 += [
        "19_transformer_32x512x2048_32x512x2048",
        "parallelby bound mutated to 0 on the largest relu case",
        ("parallel q by 64", "parallel q by 0")),
-    _m("M4.2.tp1.neg", "M4", 2, "stride", "transpose",
+    _m("M4.6.tp1.neg", "M4", 2, "stride", "transpose",
        "1_bert_32x512x768_32x768x512",
        "parallelby bound mutated to negative on the transpose inner loop",
-       ("parallel q by 64", "parallel q by -64")),
+       ("parallel q by 64", "parallel q by -64"), spec_id="M4.6"),
     _m("M4.2.tp14.zero", "M4", 2, "stride", "transpose",
        "14_efficientnet_64x1280x7x7_64x7x7x1280",
        "parallelby bound mutated to 0 on the dma.transp case",
@@ -1880,7 +1943,53 @@ M3 += [
        ("parallel p by 2  {", "parallel p by 3  {"), spec_id="M3.20"),
 ]
 
-ALL["M4"] = M4
+# ---------------------------------------------------------------------------
+# Assemble the class cells. `Mut.cls` is the authority, NOT the list.
+# ---------------------------------------------------------------------------
+# M1.6 and M1.7 live in the `M1` list because that is the surface they edit,
+# but they count in M4's cell (families M4-d and M4-e). Grouping by list
+# membership -- which is what `ALL = {"M1": M1, ...}` used to do -- put 13
+# M4 operators into M1's cell and left M4's cell looking short, while `cls`,
+# the field that was supposed to say otherwise, was written and never read.
+# Grouping by `cls` makes that field load-bearing; the assertion ties it to
+# the registry so the two cannot drift apart again in silence.
+def _axis_classes():
+    """The mutation classes, from the one definition: `schema/class_axis.py`.
+
+    Restating the class ids as a literal is what guard
+    `axis.no-restated-tuples` forbids, and the old
+    `ALL = {"M1": M1, "M2": M2, "M3": M3}` dodged that guard only by being a
+    dict rather than a quoted tuple -- it hard-coded the same 3-class dialect
+    the guard exists to catch. The axis is the authority, so ask it. Same
+    lazy-import pattern as `choreo/stats.py`, for the same reason: this module
+    is imported from several working directories.
+    """
+    import os as _os
+    import sys as _sys
+    _b2 = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
+    if _b2 not in _sys.path:
+        _sys.path.insert(0, _b2)
+    from schema import class_axis as _AX
+    return list(_AX.mutation_classes())
+
+
+ALL = {c: [] for c in _axis_classes()}
+for _x in M1 + M2 + M3 + M4:
+    if _x.cls not in ALL:
+        raise ValueError(
+            "mutation %r declares class %r, which is not on the class axis "
+            "%s" % (_x.id, _x.cls, sorted(ALL)))
+    # Inline lookup rather than `class_of_spec()`: that helper is defined
+    # further down, below the registry reconciliation, and this pass runs
+    # first. `Mut.__init__` already refused an unregistered spec_id, so the
+    # key is present.
+    _want = SPEC_REGISTRY[_x.spec_id]["cls"]
+    if _x.cls != _want:
+        raise ValueError(
+            "mutation %r is class %s but spec %s is registered as class %s: "
+            "the operator and the registry disagree about which class cell "
+            "this is evidence for" % (_x.id, _x.cls, _x.spec_id, _want))
+    ALL[_x.cls].append(_x)
 
 
 # ===========================================================================
@@ -1945,6 +2054,172 @@ unwritten_specs = sorted(s for s, v in SPEC_REGISTRY.items()
                          if v["status"] == "pending")
 na_specs = sorted(s for s, v in SPEC_REGISTRY.items()
                   if not v["admissible"])
+
+# THE WORD `pending` NAMES TWO DIFFERENT SETS IN THIS MODULE -- defect D2.
+#
+#   status == "pending"        merely unwritten. Today 23 specs. This is what
+#                              the record schema's enum value means.
+#   `pending_specs`            unwritten AND admissible -- the GATE 2 list.
+#                              Today EMPTY, because every unwritten spec is
+#                              inadmissible, so the two sets are disjoint by
+#                              accident rather than by design.
+#
+# `schema/PATCH-v2.1.md` glosses the enum value as "admissible, unwritten",
+# which describes the *second* set, not the enum value. A reader who greps
+# `pending` finds 23 where the gloss promises 0. The alias below exists so that
+# any report can say which of the two questions it answered; the registry key
+# `"pending"` is deliberately left alone, because renaming it would silently
+# change the meaning of every record already written (the `L` -> M3 non-additive
+# hazard) for no gain: no writer needs a third enum value, since an unwritten
+# spec and an unwritten-admissible spec are both just "no operator yet".
+admissible_unwritten_specs = pending_specs
+
+# ---------------------------------------------------------------------------
+# The method-family partition is NOT restated here.
+# ---------------------------------------------------------------------------
+# schema/method-taxonomy.json is the one definition of the family axis, and
+# schema/method_taxonomy.py is its checker. The family is the level-2 unit that
+# W1's budget N=8 is quoted per, so a lane that typed its own family names would
+# drift exactly the way the class axis did before class-axis.json existed: a
+# spec quietly re-homed to a neighbouring family still renders, so only a
+# comparison against the one definition catches it.
+#
+# This is loaded rather than imported so that the taxonomy may add a family
+# without touching this file -- the same reason class_axis is imported into
+# stats.py instead of copied. The reverse direction (the taxonomy needs the
+# registry) is a *parameter*, not an import, so there is no cycle.
+_FAMILY_BY_SPEC = None
+
+
+def family_by_spec():
+    """{spec_id: family_id} over all 31 families, from the taxonomy."""
+    global _FAMILY_BY_SPEC
+    if _FAMILY_BY_SPEC is None:
+        import json as _j
+        import os as _o
+        _root = _o.path.dirname(_o.path.dirname(_o.path.abspath(__file__)))
+        _p = _o.path.join(_root, "schema", "method-taxonomy.json")
+        try:
+            with open(_p) as _f:
+                _d = _j.load(_f)
+        except (IOError, OSError) as _e:
+            raise ValueError(
+                "cannot read the method taxonomy at %s (%s). It is the one "
+                "definition of the family axis; a lane may not proceed "
+                "without it." % (_p, _e))
+        _m = {}
+        for _fid, _fam in _d["families"].items():
+            for _s in _fam.get("spec_ids", []):
+                if _s in _m:
+                    raise ValueError(
+                        "spec %s is declared by two families (%s and %s). One "
+                        "operator would then be evidence for two families and "
+                        "count in two cells (defect D1)." % (_s, _m[_s], _fid))
+                _m[_s] = _fid
+        _FAMILY_BY_SPEC = _m
+    return _FAMILY_BY_SPEC
+
+
+def family_of(spec_id):
+    """The family that owns `spec_id`, or None if it declares no family."""
+    return family_by_spec().get(spec_id)
+
+
+def check_family_partition():
+    """Every registered spec is accounted for exactly once.
+
+    The taxonomy is the definition and this is the consumer, so disagreement
+    is always this file's or the taxonomy's bug -- never something to paper
+    over.
+
+    THREE buckets, not one. A spec can leave the family partition for exactly
+    two legitimate reasons, and both are still *accounted for*:
+
+      families            -- the spec is a realisation of some family
+      attribution_only    -- launch-only; measured for attribution, never
+                             enters a family's N
+      p2_never_generated  -- structurally refused by the compiler, so it can
+                             witness nothing
+
+    `dead_declarations` is deliberately NOT a bucket here. It is a *state* a
+    family member can be in (declared, no operator written yet) -- that is
+    precisely the R_f<2 work item -- so treating it as an ownership bucket
+    would let a family's only realisation be filed as "dead" and vanish from
+    the denominator instead of showing up as a shortfall.
+
+    Returns the number of specs checked; raises on any mismatch.
+    """
+    import json as _j
+    import os as _o
+    _root = _o.path.dirname(_o.path.dirname(_o.path.abspath(__file__)))
+    with open(_o.path.join(_root, "schema", "method-taxonomy.json")) as _f:
+        _d = _j.load(_f)
+
+    _attr = set()
+    for _k in _d.get("attribution_only", {}).values():
+        _attr |= set(_k.get("spec_ids", []))
+    _p2 = set(_d.get("p2_never_generated", {}).get("spec_ids", []))
+
+    m = family_by_spec()
+    owned = set(m)
+    unowned = sorted(s for s in SPEC_REGISTRY if s not in owned)
+    unaccounted = sorted(s for s in unowned if s not in _attr and s not in _p2)
+    if unaccounted:
+        raise ValueError(
+            "%d registered spec(s) belong to no family and are not declared "
+            "attribution-only or P2: %s. A spec in no bucket is a test "
+            "outside the budget, so it can never be counted and never be "
+            "missed." % (len(unaccounted), ", ".join(unaccounted)))
+
+    # The other direction: a spec must not be filed in two buckets at once.
+    # A launch-only operator that also claims to realise a family is how one
+    # operator becomes evidence for two things.
+    both = sorted(s for s in (_attr | _p2) if s in owned)
+    if both:
+        raise ValueError(
+            "%d spec(s) are both a family realisation and filed as "
+            "attribution-only / P2: %s" % (len(both), ", ".join(both)))
+
+    covered = len(owned) + len(_attr) + len(_p2)
+    if covered != len(SPEC_REGISTRY):
+        raise ValueError(
+            "the three buckets cover %d specs but the registry has %d -- they "
+            "must be disjoint and complete"
+            % (covered, len(SPEC_REGISTRY)))
+    return covered
+
+
+def class_of_spec(spec_id):
+    """The mutation class whose cell this spec's operators count in.
+
+    Read from the REGISTRY, not from the id prefix. M1.6 and M1.7 are
+    deliberately re-homed to class M4 (their edit is on an M1 index surface
+    but the defect is M4's bound semantics), so for those two the prefix is a
+    legacy label and the registry is the authority. Reading the prefix would
+    put 13 M4-d/M4-e operators into M1's cell while leaving M4's cell looking
+    empty -- a miscount that renders as a perfectly plausible number.
+    """
+    if spec_id not in SPEC_REGISTRY:
+        raise ValueError("unregistered spec_id %r" % (spec_id,))
+    return SPEC_REGISTRY[spec_id]["cls"]
+
+
+def check_class_rehoming():
+    """The two re-homed specs must keep their ids and their M4 class.
+
+    Cheap guard against a well-meaning tidy-up "fixing" the M1.6 spelling and
+    silently moving 13 operators back into M1's cell.
+    """
+    rehomed = {"M1.6": "M4", "M1.7": "M4"}
+    for s, want in rehomed.items():
+        got = SPEC_REGISTRY.get(s, {}).get("cls")
+        if got != want:
+            raise ValueError(
+                "%s is declared class %s but must be %s: it is re-homed from "
+                "M1 to M4 (its operators belong to family M4-d / M4-e, and "
+                "counting them in M1's cell would inflate M1 while leaving "
+                "M4's cell short)" % (s, got, want))
+    return len(rehomed)
 
 
 def _admissible_specs():

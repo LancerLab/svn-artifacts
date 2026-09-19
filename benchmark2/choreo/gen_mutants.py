@@ -17,7 +17,7 @@ GATE 2 -- path-class-aware selection (specs §9.6.1, specs/expansion-workflow.md
 §3/§4). The old flat "40 per class" rule is wrong under v2.1 because budget
 follows the PATH, not the importance of the feature:
 
-  P1  assessed    full budget (N_P1_PER_CLASS per class), THEN re-run the whole
+  P1  assessed    up to N_PER_FAMILY per method family, THEN re-run the whole
                   class at each -rtc level so the cost-threshold curve exists
   P3  unchecked   exactly ONE operator per (spec x category) cell -- no
                   threshold reaches this spec, so more instances buy nothing
@@ -25,10 +25,23 @@ follows the PATH, not the importance of the feature:
   L   launch      one per (spec x category) cell, attribution-only
   P2  hard-error  NEVER generated; recorded as N/A (specs §9.5.0)
 
+The budget is per **(class, method family)** -- that is the unit of requirement
+(b) -- and within a family it is `N_kernels kernels x N_realisations
+realisations`, so each category is capped at N_REALISATIONS. A per-CLASS budget
+cannot express this: it lets a family with seven declarations absorb the budget
+while a family with one gets a single instance, which is precisely how the
+corpus passed "40 per class" while 19 of 31 families sat at `R_f < 2`.
+
 Selection is therefore: take every non-P1 cell first (mandatory), then
-round-robin P1 candidates over the categories in the minimal coverage set,
-taking candidates in declaration order within each. Fully deterministic: the
-same mutations.py always yields the same corpus.
+round-robin P1 candidates over the family's categories, taking candidates in
+declaration order within each, until the family holds N_PER_FAMILY. Fully
+deterministic: the same mutations.py always yields the same corpus.
+
+**Every candidate that is not chosen is persisted with a reason.** 59
+declarations used to vanish silently, so "the corpus has 170 mutants" was not
+auditable from the corpus itself: the arithmetic `selected + dropped + n/a ==
+candidates` did not hold anywhere. Reasons come from a closed vocabulary (see
+`select()`).
 
 GATE 2 also cross-checks mutations.SPEC_REGISTRY against the operators that
 actually loaded and REFUSES to run if an operator claims an unregistered spec.
@@ -36,7 +49,8 @@ A spec that is `pending` is printed, not hidden.
 
 Usage:
   gen_mutants.py [--level2] [--rtc LEVEL] [--dry-run] [--report]
-                 [--n-p1 N] [--out DIR] [--manifest FILE]
+                 [--n-per-family N] [--n-realisations N] [--out DIR]
+                 [--manifest FILE]
 """
 
 from __future__ import annotations
@@ -61,10 +75,23 @@ OUT = os.path.join(HERE, "mutants")
 MANIFEST = os.path.join(HERE, "raw", "mutant_manifest.json")
 SPEC_REGISTRY_OUT = os.path.join(HERE, "raw", "spec_registry.json")
 
-# ---- budget (specs §9.6.1) -------------------------------------------------
-N_P1_PER_CLASS = 40       # P1 assessed: full budget, so the -rtc curve exists
-N_CELLS = 1               # P3 / P4 / L: one injection per (spec x category)
-N_PER_CLASS = N_P1_PER_CLASS   # retained: the pre-v2.1 name in the manifest
+# The per-family budget lives in ONE place: schema/method-taxonomy.json. It is
+# imported the same way choreo/mutations.py imports schema.class_axis, so both
+# levels of the axis are read from their owner rather than restated here.
+if B2 not in sys.path:
+    sys.path.insert(0, B2)
+from schema import method_taxonomy as T  # noqa: E402
+
+# ---- budget ---------------------------------------------------------------
+# N = N_KERNELS x N_REALISATIONS, per (class, method family), per in-scope
+# lane. The factor that matters for selection is N_REALISATIONS: without a
+# per-category cap, "8 instances for M2-a" would be satisfiable by 8 edits to
+# one kernel, and the "4 kernels x 2 realisations" decomposition would be a
+# claim about the prose rather than about the corpus.
+N_PER_FAMILY = T.N_PER_FAMILY          # 8 = 4 kernels x 2 realisations
+N_REALISATIONS = T.N_REALISATIONS      # 2 -- the cap per kernel (category)
+N_CELLS = 1                            # P3/P4/L: one instance per (spec, cat)
+LANE = "choreo"
 
 # ---- check paths that are MUTATABLE ---------------------------------------
 MUTATABLE_PATHS = ("P1", "P3", "P4", "L")
@@ -106,78 +133,349 @@ def apply_transform(src, mut):
         return None, "noop"
     return out, None
 
+def _match_floor(specs, kernels_of, capacity):
+    """Give each spec one kernel slot, never exceeding `capacity` per kernel.
 
-def select(cands, n_p1=N_P1_PER_CLASS, n_cells=N_CELLS):
-    """Path-class-aware, deterministic selection (specs §9.6.1).
+    Stage 1's floor is "every declared spec is realised at least once", and a
+    spec is usually realisable on several kernels while some are realisable on
+    exactly one. Greedy assignment in declaration order is therefore wrong: a
+    flexible spec can take the only kernel a constrained spec has, leaving the
+    constrained one unrealised while a slot sits free on another kernel. That
+    failure is invisible -- the family simply looks one instance short, which is
+    also what a missing operator looks like. Augmenting paths fix it exactly,
+    and with at most four kernels and seven specs the O(specs x slots) search
+    costs nothing.
 
-    Stage 1 -- cell floor. One instance per (spec_id, category) cell for EVERY
-    generatable spec. This is the v2.1 non-negotiable: a declared spec that
-    produces no instance is indistinguishable from a spec that was forgotten,
-    so the corpus must cover each cell at least once. For P3/P4/L the cell floor
-    IS the whole budget (no threshold reaches those paths, so more instances buy
-    nothing); for P1 it is a floor, not a ceiling.
-
-    Stage 2 -- P1 budget. Round-robin over categories in declaration order until
-    the class has n_p1 P1 instances. This is the budget the cost-threshold curve
-    is swept with, so it is deliberately generous.
-
-    P2 candidates are never chosen: the compiler repairs the state, so there is
-    no test (specs §9.5.0).
-
-    Returns (selected, dropped); both preserve declaration order.
+    `capacity` is a `{kernel: n}` of free slots. Returns `{spec_id: kernel}`;
+    a spec absent from the result had no kernel left anywhere, which is a fact
+    about the family's declaration set and is reported, not guessed at.
     """
-    # ---- stage 1: cell floor --------------------------------------------
-    cells = collections.OrderedDict()
+    slots = [(k, i) for k, n in capacity.items() for i in range(n)]
+    holder = dict.fromkeys(slots)
+
+    def augment(sid, seen):
+        for k in kernels_of[sid]:
+            for slot in (s for s in slots if s[0] == k):
+                if slot in seen:
+                    continue
+                seen.add(slot)
+                if holder[slot] is None or augment(holder[slot], seen):
+                    holder[slot] = sid
+                    return True
+        return False
+
+    for sid in specs:
+        augment(sid, set())
+    return {sid: slot[0] for slot, sid in holder.items() if sid is not None}
+
+def select(cands, n_per_family=N_PER_FAMILY, n_realisations=N_REALISATIONS,
+           n_cells=N_CELLS, lane=LANE):
+    """Per-family, path-class-aware, deterministic selection (specs §9.6.1).
+
+    The unit of requirement (b) is `(class, method family)`, so the budget is
+    per FAMILY. Budgeting per class cannot express it -- that is the defect this
+    function replaces, not a refinement of it. A per-class budget let one
+    family absorb the whole allowance while another got a single instance,
+    which is precisely how a corpus can satisfy "35 per class" while most
+    families sit at one.
+
+    N is a hard ceiling on a family, and it decomposes as
+    `n_kernels categories x n_realisations instances per category`, so no single
+    kernel can absorb the budget either.
+
+    Stage 1 -- the two obligations that are not budget. Every declared spec in
+    the family must be realised at least once, or "a spec nobody wrote" and "a
+    spec that matches nothing" are indistinguishable. And every non-P1 cell
+    (`(spec_id, category)`) must be realised, because a missing injection on
+    P3/P4/L is a silent noop rather than a surviving mutant. The floor is per
+    SPEC, not per cell: demanding every P1 cell would demand more instances
+    than the family has slots wherever one spec is declared on several
+    surfaces, and the first guarantee to break would be (b) itself. For P3/P4/L
+    one per cell is the whole budget, not a floor -- nothing sweeps those paths,
+    so a second instance buys nothing. A family whose obligations alone exceed N
+    is REFUSED, never truncated: truncating drops a guarantee to balance a
+    budget, when the budget is the thing the paper promises.
+
+    Stage 2 -- fill. Round-robin over the family's categories until the family
+    holds `n_per_family`, capped at `n_realisations` per category. A family that
+    cannot reach `n_per_family` is left short and REPORTED, never topped up from
+    a neighbouring family: a family whose realisations do not exist is a work
+    item (W1), and borrowing instances to fill it would satisfy (b) by
+    relabelling.
+
+    P2 candidates are never chosen -- the compiler repairs the state, so there
+    is no test (specs §9.5.0) -- and they are not "dropped" either: they are
+    recorded N/A in `raw/spec_registry.json`.
+
+    A candidate is never silently discarded. `dropped` carries
+    `(candidate, reason)` with a reason from this closed vocabulary, and the
+    reason is the binding constraint, not whichever check ran first:
+
+      out of scope   the lane's surface cannot express the family (a
+                     prohibition, see method_taxonomy.na_reason)
+      cell budget    a non-P1 cell is already covered; P3/P4/L take exactly one
+                     instance per (spec_id, category) by construction
+      category cap   the category already holds n_realisations in this family
+      family budget  the family already holds n_per_family
+
+    ATTRIBUTION-ONLY specs (`path: L`, prohibition `observation` -- M3-L's 7
+    spec_ids) are returned separately in `attribution`. They own no family, so
+    they are not evidence for requirement (b); they exist to grow the
+    never-attribution table. They must be generated and must NOT be counted in
+    a class cell, so putting them in `selected` would inflate M3's cell by 12
+    and putting them in `dropped` would delete real data. `method-taxonomy.json`
+    states the rule ("Kept for attribution, EXCLUDED from M3's 8 families and
+    from M3's class cell") and this is where it is enforced.
+
+    Returns `(selected, dropped, attribution)`. `selected` preserves declaration
+    order; `attribution` is `{tag: [candidate, ...]}`. Every candidate is in
+    exactly one of `selected`, `dropped`, `attribution`'s values, or the N/A set.
+    """
+    attr_tag = {s: tag for tag, ids in T.ATTRIBUTION_ONLY.items()
+                for s in ids}
+
+    by_family = collections.OrderedDict()
+    by_attr = collections.OrderedDict()
     for c in cands:
-        if c.is_na:                      # P2 -- repaired, never generated
+        fam = T.family_of(c.spec_id)
+        if c.spec_id in attr_tag:
+            if fam is not None:
+                raise ValueError(
+                    "spec_id %r is declared both attribution-only (tag %r) and "
+                    "a member of family %r. It cannot be both: the first makes "
+                    "it invisible to requirement (b) and the second makes it "
+                    "evidence for it, so counting it would give two different "
+                    "answers depending on which list a reader used."
+                    % (c.spec_id, attr_tag[c.spec_id], fam))
+            by_attr.setdefault(attr_tag[c.spec_id], []).append(c)
             continue
-        cells.setdefault((c.spec_id, c.category), []).append(c)
+        if fam is None:
+            raise ValueError(
+                "operator %r realises spec_id %r, which no method family owns "
+                "and which is not declared attribution-only. Every generated "
+                "instance must be evidence for exactly one family, or it would "
+                "sit in the corpus without being counted anywhere -- the same "
+                "shape as defect D1." % (c.id, c.spec_id))
+        by_family.setdefault(fam, []).append(c)
 
-    mandatory = set()
-    for group in cells.values():
-        for c in group[:n_cells]:
-            mandatory.add(c.id)
+    selected = []
+    dropped = []
 
-    # ---- stage 2: P1 budget ---------------------------------------------
-    p1 = [c for c in cands if c.needs_rtc_curve and not c.is_na]
-    by_cat = collections.OrderedDict()
-    for c in p1:
-        by_cat.setdefault(c.category, []).append(c)
-    queues = {k: list(v) for k, v in by_cat.items()}
-    taken_p1 = len([c for c in p1 if c.id in mandatory])
-    # NOTE: a pass over the queues may legitimately consume only candidates that
-    # are already in the cell floor (they are the first entry of their cell, so
-    # they sit at the head of their category queue). That is *consumption*, not
-    # a stall, so the termination test must be "did any queue yield an item in
-    # this pass", not "did the P1 count increase". Using the latter silently
-    # truncated every class whose cell heads are P1 (M3 chose 10 of 47).
-    while taken_p1 < n_p1:
-        consumed = 0
-        for cat in queues:
-            if taken_p1 >= n_p1:
-                break
-            if not queues[cat]:
+    for fam in sorted(by_family):
+        members = by_family[fam]
+
+        # ---- a family this lane cannot express is n/a, not short ----------
+        if not T.in_scope(lane, fam):
+            for c in members:
+                dropped.append((c, "out of scope: %s cannot express %s "
+                                   "(prohibition %s)"
+                                   % (lane, fam, T.na_reason(lane, fam))))
+            continue
+
+        # ---- census the family's cells ------------------------------------
+        # A cell is `(spec_id, category)` -- "one injection per cell" in the
+        # docs. Cells are censused in declaration order so selection is
+        # deterministic and a re-run is a no-op.
+        cells = collections.OrderedDict()
+        for c in members:
+            if c.is_na:                  # P2 -- repaired, never generated
                 continue
-            m = queues[cat].pop(0)
-            consumed += 1
-            if m.id not in mandatory:
-                mandatory.add(m.id)
-                taken_p1 += 1
-        if consumed == 0:            # every category queue is drained
-            break
+            cells.setdefault((c.spec_id, c.category), []).append(c)
 
-    chosen = [c for c in cands if c.id in mandatory]
-    dropped = [c for c in cands if c.id not in mandatory]
-    return chosen, dropped
+        take = collections.OrderedDict()          # insertion-ordered id set
+        cat_used = collections.Counter()
+        cell_used = collections.Counter()
+
+        def ceiling(c):
+            # P3/P4/L: no threshold reaches those paths, so a second instance
+            # in the same cell re-measures a constant. "One injection per cell"
+            # is that path's WHOLE budget, not a floor -- and it is a ceiling
+            # on the CELL, so a spec declared on two surfaces still gets two.
+            # P1: a cell is a floor of one, but the curve is the point, so the
+            # cell ceiling is the category ceiling.
+            return n_cells if not c.needs_rtc_curve else n_realisations
+
+        def room(c):
+            return (len(take) < n_per_family
+                    and cat_used[c.category] < n_realisations
+                    and cell_used[(c.spec_id, c.category)] < ceiling(c))
+
+        def put(c):
+            take[c.id] = c
+            cat_used[c.category] += 1
+            cell_used[(c.spec_id, c.category)] += 1
+
+        # ---- stage 1: the obligations that are not budget ------------------
+        # Two things must happen before any budget is spent on depth:
+        #
+        #   * every declared spec in the family is realised at least once, or
+        #     "a spec nobody wrote" and "a spec that matches nothing" look
+        #     identical -- which is the whole reason GATE 2 exists;
+        #   * every non-P1 cell is realised, because on those paths a missing
+        #     injection is a silent noop rather than a surviving mutant.
+        #
+        # The floor is on SPECS, not on (spec, category) cells. Demanding every
+        # P1 cell would demand more instances than the family has slots
+        # wherever a spec is declared on several surfaces -- M1-a alone has 13
+        # P1 cells against a family budget of 8 -- and the first thing to break
+        # would be requirement (b) itself. The observation is realised on one
+        # surface is not a forgotten spec.
+        by_spec = collections.OrderedDict()
+        for key in cells:
+            by_spec.setdefault(key[0], []).append(key)
+
+        free = {k[1]: n_realisations for k in cells}
+
+        # Non-P1 obligations are per CELL and their kernel is not a choice, so
+        # they are reserved first: a matching that spent their kernel on a
+        # flexible spec could not give it back.
+        for sid, keys in by_spec.items():
+            if cells[keys[0]][0].needs_rtc_curve:
+                continue
+            for key in keys:
+                if free[key[1]] <= 0:
+                    continue          # unpaid; reported by `compose()` below
+                free[key[1]] -= 1
+                put(cells[key][0])
+
+        # P1 obligations are one instance per SPEC, and which kernel it lands
+        # on is a choice, so it is solved as a matching rather than a loop.
+        p1 = [sid for sid, keys in by_spec.items()
+              if cells[keys[0]][0].needs_rtc_curve]
+        kernels_of = {sid: list(dict.fromkeys(k[1] for k in by_spec[sid]))
+                      for sid in p1}
+        assigned = _match_floor(p1, kernels_of, free)
+        for sid in p1:
+            if sid in assigned:
+                put(cells[(sid, assigned[sid])][0])
+
+        # N is a ceiling, so the obligations must fit under it. They are placed
+        # before the cap is consulted -- a guarantee that only holds when the
+        # budget is not yet full is not a guarantee -- so the breach is caught
+        # here rather than allowed to become the corpus's shape.
+        if len(take) > n_per_family:
+            raise ValueError(
+                "family %s owes %d obligation instance(s) but N is %d: the "
+                "declaration set and the budget disagree, and honouring one "
+                "would silently break the other."
+                % (fam, len(take), n_per_family))
+
+        # ---- stage 2: fill the family to N ---------------------------------
+        queues = collections.OrderedDict()
+        for c in members:
+            if c.is_na or c.id in take:
+                continue
+            queues.setdefault(c.category, []).append(c)
+
+        # A pass that takes nothing means every queue is drained or every
+        # category is capped, so terminate on "did this pass make progress",
+        # not on the instance count -- the count also rises when the head of a
+        # queue was already taken, which is consumption, not a stall.
+        while len(take) < n_per_family:
+            progress = 0
+            for cat in list(queues):
+                if len(take) >= n_per_family:
+                    break
+                if cat_used[cat] >= n_realisations:
+                    continue
+                while queues[cat]:
+                    c = queues[cat].pop(0)
+                    if room(c):
+                        put(c)
+                        progress += 1
+                        break
+            if progress == 0:
+                break
+
+        # ---- account for every candidate this family did not take ---------
+        # Exactly one reason each, from the closed vocabulary, and the reason
+        # is the binding constraint -- a candidate is named by the first thing
+        # that stopped it, not by whatever check happens to come first here.
+        for c in members:
+            if c.id in take:
+                selected.append(c)
+            elif c.is_na:
+                pass                     # an N/A verdict, not a drop
+            elif not c.needs_rtc_curve and ceiling(c) <= cell_used[
+                    (c.spec_id, c.category)]:
+                dropped.append((c, "cell budget: %s takes exactly one instance "
+                                   "per (spec_id, category) and the cell "
+                                   "(%s, %s) is already covered"
+                                   % (c.path_class, c.spec_id, c.category)))
+            elif cat_used[c.category] >= n_realisations:
+                dropped.append((c, "category cap: %s already holds %d "
+                                   "instance(s) in %s (n_realisations=%d)"
+                                   % (c.category, cat_used[c.category], fam,
+                                      n_realisations)))
+            elif len(take) >= n_per_family:
+                dropped.append((c, "family budget: %s already holds %d "
+                                   "instances (n_per_family=%d)"
+                                   % (fam, len(take), n_per_family)))
+            else:
+                # Unreachable: the fill loop stops only with every queue
+                # drained or every category capped. If it is reached, one of
+                # the reasons above is not the binding constraint and the
+                # ledger would be lying, so say so rather than invent a label.
+                raise ValueError(
+                    "candidate %s in family %s was not taken and no reason in "
+                    "the closed vocabulary applies: take=%d/%d, %s holds %d, "
+                    "cell (%s, %s) holds %d"
+                    % (c.id, fam, len(take), n_per_family, c.category,
+                       cat_used[c.category], c.spec_id, c.category,
+                       cell_used[(c.spec_id, c.category)]))
+
+    # ---- attribution-only: cell floor and nothing more --------------------
+    # They carry `path: L`, so no threshold reaches them and a second instance
+    # per cell buys nothing. They are never budgeted against a family because
+    # they are not evidence for one.
+    attribution = collections.OrderedDict()
+    for tag in sorted(by_attr):
+        members = by_attr[tag]
+        cells = collections.OrderedDict()
+        for c in members:
+            if c.is_na:
+                continue
+            cells.setdefault((c.spec_id, c.category), []).append(c)
+        keep = set()
+        for group in cells.values():
+            for c in group[:n_cells]:
+                keep.add(c.id)
+        keep_list = []
+        for c in members:
+            if c.id in keep:
+                keep_list.append(c)
+            elif c.is_na:
+                pass
+            else:
+                dropped.append((c, "cell budget: attribution-only %s takes "
+                                   "exactly one instance per (spec_id, "
+                                   "category), and (%s, %s) is covered"
+                                   % (tag, c.spec_id, c.category)))
+        if keep_list:
+            attribution[tag] = keep_list
+
+    return selected, dropped, attribution
 
 
-def compose(level2=False):
-    """Build the candidate list per class, then select.
+def compose(level2=False, n_per_family=N_PER_FAMILY,
+            n_realisations=N_REALISATIONS, lane=LANE):
+    """Build the candidate list per class, then select, then say what is left.
 
     Level 2 is now real: `mutations.categories_for(cls, level2=True)` unions the
     level-2 category order into the class's coverage set, so any operator that
     declares a level-2 category is picked up. No such operator exists yet, so
     the widening is reported rather than silently a no-op.
+
+    `family_short` is the honest part of the result. A family that ends below
+    `n_per_family` is short because its realisations do not exist, and that is a
+    W1 work item; reporting it here means `--dry-run` answers "what does W1 still
+    have to write" without anyone recomputing it from the manifest by hand.
+
+    `unrealised_specs` is likewise a coverage fact, not a selection outcome: a
+    generatable spec with ZERO operators. Such a spec has no (spec_id, category)
+    cell, so stage 1's cell floor cannot see it -- the floor covers the cells
+    that exist, and a spec with no operator has none. That is the blind spot the
+    floor was supposed to close, so it is closed here by name instead.
     """
     plan = {}
     for cls in sorted(M.ALL):
@@ -194,9 +492,52 @@ def compose(level2=False):
                 % (cls, 2 if level2 else 1, ", ".join(missing)))
         gen = [c for c in cands if not c.is_na]
         na = [c for c in cands if c.is_na]
-        chosen, dropped = select(gen)
+        chosen, dropped, attribution = select(
+            gen, n_per_family=n_per_family,
+            n_realisations=n_realisations, lane=lane)
+
+        # Per-family ledger: how deep is each family, against what budget.
+        # `family_of` never returns None here -- `select()` refuses a candidate
+        # that owns no family -- but a None would silently become a Counter key,
+        # so it is dropped rather than counted.
+        depth = collections.Counter(
+            f for f in (T.family_of(c.spec_id) for c in chosen) if f)
+        fams = [f for f in T.families_of(cls) if T.in_scope(lane, f)]
+        short = collections.OrderedDict(
+            (f, n_per_family - depth.get(f, 0)) for f in fams
+            if depth.get(f, 0) < n_per_family)
+
+        have = {c.spec_id for c in cands}
+        unrealised = sorted(s for f in T.families_of(cls)
+                            for s in T.specs_of(f)
+                            if s not in T.P2 and s not in have)
+
+        # A spec with operators that still got no instance. `select()` gives
+        # every declared spec a floor instance whenever a kernel has room, so
+        # this set is exactly the families whose obligations do not fit inside
+        # N and the per-kernel cap -- M2-a today, where M2.19's two fixed cells
+        # and M2.14's single available kernel crowd three specs into
+        # layer_normalization's two slots. Derived here rather than passed back
+        # from `select()` so there is one definition of "realised": a spec is
+        # realised iff an instance of it is in the corpus.
+        declared = collections.defaultdict(set)
+        realised = collections.defaultdict(set)
+        for c in gen:
+            f = T.family_of(c.spec_id)
+            if f:
+                declared[f].add(c.spec_id)
+        for c in chosen:
+            realised[T.family_of(c.spec_id)].add(c.spec_id)
+        overcrowded = collections.OrderedDict(
+            (f, sorted(declared[f] - realised[f]))
+            for f in T.families_of(cls)
+            if declared[f] - realised[f])
+
         plan[cls] = {"chosen": chosen, "dropped": dropped, "total": len(cands),
-                     "na": na, "level2": level2}
+                     "na": na, "level2": level2, "depth": depth,
+                     "family_short": short, "unrealised_specs": unrealised,
+                     "attribution": attribution,
+                     "obligation_unmet": overcrowded}
     return plan
 
 
@@ -239,7 +580,14 @@ def emit(plan, out_dir, dry_run=False):
     records = []
     skipped = []
     for cls in sorted(plan):
-        for mut in plan[cls]["chosen"]:
+        # Attribution-only candidates are emitted through exactly this path, so
+        # they get the same hashes, diff and provenance as everything else. The
+        # tag rides along in `attribution_only` so a consumer can subtract them
+        # from a class cell without pattern-matching on spec_id.
+        todo = [(m, None) for m in plan[cls]["chosen"]]
+        todo += [(m, tag) for tag, group in plan[cls]["attribution"].items()
+                 for m in group]
+        for mut, attr in todo:
             bp = base_path(mut.category, mut.case)
             if not os.path.exists(bp):
                 skipped.append((mut.id, f"base kernel missing: {bp}"))
@@ -297,21 +645,98 @@ def emit(plan, out_dir, dry_run=False):
             rec.update(mut.as_meta())
             rec["level"] = lvl            # re-assert: as_meta carries a level
             rec["needs_rtc_curve"] = mut.needs_rtc_curve
+            rec["attribution_only"] = attr
             records.append(rec)
     return records, skipped
 
 
-def report(plan, records, skipped, rtc=None):
+def report(plan, records, skipped, rtc=None, n_per_family=N_PER_FAMILY,
+           n_realisations=N_REALISATIONS, lane=LANE):
     print(f"selected {len(records)} mutants  (skipped {len(skipped)})"
           + (f"  @ -rtc={rtc}" if rtc else ""))
-    print(f"{'class':<6}{'candidates':>11}{'P1':>8}{'mandatory':>11}"
+    print(f"target: N = {n_per_family} per (class x method family) per "
+          f"in-scope lane, as {n_per_family // n_realisations} kernels x "
+          f"{n_realisations} realisations, lane={lane}")
+    print(f"{'class':<6}{'candidates':>11}{'chosen':>8}{'P1':>6}{'cells':>7}"
           f"{'N/A':>6}{'dropped':>9}{'budget':>8}")
     for cls in sorted(plan):
         p = plan[cls]
         n_p1 = len([c for c in p["chosen"] if c.needs_rtc_curve])
         n_cells = len(p["chosen"]) - n_p1
-        print(f"{cls:<6}{p['total']:>11}{n_p1:>8}{n_cells:>11}"
-              f"{len(p['na']):>6}{len(p['dropped']):>9}{N_P1_PER_CLASS:>8}")
+        target = len([f for f in T.families_of(cls)
+                      if T.in_scope(lane, f)]) * n_per_family
+        print(f"{cls:<6}{p['total']:>11}{len(p['chosen']):>8}{n_p1:>6}"
+              f"{n_cells:>7}{len(p['na']):>6}{len(p['dropped']):>9}"
+              f"{target:>8}")
+
+    # ---- the accounting identity, per class and in total -------------------
+    # "selected" alone is not auditable: the corpus is chosen + dropped + n/a +
+    # attribution-only, and nothing used to print the last three, so 59
+    # declarations vanished with no arithmetic that could notice.
+    tot = [0, 0, 0, 0, 0]
+    for cls in sorted(plan):
+        p = plan[cls]
+        tot[0] += p["total"]
+        tot[1] += len(p["chosen"])
+        tot[2] += len(p["dropped"])
+        tot[3] += len(p["na"])
+        tot[4] += sum(len(g) for g in p["attribution"].values())
+    print(f"\naccounting: candidates {tot[0]} = chosen(family) {tot[1]} + "
+          f"attribution-only {tot[4]} + dropped {tot[2]} + n/a {tot[3]}")
+    assert tot[0] == tot[1] + tot[2] + tot[3] + tot[4], (
+        "the candidate ledger does not balance: %d != %d + %d + %d + %d"
+        % (tot[0], tot[1], tot[4], tot[2], tot[3]))
+    print(f"class cell (chosen only -- what requirement (b) counts): {tot[1]}")
+
+    # ---- per-family depth against the budget ------------------------------
+    depth = collections.Counter(
+        f for f in (T.family_of(r["spec_id"]) for r in records) if f)
+    print(f"\nper (class x method family) -- depth vs N={n_per_family}:")
+    n_short = 0
+    for cls in sorted(plan):
+        for f in T.families_of(cls):
+            if not T.in_scope(lane, f):
+                continue
+            d = depth.get(f, 0)
+            mark = "" if d >= n_per_family else "  SHORT -%d" % (n_per_family - d)
+            if d < n_per_family:
+                n_short += 1
+            print(f"  {f:<6}{T.name(f):<26}{d:>3}{mark}")
+    print(f"  families short of N: {n_short}")
+
+    print("\nwhy candidates were not chosen (closed vocabulary):")
+    why = collections.Counter(
+        reason.split(":")[0] for p in plan.values()
+        for _, reason in p["dropped"])
+    if not why:
+        print("  (none -- every generatable candidate was chosen)")
+    for k, v in why.most_common():
+        print(f"  {v:>5}  {k}")
+
+    print("\ndeclared but never realised (no operator at all):")
+    any_unrealised = False
+    for cls in sorted(plan):
+        if plan[cls]["unrealised_specs"]:
+            any_unrealised = True
+            print(f"  {cls}: {plan[cls]['unrealised_specs']}")
+    if not any_unrealised:
+        print("  (none)")
+
+    # Distinct from the list above and much more specific: these specs DO have
+    # operators, and still got no instance, because the family's obligations do
+    # not fit N with the per-kernel cap. A spec with operators that is silently
+    # absent is the exact failure the family axis exists to prevent, so it is
+    # named here rather than left to be noticed in a shortfall count.
+    print("\nobligations not met within N (operators exist, no instance "
+          "selected):")
+    any_unmet = False
+    for cls in sorted(plan):
+        for f, sids in plan[cls]["obligation_unmet"].items():
+            any_unmet = True
+            print(f"  {f:<6}holds {depth.get(f, 0):>2} of N "
+                  f"{n_per_family}; unrealised: {sids}")
+    if not any_unmet:
+        print("  (none -- every declared spec with an operator is realised)")
 
     print("\nper class x category:")
     by = collections.Counter((r["class"], r["category"]) for r in records)
@@ -397,16 +822,25 @@ def write_spec_registry(path):
 
 
 def main():
-    global N_P1_PER_CLASS, N_CELLS
+    global N_CELLS
     ap = argparse.ArgumentParser()
     ap.add_argument("--level2", action="store_true",
                     help="also widen to the level-2 category set (specs §5)")
+    ap.add_argument("--lane", default=LANE, choices=T.lanes(),
+                    help="the lane whose scope model drives n/a families "
+                         "(default %s)" % LANE)
     ap.add_argument("--rtc", choices=RTC_LEVELS, default=None,
                     help="stamp the -rtc level this corpus will be run at "
                          "(specs §9.6.1: the curve is a RUN parameter; P1 "
                          "classes are re-run at every level)")
-    ap.add_argument("--n-p1", type=int, default=N_P1_PER_CLASS,
-                    help="P1 budget per class (default %d)" % N_P1_PER_CLASS)
+    ap.add_argument("--n-per-family", type=int, default=N_PER_FAMILY,
+                    help="instances per (class x method family), from "
+                         "schema/method-taxonomy.json (default %d)"
+                         % N_PER_FAMILY)
+    ap.add_argument("--n-realisations", type=int, default=N_REALISATIONS,
+                    help="cap per kernel/category -- the 'realisations' half of "
+                         "N = kernels x realisations (default %d)"
+                         % N_REALISATIONS)
     ap.add_argument("--n-cells", type=int, default=N_CELLS,
                     help="injections per (spec x category) cell for P3/P4/L "
                          "(default %d)" % N_CELLS)
@@ -419,22 +853,32 @@ def main():
                          "inadmissible spec is a verdict and never fails, but "
                          "an admissible spec without an operator is open work "
                          "and must not pass silently")
+    ap.add_argument("--fail-on-short", action="store_true",
+                    help="exit 3 if any in-scope family is below "
+                         "N. This is the W1 gate, and it is opt-in on purpose: "
+                         "today it fails by construction (19 of 31 families are "
+                         "short), and a gate that a known-incomplete corpus "
+                         "always fails is noise, not a gate. It becomes the "
+                         "default once W1 closes.")
     ap.add_argument("--out", default=OUT)
     ap.add_argument("--manifest", default=MANIFEST)
     a = ap.parse_args()
 
-    N_P1_PER_CLASS, N_CELLS = a.n_p1, a.n_cells
-    if a.level2:
-        for cls, cats in M.LEVEL2_SET.items():
-            for c in cats:
-                if c not in M.MINIMAL_SET.get(cls, []):
-                    M.MINIMAL_SET.setdefault(cls, []).append(c)
+    N_CELLS = a.n_cells
+    # `--level2` used to APPEND the level-2 categories into M.MINIMAL_SET, which
+    # (a) mutated the one definition the rest of the module reads for coverage
+    # and for the `level` stamp, so a level-2 run silently relabelled level-2
+    # categories as level 1, and (b) made the widening order-dependent within a
+    # process. compose() already passes `level2` to categories_for(); nothing
+    # else needs to know.
 
-    plan = compose(a.level2)
+    plan = compose(a.level2, n_per_family=a.n_per_family,
+                   n_realisations=a.n_realisations, lane=a.lane)
     records, skipped = emit(plan, a.out, dry_run=a.dry_run)
     summary = M.registry_summary()
     n_specs = write_spec_registry(SPEC_REGISTRY_OUT)
-    report(plan, records, skipped, rtc=a.rtc)
+    report(plan, records, skipped, rtc=a.rtc, n_per_family=a.n_per_family,
+           n_realisations=a.n_realisations, lane=a.lane)
     print(f"spec registry -> {os.path.relpath(SPEC_REGISTRY_OUT, REPO)}"
           f"  ({n_specs} specs)")
 
@@ -446,22 +890,104 @@ def main():
               % (len(summary["pending"]), ", ".join(summary["pending"])),
               file=sys.stderr)
         rc = 2
+    short = sorted(f for cls in plan for f, _ in plan[cls]["family_short"].items())
+    if a.fail_on_short and short:
+        print("\nW1 GATE FAILED: %d in-scope families are below N=%d: %s"
+              % (len(short), a.n_per_family, ", ".join(short)),
+              file=sys.stderr)
+        rc = 3
     if a.dry_run:
         return rc
+
+    # Every candidate that is not a mutant is written down. The manifest is the
+    # provenance record for the corpus, and a corpus records what it does not
+    # contain as well as what it does: without `dropped` and `na` the identity
+    # `candidates == chosen + dropped + n/a` is not recoverable from committed
+    # data, so 59 vanished declarations were invisible until someone re-ran the
+    # generator and diffed by hand.
+    dropped_recs = []
+    for cls in sorted(plan):
+        for c, reason in plan[cls]["dropped"]:
+            dropped_recs.append({
+                "class": cls,
+                "mutant_id": c.id,
+                "spec_id": c.spec_id,
+                "family": T.family_of(c.spec_id),
+                "category": c.category,
+                "case": c.case,
+                "path_class": c.path_class,
+                "reason": reason,
+            })
+    na_recs = [{"class": cls, "mutant_id": c.id, "spec_id": c.spec_id,
+                "family": T.family_of(c.spec_id), "category": c.category,
+                "case": c.case, "path_class": c.path_class,
+                "prohibition": c.prohibition}
+               for cls in sorted(plan) for c in plan[cls]["na"]]
+    attr_recs = [{"class": cls, "tag": tag, "mutant_id": c.id,
+                  "spec_id": c.spec_id, "category": c.category,
+                  "case": c.case, "path_class": c.path_class}
+                 for cls in sorted(plan)
+                 for tag, group in plan[cls]["attribution"].items()
+                 for c in group]
+    family_depth = {f: n for f, n in collections.Counter(
+        x for x in (T.family_of(r["spec_id"]) for r in records) if x).items()}
+
+    # The ledger, over the whole candidate set. `selected` is what the family
+    # axis decided; `emitted` is what reached the disk, and they differ by
+    # `skipped` -- a selected mutant whose edit did not match the base kernel,
+    # which is a GATE 2 failure and not a budget decision. Keeping both makes
+    # `candidates == selected + attribution + dropped + na` checkable by a
+    # reader of the manifest rather than only by a re-run of the generator.
+    accounting = {
+        "candidates": sum(p["total"] for p in plan.values()),
+        "selected": sum(len(p["chosen"]) for p in plan.values()),
+        "attribution": len(attr_recs),
+        "dropped": len(dropped_recs),
+        "na": len(na_recs),
+        "skipped": len(skipped),
+        "emitted": len(records),
+    }
+    assert accounting["candidates"] == (accounting["selected"]
+                                        + accounting["attribution"]
+                                        + accounting["dropped"]
+                                        + accounting["na"]), accounting
+    assert accounting["emitted"] == (accounting["selected"]
+                                      + accounting["attribution"]
+                                      - accounting["skipped"]), accounting
 
     os.makedirs(os.path.dirname(a.manifest), exist_ok=True)
     with open(a.manifest, "w") as f:
         json.dump({"toolchain": TOOLCHAIN,
                    "spec_version": SPEC_VERSION,
-                   "n_per_class": N_PER_CLASS,
-                   "n_p1_per_class": N_P1_PER_CLASS,
+                   "lane": a.lane,
+                   "n_per_family": a.n_per_family,
+                   "n_realisations": a.n_realisations,
+                   "n_kernels": a.n_per_family // a.n_realisations,
                    "n_cells": N_CELLS,
+                   "target_instances": T.target(a.lane),
                    "level2": a.level2,
                    "rtc": a.rtc,
+                   "accounting": accounting,
+                   "family_depth": {f: family_depth.get(f, 0)
+                                    for cls in sorted(plan)
+                                    for f in T.families_of(cls)
+                                    if T.in_scope(a.lane, f)},
+                   "family_short": {f: n for cls in sorted(plan)
+                                    for f, n in plan[cls]["family_short"].items()},
+                   "unrealised_specs": {cls: plan[cls]["unrealised_specs"]
+                                        for cls in sorted(plan)},
+                   "obligation_unmet": {f: sids for cls in sorted(plan)
+                                        for f, sids
+                                        in plan[cls]["obligation_unmet"].items()},
                    "registry": summary,
+                   "dropped": dropped_recs,
+                   "na": na_recs,
+                   "attribution": attr_recs,
                    "mutants": records}, f, indent=1)
     print(f"\nwrote {len(records)} mutants -> {os.path.relpath(a.out, REPO)}")
-    print(f"manifest -> {os.path.relpath(a.manifest, REPO)}")
+    print(f"manifest -> {os.path.relpath(a.manifest, REPO)}"
+          f"  (+{len(attr_recs)} attribution-only, {len(dropped_recs)} dropped, "
+          f"{len(na_recs)} n/a)")
     return rc
 
 
