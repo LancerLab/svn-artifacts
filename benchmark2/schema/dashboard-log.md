@@ -7,6 +7,44 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ---
 
+## 2026-09-19 (rev. 3) — the corpus is provably saturated, and two plans were wrong
+
+- **`fill_plan` sorted the wrong way.** `sorted(order, key=lambda k:
+  cur.get(k, 0))` put a kernel the family does not use (0) **ahead of** one
+  sitting at 1 of 2, so it opened a new kernel while a thin one was still open —
+  the exact opposite of the function's own docstring, and the reason `M2-a` was
+  told to add `conv2d` when it has no `conv2d` operator at all. The key is now
+  `(is_new, count)`. **14 plans changed**, all toward a flatter spread;
+  `M2-a` is now `relu+1`, which closes it to a perfect `2,2,2,2`.
+- **`worklist.csv` gained a `ceiling` column — the number that says whether a
+  plan is even reachable.** `short` is `N - have` (the obligation). `ceiling` is
+  what the candidate table can supply. Three caps stack under `N`: 2 per
+  category; the CELL ceiling (one instance per `(spec_id, category)`, or two
+  when the spec is P1); and the candidate count — a cell with one incumbent
+  supplies one, not two. `family_ceiling()` computes exactly that.
+- **It reproduces the measured corpus for all 31 families — every choreo row
+  reads `have == ceiling`.** M1 34/34, M2 26/26, M3 14/14, M4 29/29. That is the
+  mechanical answer to "can we not just re-run it to get more": where
+  `ceiling == have` there is **no candidate left to take**, so CPU time cannot
+  change the corpus and only a new operator can. It also settles the open
+  `M2 = 34` vs `26` puzzle: `34` came from `Σ_categories min(2, candidates)`,
+  which ignores the per-cell ceiling. `26` is the correct value.
+- **Two documentation errors corrected in the handoff**, both caused by writing
+  prose from `fill_plan` instead of from the candidate table: `M2-a` was
+  described as `7 → 8` by a re-run (it is 7 today, and 7 is its ceiling), and
+  M3's "reachable after the plans land" was given as `32` when only 5 of its 8
+  families hold operators, so `5 × 4 = 20` is the fillable figure and the
+  assignable distance is **6**, not 18. `m2.md` §2.1's "to reach 8, add" column
+  was re-derived per family from measured cells.
+- `make guards` unchanged at **44** — no guard consumes `worklist.csv`, so a
+  more honest column moves no verdict.
+- **Lesson.** A `fill_plan` derived from the class coverage set names kernels
+  the family does not have. Verify a generated plan against the family's own
+  candidate table before publishing it, and never print a plan without the
+  ceiling beside it.
+
+---
+
 ## 2026-09-19 (rev. 2) — the worklist now covers M1–M4, and M3 has a ceiling
 
 - **`make worklist`: 75 → 155 rows. `in-scope shortfall` 97 → 233.** The

@@ -170,7 +170,15 @@ def fill_plan(cls, have: Counter, total: int) -> str:
     order = list(MINIMAL.get(cls, []))
     steps = []
     cur = dict(have)
-    for k in sorted(order, key=lambda k: cur.get(k, 0)):
+    # Present-but-thin kernels first, then new ones. The sort key is
+    # `(is_new, count)`, not `count`: a kernel the family does not use has
+    # count 0, and a plain ascending sort puts it ahead of a kernel sitting at
+    # 1 of 2 -- starting a new kernel while a thin one is still open, which is
+    # the exact move this function exists to avoid. It also produced plans that
+    # were one kernel less even than the family could afford: M2-a topped up to
+    # `conv2d+1` when `relu+1` closes it to a perfectly flat `2,2,2,2`.
+    for k in sorted(order, key=lambda k: (0 if cur.get(k, 0) else 1,
+                                          cur.get(k, 0))):
         if sum(cur.values()) >= want:
             break
         c = cur.get(k, 0)
@@ -182,6 +190,42 @@ def fill_plan(cls, have: Counter, total: int) -> str:
         steps.append("%s+%d" % (k, add))
         cur[k] = c + add
     return " ".join(steps)
+
+
+def family_ceiling(cls: str, fam: str) -> int:
+    """The most instances this family can hold, measured from its candidates.
+
+    `N` is a ceiling *and* a decomposition, and three caps stack under it. Only
+    the first is a budget; the other two are properties of the declaration set
+    and of the candidate table, so no re-run of `select()` can lift them:
+
+      * `n_realisations` (2) -- a family holds at most 2 instances per category;
+      * the CELL ceiling -- a `(spec_id, category)` cell holds one instance, or
+        two when that spec is P1, because there the curve is the point;
+      * the candidate table -- a cell cannot supply more instances than it has
+        candidates, so a cell with one incumbent supplies one, not two.
+
+    `select()` takes exactly this maximum. For all 31 families the measured
+    corpus equals this number, so wherever `ceiling == have` the supply is
+    exhausted and only a NEW operator moves the count -- `fill_plan` names the
+    kernel to add to, but it is an ideal spread and does not promise a
+    candidate exists. Read the two together: `have 4 / ceiling 4 / plan
+    matmul+1` means "the shape wants matmul, and there is no matmul left".
+    """
+    if MUT is None:
+        return 0
+    cells = defaultdict(lambda: defaultdict(int))   # category -> spec -> count
+    per = {}                                        # (category, spec) -> 2|1
+    for c in MUT.ALL.get(cls, []):
+        if MUT.family_of(c.spec_id) != fam:
+            continue
+        cells[c.category][c.spec_id] += 1
+        per[(c.category, c.spec_id)] = N_R if c.needs_rtc_curve else 1
+    total = 0
+    for cat, by_spec in cells.items():
+        supply = sum(min(per[(cat, sid)], n) for sid, n in by_spec.items())
+        total += min(N_R, supply)
+    return min(N, total)
 
 
 def kernel_ceiling(cls) -> int:
@@ -288,6 +332,10 @@ for cls in CLASSES:
                 "have": have,
                 "need": N if state == "in-scope" else 0,
                 "short": short,
+                # The supply, not the obligation. `short` is `N - have`; this
+                # is what the family can actually reach today. When the two
+                # differ the row is corpus work, not a CPU run.
+                "ceiling": (family_ceiling(cls, f) if lane == "choreo" else ""),
                 "unattributed_rows": (
                     "" if state == "in-scope" and lane not in lane_fam
                     else ""),
@@ -325,7 +373,8 @@ def main():
         out = OUT_DEFAULT
     out.parent.mkdir(parents=True, exist_ok=True)
     cols = ["lane", "class", "family", "family_name", "state", "specs", "R_f",
-            "R_a", "have", "need", "short", "fill_plan", "blocker", "guarded"]
+            "R_a", "have", "ceiling", "need", "short", "fill_plan", "blocker",
+            "guarded"]
     with out.open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=cols)
         w.writeheader()
