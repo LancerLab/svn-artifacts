@@ -15,19 +15,19 @@
     "blocked-by-suite": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts."
   },
   "summary": {
-    "n_specs": 72,
-    "choreo_realized": 49,
+    "n_specs": 73,
+    "choreo_realized": 50,
     "choreo_unrealized": 23,
     "recorded_by_a_sota_lane": 14,
-    "recorded_over_choreo": 0.2857,
-    "recorded_over_all_specs": 0.1944,
-    "achievable_by_a_sota_lane": 56,
-    "achievable_over_all_specs": 0.7778,
-    "achievable_among_choreo_realized": 49,
+    "recorded_over_choreo": 0.28,
+    "recorded_over_all_specs": 0.1918,
+    "achievable_by_a_sota_lane": 57,
+    "achievable_over_all_specs": 0.7808,
+    "achievable_among_choreo_realized": 50,
     "achievable_over_choreo": 1.0,
-    "choreo_only_and_achievable": 35,
+    "choreo_only_and_achievable": 36,
     "choreo_only_and_recorded": 14,
-    "constitutional_n_a_anywhere": 38,
+    "constitutional_n_a_anywhere": 41,
     "lane_recorded_counts": {
       "triton": 8,
       "mlir-low": 6,
@@ -35,16 +35,16 @@
       "iree": 2
     },
     "lane_achievable_counts": {
-      "triton": 37,
-      "mlir-linalg": 36,
-      "mlir-low": 17,
-      "iree": 36
+      "triton": 38,
+      "mlir-linalg": 34,
+      "mlir-low": 16,
+      "iree": 34
     },
     "lane_recorded_over_achievable": {
-      "triton": 0.2162,
-      "mlir-linalg": 0.1667,
-      "mlir-low": 0.3529,
-      "iree": 0.0556
+      "triton": 0.2105,
+      "mlir-linalg": 0.1765,
+      "mlir-low": 0.375,
+      "iree": 0.0588
     },
     "union_metric_caveat": "`achievable_by_a_sota_lane` is the union over lanes and reaches 100% because each obligation class is declared expressible by at least one lane.  It answers 'could ANY lane express this?' and must not be quoted as a per-lane rate.  Quote `lane_recorded_over_achievable` instead.",
     "n_duplicate_findings": 29,
@@ -1046,11 +1046,13 @@
       "mechanism": "p#n off-by-one",
       "choreo": {
         "realized": true,
-        "n_mutants": 4,
+        "n_mutants": 7,
         "cases": [
+          "11_dynamic_32xSx768_32xSx768",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_32x768x512",
-          "1_bert_32x512x768_768_768"
+          "1_bert_32x512x768_768_768",
+          "3_attention_32xNx512x64_64_64"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -1174,8 +1176,9 @@
       "mechanism": "offset-view overrun",
       "choreo": {
         "realized": true,
-        "n_mutants": 4,
+        "n_mutants": 7,
         "cases": [
+          "11_dynamic_32xSx768_32xSx768",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_32x768x512",
           "1_bert_32x512x768_768_768"
@@ -1201,95 +1204,6 @@
         "mlir-low": {
           "status": "recorded",
           "evidence": "mlir-shared/mutate.py Structural(offset-overrun)"
-        },
-        "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
-        }
-      }
-    },
-    {
-      "unit": "M1.6",
-      "class": "M1",
-      "path_class": "P1",
-      "mechanism": "zero-stride / empty range",
-      "choreo": {
-        "realized": true,
-        "n_mutants": 4,
-        "cases": [
-          "1_bert_32x512x768_32x512x768",
-          "1_bert_32x512x768_32x768x512",
-          "1_bert_32x512x768_768_768"
-        ],
-        "admissible": false,
-        "registry_status": "implemented",
-        "prohibition": "absent",
-        "note": "noop by construction -- there is no prohibition to enforce, because the range is correctly empty. Retained for the miss audit, excluded from the admissible denominator",
-        "n_operators": 11,
-        "n_distinct_realisations": 11
-      },
-      "lanes": {
-        "triton": {
-          "status": "recorded",
-          "evidence": "triton/mutants/relu.py::relu_zerorange"
-        },
-        "mlir-linalg": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "yes",
-          "evidence": "results/mlir-linalg/stats.json S8_expressibility[elem] = yes",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
-        },
-        "mlir-low": {
-          "status": "recorded",
-          "evidence": "mlir-shared/mutate.py Structural(zero-stride)"
-        },
-        "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
-        }
-      }
-    },
-    {
-      "unit": "M1.7",
-      "class": "M1",
-      "path_class": "P1",
-      "mechanism": "reversed loop bound (upper < lower) -> overrun instead of empty",
-      "choreo": {
-        "realized": true,
-        "n_mutants": 2,
-        "cases": [
-          "11_dynamic_32xSx768_32x768xS",
-          "1_bert_32x512x768_32x512x768"
-        ],
-        "admissible": true,
-        "registry_status": "implemented",
-        "prohibition": null,
-        "note": null,
-        "n_operators": 2,
-        "n_distinct_realisations": 2
-      },
-      "lanes": {
-        "triton": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "yes",
-          "evidence": "triton/results/stats.json S8_expressibility[elem] = yes",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
-        },
-        "mlir-linalg": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "yes",
-          "evidence": "results/mlir-linalg/stats.json S8_expressibility[elem] = yes",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
-        },
-        "mlir-low": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "yes",
-          "evidence": "results/mlir-low/stats.json S8_expressibility[elem] = yes",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "iree": {
           "status": "expressible-not-recorded",
@@ -4093,20 +4007,17 @@
       "mechanism": "with-in mdspan dim mutated to 0 -- control",
       "choreo": {
         "realized": true,
-        "n_mutants": 14,
+        "n_mutants": 11,
         "cases": [
           "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
           "14_efficientnet_64x1280x7x7_64x7x7x1280",
           "14_mobilenet_128x32x112x112_32x32x3x3_128x32x112x112_S_P_D",
           "16_resnet_64x3x224x224_64x3x7x7_64x64x112x112_S_P_D",
           "18_unet_16x64x128x128_128x64x3x3_16x128x128x128_S_P_D",
-          "19_vit_32x3x224x224_768x3x16x16_32x768x14x14_16_0_1",
-          "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_32x768x512",
           "21_vit_32x768x14x14_1000x768x7x7_32x1000x7x7_S_P_D",
           "2_cnn_128x128x28x28_128x128x28x28",
-          "2_dynamic_Nx64x56x56_128x64x3x3_Nx128x56x56_S_P_D",
           "6_dynamic_64x64x56x56_128x64x3x3_64x128x56x56_S_P_D",
           "8_dynamic_64x256x28x28_Cx256x3x3_64xCx28x28_S_P_D"
         ],
@@ -4151,32 +4062,23 @@
       "unit": "M4.2",
       "class": "M4",
       "path_class": "P1",
-      "mechanism": "parallelby bound mutated to 0 or negative",
+      "mechanism": "parallelby bound mutated to 0 (a legal but empty iteration space)",
       "choreo": {
         "realized": true,
-        "n_mutants": 14,
+        "n_mutants": 5,
         "cases": [
           "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
-          "11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1",
-          "13_static_32x192x28x28_64x192x1x1_32x64x28x28_1_0_1",
           "14_efficientnet_64x1280x7x7_64x7x7x1280",
-          "16_resnet_64x3x224x224_64x3x7x7_64x64x112x112_S_P_D",
           "17_mobilenet_128xx96x112x112_128x112x112x96",
           "19_transformer_32x512x2048_32x512x2048",
-          "19_vit_32x3x224x224_768x3x16x16_32x768x14x14_16_0_1",
-          "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
-          "1_bert_32x512x768_32x768x512",
-          "2_cnn_128x128x28x28_128x128x28x28",
-          "2_dynamic_Nx64x56x56_128x64x3x3_Nx128x56x56_S_P_D",
-          "3_dynamic_16x256xHxW_256x256x3x3_16x256xHxW_S_P_D",
           "9_dynamic_64x128xHxW_64x128xHxW"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 14,
-        "n_distinct_realisations": 14
+        "n_operators": 10,
+        "n_distinct_realisations": 10
       },
       "lanes": {
         "triton": {
@@ -4215,15 +4117,12 @@
       "mechanism": "parallelby bound symbolic and zero only at runtime",
       "choreo": {
         "realized": true,
-        "n_mutants": 7,
+        "n_mutants": 4,
         "cases": [
           "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
           "11_dynamic_32xSx768_32x768xS",
-          "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
           "1_bert_32x512x768_32x768x512",
-          "2_cnn_128x128x28x28_128x128x28x28",
-          "4_dynamic_32x128xHxW_256x128x3x3_32x256xHxW_S_P_D",
-          "5_dynamic_128xCx112x112_64xCx1x1_128x64x112x112_1_0_1"
+          "2_cnn_128x128x28x28_128x128x28x28"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -4316,11 +4215,10 @@
       "mechanism": "stride/step = 0 in an iteration",
       "choreo": {
         "realized": true,
-        "n_mutants": 5,
+        "n_mutants": 4,
         "cases": [
           "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
           "11_dynamic_32xSx768_32x768xS",
-          "12_dynamic_64xSx256_Sx64x256",
           "2_cnn_128x128x28x28_128x128x28x28",
           "2_cnn_128x128x28x28_128x28x28x128"
         ],
@@ -4330,6 +4228,153 @@
         "note": null,
         "n_operators": 5,
         "n_distinct_realisations": 5
+      },
+      "lanes": {
+        "triton": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "triton/results/stats.json S8_expressibility[loop] = yes",
+          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "mlir-linalg": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-linalg/stats.json S8_expressibility[loop] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "mlir-low": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-low/stats.json S8_expressibility[loop] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "iree": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        }
+      }
+    },
+    {
+      "unit": "M1.6",
+      "class": "M4",
+      "path_class": "P1",
+      "mechanism": "zero-stride / empty range",
+      "choreo": {
+        "realized": true,
+        "n_mutants": 11,
+        "cases": [
+          "11_dynamic_32xSx768_32x768xS",
+          "11_dynamic_32xSx768_32xSx768",
+          "1_bert_32x512x768_32x512x768",
+          "1_bert_32x512x768_32x768x512",
+          "1_bert_32x512x768_768_768",
+          "3_attention_32xNx512x64_64_64"
+        ],
+        "admissible": false,
+        "registry_status": "implemented",
+        "prohibition": "absent",
+        "note": "class is M4, not M1: the edit is on an M1 index surface but the defect is M4's 'empty space', so the operator counts in M4's cell (family M4-d) while the spec_id keeps its M1 spelling. noop by construction -- there is no prohibition to enforce, because the range is correctly empty. Retained for the miss audit, excluded from the admissible denominator",
+        "n_operators": 11,
+        "n_distinct_realisations": 11
+      },
+      "lanes": {
+        "triton": {
+          "status": "recorded",
+          "evidence": "triton/mutants/relu.py::relu_zerorange"
+        },
+        "mlir-linalg": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-linalg/stats.json S8_expressibility[loop] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "mlir-low": {
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py Structural(zero-stride)"
+        },
+        "iree": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        }
+      }
+    },
+    {
+      "unit": "M4.6",
+      "class": "M4",
+      "path_class": "P1",
+      "mechanism": "parallelby bound mutated to negative -- invalid, so unlike an empty space it must be rejected",
+      "choreo": {
+        "realized": true,
+        "n_mutants": 3,
+        "cases": [
+          "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+          "1_bert_32x512x768_32x768x512",
+          "2_cnn_128x128x28x28_128x128x28x28"
+        ],
+        "admissible": true,
+        "registry_status": "implemented",
+        "prohibition": null,
+        "note": "split out of M4.2 so one operator is not evidence for two families: M4-a (zero bound) and M4-b (negative bound) have different oracle expectations, and while they shared a spec_id M4.2 was the sole realisation of M4-b and one of M4-a's two (defect D1)",
+        "n_operators": 4,
+        "n_distinct_realisations": 4
+      },
+      "lanes": {
+        "triton": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "triton/results/stats.json S8_expressibility[loop] = yes",
+          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "mlir-linalg": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-linalg/stats.json S8_expressibility[loop] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "mlir-low": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-low/stats.json S8_expressibility[loop] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "iree": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        }
+      }
+    },
+    {
+      "unit": "M1.7",
+      "class": "M4",
+      "path_class": "P1",
+      "mechanism": "reversed loop bound (upper < lower) -> overrun instead of empty",
+      "choreo": {
+        "realized": true,
+        "n_mutants": 2,
+        "cases": [
+          "11_dynamic_32xSx768_32x768xS",
+          "1_bert_32x512x768_32x512x768"
+        ],
+        "admissible": true,
+        "registry_status": "implemented",
+        "prohibition": null,
+        "note": "class is M4, not M1: same re-homing as M1.6 -- the defect is M4's 'reversed bound' (family M4-e), so the operator must not be counted in M1's cell",
+        "n_operators": 2,
+        "n_distinct_realisations": 2
       },
       "lanes": {
         "triton": {

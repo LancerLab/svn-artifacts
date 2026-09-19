@@ -226,9 +226,10 @@ def lane_spec_version(lane: str) -> dict:
     v2.1 fields as required of every record, which retroactively invalidated
     every pre-existing lane and made four separate validators reject their own
     committed corpora. `schema/records.py` now resolves required fields per
-    release, and gate G8 in `check_class_axis.py` checks each ready lane's
-    records against the release declared here -- so a lane cannot silently hold
-    records of a release it does not declare, and a v1 corpus cannot be
+    release, and `corpus.declared-files` in `check_class_axis.py` checks each
+    ready lane's records against the release declared here -- so a lane cannot
+    silently hold records of a release it does not declare, and a v1 corpus
+    cannot be
     mislabelled as v2.1 to make a gate pass.
     """
     return axis()["lanes"][lane]["spec_version"]
@@ -290,7 +291,8 @@ def lane_release_is_consistent(lane: str) -> str | None:
 
     Checks the declaration against itself and against the axis's own vocabulary,
     and refuses a declaration that points at files which do not exist -- a path
-    typo would otherwise make gate G8 pass by having nothing to check.
+    typo would otherwise make `corpus.declared-files` pass by having nothing to
+    check.
 
     A file may sit BELOW the lane's target release: the target is a statement of
     where the corpus is going, and the per-path `release` is where it is. That is
@@ -325,7 +327,8 @@ def lane_release_is_consistent(lane: str) -> str | None:
 
 
 #: Legal values of `lanes.<lane>.spec_version.corpus`. Mirrors
-#: `schema/records.py` SPEC_VERSIONS; G3 checks the two agree.
+#: `schema/records.py` SPEC_VERSIONS; `axis.restated-constants` checks the two
+#: agree.
 SPEC_VERSIONS = ("v1", "v2.1")
 
 

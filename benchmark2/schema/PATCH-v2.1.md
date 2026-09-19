@@ -62,7 +62,7 @@ exists: an N/A verdict must be auditable without a mutant to hang it on.
 | `path_class` | `P1`–`P4`, `L` |
 | `applicable` | `true`/`false` |
 | `prohibition` | reason, when not applicable |
-| `status` | `implemented` (an operator exists) / `pending` (admissible, unwritten) |
+| `status` | `implemented` (an operator exists) / `pending` (no operator exists; **says nothing about admissibility** — check `applicable`) |
 | `desc` | one-line statement of the corruption |
 | `note` | free text; **must name the missing surface** when `prohibition == "absent"` |
 | `spec_version` | `v2.1` |

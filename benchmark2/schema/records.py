@@ -47,8 +47,9 @@ A v2.1 writer that forgets to stamp `spec_version` produces records that look
 v1 and validate. This module cannot close that, because "v1" and "forgot to
 say" are the same JSON. It is closed one level up, where the missing information
 actually lives: every lane declares its corpus release in
-`schema/class-axis.json`, and `schema/check_class_axis.py` G8 asserts that the
-declaration and the records agree. A lane cannot forget in private.
+`schema/class-axis.json`, and `corpus.declared-files` in
+`schema/check_class_axis.py` asserts that the declaration and the records agree.
+A lane cannot forget in private.
 
 Net effect on the guard's strength
 ==================================
@@ -56,8 +57,9 @@ Net effect on the guard's strength
 Strictly stronger, not weaker. Before: every record had to carry all 14 fields,
 and a v1 corpus failed. After: a v2.1 record still has to carry all 14 fields (a
 missing one is still an error), and additionally a corpus that *claims* to be
-v2.1 but is not will be caught by G8. The only records that now pass where they
-previously failed are ones explicitly declared v1 by their lane.
+v2.1 but is not will be caught by `corpus.declared-files`. The only records
+that now pass where they previously failed are ones explicitly declared v1 by
+their lane.
 """
 
 from __future__ import annotations
@@ -197,7 +199,8 @@ def load_schema(benchmark2: Path | str | None = None) -> dict:
 
 
 def census(rows: list[dict], kind: str) -> dict[str, int]:
-    """Count records by release. Used by the checker's G8 and by lane logs."""
+    """Count records by release. Used by the checker's `corpus.declared-files`
+    and by lane logs."""
     out: dict[str, int] = {}
     for r in rows:
         v = spec_version_of(r)
