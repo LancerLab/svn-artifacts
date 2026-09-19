@@ -7,6 +7,52 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ---
 
+## 2026-09-19 (rev. 4) — M3's cell is not a design call; the floor settles it
+
+Was recorded as a decision for the owner: *"widen `MINIMAL_SET["M3"]`, or restate
+the cell and record the deviation."* The measurements below remove the choice —
+one branch is forced and the other does not exist.
+
+- **The floor rejects every restatement, on measured data.** From
+  `choreo/raw/mutant_manifest.json`, the admissible rate per class is M1 34/34 =
+  100%, M2 26/26 = 100%, **M3 10/14 = 71.43%**, M4 21/29 = 72.41% (M3 counts
+  family-assigned rows; over all 18 rows it is 55.56%). `floor_rationale` reasons
+  from an *assumed* 45% attrition, but M3's is **better** than that — 28.6% — and
+  it still fails: `admissible_floor_per_class = 35` needs a cell of
+  `ceil(35 / 0.7143) = **49**`. Cell 64 gives 45.7 (**clears**), cell 48 gives
+  **34.3 — short by 0.7**, cell 32 gives 22.9 — short by 12.1. The declared 64 is
+  the only reachable value that clears the floor, so "restate as 48 or 32" is not
+  a cheaper honest option, it is a floor failure. (M4 survives its smaller cell of
+  56 at 40.6 because its rate is higher.)
+- **Restating does not clear the guard either — verified, not inferred.**
+  `m3.cell` checks `len(declared)` and `len(realised)` against
+  `budget.kernel_component = 4` and derives the cell from `families x
+  N_PER_FAMILY`; **it never reads `budget.classes.M3.cell`**. Setting that field
+  to 48 and re-running `check_class_axis.py --guard m3.cell` reproduces the
+  identical two findings. The guard's *"or record the class cell that the corpus
+  can actually carry"* is permission to be honest in prose — the standing FAIL
+  **is** the record.
+- **So the remedy is a work item, and its size is known.** `declared` = 3
+  (`matmul`, `conv2d`, `batch_norm`) and `realised` = 2 (`matmul`, `conv2d`),
+  so **both halves must move** and the costly one is the second: a category added
+  to `MINIMAL_SET` with no operator behind it changes the declaration, not the
+  corpus. The suite realises **seven** kernels in total — `concat`, `conv2d`,
+  `layer_normalization`, `matmul`, `relu`, `softmax`, `transpose` — and **M3's
+  already-declared third, `batch_norm`, has no case anywhere** under
+  `choreo/mutants/` (`max_pool2d` and `embedding`, which `M1`'s Level-2 order
+  names, are equally absent). The `MINIMAL_SET` edit is the *last* step, not the
+  first. Needs the DSL toolchain, so it is not CPU work.
+- **`m3.cell` is the only red cell guard** — `m1.cell`, `m2.cell` and `m4.cell`
+  all pass. M4 realises 5 categories (`conv2d`, `layer_normalization`, `relu`,
+  `softmax`, `transpose`), so the same disease was suspected there and does not
+  exist. Guards unchanged at **44**.
+
+Docs corrected to match: `m3.md` §1.2 (new) and §4 (rewritten — "The design call"
+becomes "and why it is not a choice"), §2 and §6, plus `HANDOFF.md` §3.1 and
+`README.md`.
+
+---
+
 ## 2026-09-19 (rev. 3) — the corpus is provably saturated, and two plans were wrong
 
 - **`fill_plan` sorted the wrong way.** `sorted(order, key=lambda k:
