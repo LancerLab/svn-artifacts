@@ -9,6 +9,17 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ## 2026-09-19
 
+- **Both generators' fallback output path is derived, not hardcoded.** No number
+  moved. `gen_worklist.py` and `gen_dashboard.py` each carried an absolute
+  `/home/garfee/...` default, so the M1/M4 handoff's *documented* command
+  (`make worklist`) worked on exactly one machine. Now derived as
+  `benchmark2/schema -> ../../.. /eurosys27`, mirroring the Makefile's
+  `PAPER ?=`. The existence check runs only when the default is used, so
+  importing either module is still side-effect-free (verified) and an explicit
+  path argument still overrides everything. If the paper repo is absent the
+  failure names the missing directory and the override, instead of creating a
+  stray tree.
+
 - **Output paths repointed at the live venue.** The vscode workspace root is
   `svn/asplos27`, so both generators defaulted into it — but `asplos27` is the
   **pre-retarget snapshot**: the paper is EuroSys now, every recent commit

@@ -55,7 +55,17 @@ DEADLINE = date(2026, 9, 24)
 CLASSES = ["M1", "M2", "M3", "M4"]
 LANES = ["choreo", "triton", "mlir-low", "mlir-linalg", "iree"]
 PER_CLASS_LANES = {"mlir-low", "mlir-linalg"}
-OUT_DEFAULT = Path("/home/garfee/croq-paper-plan/svn/eurosys27/DASHBOARD.md")
+
+# The paper repo is a sibling of svn-artifacts, and this file lives at
+# svn-artifacts/benchmark2/schema/gen_dashboard.py, so `BASE.parent.parent` is
+# svn-artifacts and its parent holds `eurosys27`. Derived rather than hardcoded:
+# a colleague on another machine has no /home/garfee/... path. Mirrors the
+# Makefile's `PAPER ?= $(ROOT)/../../eurosys27`.
+#
+# Only checked when the default is actually used -- an explicit path argument
+# never touches this, and importing the module never fails.
+PAPER_DEFAULT = BASE.parent.parent / "eurosys27"
+OUT_DEFAULT = PAPER_DEFAULT / "DASHBOARD.md"
 
 
 def load_json(p):
@@ -448,7 +458,19 @@ def main():
         w(log.read_text().strip())
         w("")
 
-    out = Path(sys.argv[1]) if len(sys.argv) > 1 else OUT_DEFAULT
+    if len(sys.argv) > 1:
+        out = Path(sys.argv[1])
+    else:
+        if not PAPER_DEFAULT.is_dir():
+            raise SystemExit(
+                "cannot find the paper repo: %s does not exist.\n"
+                "This script writes into the paper tree, so it needs the "
+                "paper repo checked out as a sibling of svn-artifacts.\n"
+                "Pass an explicit path instead:\n"
+                "  python3 schema/gen_dashboard.py /path/to/DASHBOARD.md"
+                % PAPER_DEFAULT)
+        out = OUT_DEFAULT
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(L) + "\n")
     print("wrote %s (%d lines)" % (out, len(L)))
 

@@ -32,8 +32,17 @@ try:
 except Exception:  # pragma: no cover
     MUT = None
 
-OUT_DEFAULT = (Path("/home/garfee/croq-paper-plan/svn/eurosys27")
-               / "plan" / "m1-m4-handoff" / "worklist.csv")
+# The paper repo is a sibling of svn-artifacts, and this file lives at
+# svn-artifacts/benchmark2/schema/gen_worklist.py, so `BASE.parent.parent` is
+# svn-artifacts and its parent holds `eurosys27`. Derived rather than hardcoded:
+# a colleague who clones this repo on another machine has no /home/garfee/...
+# path, and a default that only works on one machine is worse than no default.
+# Mirrors the Makefile's `PAPER ?= $(ROOT)/../../eurosys27`.
+#
+# Only checked when the default is actually used -- an explicit path argument
+# never touches this, and importing the module never fails.
+PAPER_DEFAULT = BASE.parent.parent / "eurosys27"
+OUT_DEFAULT = PAPER_DEFAULT / "plan" / "m1-m4-handoff" / "worklist.csv"
 
 CLASSES = ["M1", "M4"]
 LANES = ["choreo", "triton", "mlir-low", "mlir-linalg", "iree"]
@@ -254,7 +263,18 @@ for cls in CLASSES:
 
 
 def main():
-    out = Path(sys.argv[1]) if len(sys.argv) > 1 else OUT_DEFAULT
+    if len(sys.argv) > 1:
+        out = Path(sys.argv[1])
+    else:
+        if not PAPER_DEFAULT.is_dir():
+            raise SystemExit(
+                "cannot find the paper repo: %s does not exist.\n"
+                "This script writes its CSV into the paper tree, so it needs "
+                "the paper repo checked out as a sibling of svn-artifacts.\n"
+                "Pass an explicit path instead:\n"
+                "  python3 schema/gen_worklist.py /path/to/worklist.csv"
+                % PAPER_DEFAULT)
+        out = OUT_DEFAULT
     out.parent.mkdir(parents=True, exist_ok=True)
     cols = ["lane", "class", "family", "family_name", "state", "specs", "R_f",
             "R_a", "have", "need", "short", "fill_plan", "blocker", "guarded"]
