@@ -1,0 +1,44 @@
+#include "choreo.h"
+#include "common.h"
+
+#define stride 1
+#define padding 0
+#define dilation 1
+
+__co__ auto CONV2D(f32 [16, 1024, 13, 13] i, f32 [255, 1024, 1, 1] w) {
+  N = i.span(0);
+  Cin = i.span(1);
+  H = i.span(2);
+  W = i.span(3);
+  Cout = w.span(0);
+  Kh = w.span(2);
+  Kw = w.span(3);
+  Ho = (H + 2 * padding - dilation * (Kh - 1) - 1) / stride + 1;
+  Wo = (W + 2 * padding - dilation * (Kw - 1) - 1) / stride + 1;
+
+  f32 [N, Cout, Ho, Wo] o;
+
+  M = Ho * Wo;
+  K = Cin * Kh * Kw;
+
+  parallel p by 2  {
+    foreach n in [N / #p] {
+      parallel q by 13  {
+        local f32 [M/#q, Cout] l1_Y{0.0f};
+        foreach kt in [16] {
+          shared f32 [Cout, 64] B_tile;
+          dma.copy w.span_as(K, Cout).chunkat(_, kt) => B_tile;
+          l1_A = dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(kt, q, _).span_as(64, 13) => local;
+          l1_B = dma.copy B_tile => local;
+          call k_matmul(l1_A.data, l1_B.data, l1_Y, M/#q, Cout, 64);
+        }
+        dma.transp<1, 0> l1_Y => o.chunkat(p#n, _, q, _).span_as(Cout, 13);
+      }
+    }
+  }
+  return o;
+}
+
+int main() {
+  test("CONV2D", CONV2D, {16, 1024, 13, 13}, {255, 1024, 1, 1}, 1, 0, 1 );
+}

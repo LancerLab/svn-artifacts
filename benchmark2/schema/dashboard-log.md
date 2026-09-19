@@ -343,3 +343,36 @@ becomes "and why it is not a choice"), §2 and §6, plus `HANDOFF.md` §3.1 and
 - `make test-guards`: 27 controls pass. GREEN.
 - Not from this sitting, flagged for the coordinator: upstream baseline drift
   44 -> 47 between handoff issuance and this sitting.
+
+### Fill: `choreo` 107 -> 120 (17 new operators)
+
+- Answer to *"make each lane's instance count reach its plan"*. Established first
+  that **CPU cannot move a count**: `gen_mutants.py --dry-run --report` prints
+  `selected 107 mutants  (skipped 0)` identically on repeated runs. A lane's
+  count moves only when its mutant *surface* (operators x anchored kernels) grows.
+- Wrote **19 operators** into `choreo/mutations.py` (+95 lines); **17** survive as
+  selected instances. The 2 dropped ones (`M2.17.cc1.alt`, `M2.17.ln1.alt`) were
+  found by **single-operator ablation** to add zero instances while *displacing*
+  `M2.17.cc11.rtshaped` and `M2.17.ln3.rtshaped`. Ablate before committing an
+  operator: `--dry-run --report`'s class cell is the only honest delta.
+  - `M1` +6 (`M1.8.ln1.alt`, `M1.12.ln1.alt`, `M1.12.sm1.alt`,
+    `M1.21.ln1.alt`, `M1.11.rl1.alt`, `M1.11.tp1.alt`) -> `M1` 34 -> **40**.
+  - `M2` +6 (`M2.11.rl1.alt`, `M2.9.ln1.alt`, `M2.6.mm1.alt`, `M2.7.cc1.alt`,
+    `M2.16.cv1.alt`, `M2.7.mm1.alt`) -> `M2` 26 -> **32**.
+  - `M4` +5 (`M4.6.rl1.alt`, `M4.6.tp1.alt`, `M4.3.rl1.alt`, `M4.5.cv1.alt`,
+    `M4.5.rl1.alt`) -> `M4` 29 -> **34**.
+  - `M3` +0 (saturated at 14; four of its eight families have no spec at all).
+- Corpus **116 -> 124** mutants (120 cell-bearing + 4 attribution-only).
+- `make guards`: true A/B **32 -> 30 failures**, nothing broken
+  (`m1.e.instances` and `m2.a.instances` flipped `ok`). **`make guards` reads
+  `choreo/raw/mutant_manifest.json`, not `mutations.py`**, so any before/after
+  comparison MUST re-run `gen_mutants.py` between the two swaps or both sides
+  read the same manifest and appear identical.
+- Corrected the standing *"`M2` realisable = 54"* to **32**. Two causes: a grep
+  for a *feature* was mistaken for proof that a spec's *literal anchor* exists
+  (`M2.5` is `concat`-only — 3 of 21 files), and the P3 `N_CELLS = 1` rule was
+  not applied (`M2.17`).
+- Bug found: an operator re-using spec integer `2` without `spec_id="M4.6"` is
+  attributed to `V1_SPEC_ID[('M4', 2)]`, a *different* registry entry, and is
+  therefore invisible to its own family. Always pass `spec_id=` when reusing a
+  spec integer across classes.

@@ -827,6 +827,35 @@ M1 = [
        "transposed output layout: undo the permutation in the declaration",
        ("f32 [i.span(0), i.span(2), i.span(1)] o;",
         "f32 [i.span(0), i.span(1), i.span(2)] o;")),
+
+
+    # --- additional realisation cells (auto-derived: an existing
+    # spec edit applied to a further base kernel where its anchor occurs,
+    # raising the family to the depth its kernel spread allows) ---
+    _m("M1.8.ln1.alt", 'M1', 8, 'stride', 'layer_normalization',
+       '11_dynamic_32xSx768_768_768',
+       'stride scaling: the row index advances by 2 within the chunk',
+       ('lhs.at(p#n, j, k)', 'lhs.at(p#n, j * 2, k)', None)),
+    _m("M1.12.ln1.alt", 'M1', 12, 'stride', 'layer_normalization',
+       '11_dynamic_32xSx768_768_768',
+       'wrong loop variable for a dimension on the primary operand',
+       ('lhs.at(p#n, j, k)', 'lhs.at(p#n, j, j)', None)),
+    _m("M1.12.sm1.alt", 'M1', 12, 'stride', 'softmax',
+       '11_dynamic_32xSx768_32xSx768',
+       'wrong loop variable for a dimension: the reduction index is reused for the row dimension (broadcast index reuse)',
+       ('l1_input.data.at(0, j, k)', 'l1_input.data.at(0, k, k)', None)),
+    _m("M1.21.ln1.alt", 'M1', 21, 'oob', 'layer_normalization',
+       '11_dynamic_32xSx768_768_768',
+       'tile index one past the tiled extent on the primary operand',
+       ('lhs.at(p#n, j, k)', 'lhs.at(p#n, j, k + K)', None)),
+    _m("M1.11.rl1.alt", 'M1', 11, 'stride', 'relu',
+       '11_dynamic_32xSx768_32xSx768',
+       "read-after-write aliasing: the shared tile is shrunk below the `parallel q by 64` fan-out, so threads overwrite each other's region",
+       ('shared f32 [1, 1, 64, 1] inp_s, out_s;', 'shared f32 [1, 1, 32, 1] inp_s, out_s;', None)),
+    _m("M1.11.tp1.alt", 'M1', 11, 'stride', 'transpose',
+       '11_dynamic_32xSx768_32x768xS',
+       'read-after-write aliasing on the transpose source tile',
+       ('shared f32 [1, 1, 64] is;', 'shared f32 [1, 1, 32] is;', None)),
 ]
 
 # ===========================================================================
@@ -1025,6 +1054,39 @@ M2 = [
        "11_dynamic_32xS1x768_32xS2x768_32xS1pS2x768",
        "shared source tile extent disagrees with the DMA source",
        ("shared f32 [1, J1, 1, 1] as;", "shared f32 [1, J1 + 1, 1, 1] as;")),
+
+    # ------------------------------------------------------------------
+    # Second realisation cells for the M2 families whose ceiling was not
+    # reached because a family's depth is bounded by the number of KERNELS
+    # its specs' edit anchors exist on (select() caps 2 per category):
+    #   family depth <= 2 x (#categories the family's anchors exist on)
+    # Each operator below is an EXISTING spec's edit list applied to a
+    # further base kernel where its anchor is present -- no new semantics.
+    # ------------------------------------------------------------------
+    _m("M2.11.rl1.alt", "M2", 11, 'wrong-shape', 'relu',
+       '11_dynamic_32xSx768_32xSx768',
+       'DMA destination buffer undersized by one element on an otherwise LogicalEqual path on relu (second cell: the same defect on another kernel of the family)',
+       ('shared f32 [1, 1, 64, 1] inp_s, out_s;', 'shared f32 [1, 1, 63, 1] inp_s, out_s;')),
+    _m("M2.9.ln1.alt", "M2", 9, 'dim-mismatch', 'layer_normalization',
+       '6_dynamic_128xCx112x112_112x112_112x112',
+       'batch/group dimension swapped on the primary operand on layer_normalization (second cell: the same defect on another kernel of the family)',
+       ('f32 [I, N0, K, L] lhs', 'f32 [N0, I, K, L] lhs')),
+    _m("M2.6.mm1.alt", "M2", 6, 'dim-mismatch', 'matmul',
+       '11_dynamic_32xSx768_768x768_32xSx768',
+       'two leading extents transposed in the output declaration on matmul (second cell: the same defect on another kernel of the family)',
+       ('f32 [lhs.span(0), lhs.span(1), rhs.span(1)] output;', 'f32 [lhs.span(1), lhs.span(0), rhs.span(1)] output;')),
+    _m("M2.7.cc1.alt", "M2", 7, 'dim-mismatch', 'concat',
+       '15_gpt_16x512x1536_16x512x1536_16x512x3072',
+       'reduced-rank view on the second concat operand on concat (second cell: the same defect on another kernel of the family)',
+       ('f32 [I, J, K, L] b)', 'f32 [I, J, K] b)')),
+    _m("M2.16.cv1.alt", "M2", 16, 'dim-mismatch', 'conv2d',
+       '20_static_16x1024x13x13_255x1024x1x1_16x255x13x13_1_0_1',
+       'span_as split exchanged: ElementCount is preserved, so the count-only comparison at semacheck.cpp:947 passes on conv2d (second cell: the same defect on another kernel of the family)',
+       ('dma.copy w.span_as(Cout, K).chunkat(_, kt) => B_tile;', 'dma.copy w.span_as(K, Cout).chunkat(_, kt) => B_tile;')),
+    _m("M2.7.mm1.alt", "M2", 7, 'dim-mismatch', 'matmul',
+       '11_dynamic_32xSx768_768x768_32xSx768',
+       'reduced-rank view: a dimension is dropped from the output declaration on matmul (second cell: the same defect on another kernel of the family)',
+       ('f32 [lhs.span(0), lhs.span(1), rhs.span(1)] output;', 'f32 [lhs.span(0), rhs.span(1)] output;')),
 ]
 
 # ===========================================================================
@@ -1678,6 +1740,31 @@ M4 += [
        "with-in mdspan extent mutated to 0 on the element loop",
        ("foreach {i, j, k} in [I / #p, J, 12]",
         "foreach {i, j, k} in [0, J, 12]")),
+
+
+    # --- additional realisation cells (auto-derived: an existing
+    # spec edit applied to a further base kernel where its anchor occurs,
+    # raising the family to the depth its kernel spread allows) ---
+    _m("M4.6.rl1.alt", 'M4', 2, 'stride', 'relu',
+       '11_dynamic_32xSx768_32xSx768',
+       'parallelby bound mutated to negative on the relu inner loop',
+       ('parallel q by 64', 'parallel q by -64', None), spec_id="M4.6"),
+    _m("M4.6.tp1.alt", 'M4', 2, 'stride', 'transpose',
+       '11_dynamic_32xSx768_32x768xS',
+       'parallelby bound mutated to negative on the transpose inner loop',
+       ('parallel q by 64', 'parallel q by -64', None), spec_id="M4.6"),
+    _m("M4.3.rl1.alt", 'M4', 3, 'stride', 'relu',
+       '18_resnet_64x256x56x56_64x256x56x56',
+       'symbolic leading bound cancelled on a rank-4 relu',
+       ('foreach {i, j, k, l} in [I / #p, J, K, 7]', 'foreach {i, j, k, l} in [I - I, J, K, 7]', None)),
+    _m("M4.5.cv1.alt", 'M4', 5, 'stride', 'conv2d',
+       '18_unet_16x64x128x128_128x64x3x3_16x128x128x128_S_P_D',
+       'zero stride in the index map: every iteration reads tile 0, so the write-back overwrites a single tile N times',
+       ('dma.copy l1_Y => Y.chunkat(q#_q, qq);', 'dma.copy l1_Y => Y.chunkat(q#_q, qq * 0);', None)),
+    _m("M4.5.rl1.alt", 'M4', 5, 'stride', 'relu',
+       '17_mobilenet_128x96x112x112_128x96x112x112',
+       'element index of the relu write-back multiplied by 0, so a single output element is overwritten N times',
+       ('out.chunkat(p#i, j, k, l);', 'out.chunkat(p#i, j, k, l * 0);', None)),
 ]
 
 M4 += [

@@ -55,21 +55,67 @@ def current_arch() -> str:
 
 # ---------------------------------------------------------------- oracle
 def oracle_check(category, ref_out, mut_out) -> str:
-    """manifest field: corrupts | noop"""
+    """manifest field: corrupts | noop.
+
+    NOTE: this lane is torch-free by design (gpubuf.py is a ctypes libcudart
+    shim), so the comparison is numpy. It used to call `torch.allclose` with
+    no `import torch` anywhere in the file: the `except Exception` swallowed
+    the resulting NameError and returned `corrupts` for every mutant. The
+    function is currently unreferenced -- the live manifest comes from
+    `run_mutant` -- so the bug was latent, not active. Do not "fix" it by
+    adding a torch dependency.
+    """
+    import numpy as np
+
     if mut_out is None:
         return "corrupts"  # never wrote output
     try:
-        same = torch.allclose(ref_out, mut_out, atol=1e-4, equal_nan=True)
+        same = bool(np.allclose(np.asarray(ref_out), np.asarray(mut_out),
+                                atol=1e-4, equal_nan=True))
     except Exception:
         same = False
     return "noop" if same else "corrupts"
 
 
 # ---------------------------------------------------------------- records
+# Identity of a record within its stream. Everything NOT listed here (outcome,
+# manifest, detail, hashes, toolchain_version) is the measurement, and is
+# overwritten when the stage is re-run.
+IDENTITY = ("toolchain", "category", "class", "mutant_id", "level", "size")
+
+
+def _key(record: dict) -> tuple:
+    return tuple((k, record[k]) for k in IDENTITY if k in record)
+
+
 def emit(path: Path, record: dict):
+    """Upsert `record` into the JSONL stream at `path`, keyed by IDENTITY.
+
+    This lane writes ONE stream from TWO invocations: `minimal` (23 level-1
+    rows) and `minimal --level2` (6 level-2 rows) both land in
+    `raw/mutants.jsonl`. So the writer cannot truncate per invocation -- that
+    would make the second stage destroy the first -- and it must not blindly
+    append either: appending the same generation twice silently doubles the
+    corpus (observed 29 -> 52 rows, 23 byte-identical pairs), which is the
+    `mutants.no-duplicate-injection` finding and inflates every count derived
+    from the lane. Upsert gives both properties at once: re-running a stage
+    REPLACES that stage's rows, and the two stages still accumulate.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "a") as f:
-        f.write(json.dumps(record) + "\n")
+    key = _key(record)
+    rows = []
+    if path.exists():
+        for line in path.read_text().splitlines():
+            if not line.strip():
+                continue
+            try:
+                old = json.loads(line)
+            except json.JSONDecodeError:
+                continue  # drop unparseable lines rather than propagate them
+            if _key(old) != key:
+                rows.append(old)
+    rows.append(record)
+    path.write_text("".join(json.dumps(r) + "\n" for r in rows))
 
 
 def kernel_record(category, size, compile_st, run_st, ref_st, device):
