@@ -7,9 +7,33 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ---
 
+## 2026-09-19 (later)
+
+- **`996087b` closed five `mutants.edits-apply` findings and opened two
+  `corpus.declared-files` ones. Baseline 49 → 46 — the number is the sum of
+  both.** The repair is real: all five operators now apply (re-verified by hand
+  against their base kernel), and **no measured number moved** — the corpus is
+  still 107 mutants, and M2/M3's family depths are unchanged (`M2-a 7`, `M2-e 2`,
+  `M3-a 4`, `M3-e 4`). But `raw/e1_mutant_records.json` was regenerated and now
+  emits **v2.1** records (`path_class`, `prohibition`, `spec_id`, `spec_version`)
+  while the lane still declares that file at **release v1**, and the axis records
+  none of those fields. So `corpus.declared-files` went `1 → 3`. **Arithmetic:
+  49 − 5 + 2 = 46**; group-level FAILs `33 → 32`. **Proved:** per-group parse of
+  `make guards` before and after — the *only* changed groups are
+  `mutants.edits-apply` (`FAIL 5` → `ok 0`) and `corpus.declared-files` (`FAIL 1`
+  → `FAIL 3`). A count that moved by three is not "five fixed"; read the groups.
+  **Owner action:** either bump the declared release to `v2.1` and record the
+  fields in the axis, or stop declaring `e1_mutant_records.json` until ported.
+
+- **Correction to the entry below.** It claimed the five non-applying operators
+  make the M2/M3 instance counts "optimistic by four". **That was wrong**, and
+  was checked the careless way — from the registry rather than from the corpus.
+  See the amended note in that entry.
+
 ## 2026-09-19
 
-- **The guard baseline is 49, and four of those findings are real M2/M3 debt.**
+- **The guard baseline moved 44 → 49, and the extra findings were M2/M3 registry
+  debt — not a worse audit.**
   The count moved 44 → 49, which looks like a regression and is not. Commit
   `1161cee` added the `mutants.edits-apply` guard; it immediately found five
   operators whose literal `old` string no longer exists in their base kernel,
@@ -17,14 +41,13 @@ Keep each entry to: what changed, what number moved, what it proved.
   `11_dynamic_32xSx768_768x768_32xSx768.co`: `M2.s3.mm11.swap` (spec `M2.3`,
   M2-a), `M2.s2.mm11.tiles` (`M2.2`, M2-a), `M2.13.mm11.affine` (`M2.13`,
   M2-e), `M3.s1.mm11.ktile31` (`M3.1`, M3-a), `M3.s2.mm11.rhs1` (`M3.6`,
-  M3-e). **Four are admissible and counted, so the M2 and M3 instance counts
-  in this dashboard are optimistic by four** (M2 by three, M3 by one); the
-  fifth sits in `M3-e`, which is already `0 of 8` admissible, so it overstates
-  nothing. **Proved:** `make guards` at `1161cee~1` → 14 findings, i.e. the
+  M3-e). **They inflated the registry, not the measurements** — corrected above:
+  none was in the committed corpus, and each has a working sibling realising the
+  same spec, so no instance count and no `R_f` moved. **Proved:** `make guards` at `1161cee~1` → 14 findings, i.e. the
   growth is guard instrumentation, not graded findings; `make test-guards` →
   27/27 controls pass at 49. **The audit did not get worse; the instrument got
-  sharper.** Recorded in `DASHBOARD.md`'s handoff, not fixed — M2/M3 are
-  deferred. `plan/m1-m4-handoff/HANDOFF.md` §2.5 and §6.6.
+  sharper.** Recorded in `DASHBOARD.md`'s handoff — M2/M3 are deferred.
+  `plan/m1-m4-handoff/HANDOFF.md` §2.5 and §6.6.
 
 - **A missing lane input no longer renders as a measured zero.** No number
   moved on a checkout that has the data. Cloning `gxf/croq-paper-plan` +
