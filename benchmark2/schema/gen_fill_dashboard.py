@@ -17,6 +17,7 @@ Usage:
     make fill-dashboard
 """
 import csv
+import re
 import sys
 from datetime import date
 from pathlib import Path
@@ -51,6 +52,15 @@ def num(row, key):
     return int(v) if v else 0
 
 
+def published(row, key):
+    """True iff the column carries a measurement at all.
+
+    Blank and `0` are different facts, and the difference decides whether a
+    family reads as `saturated` or `unwritten`. A blank `ceiling` means nobody
+    measured one; a zero means it was measured and is zero."""
+    return bool((row.get(key) or "").strip())
+
+
 def fams_all(rows):
     """Every family the taxonomy declares -- the plan's domain.
 
@@ -67,16 +77,18 @@ def in_scope(row):
 
 
 def resolves_family(rows):
-    """True iff this lane's rows are a family partition.
+    """True iff this lane's rows carry a `spec_id`, and so a family.
 
-    `choreo` composes family-first, so every instance lands in a family and the
-    per-family count is bounded by N.  The mlir lanes compose class-first, so
-    `have` can exceed N in one family and be 0 in its siblings -- that is a
-    missing axis, not over-delivery.
+    The test is `gen_worklist.py`'s own attribution state, NOT a shape test on
+    the counts. An earlier version asked "is every `have` <= `need`?" and
+    inferred "no family axis" whenever a count exceeded N. That was wrong twice
+    over: `mlir-linalg` and `mlir-low` DO emit `spec_id`
+    (`mlir-linalg-layer_normalization-static-M2.1-off`), and a family at 40
+    against N=8 is *over-delivery*, not the absence of an axis. The heuristic
+    hid 48 unwritten `mlir-linalg` instances behind a label that said they were
+    not countable.
     """
-    if not any(num(r, "need") for r in rows):
-        return False
-    return all(num(r, "have") <= num(r, "need") for r in rows)
+    return not any(r["state"].startswith("unattributed") for r in rows)
 
 
 def cell(row, resolves, plan):
@@ -99,10 +111,21 @@ def cell(row, resolves, plan):
         return "conflict"
     if not resolves:
         return "n/a"
-    have, need, ceil = num(row, "have"), plan, num(row, "ceiling")
+    have, need = num(row, "have"), plan
     if have >= need:
-        return f"**{have}**/{need} ok"
-    if have >= ceil:
+        # `over` is not a warning: N is a decomposition, not a maximum, so a
+        # lane may legitimately land more instances on one family than the
+        # budget names -- but it is never the same fact as "ok", and it is
+        # never a reason to leave a sibling family at zero.
+        return f"**{have}**/{need} over" if have > need else f"**{have}**/{need} ok"
+    if not published(row, "ceiling"):
+        # Nothing was measured, so nothing may be claimed about the supply.
+        # Reporting `saturated` here was a real defect in this generator: a
+        # blank `ceiling` compares as 0, so `have 0 >= ceiling 0` printed
+        # `**0**/8 saturated` for `mlir-linalg` M2-b, i.e. it dressed six
+        # families of unwritten code as a measured kernel-supply limit.
+        return f"**{have}**/{need} unwritten"
+    if have >= num(row, "ceiling"):
         return f"**{have}**/{need} saturated"
     return f"**{have}**/{need} short"
 
@@ -220,29 +243,45 @@ def main(argv):
     # ----------------------------------------------------------- next actions
     out.append("## 3. Short families where an operator would actually help")
     out.append("")
+    out.append("Two cases qualify, and they are different jobs. `unwritten` "
+               "means no ceiling was ever measured because the spec has no "
+               "mutation code -- the fix is to write that code. `short` means a "
+               "ceiling exists and the corpus is below it -- the fix is an "
+               "operator whose anchor reaches an unused kernel. `saturated` "
+               "families are excluded: their supply is exhausted and only a new "
+               "kernel surface moves them (section 4).")
+    out.append("")
     help_ = [r for r in rows
              if r["state"] == "in-scope" and resolves[r["lane"]]
-             and num(r, "have") < num(r, "ceiling")
-             and num(r, "have") < plan[(r["lane"], r["family"])]]
-    help_.sort(key=lambda r: (-(num(r, "ceiling") - num(r, "have")), r["lane"], r["family"]))
+             and num(r, "have") < plan[(r["lane"], r["family"])]
+             and (not published(r, "ceiling")
+                  or num(r, "have") < num(r, "ceiling"))]
+    help_.sort(key=lambda r: (r["lane"], r["class"], r["family"]))
     if not help_:
-        out.append("**None.** Every in-scope family is at its measured ceiling. "
-                   "No further operator can raise any lane; the remaining gap is "
-                   "a kernel-suite question, not a corpus one.")
+        out.append("**None.** No family has unwritten mutation code, and every "
+                   "written family is at its measured ceiling. The remaining gap "
+                   "is a kernel-suite question, not a corpus one.")
     else:
-        out.append("| lane | class | family | have | ceiling | planned | headroom |")
-        out.append("|---|---|---|---|---|---|---|")
+        out.append("| lane | class | family | have | ceiling | planned | "
+                   "missing | work |")
+        out.append("|---|---|---|---|---|---|---|---|")
         for r in help_:
             pl = plan[(r["lane"], r["family"])]
+            ceil = (r["ceiling"] if published(r, "ceiling") else "--")
+            kind = ("write the spec's mutation code"
+                    if not published(r, "ceiling")
+                    else "operator with an anchor on +%d kernel(s)"
+                         % (num(r, "ceiling") - num(r, "have")))
             out.append(f"| `{r['lane']}` | {r['class']} | `{r['family']}` | "
-                       f"{r['have']} | {r['ceiling']} | {pl} | "
-                       f"**{num(r, 'ceiling') - num(r, 'have')}** |")
+                       f"{r['have']} | {ceil} | {pl} | "
+                       f"**{pl - num(r, 'have')}** | {kind} |")
     out.append("")
 
     out.append("## 4. Families at their measured ceiling (kernel-supply bound)")
     out.append("")
     sat = [r for r in rows
            if r["state"] == "in-scope" and resolves[r["lane"]]
+           and published(r, "ceiling")
            and num(r, "have") >= num(r, "ceiling")
            and num(r, "have") < plan[(r["lane"], r["family"])]]
     sat.sort(key=lambda r: (r["lane"], r["class"], r["family"]))
@@ -264,43 +303,67 @@ def main(argv):
     out.append("")
 
     # ------------------------------------------------- no family axis lanes
-    out.append("## 5. Lanes with no family axis")
+    out.append("## 5. Lanes whose rows carry no `spec_id`")
     out.append("")
-    out.append("These lanes cannot be scored per family, for two different "
-               "reasons. Neither is improved by writing operators.")
+    out.append("Two lanes emit records with a `class` but no `spec_id`, so their "
+               "instances can be counted per class and never per family. Their "
+               "`implemented` column above reads 0 for that reason alone, and "
+               "the instances that do exist are named here so the shortfall is "
+               "not overstated.")
     out.append("")
-    out.append("| lane | why | planned | implemented | the fix |")
-    out.append("|---|---|---|---|---|")
+    out.append("| lane | why | planned | implemented | discarded instances | "
+               "the fix |")
+    out.append("|---|---|---|---|---|---|")
     why = {
-        "triton": "family-first in principle, but its rows carry no `spec_id`, "
-                  "so nothing can be attributed to a family.",
-        "iree": "same `spec_id` blocker as `triton`.",
-        "mlir-low": "class-first composition: its M1 work lands on 4 "
-                    "categories, not on M1's 8 families.",
-        "mlir-linalg": "class-first composition, as `mlir-low`.",
+        "triton": "its raw rows carry `class` and `mutant_id` "
+                  "(`layer_norm-f1`) but no `spec_id`. Its own "
+                  "`mutants/README.md` already documents what each local "
+                  "family is -- `M1 family 1 dropped boundary mask`, "
+                  "`M3 family 1 tl.dot contraction dim not divisible by the "
+                  "atom` -- so the mapping to taxonomy specs is knowable. It "
+                  "has not been written down, which is not the same as being "
+                  "unknowable.",
+        "iree": "same as `triton`: `class: M2` with a `mutant_id` that already "
+                "names the fault (`iree-layer_normalization-10-gamma-len-1`), "
+                "and no `spec_id`.",
     }
     fix = {
-        "triton": "emit `spec_id` in the triton collector rows",
-        "iree": "emit `spec_id` in the iree collector rows",
-        "mlir-low": "add the missing M1 mutation kinds to "
-                    "`mlir-shared/mutate.py`, then distribute by family",
-        "mlir-linalg": "add the missing M2 mutation kinds to "
-                       "`mlir-shared/mutate.py`, then distribute by family",
+        "triton": "map its local family integers onto taxonomy spec_ids in "
+                  "`triton/mutants/README.md`'s terms, emit `spec_id` per row, "
+                  "then re-derive. Note its surface is 6 M1 and 2 M3 local "
+                  "families against the taxonomy's 8 and 8: emitting `spec_id` "
+                  "attributes what exists, it does not reach 168.",
+        "iree": "emit `spec_id` per row the same way. Same caveat: the "
+                "taxonomy names 8 M2 families and 4 of iree's are carved out, "
+                "so attribution will not reach 88 on its own.",
     }
     for lane in LANES:
         rs = [r for r in rows if r["lane"] == lane and in_scope(r)]
         if not rs or resolves[lane]:
             continue
+        # The rows carry the count of instances that exist but could not be
+        # attributed: "lane has N <class> instance(s) but its raw rows carry no
+        # spec_id". Surface it, because `implemented 0` otherwise reads as "this
+        # lane ran nothing", when it in fact ran N per class. The sentence
+        # repeats on every family row of a class, so count each class once --
+        # summing the rows reported 72 for a lane that ran 9.
+        disc = 0
+        seen_cls = set()
+        for r in rs:
+            m = re.search(r"lane has (\d+) (\w+) instance", r.get("blocker", ""))
+            if m and m.group(2) not in seen_cls:
+                seen_cls.add(m.group(2))
+                disc += int(m.group(1))
         out.append(f"| `{lane}` | {why.get(lane, '')} | {lane_plan[lane]} | "
-                   f"**{sum(num(r, 'have') for r in rs)}** | "
+                   f"**{sum(num(r, 'have') for r in rs)}** | **{disc}** | "
                    f"{fix.get(lane, '')} |")
-        if all((r["state"].startswith(BLOCKED.split("(")[0])
-                or r["state"] == CONFLICT) for r in rs):
-            out.append("")
-            out.append(f"> `{lane}`'s shortfall is **not work**. Its rows and "
-                       "the class-axis taxonomy disagree about what the lane "
-                       "covers, or the rows are unattributable. Resolve the "
-                       "instrument before assigning anything.")
+    out.append("")
+    out.append("`implemented 0` in these rows is an attribution failure, not a "
+               "dead lane: the discarded column counts instances that ran and "
+               "were recorded without a `spec_id`. Fix the instrument first -- "
+               "but do not read the result as a smaller job. Once attributed, "
+               "whatever families the surface actually covers will show up as "
+               "short, and the rest as genuinely unwritten.")
     out.append("")
 
     dst.write_text("\n".join(out) + "\n")
