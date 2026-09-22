@@ -26,3 +26,7 @@
 {"category": "transpose", "class": "shape", "expressible": "no", "settings_hash": "df847a35dd4b", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
 {"category": "transpose", "class": "loop", "expressible": "no", "settings_hash": "df847a35dd4b", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
 {"category": "transpose", "class": "hw", "expressible": "no", "settings_hash": "df847a35dd4b", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
+{"category": "transpose_square", "class": "elem", "expressible": "yes", "settings_hash": "MISSING", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
+{"category": "transpose_square", "class": "shape", "expressible": "no", "settings_hash": "MISSING", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
+{"category": "transpose_square", "class": "loop", "expressible": "no", "settings_hash": "MISSING", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
+{"category": "transpose_square", "class": "hw", "expressible": "no", "settings_hash": "MISSING", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}

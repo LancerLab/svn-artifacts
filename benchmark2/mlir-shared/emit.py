@@ -345,6 +345,43 @@ def emit_formula_tensor(
 
 
 # --------------------------------------------------------------------------
+# M2.13 layout-unequal (family M2-e)
+# --------------------------------------------------------------------------
+
+
+def emit_layout_permute(e: Emitter, x: str, dims, r, st: Structural) -> str:
+    """Re-read `x` with two EQUAL extents swapped, leaving the shape unchanged.
+
+    M2.13 is "every extent agrees, the affine map does not". Swapping two equal
+    axes keeps the result type identical (so the shape check cannot see it) while
+    the element mapping changes, which is exactly the layout defect. The two axes
+    come from `st.perm`; the mutation only picks a pair that is genuinely equal.
+    """
+    nd = len(dims)
+    i, j = st.perm
+    t = C.tensor_type(dims)
+    init = emit_empty(e, dims, r)
+    loop = ",".join(f"d{k}" for k in range(nd))
+    idx = [f"d{k}" for k in range(nd)]
+    idx[i], idx[j] = idx[j], idx[i]
+    inmap = f"affine_map<({loop}) -> ({loop})>"
+    outmap = f"affine_map<({loop}) -> ({','.join(idx)})>"
+    res = e.new("ly")
+    e.emit(f"{res} = linalg.generic {{")
+    e.indent += 1
+    e.emit(f"indexing_maps = [{inmap}, {outmap}],")
+    e.emit(f"iterator_types = [{iters_all_parallel(nd)}]")
+    e.indent -= 1
+    e.emit(f"}} ins({x} : {t}) outs({init} : {t}) {{")
+    e.indent += 1
+    e.emit("^bb0(%v: f32, %o: f32):")
+    e.emit("linalg.yield %v : f32")
+    e.indent -= 1
+    e.emit(f"}} -> {t}")
+    return res
+
+
+# --------------------------------------------------------------------------
 # Reductions (checksums) and the oracle tail
 # --------------------------------------------------------------------------
 
@@ -598,9 +635,17 @@ def _emit_transpose(e: Emitter, case: C.Case, st: Structural | None) -> tuple[st
     inp_t, out_t = C.tensor_type(inp_dims), C.tensor_type(out_dims)
 
     x = emit_formula_tensor(e, inp_dims, inp_r, offset=0, name="inp")
+    if st is not None and st.kind == "layout-unequal":
+        x = emit_layout_permute(e, x, inp_dims, inp_r, st)
     init = emit_empty(e, out_dims, out_r)
     res = e.new("tr")
-    perm = ",".join(str(i) for i in reversed(range(len(inp_dims))))
+    # M2.10 (family M2-e) supplies a WRONG permutation via the structural. On a
+    # square operand every shape stays legal, so only the memory order differs.
+    if st is not None and st.kind == "perm":
+        axes = st.perm
+    else:
+        axes = tuple(reversed(range(len(inp_dims))))
+    perm = ",".join(str(i) for i in axes)
     e.emit(
         f"{res} = linalg.transpose ins({x} : {inp_t}) "
         f"outs({init} : {out_t}) permutation = [{perm}]"
@@ -618,6 +663,8 @@ def _emit_concat(e: Emitter, case: C.Case, st: Structural | None) -> tuple[str, 
     )
 
     a = emit_formula_tensor(e, a_dims, a_r, offset=0, name="a")
+    if st is not None and st.kind == "layout-unequal":
+        a = emit_layout_permute(e, a, a_dims, a_r, st)
     b = emit_formula_tensor(e, b_dims, b_r, offset=1000, name="b")
     res = e.new("cc")
     # LLVM 21 requires the function-type form: `dim(N) %a, %b : (T1, T2) -> T3`.
@@ -752,6 +799,8 @@ def _emit_layer_norm(e: Emitter, case: C.Case, st: Structural | None) -> tuple[s
     nd = len(lhs_dims)
 
     x = emit_formula_tensor(e, lhs_dims, lhs_r, offset=0, name="lhs")
+    if st is not None and st.kind == "layout-unequal":
+        x = emit_layout_permute(e, x, lhs_dims, lhs_r, st)
     sc = emit_formula_tensor(e, scale_dims, scale_r, offset=2000, name="scale")
     bi = emit_formula_tensor(e, bias_dims, bias_r, offset=3000, name="bias")
 
@@ -905,6 +954,8 @@ def _emit_elemwise_add(e: Emitter, case: C.Case,
     # Distinct offsets keep the two operands' values apart, matching `reference`.
     a = emit_formula_tensor(e, lhs_dims, lhs_r, offset=0, name="lhs")
     b = emit_formula_tensor(e, rhs_dims, rhs_r, offset=1000, name="rhs")
+    if st is not None and st.kind == "layout-unequal":
+        a = emit_layout_permute(e, a, lhs_dims, lhs_r, st)
     init = emit_empty(e, out_dims, out_r)
 
     dims = ",".join(f"d{i}" for i in range(nd))
@@ -930,6 +981,7 @@ EMITTERS = {
     "matmul": _emit_matmul,
     "relu": _emit_relu,
     "transpose": _emit_transpose,
+    "transpose_square": _emit_transpose,
     "concat": _emit_concat,
     "softmax": _emit_softmax,
     "layer_normalization": _emit_layer_norm,

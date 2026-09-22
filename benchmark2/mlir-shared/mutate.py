@@ -43,7 +43,8 @@ class Structural:
       * `duplicate-write` -- a tile is written twice, the second time at an
                              overlapping offset.
       * M1 kinds (`drop-mask`, `off-by-one`, `negative-index`,
-        `transposed-stride`, `offset-overrun`, `zero-stride`) -- index/stride
+        `transposed-stride`, `offset-overrun`, `zero-stride`,
+        `overlap-write`, `broadcast-index`, `tile-coord`) -- index/stride
         perturbations on the low-level surface.
     """
 
@@ -51,6 +52,7 @@ class Structural:
     tile: int = 0  # extent of the written tile along `axis`
     axis: int = 0
     offset: int = 0  # second write offset, for duplicate-write
+    perm: tuple[int, ...] = ()  # replacement permutation, for M2.10
 
 
 def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
@@ -241,6 +243,35 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
                 raise NotApplicable(f"M2.16: {cat!r} operand has rank < 2")
             merge_last_two(op)
 
+        elif mut.spec == 10:
+            # "transpose permutation on a SQUARE operand" (v2.1 family M2-e):
+            # every extent agrees, so only the memory order can be wrong. Only
+            # the square transpose composes this; on a non-square transpose a
+            # wrong permutation would change the output shape and be caught
+            # trivially, which is not this defect.
+            if cat != "transpose_square":
+                raise NotApplicable(
+                    f"M2.10: {cat!r} has no square operand whose permutation "
+                    f"can be changed with extents intact")
+            structural = Structural(
+                kind="perm", perm=tuple(range(len(dims["inp"]))))
+
+        elif mut.spec == 13:
+            # "shape-equal / layout-unequal" (v2.1 family M2-e): two equal
+            # extents are swapped, so every shape stays legal while the indexing
+            # map -- and therefore the element mapping -- changes.
+            op = {"matmul": "lhs", "concat": "a",
+                  "layer_normalization": "lhs", "elemwise_add": "lhs",
+                  "softmax": "inp", "transpose_square": "inp"}.get(cat)
+            if op is None:
+                raise NotApplicable(f"M2.13: {cat!r} is not an M2 category")
+            pair = _equal_pair(_concrete(case, op))
+            if pair is None:
+                raise NotApplicable(
+                    f"M2.13: {cat!r} {op!r} has no two equal extents; swapping "
+                    f"unequal ones would change the shape (that is M2.6)")
+            structural = Structural(kind="layout-unequal", perm=pair)
+
         else:
             raise KeyError(f"unknown M2 spec {mut.spec}")
 
@@ -270,6 +301,16 @@ class NotApplicable(Exception):
     Recorded as `outcome=n/a` (mutation-specs.md §6), never re-balanced and never
     counted as a detection.
     """
+
+
+def _equal_pair(r: tuple[int, ...]) -> tuple[int, int] | None:
+    """First two equal extents of `r`, or None. Used by M2.13, which is only
+    shape-preserving when the swapped extents are equal."""
+    for i in range(len(r)):
+        for j in range(i + 1, len(r)):
+            if r[i] == r[j]:
+                return (i, j)
+    return None
 
 
 def _concrete(case: C.Case, name: str) -> tuple[int, ...]:
@@ -317,4 +358,22 @@ def _m1_structural(case: C.Case, mut: C.Mutation) -> Structural:
         return Structural(kind="offset-overrun", axis=last, offset=extents[last])
     if mut.spec == 6:
         return Structural(kind="zero-stride", axis=last)
+    if mut.spec == 11:
+        # Read-after-write aliasing overlap (family M1-h). The written region is
+        # shrunk by one, so successive tiles map onto the same live slots and
+        # clobber each other. `tile` carries the shrunk region size; the emitter
+        # wraps the store index modulo it.
+        return Structural(kind="overlap-write", axis=last,
+                          tile=max(1, extents[last] - 1))
+    if mut.spec == 12:
+        # Wrong loop variable used for a dimension (family M1-d). The emitter
+        # substitutes a different induction variable for the axis's own index.
+        if last < 1:
+            raise KeyError(f"M1.12: {case.category!r} rank < 2, nothing to reuse")
+        return Structural(kind="broadcast-index", axis=last)
+    if mut.spec == 14:
+        # Tile-coordinate over/underflow (family M1-e). `tile` carries the axis
+        # extent; the emitter applies `_tile_for` to pick the tile size and
+        # advances the read index by that whole tile.
+        return Structural(kind="tile-coord", axis=last, tile=extents[last])
     raise KeyError(f"unknown M1 spec {mut.spec}")

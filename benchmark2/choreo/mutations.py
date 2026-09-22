@@ -113,7 +113,12 @@ MINIMAL_SET = {
 # Level-2 widening order (specs §5), applied only after level-1 is green.
 LEVEL2_SET = {
     "M1": ["max_pool2d", "conv2d", "embedding", "batch_norm"],
-    "M2": ["elemwise_add"],
+    # `transpose_square` is mlir-linalg's M2-e surface (family "layout (extents
+    # intact)"): a square transpose keeps every extent legal under a wrong
+    # permutation, so only the memory order changes. Declared here (not in
+    # MINIMAL_SET) so it widens the coverage set without reclassifying any
+    # existing choreo level-1 category.
+    "M2": ["elemwise_add", "transpose_square"],
     "M3": ["batch_norm"],
     "M4": [],
 }

@@ -138,7 +138,8 @@ SURFACES = {
         "lane": "mlir-linalg",
         "emitter": E.emit_kernel,
         "categories": ["matmul", "relu", "softmax", "transpose", "concat",
-                       "layer_normalization", "elemwise_add"],
+                       "layer_normalization", "elemwise_add",
+                       "transpose_square"],
         # The mutation battery is NOT the composed set. `categories` above is
         # what E2 gates and what S8/S9 report over (7 composed kernels);
         # `battery_cats` is what M2 actually injects into — mutation-specs.md §5
@@ -146,12 +147,11 @@ SURFACES = {
         # guards but are not M2 injection targets; iterating `categories` here
         # silently produced 70 injections instead of the spec-count arithmetic.
         "battery_cats": list(C.M2_CATS),
-        # Pinned, NOT derived from the list being iterated. Deriving it from
-        # `cats` made the census check a tautology. Now 9 spec ids (the v1
-        # M2.1-M2.5 plus the v2.1 M2.6/M2.9 for family M2-b and M2.7/M2.16 for
-        # family M2-c) x 3 level-1 cats x 2 shapes = 54, and x 5 level-2 cats
-        # x 2 = 90. These are contract numbers the measured count is compared
-        # against.
+        # The historical §5.1 Cartesian arithmetic (10 spec ids x cats x 2
+        # shapes), kept only for reference. M2 no longer compares against it:
+        # `select_m2` now holds each FAMILY at N_PER_FAMILY, and the census
+        # checks the per-family budget instead (see below), so the measured
+        # count legitimately sits below this Cartesian product.
         "expected_injected": {"1": 54, "2": 90},
         "klass": "M2",
         "specs": C.M2_SPECS,
@@ -177,9 +177,11 @@ SURFACES = {
         # On this surface the M1 battery and the composed set coincide:
         # mutation-specs.md §5's M1 minimal set is exactly these four.
         "battery_cats": list(L.LOW_CATS),
-        # Pinned from §5.1: 6 specs x 4 cats x 2 shapes = 48. Every M1 record is
-        # level-1, so there is no level split to key on.
-        "expected_injected": {"1": 48},
+        # Pinned, NOT derived from the specs being iterated. v1 §5.1 was 6 specs
+        # x 4 cats x 2 shapes = 48; the v2.1 additions the memref surface can
+        # realise (M1.11 family M1-h, M1.12 family M1-d, M1.14 family M1-e) add
+        # 3 specs x 4 x 2 = 24, for 9 specs = 72. Every M1 record is level-1.
+        "expected_injected": {"1": 72},
         "klass": "M1",
         "specs": C.M1_SPECS,
         "spec_ids": [m.spec_id for m in C.M1_SPECS],
@@ -528,9 +530,10 @@ class Lane:
 
         §5.1's enumeration arithmetic is owner-approved and must NOT be trimmed
         to hit N=40 exactly: linalg M2 = 5 specs x 5 cats x 2 shapes = 50
-        injections -> 54 mutants -> 120 records; low M1 = 6 specs x 4 cats x 2
-        shapes = 48 injections -> 48 mutants -> 96 records. The +10 / +8
-        overshoot is recorded explicitly in stats.json.
+        injections -> 54 mutants -> 120 records; low M1 = 9 specs x 4 cats x 2
+        shapes = 72 injections -> 72 mutants -> 144 records. The +10 / +32
+        overshoot is recorded explicitly in stats.json. (v1 shipped 6 M1 specs;
+        the v2.1 additions M1.11/M1.12/M1.14 raise it to 9.)
         """
         w = self._writer("mutants", "mutant")
         klass = self.cfg["klass"]

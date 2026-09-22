@@ -252,6 +252,19 @@ M2_SPECS: list[Mutation] = [
     Mutation("M2", 16, "reshaped-element-count", "wrong-shape",
              target="primary",
              detail="same element count, different rank/split"),
+    # family M2-e "layout (extents intact)". Square extents are load-bearing:
+    # with unequal extents a wrong permutation changes the output shape and is
+    # caught trivially; square is the case where only the memory order is wrong.
+    Mutation("M2", 10, "transpose-permutation-square", "wrong-shape",
+             target="inp", detail="transpose permutation on a SQUARE operand: "
+             "every extent agrees, the memory order does not"),
+    # family M2-e, the affine-map half. Picks two equal extents so the swap
+    # leaves every shape legal; on an operand with no equal pair the defect is
+    # not expressible (a swap would change the shape, which is M2.6's defect).
+    Mutation("M2", 13, "layout-unequal-equal-extents", "wrong-shape",
+             target="primary",
+             detail="shape-equal / layout-unequal: every extent agrees, the "
+                    "indexing map does not"),
 ]
 
 # The numbered M2 specs, in order, with variants collapsed. This is the list to
@@ -260,7 +273,8 @@ M2_SPECS: list[Mutation] = [
 # the numbering is NOT contiguous here because it tracks the v2.1 register, not a
 # lane-local count.
 M2_SPEC_IDS: list[str] = [
-    "M2.1", "M2.2", "M2.3", "M2.4", "M2.5", "M2.6", "M2.7", "M2.9", "M2.16",
+    "M2.1", "M2.2", "M2.3", "M2.4", "M2.5", "M2.6", "M2.7", "M2.9", "M2.10",
+    "M2.13", "M2.16",
 ]
 
 # mutation-specs.md §5 splits M2 coverage into a level-1 minimal set and level-2
@@ -268,7 +282,9 @@ M2_SPEC_IDS: list[str] = [
 # schema enum is exactly {"1","2"}. Kept here (not in a validator) so the record
 # writer and the census cannot drift apart.
 LEVEL1_M2_CATS: list[str] = ["layer_normalization", "matmul", "concat"]
-LEVEL2_M2_CATS: list[str] = ["elemwise_add", "softmax"]
+# `transpose_square` is the M2-e surface (family "layout (extents intact)"):
+# square extents let a wrong permutation keep every shape legal.
+LEVEL2_M2_CATS: list[str] = ["elemwise_add", "softmax", "transpose_square"]
 M2_CATS: list[str] = LEVEL1_M2_CATS + LEVEL2_M2_CATS
 LEVEL_OF: dict[str, str] = {c: "1" for c in LEVEL1_M2_CATS}
 LEVEL_OF.update({c: "2" for c in LEVEL2_M2_CATS})
@@ -294,6 +310,30 @@ M1_SPECS: list[Mutation] = [
              detail="base + offset overruns the tensor"),
     Mutation("M1", 6, "zero-stride-empty-range", "stride",
              detail="zero stride / empty iteration range"),
+    # v2.1 additions that the memref/affine surface can realise. Paper categories
+    # are copied from choreo's already-published rows for the same spec ids
+    # (`choreo/raw/e1_mutant_records.json`): M1.11/M1.12 are `stride`, M1.14 is
+    # `oob`. Keeping them identical is what lets the two lanes be pooled.
+    #
+    # family M1-h "tile overlap": concurrent accesses address the same live slot.
+    # Realised as an overlapping store -- the written region is shrunk by one, so
+    # later tiles clobber the slot an earlier tile wrote (choreo shrinks the
+    # shared tile below the parallel fan-out; `mutations.py` M1.11.rl1.alt).
+    Mutation("M1", 11, "read-after-write-aliasing-overlap", "stride",
+             detail="overlapping store: concurrent accesses address the same "
+                    "live slot"),
+    # family M1-d "index substitution": the index expression names the wrong loop
+    # variable. Realised by reusing one loop induction variable for another
+    # dimension (choreo M1.12: `at(p#n, j, k)` -> `at(p#n, j, j)`).
+    Mutation("M1", 12, "broadcast-index-reuse", "stride",
+             detail="wrong loop variable used for a dimension "
+                    "(broadcast index reuse)"),
+    # family M1-e "tile coordinate": the tile coordinate is wrong by one tile
+    # while the in-tile index stays legal. Realised by advancing the read index
+    # by a whole tile (choreo M1.14: `k` -> `k + K`, K the tile extent).
+    Mutation("M1", 14, "tile-coordinate-overflow", "oob",
+             detail="tile coordinate one past the tiled extent while the "
+                    "element index stays in bounds"),
 ]
 
 
@@ -340,6 +380,11 @@ SMALL_DIMS: dict[str, dict[str, tuple[int | None, ...]]] = {
     "relu": {"inp": (2, 3), "out": (2, 3)},
     "softmax": {"inp": (2, 4), "out": (2, 4)},
     "transpose": {"inp": (2, 3), "out": (3, 2)},
+    # M2-e (family "layout (extents intact)"). A SQUARE transpose is a distinct
+    # kernel from mlir-low's `transpose` above: with extents equal, a wrong
+    # permutation keeps every shape legal and only the memory order changes --
+    # the M2.10 defect. mlir-low's non-square `transpose` is left untouched.
+    "transpose_square": {"inp": (2, 2), "out": (2, 2)},
 }
 
 # Full-size extents, taken from the first concrete case in each settings file.
@@ -355,6 +400,7 @@ FULL_DIMS: dict[str, dict[str, tuple[int | None, ...]]] = {
     "relu": {"inp": (32, 512, 8, 8), "out": (32, 512, 8, 8)},
     "softmax": {"inp": (16, 512, 8, 8), "out": (16, 512, 8, 8)},
     "transpose": {"inp": (32, 64), "out": (64, 32)},
+    "transpose_square": {"inp": (64, 64), "out": (64, 64)},
 }
 
 # Which operand(s) carry a dynamic extent, per category (mirrors the settings'
@@ -371,6 +417,8 @@ DYNAMIC_SLOT: dict[str, tuple[tuple[str, int], ...]] = {
     "relu": (("inp", 0),),
     "softmax": (("inp", 0),),
     "transpose": (("inp", 0),),
+    # Both axes are the same symbolic extent, so the dynamic build stays square.
+    "transpose_square": (("inp", 0), ("inp", 1)),
 }
 
 _DYN_VALUE = 3
@@ -404,7 +452,7 @@ def _derive_output(category: str, dims: dict[str, tuple[int | None, ...]],
         dims["out"] = tuple(out)
         if out[ax] is None:
             dyn["out.%d" % ax] = total
-    elif category == "transpose":
+    elif category in ("transpose", "transpose_square"):
         dims["out"] = tuple(reversed(dims["inp"]))
         for axis, d in enumerate(dims["inp"]):
             if d is None:
@@ -470,7 +518,7 @@ def reference(case: Case) -> np.ndarray:
         x = input_values(case.numel("inp")).reshape(case.shape("inp"))
         e = np.exp(x - x.max(axis=-1, keepdims=True))
         return (e / e.sum(axis=-1, keepdims=True)).astype(np.float32)
-    if cat == "transpose":
+    if cat in ("transpose", "transpose_square"):
         x = input_values(case.numel("inp")).reshape(case.shape("inp"))
         return np.transpose(x).astype(np.float32)
     if cat == "concat":
