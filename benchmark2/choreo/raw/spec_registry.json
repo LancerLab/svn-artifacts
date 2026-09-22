@@ -2,13 +2,13 @@
  "toolchain": "choreo",
  "spec_version": "v2.1",
  "summary": {
-  "n_specs": 73,
+  "n_specs": 77,
   "status_counts": {
-   "implemented": 50,
+   "implemented": 54,
    "pending": 23
   },
   "admissible_counts": {
-   "true": 45,
+   "true": 49,
    "false": 28
   },
   "prohibition_counts": {
@@ -17,7 +17,7 @@
    "observation": 3
   },
   "path_counts": {
-   "P1": 50,
+   "P1": 54,
    "P3": 10,
    "P2": 5,
    "P4": 1,
@@ -67,13 +67,17 @@
    "M3.17",
    "M3.18",
    "M3.20",
+   "M3.27",
+   "M3.28",
    "M3.6",
    "M3.9",
    "M4.1",
    "M4.2",
    "M4.3",
    "M4.5",
-   "M4.6"
+   "M4.6",
+   "M4.7",
+   "M4.8"
   ],
   "admissible": [
    "M1.1",
@@ -115,12 +119,16 @@
    "M3.14",
    "M3.15",
    "M3.16",
+   "M3.27",
+   "M3.28",
    "M3.9",
    "M4.1",
    "M4.2",
    "M4.3",
    "M4.5",
-   "M4.6"
+   "M4.6",
+   "M4.7",
+   "M4.8"
   ],
   "pending": [],
   "unwritten": [
@@ -217,8 +225,8 @@
   "n_operators": {
    "M1": 66,
    "M2": 70,
-   "M3": 53,
-   "M4": 58
+   "M3": 55,
+   "M4": 60
   }
  },
  "specs": [
@@ -823,6 +831,26 @@
    "note": "MISSING SURFACE: no case in the suite declares a cluster"
   },
   {
+   "spec_id": "M3.27",
+   "cls": "M3",
+   "path": "P1",
+   "admissible": true,
+   "prohibition": "",
+   "status": "implemented",
+   "desc": "shared tile exceeds the device budget, but only for a runtime-shaped (symbolic) extent",
+   "note": "memcheck.hpp:267-287 (CheckCtMemUsage) compares COMPILE-TIME byte totals against the limit and raises Error1 (that is M3.12). A runtime-shaped extent is not a constant, so the total it contributes is not a constant either and the check cannot fire: the oversized tile is launched, and only a runtime channel can judge it"
+  },
+  {
+   "spec_id": "M3.28",
+   "cls": "M3",
+   "path": "P1",
+   "admissible": true,
+   "prohibition": "",
+   "status": "implemented",
+   "desc": "per-thread local tile exceeds the per-thread budget, but only for a runtime-shaped (symbolic) extent",
+   "note": "the LOCAL half of M3-h, same mechanism as M3.27. The static check has two local bands (memcheck.hpp:288-306, warn-only between the best-practice budget and the hard cap), so an over-budget local tile is exactly where a compiler that only checks SHARED stays silent"
+  },
+  {
    "spec_id": "M3.3",
    "cls": "M3",
    "path": "P1",
@@ -951,6 +979,26 @@
    "status": "implemented",
    "desc": "parallelby bound mutated to negative -- invalid, so unlike an empty space it must be rejected",
    "note": "split out of M4.2 so one operator is not evidence for two families: M4-a (zero bound) and M4-b (negative bound) have different oracle expectations, and while they shared a spec_id M4.2 was the sole realisation of M4-b and one of M4-a's two (defect D1)"
+  },
+  {
+   "spec_id": "M4.7",
+   "cls": "M4",
+   "path": "P1",
+   "admissible": true,
+   "prohibition": "",
+   "status": "implemented",
+   "desc": "padded extent goes NEGATIVE -- the negative-padding corner the GSC study names",
+   "note": "re-realises M2.12's negative-padding trigger on P1 (method-taxonomy.json `reassigned.M2.12`): the rank repair through `.pad` was P2/`repaired` and so never generated. The edit is on the padded-extent derivation, not on a loop literal, which is what keeps it distinct from the empty-range control M4-d"
+  },
+  {
+   "spec_id": "M4.8",
+   "cls": "M4",
+   "path": "P1",
+   "admissible": true,
+   "prohibition": "",
+   "status": "implemented",
+   "desc": "padded extent goes EMPTY -- the zero-length half of the GSC corner-case trigger",
+   "note": "the second P1 realisation of M4-g, so the family is not evidence from a single operator (defect D1). An empty padded extent is a legal zero-trip loop whose body never runs, so the expected verdict is a miss, not a refusal"
   }
  ]
 }

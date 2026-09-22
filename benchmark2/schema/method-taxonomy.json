@@ -368,7 +368,9 @@
       "edit": "Shared or local tile exceeds the device or per-thread budget",
       "view": false,
       "spec_ids": [
-        "M3.12"
+        "M3.12",
+        "M3.27",
+        "M3.28"
       ]
     },
     "M4-a": {
@@ -433,7 +435,10 @@
       "name": "degenerate pad",
       "edit": "A padded extent goes negative or empty -- the negative-padding trigger named by the torch.compile study",
       "view": false,
-      "spec_ids": []
+      "spec_ids": [
+        "M4.7",
+        "M4.8"
+      ]
     }
   },
   "reassigned": {
@@ -537,14 +542,6 @@
   "known_debt": {
     "note": "Coverage debt that is REAL and TRACKED. `method_taxonomy --check` reports these as DEBT (exit 0) instead of FAIL (exit 1), so the checker is usable as a gate before the debt is paid. The discipline is the same as the `mutants.no-duplicate-injection` ledger: a finding that is NOT listed here is a FAIL (new debt, never seen before); a finding that IS listed but no longer holds is also a FAIL (stale entry). Nothing can be silently added to or removed from this list. Keys are the exact machine keys the checker emits: `<family>:<finding>`.",
     "items": {
-      "M3-h:unrealisable as declared": {
-        "finding": "unrealisable as declared",
-        "observed": "every spec_id ['M3.12'] is on P2 (refused/repaired)",
-        "why_real": "memcheck.hpp CheckCtMemUsage raises Error1 when compile-time SHARED/LOCAL usage exceeds the limit, so the compiler refuses the state and there is no test to run. M3.12's own registry note records the P1 -> P2 reclassification.",
-        "must_not_print_as": "a family with 8 instances, or as 'two operators of ordinary work'",
-        "fix": "W1: find a P1 realisation of on-chip capacity, or declare M3-h n/a `repaired` in every lane and remove it from the budget. Deciding which is a design call, not a coding one.",
-        "clears_when": "M3-h gains a path-P1 realisation, or is declared n/a `repaired`"
-      },
       "M3-d:no admissible declaration": {
         "finding": "no admissible declaration",
         "observed": "the family's only spec_id M3.4 is `pending, P1, admissible: false, prohibition: absent`",
@@ -578,7 +575,7 @@
     "findings": {
       "M3-e": "R_f 1, R_a 0. M3.6 `leading dim not aligned to descriptor granularity` ships 8 operators but is declared `admissible: false` with prohibition `absent`, so alignment currently has operators and no test. This is a coverage hole that the R_f-only view reports as a healthy 1.",
       "M4-d": "R_f 1, R_a 0 by design -- it is the declared noop control, so its instances must be inadmissible for the admissible floor to mean anything.",
-      "M3-h": "R_f 0 with its only declaration on P2, so the family is unrealisable as declared rather than merely unwritten."
+      "M3-h": "R_f 2, R_a 2 after the P1 re-realisations M3.27/M3.28. The declared M3.12 is still P2 (compile-time capacity is refused), but a runtime-shaped extent escapes the static check, which is exactly the channel M3-h is about. Before this the family read as unrealisable as declared rather than merely unwritten."
     }
   },
   "spec_status": {
@@ -586,6 +583,6 @@
       "implemented",
       "pending"
     ],
-    "note": "Defect D2, CORRECTED 2026-09-17. The originally recorded premise was FALSE and is retracted: it claimed that under the two-value enum an `unwritten` spec emits no spec record, so its N/A verdict has nothing to hang on. It does emit one -- `choreo/collect.py::from_spec_registry` walks every entry in the registry snapshot (73 today) and copies `status` through verbatim, so all 23 unwritten specs are represented. Measured cross-tabulation of (status, admissible): implemented/True 45, implemented/False 5, pending/False 23, pending/True 0. Adding a third enum value would therefore unblock nothing: no writer of a new W1 spec needs it. The real defect is a name collision, not a missing value -- `pending` denotes TWO different sets in choreo/mutations.py: the enum value means 'no operator exists' (23 specs), while `pending_specs` -- the GATE 2 list, and the set PATCH-v2.1.md used to gloss as 'admissible, unwritten' -- means 'no operator exists AND admissible' (0 specs). A reader who greps `pending` finds 23 where the gloss promised 0, and `gen_mutants.py --fail-on-pending` reports success without covering 23 of the 23 unwritten specs. Resolution: the gloss in PATCH-v2.1.md is corrected to 'no operator exists; says nothing about admissibility', and mutations.py exports `admissible_unwritten_specs` as an alias of `pending_specs` so a report can state which question it answered. The enum is NOT extended and `pending` is NOT renamed: renaming an existing value would silently change the meaning of every record already written (the `L` -> M3 non-additive hazard) for no gain."
+    "note": "Defect D2, CORRECTED 2026-09-17. The originally recorded premise was FALSE and is retracted: it claimed that under the two-value enum an `unwritten` spec emits no spec record, so its N/A verdict has nothing to hang on. It does emit one -- `choreo/collect.py::from_spec_registry` walks every entry in the registry snapshot (73 today) and copies `status` through verbatim, so all 23 unwritten specs are represented. Measured cross-tabulation of (status, admissible): implemented/True 49, implemented/False 5, pending/False 23, pending/True 0. Adding a third enum value would therefore unblock nothing: no writer of a new W1 spec needs it. The real defect is a name collision, not a missing value -- `pending` denotes TWO different sets in choreo/mutations.py: the enum value means 'no operator exists' (23 specs), while `pending_specs` -- the GATE 2 list, and the set PATCH-v2.1.md used to gloss as 'admissible, unwritten' -- means 'no operator exists AND admissible' (0 specs). A reader who greps `pending` finds 23 where the gloss promised 0, and `gen_mutants.py --fail-on-pending` reports success without covering 23 of the 23 unwritten specs. Resolution: the gloss in PATCH-v2.1.md is corrected to 'no operator exists; says nothing about admissibility', and mutations.py exports `admissible_unwritten_specs` as an alias of `pending_specs` so a report can state which question it answered. The enum is NOT extended and `pending` is NOT renamed: renaming an existing value would silently change the meaning of every record already written (the `L` -> M3 non-additive hazard) for no gain."
   }
 }

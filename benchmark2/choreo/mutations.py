@@ -416,6 +416,23 @@ SPEC_REGISTRY = {
                        "executes. If it is ever counted as admissible the "
                        "oracle has regressed"),
     "M4.5": _spec("M4", "P1", "stride/step = 0 in an iteration"),
+    "M4.7": _spec("M4", "P1", "padded extent goes NEGATIVE -- the "
+                          "negative-padding corner the GSC study names",
+                  status="implemented",
+                  note="re-realises M2.12's negative-padding trigger on P1 "
+                       "(method-taxonomy.json `reassigned.M2.12`): the rank "
+                       "repair through `.pad` was P2/`repaired` and so never "
+                       "generated. The edit is on the padded-extent "
+                       "derivation, not on a loop literal, which is what keeps "
+                       "it distinct from the empty-range control M4-d"),
+    "M4.8": _spec("M4", "P1", "padded extent goes EMPTY -- the zero-length "
+                          "half of the GSC corner-case trigger",
+                  status="implemented",
+                  note="the second P1 realisation of M4-g, so the family is "
+                       "not evidence from a single operator (defect D1). An "
+                       "empty padded extent is a legal zero-trip loop whose "
+                       "body never runs, so the expected verdict is a miss, "
+                       "not a refusal"),
 
     # ---- M3.17-M3.26 target limits (were class L) ------------------------
     # FOLDED INTO M3: the standalone `L launch-status` class was merged here,
@@ -491,6 +508,33 @@ SPEC_REGISTRY = {
                  prohibition="absent",
                  note="MISSING SURFACE: no case in the suite declares a "
                       "cluster"),
+
+    # ---- M3.27/M3.28 on-chip capacity on a SYMBOLIC extent (P1) ----------
+    # The P1 realisations of family M3-h. M3.12 is the declared one and is
+    # P2/repaired: CheckCtMemUsage refuses a tile whose byte size it can fold,
+    # and M3.12's own note draws the consequence -- "a runtime channel exists
+    # only when an extent is symbolic". These two supply that extent, so the
+    # tile is not refused at compile time and the family is no longer
+    # unrealisable as declared. Distinct from M3.17/M3.18 (path L, prohibition
+    # `observation`): these are admissible and can witness a miss.
+    "M3.27": _spec("M3", "P1", "shared tile exceeds the device budget, but only "
+                          "for a runtime-shaped (symbolic) extent",
+               status="implemented",
+               note="memcheck.hpp:267-287 (CheckCtMemUsage) compares "
+                    "COMPILE-TIME byte totals against the limit and raises "
+                    "Error1 (that is M3.12). A runtime-shaped extent is not a "
+                    "constant, so the total it contributes is not a constant "
+                    "either and the check cannot fire: the oversized tile is "
+                    "launched, and only a runtime channel can judge it"),
+    "M3.28": _spec("M3", "P1", "per-thread local tile exceeds the per-thread "
+                          "budget, but only for a runtime-shaped (symbolic) "
+                          "extent",
+               status="implemented",
+               note="the LOCAL half of M3-h, same mechanism as M3.27. The "
+                    "static check has two local bands (memcheck.hpp:288-306, "
+                    "warn-only between the best-practice budget and the hard "
+                    "cap), so an over-budget local tile is exactly where a "
+                    "compiler that only checks SHARED stays silent"),
 }
 
 # The v1 spec integers still carried by every operator (specs v1 §1-§3) map 1:1
@@ -1719,6 +1763,27 @@ M3 += [
        (_PAD10, _PAD10.replace("{0, 0, 0, 0}, 0.0f>", "{0, 0, 1, 0}, 0.0f>"))),
 ]
 
+# ---- M3.27/M3.28 on-chip capacity with a SYMBOLIC extent -----------------
+# M3.12's scope note is exact: CheckCtMemUsage only refuses a tile whose byte
+# size it can fold, so "a runtime channel exists only when an extent is
+# symbolic". These two operators supply that extent by multiplying a shared and
+# a local tile by the runtime span N. The tile is then oversized at run time
+# while the compile-time total the checker folds stays small, so the capacity
+# check cannot fire -- the gap M3-h names.
+M3 += [
+    _m("M3.27.cv1.symshared", "M3", 27, "dim-mismatch", "conv2d", _C1,
+       "shared tile extent made runtime-shaped (Cout x 8*N): the byte size is "
+       "not a compile-time constant, so the capacity check stays silent and "
+       "the tile is launched far past the device budget",
+       ("shared f32 [Cout, 8] B_tile;",
+        "shared f32 [Cout, 8 * N] B_tile;"), spec_id="M3.27"),
+    _m("M3.28.cv1.symlocal", "M3", 28, "dim-mismatch", "conv2d", _C1,
+       "per-thread local tile extent made runtime-shaped (M/#q x Cout*N): the "
+       "per-thread budget is exceeded in a size the static check cannot fold",
+       ("local f32 [M/#q, Cout] l1_Y{0.0f};",
+        "local f32 [M/#q, Cout * N] l1_Y{0.0f};"), spec_id="M3.28"),
+]
+
 # ===========================================================================
 # M4 -- control-flow / iteration-space (specs §4)
 #
@@ -1804,6 +1869,30 @@ M4 += [
        "write-back overwrites a single tile N times",
        ("dma.copy l1_Y => Y.chunkat(q#_q, qq);",
         "dma.copy l1_Y => Y.chunkat(q#_q, qq * 0);")),
+]
+
+# ---- M4-g degenerate pad (specs §4; M2.12's trigger re-realised on P1) ----
+# The im2col loop runs over the padded extent. Mutating the derivation of that
+# extent -- not the loop literal, which is M4-a/M4.1's surface -- makes the loop
+# bound degenerate at its source, in the padding arithmetic. This is the
+# negative-padding corner case of the GSC study: M2.12 routed it to a P2 rank
+# repair and so never generated it, which left the family with no realisation
+# at all.
+M4 += [
+    _m("M4.7.cv10.negpad", "M4", 7, "stride", "conv2d",
+       "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
+       "padded extent computed as 2*padding - H - 1: negative for the case's "
+       "own padding (=1) and H (=16), so the im2col loop over the padded "
+       "extent is invalid rather than merely empty -- the negative-padding "
+       "trigger the GSC study names",
+       ("Hpad = H + 2 * padding;", "Hpad = 2 * padding - H - 1;"),
+       spec_id="M4.7"),
+    _m("M4.8.cv14.emptypad", "M4", 8, "stride", "conv2d",
+       "14_mobilenet_128x32x112x112_32x32x3x3_128x32x112x112_S_P_D",
+       "padded extent vanishes exactly (W - W): the zero-length half of the "
+       "GSC corner-case trigger, a legal zero-trip loop whose body never runs",
+       ("Wpad = W + 2 * padding;", "Wpad = W - W;"),
+       spec_id="M4.8"),
 ]
 
 # ---- M4 depth -----------------------------------------------------------
