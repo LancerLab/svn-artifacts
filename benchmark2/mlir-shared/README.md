@@ -137,29 +137,32 @@ on the `sum` and position-weighted checks, whose summands cancel and stay tight
 (measured drift 0.0 on every full-size category). The three checks are OR-ed for
 exactly this reason.
 
-## M1 injection census — 72, and the mode-dependent defect
+## M1 injection census — 56, and the mode-dependent defect
 
-M1's nine specs (§1: the v1 six plus the v2.1 additions M1.11/M1.12/M1.14) have
-**no sub-variants**, so on this lane one injection is exactly one record per
+M1's realised specs on this surface (seven: M1.1, M1.4–M1.6, M1.11, M1.12, M1.14)
+have **no sub-variants**, so on this lane one injection is exactly one record per
 `(category, shape, spec)` — unlike M2, where spec 5 emits two variants counting
-as one injection.
+as one injection. M1.2/M1.3 are declared but not realised here; see below.
 
 | | |
 |---|---|
 | level-1 categories (§5's M1 minimal set) | `relu`, `transpose`, `softmax`, `layer_normalization` |
-| injections | 9 specs × 4 categories × 2 shapes = **72** |
+| injections | 7 specs × 4 categories × 2 shapes = **56** |
 | §0 target N per class | 40 |
-| delta | **+32** (v1's +8, plus 3 v2.1 specs × 8) |
+| delta | **+16** (v1's +8, plus the v2.1 specs, held to the family budget) |
 | `n/a` cells (§6) | **0** — no M1 spec raised `NotExpressible` on any of the four at small size |
-| records emitted | 144 (× 2 RTV modes) |
+| records emitted | 112 (× 2 RTV modes) |
 
-The +32 is the same kind of deliberate overshoot as M2's +10 and is **accepted as
-an auditable over-count** under specs §5.1: N = 40 is a target, not a cap, and the
-over-count is guarded by cross-surface uniformity (any lane following §1's nine
-expressible specs × §5's four categories × 2 shapes lands on 72). No redesign to
-force it back to exactly 40. The v2.1 additions do **not** raise the family count
-uniformly: they fill the previously empty families M1-d (M1.12), M1-e (M1.14) and
-M1-h (M1.11), which is what lifts `mlir-low`'s M1 cell from 40 to 64 instances.
+The realised set is 7, not §1's 9, because `M1-a` is the only M1 family reachable
+through more than one spec (M1.1/2/3) and realising all three would give it
+24 instances against the 8 every other family holds. It is realised through the
+lowest-id spec, `M1.1`, only (`compose.py::M1_LOW_SPECS`), matching the
+single-spec budget of `M1-b`..`M1-h`; the other lanes carry M1.2/M1.3 (triton 6
+and 5). The +16 is a deliberate overshoot under specs §5.1: N = 40 is a target,
+not a cap, and the over-count is guarded by cross-surface uniformity. The v2.1
+additions fill the previously empty families M1-d (M1.12), M1-e (M1.14) and M1-h
+(M1.11); with `M1-a` at one spec the M1 cell holds **48** of its 64 instances
+(six families × 8), the two empty families being M1-f and M1-g.
 
 ### The manifestation check is per *mutant*, not per record
 
@@ -219,8 +222,7 @@ That matters because the record tally is an artifact: `relu/static` M1.1 RTV-off
 lands in the `never/noop` bucket only if *every* run lands noop, i.e. with
 probability $p^N$. At the old default `N=5` that is **4.4%** at the pooled $p$
 (10.2% at the 30-run study's $p=0.633$) — roughly one validation run in ten to
-twenty-five would have silently shifted a tally cell (95/0/49 → 95/1/48, counting
-`never`/`corrupts`, `never`/`noop`, `runtime`/`corrupts` over all 144 records).
+twenty-five would have silently shifted a tally cell's `never`/`runtime` split.
 `_validate_m1.py` therefore defaults to `N_REPEAT=16` (env `M1_REPEAT`).
 
 Note that this churns the *artifact* without moving the *gate*. A mutant counts as a
@@ -324,12 +326,12 @@ that did run: 7–13 sites on `low`, 23–44 on `linalg`.
 
 | lane | class | flagged ∧ exercised | total | split |
 |---|---|---|---|---|
-| `mlir-low` | M1 | **46** | 72 | 46 flagged, 26 genuine misses |
+| `mlir-low` | M1 | **30** | 56 | 30 flagged, 26 genuine misses |
 | `mlir-linalg` | M2 | **0** | 54 | 34 rejected before run, 20 ran clean |
 
 The two rows are the whole point of S12 and they must not be averaged. On `low` the
 injected defects are **memory** faults — an out-of-bounds index really does leave
-the allocation — so an external checker sees 46 of 72. On `linalg` they are
+the allocation — so an external checker sees 30 of 56. On `linalg` they are
 **shape** faults: 34 of 54 never reach a binary at all because the verifier rejects
 the type contract at lowering, and the 20 that do run are all M2.5
 (partial-write / duplicate-write), which produce a wrong *result* while every
@@ -384,7 +386,7 @@ allocation is invisible to any memory checker.** It is reported as a finding, no
 patched away by choosing dims that force the defect to be observable, because
 forcing output-observability would distort the kernel — the same reasoning as owner
 decision 3 below. The consequence for the paper is that S12's M1 flagged count is
-**46/72 at small size** (committed); the pre-v2.1 six-spec full-size run reported
+**30/56 at small size** (committed); the pre-v2.1 six-spec full-size run reported
 36/48 and has not been rerun for the v2.1 specs. The committed artifact reports the
 small-size figure and the size-dependence is documented here rather than hidden.
 
@@ -399,9 +401,9 @@ The kernel gate is committed at **both** sizes, matching the `iree` lane (311 sm
 | `linalg` e2 | 14/14 green | 14/14 green |
 | `low` e2 | 8/8 green | 8/8 green |
 | `linalg` minimal | 120 rec / 50 inj, §5.1 OK | 120 rec / 50 inj, §5.1 OK |
-| `low` minimal | 144 rec / 72 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK (pre-v2.1) |
+| `low` minimal | 112 rec / 56 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK (pre-v2.1) |
 | `linalg` s12 | 54 sanitized, reconciled | 54 sanitized, reconciled |
-| `low` s12 | 72 sanitized, reconciled, 46 flagged | 48 sanitized, reconciled, 36 flagged (pre-v2.1) |
+| `low` s12 | 56 sanitized, reconciled, 30 flagged | 48 sanitized, reconciled, 36 flagged (pre-v2.1) |
 
 The full-size `low` column predates the v2.1 spec additions (M1.11/M1.12/M1.14) and
 was not rerun; it used `M1_REPEAT=1` rather than the committed `16`, because 16
@@ -463,11 +465,11 @@ injection counts:
 
 | lane | RTV off | RTV on | effect |
 |---|---|---|---|
-| `low` M1 | `never:69, runtime:3` | `never:26, runtime:46` | **flips dramatically** |
+| `low` M1 | `never:53, runtime:3` | `never:26, runtime:30` | **flips dramatically** |
 | `linalg` M2 | `compile:34, never:20, n/a:6` | identical | **no change at all** |
 
 Bare MLIR on an out-of-bounds `memref.load` silently returns garbage with exit 0, so
-on `low` RTV is doing essentially all of the detection work — 43 records move from
+on `low` RTV is doing essentially all of the detection work — 27 records move from
 undetected to caught. On `linalg` RTV adds nothing, because the verifier has already
 rejected the shape contract before RTV ever runs. Reporting only the RTV-on column
 would therefore flatter `low` and say nothing about `linalg`; reporting only RTV-off
@@ -577,6 +579,9 @@ kept here as the audit trail for why the lane's numbers look the way they do.
    cross-surface uniformity, accepted as long as every surface shows the same M1
    enumeration and the over-count is itself documented. **No redesign to force it
    back to exactly 40.** Recorded in specs §5.1 alongside M2's +10.
+   **Superseded 2026-09-23:** `M1-a` is now realised through a single spec (M1.1),
+   so the battery is 7 specs × 8 = **56** (delta +16) and the M1 cell holds 48 of
+   64. The over-count is gone; see `schema/dashboard-log.md`.
 3. **`relu` M1.1 mode-dependent defect — record as a finding, do NOT redesign.**
    An elementwise map cannot force the defect to be output-observable without
    distorting the kernel; the mode-dependence is itself the honest result.

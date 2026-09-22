@@ -360,6 +360,18 @@ M1_SPECS: list[Mutation] = [
                     "element index stays in bounds"),
 ]
 
+# The low surface's realised M1 set. Family M1-a is the only M1 family the
+# battery reaches through more than one spec (M1.1/2/3), which would give it
+# 3 specs x 4 cats x 2 shapes = 24 -- three times the 8 every other realised
+# family holds (mutation-specs-v2.md §6). Hold it to the family budget by
+# realising only the lowest-id spec, M1.1, exactly as M1-b..M1-h realise one
+# spec each. M1.2/M1.3 stay declared in `M1_SPECS` and are carried by the other
+# lanes (triton corpus: M1.1 6, M1.2 6, M1.3 5), so this is a lane-scope choice,
+# not a retraction.
+M1_LOW_SPECS: list[Mutation] = [
+    m for m in M1_SPECS if m.spec_id not in ("M1.2", "M1.3")
+]
+
 
 # --------------------------------------------------------------------------
 # MLIR type helpers

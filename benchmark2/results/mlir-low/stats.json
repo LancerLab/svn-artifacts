@@ -5,28 +5,28 @@
   "device": "cpu (JIT on host; no GPU dependency)",
   "S1_detection": {
     "M1": {
-      "n_injected": 72,
+      "n_injected": 56,
       "n_compile": 0,
-      "n_runtime": 46,
+      "n_runtime": 30,
       "n_never": 26,
       "n_na": 0,
       "by_rtv": {
         "off": {
-          "n_injected": 72,
+          "n_injected": 56,
           "n_compile": 0,
           "n_runtime": 3,
-          "n_never": 69,
+          "n_never": 53,
           "n_na": 0
         },
         "on": {
-          "n_injected": 72,
+          "n_injected": 56,
           "n_compile": 0,
-          "n_runtime": 46,
+          "n_runtime": 30,
           "n_never": 26,
           "n_na": 0
         }
       },
-      "note": "measured on the low surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 144 mutant records reduce to 72 injections."
+      "note": "measured on the low surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 112 mutant records reduce to 56 injections."
     },
     "M2": {
       "n_injected": 0,
@@ -104,10 +104,10 @@
   },
   "S12_sanitizer_supplement": {
     "M1": {
-      "flagged_and_exercised": 46,
-      "total": 72,
-      "flagged": 46,
-      "exercised": 72,
+      "flagged_and_exercised": 30,
+      "total": 56,
+      "flagged": 30,
+      "exercised": 56,
       "not_instrumented": 0,
       "rejected_before_run": 0,
       "misses": {
@@ -248,26 +248,26 @@
     "compiled": 16,
     "ran_ok": 16,
     "ref_pass": 16,
-    "mutant_records": 144,
-    "sanitizer_records": 72,
+    "mutant_records": 112,
+    "sanitizer_records": 56,
     "expressibility_records": 16,
     "gate_failures": 0
   },
   "census": {
     "class": "M1",
-    "n_injected": 72,
-    "expected_injected": 72,
-    "n_records": 144,
+    "n_injected": 56,
+    "expected_injected": 56,
+    "n_records": 112,
     "n_target_per_class": 40,
-    "delta_vs_target": 32,
+    "delta_vs_target": 16,
     "by_rtv": {
       "off": {
-        "never": 69,
+        "never": 53,
         "runtime": 3
       },
       "on": {
         "never": 26,
-        "runtime": 46
+        "runtime": 30
       }
     },
     "battery_size": "small",

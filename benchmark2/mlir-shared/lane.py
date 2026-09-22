@@ -180,11 +180,14 @@ SURFACES = {
         # Pinned, NOT derived from the specs being iterated. v1 §5.1 was 6 specs
         # x 4 cats x 2 shapes = 48; the v2.1 additions the memref surface can
         # realise (M1.11 family M1-h, M1.12 family M1-d, M1.14 family M1-e) add
-        # 3 specs x 4 x 2 = 24, for 9 specs = 72. Every M1 record is level-1.
-        "expected_injected": {"1": 72},
+        # 3 specs x 4 x 2 = 24, for 9 specs = 72. Family M1-a is then trimmed
+        # from its 3 realising specs (M1.1/2/3, 24) to one (M1.1, 8) so it
+        # matches the single-spec budget every other family holds -- 7 specs x
+        # 4 x 2 = 56 (compose.M1_LOW_SPECS). Every M1 record is level-1.
+        "expected_injected": {"1": 56},
         "klass": "M1",
-        "specs": C.M1_SPECS,
-        "spec_ids": [m.spec_id for m in C.M1_SPECS],
+        "specs": C.M1_LOW_SPECS,
+        "spec_ids": [m.spec_id for m in C.M1_LOW_SPECS],
         # mutation-specs.md §5's M1 minimal set is exactly the four categories
         # this lane composes, so every M1 record is level-1. The §5 level-2 M1
         # additions (max_pool2d, conv2d, embedding, batch_norm) have no
@@ -530,10 +533,11 @@ class Lane:
 
         §5.1's enumeration arithmetic is owner-approved and must NOT be trimmed
         to hit N=40 exactly: linalg M2 = 5 specs x 5 cats x 2 shapes = 50
-        injections -> 54 mutants -> 120 records; low M1 = 9 specs x 4 cats x 2
-        shapes = 72 injections -> 72 mutants -> 144 records. The +10 / +32
+        injections -> 54 mutants -> 120 records; low M1 = 7 specs x 4 cats x 2
+        shapes = 56 injections -> 56 mutants -> 112 records. The +10 / +16
         overshoot is recorded explicitly in stats.json. (v1 shipped 6 M1 specs;
-        the v2.1 additions M1.11/M1.12/M1.14 raise it to 9.)
+        the v2.1 additions M1.11/M1.12/M1.14 raise it to 9, and M1.2/M1.3 are
+        then dropped so family M1-a holds one spec like every other family.)
         """
         w = self._writer("mutants", "mutant")
         klass = self.cfg["klass"]

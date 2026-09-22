@@ -65,15 +65,22 @@ mask whose out-of-bounds write is genuinely UB.
 
 | | |
 |---|---|
-| injection specs | M1.1–M1.6 plus v2.1 M1.11/M1.12/M1.14 (9 specs) |
+| injection specs | M1.1, M1.4–M1.6, M1.11, M1.12, M1.14 (7 specs) |
 | categories (§5's M1 minimal set) | `relu`, `transpose`, `softmax`, `layer_normalization` |
 | shapes | static + dynamic |
-| **injections** | 9 × 4 × 2 = **72** |
+| **injections** | 7 × 4 × 2 = **56** |
 | §0 target N per class | 40 |
-| delta | **+32** (v1's +8 plus 3 v2.1 specs × 8, auditable over-count — never trimmed) |
-| mutants | **72** — M1 specs have no sub-variants, so one injection is exactly one mutant |
-| records | **144** — 72 × 2 RTV modes |
+| delta | **+16** (v1's +8 plus the v2.1 specs, held to the family budget) |
+| mutants | **56** — M1 specs have no sub-variants, so one injection is exactly one mutant |
+| records | **112** — 56 × 2 RTV modes |
 | `n/a` cells | **0** — no M1 spec raised `NotExpressible` on any of the four |
+
+`M1.2`/`M1.3` are still declared in `M1_SPECS` but are **not realised on this
+surface**: family `M1-a` is the only M1 family reachable through more than one
+spec, and realising all three would give it 24 instances against the 8 every
+other family holds (`mutation-specs-v2.md` §6). It is realised through the
+lowest-id spec (`M1.1`) only, so `M1-a` matches the single-spec budget of
+`M1-b`..`M1-h`. The other lanes carry `M1.2`/`M1.3` (triton: 6 and 5).
 
 M2 and M3 are `n/a` on this surface (`n_na: 40` each): M2's specs are tensor-level
 shape-contract defects, which do not exist once everything is a `memref`, and M3 is
@@ -90,14 +97,14 @@ check cannot silently degrade if the composed set grows.
 | statistic | value |
 |---|---|
 | kernel gate | **16/16 green** (8 small + 8 full), 0 gate failures |
-| S1 M1 | `n_injected: 72, n_compile: 0, n_runtime: 46, n_never: 26, n_na: 0` |
+| S1 M1 | `n_injected: 56, n_compile: 0, n_runtime: 30, n_never: 26, n_na: 0` |
 | S8 | `elem {yes:4}`, `shape {no:4}`, `loop {no:4}`, `hw {no:4}` |
 | S9 | **108** kernel guards (layer_normalization 42, softmax 26, relu 20, transpose 20) |
-| S12 M1 | `flagged_and_exercised: 46` of 72 — 46 flagged, 26 genuine misses |
+| S12 M1 | `flagged_and_exercised: 30` of 56 — 30 flagged, 26 genuine misses |
 
 `n_compile: 0` is the headline difference from `mlir-linalg`. At memref level there
 is **no shape contract left to check** — every operand is a bare pointer with a
-layout, so nothing rejects a wrong extent at lowering. All 72 injections reach a
+layout, so nothing rejects a wrong extent at lowering. All 56 injections reach a
 binary and run. Detection is therefore entirely a *runtime* phenomenon here, which is
 why RTV matters so much on this surface and not at all on the other.
 
@@ -105,7 +112,7 @@ why RTV matters so much on this surface and not at all on the other.
 
 | | RTV off | RTV on | effect |
 |---|---|---|---|
-| `low` M1 | `never:69, runtime:3` | `never:26, runtime:46` | **43 records flip** |
+| `low` M1 | `never:53, runtime:3` | `never:26, runtime:30` | **27 records flip** |
 | `linalg` M2 | `compile:34, never:20, n/a:6` | identical | **no change at all** |
 
 Bare MLIR on an out-of-bounds `memref.load` **silently returns garbage with exit 0**.
@@ -148,7 +155,7 @@ with RTV **off** (RTV's own `cf.assert` would abort before the faulty access and
 the sanitizer silent). The chain, its four LLVM-21 defects, and the false-negative
 gate are documented in `../mlir-shared/README.md`.
 
-Result: **46 of 72 flagged** (`heap-buffer-overflow`), with all 72 exercised and
+Result: **30 of 56 flagged** (`heap-buffer-overflow`), with all 56 exercised and
 `instrumented` 7–13 sites each. This lane is the positive control for S12: the M1
 defects really are memory faults, so an external checker sees most of them — against
 `mlir-linalg`'s 0 of 54, where the defects are shape faults.
@@ -193,7 +200,7 @@ step: `DYNAMIC_SLOT` binds axis 0 of `relu`/`softmax`/`transpose` to
 `3x3` and `transpose`'s becomes `3x3` too — equal trailing extents, hence clean,
 while their static forms keep `(2,3)` and are flagged.
 
-Consequence for the paper: **S12's M1 flagged count is 46/72 at small size**
+Consequence for the paper: **S12's M1 flagged count is 30/56 at small size**
 (committed); the pre-v2.1 full-size run reported 36/48 and has not been rerun for
 the v2.1 specs (M1.11/M1.12/M1.14). The committed artifact reports the small-size
 figure and the size-dependence is documented here rather than hidden. This is the
@@ -211,8 +218,8 @@ v2.1 spec additions and was not rerun:
 | check | small | full |
 |---|---|---|
 | e2 | 8/8 green | 8/8 green |
-| minimal | 144 rec / 72 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK (pre-v2.1) |
-| s12 | 72 sanitized, reconciled, 46 flagged | 48 sanitized, reconciled, 36 flagged (pre-v2.1) |
+| minimal | 112 rec / 56 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK (pre-v2.1) |
+| s12 | 56 sanitized, reconciled, 30 flagged | 48 sanitized, reconciled, 36 flagged (pre-v2.1) |
 | S9 | 108 | 132 |
 
 The full-size `minimal` was run with `M1_REPEAT=1` rather than the committed `16`,
@@ -236,8 +243,8 @@ to ~1 in 446,000. See `../mlir-shared/README.md` for the full table. What is not
 uncertain is the direction: `N=5` was ~4-10%, and `N=16` is at least two orders of
 magnitude better, about three at the point estimate.
 
-Three other cells (`transpose/static` and `transpose/dynamic` M1.1,
-`layer_norm/dynamic` M1.2, all RTV-off) have also produced a mixed distribution at
+Two other cells (`transpose/static` and `transpose/dynamic` M1.1, both RTV-off)
+have also produced a mixed distribution at
 least once, but at $p(\text{noop})\le1/16$ their flip probability is
 $\lesssim10^{-19}$ — nondeterministic in the strict sense, stable in every practical
 sense, and none of them moved the RTV split at N=1.

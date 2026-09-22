@@ -169,7 +169,7 @@
     {
       "lane": "mlir-linalg",
       "class": "M2",
-      "n_mutants": 41,
+      "n_mutants": 43,
       "power_floor": 35,
       "status": "ok",
       "annotation": "meets the power floor"
@@ -193,7 +193,7 @@
     {
       "lane": "mlir-low",
       "class": "M1",
-      "n_mutants": 72,
+      "n_mutants": 56,
       "power_floor": 35,
       "status": "ok",
       "annotation": "meets the power floor"
@@ -942,24 +942,24 @@
     },
     "mlir-linalg": {
       "elem": {
-        "yes": 9,
+        "yes": 10,
         "partial": 0,
         "no": 0
       },
       "shape": {
-        "yes": 6,
+        "yes": 7,
         "partial": 0,
         "no": 3
       },
       "loop": {
         "yes": 0,
         "partial": 0,
-        "no": 9
+        "no": 10
       },
       "hw": {
         "yes": 0,
         "partial": 0,
-        "no": 9
+        "no": 10
       }
     },
     "mlir-low": {

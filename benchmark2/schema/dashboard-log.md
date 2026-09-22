@@ -7,6 +7,42 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ---
 
+## 2026-09-23 — `mlir-low` trims `M1-a` to the single-spec family budget; M1-battery 72 → 56
+
+`M1-a` was the only M1 family reached through more than one spec: `M1.1`/`M1.2`/
+`M1.3` gave it 3 specs x 4 cats x 2 shapes = 24, three times the 8 every other
+realised family holds (`mutation-specs-v2.md` §6). The low surface now realises
+only the lowest-id spec, `M1.1`, exactly as `M1-b`..`M1-h` realise one spec each
+(`compose.py::M1_LOW_SPECS`). `M1.2`/`M1.3` stay declared in `M1_SPECS` and are
+carried by triton (6 + 5). `expected_injected` 72 → **56**; raw/results
+regenerated (`run.sh all --small`, `M1_REPEAT=16`).
+
+- M1 *battery*: 56 injections / 112 rows (7 specs x 8), census 56/56, zero `n/a`.
+  M1 *families*: realised 64 → **48** (6 families x 8; `M1-f`, `M1-g` empty).
+  The pre-trim 64 was `M1-a`'s 24 masking the two empty families; the worklist
+  shortfall now reads **16** unambiguously (`M1-f` 8 + `M1-g` 8). The dashboard
+  cell still reads 56/64 ("8 to go") because the battery counts the `M1.6` spec,
+  which the registry re-homes into `M4-d` (8 instances) — the two instruments
+  disagree by that one re-homed spec (open `Q-mlir-low-3`).
+- S1 (`M1`): `n_injected` 72 → 56, `n_runtime` 46 → 30, `n_never` 26 (unchanged
+  in composition: same `M1.4`/`M1.6`/`M1.11`/`M1.12` misses). RTV contrast off
+  `never:53, runtime:3`; on `never:26, runtime:30` — **27 rows change verdict**
+  with the harness. `_validate_m1.py`: **56/56 validate, zero `noop`**.
+- S12: **46/72 → 30/56 flagged**. The 26 misses are the same set as before
+  (8x `M1.6`, 8x `M1.11`, 8x `M1.12`, 2x `M1.4`) — in-bounds corruptions ASan
+  is structurally blind to — now read against 56, not 72.
+- **`M1-f`/`M1-g` classified, and the 2026-09-22 wording corrected.**
+  `mutation-correspondence.json` does *not* record these as mlir-low `n/a`:
+  `M1.19` (`M1-f`) and `M1.20` are `expressible-not-recorded` (the lane's own
+  S8 declares `elem` expressible), and `M1.15`/`M1.16`/`M1.17` (`M1-g`) are
+  `blocked-by-suite` with an explicit correction — *"registry says
+  prohibition='absent'; the note says MISSING SURFACE. This is our gap, not the
+  model's."* The earlier entry's *"§9.5.0 absent feature"* label was wrong on
+  that point. The shortfall is a benchmark/suite hole to fill with new base
+  cases, not a scope claim about the memref surface.
+- `make test-guards`: GREEN, 27 controls (`PY=python3.10`). `make guards`:
+  pre-existing 40-finding drift, **none naming `mlir-low`**.
+
 ## 2026-09-22 — `mlir-low` realises the three v2.1 M1 families; its M1 cell goes 40 → 64
 
 `mlir-low` held 40 of M1's 64 instances, with `M1-d`, `M1-e` and `M1-h` empty.

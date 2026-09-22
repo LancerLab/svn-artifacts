@@ -148,7 +148,7 @@ def main() -> int:
             for dynamic in (False, True):
                 shape = "dyn" if dynamic else "static"
                 clean = C.make_case(cat, size="small", dynamic=dynamic)
-                for mut in C.M1_SPECS:
+                for mut in C.M1_LOW_SPECS:
                     mid = mut.mutant_id
                     ikey = (cat, shape, mut.spec_id)
 

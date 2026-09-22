@@ -317,7 +317,7 @@ def main():
     w("")
     w("`instances` is deduplicated; `rows` is what `measured_today` counts. "
       "They diverge because the mlir lanes run each mutant **twice** (rtv "
-      "`off`/`on`): 144 rows = 72 instances, 120 rows = 50. **Do not read "
+      "`off`/`on`): 112 rows = 56 instances, 120 rows = 50. **Do not read "
       "`rows` as coverage.**")
     _missing = [l for l in LANES if fam_missing.get(l)]
     if _missing:
@@ -380,7 +380,7 @@ def main():
        "`iree`'s M4 is unverified here -- see the `n/a` note above."))
     w("")
     w("**A lane is not its census label.** `mlir-low`'s census says "
-      "`class: M1`, but 8 of its 72 instances are class M4 (`M1.6` "
+      "`class: M1`, but 8 of its 56 instances are class M4 (`M1.6` "
       "\u2192 `M4-d`). The split above is by `spec_id` \u2192 family "
       "\u2192 class, not by the census label. Watch for the same re-homing "
       "in any lane carrying `M1.6` or `M1.7`.")
