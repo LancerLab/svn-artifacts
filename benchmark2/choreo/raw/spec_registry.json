@@ -4,23 +4,23 @@
  "summary": {
   "n_specs": 77,
   "status_counts": {
-   "implemented": 54,
-   "pending": 23
+   "implemented": 56,
+   "pending": 21
   },
   "admissible_counts": {
-   "true": 49,
-   "false": 28
+   "true": 51,
+   "false": 26
   },
   "prohibition_counts": {
-   "absent": 20,
+   "absent": 18,
    "repaired": 5,
    "observation": 3
   },
   "path_counts": {
-   "rt-check": 54,
+   "rt-check": 53,
    "unchecked": 10,
    "avoided": 5,
-   "ct-check": 1,
+   "ct-check": 2,
    "L": 7
   },
   "implemented": [
@@ -69,7 +69,9 @@
    "M3.20",
    "M3.27",
    "M3.28",
+   "M3.4",
    "M3.6",
+   "M3.8",
    "M3.9",
    "M4.1",
    "M4.2",
@@ -121,6 +123,8 @@
    "M3.16",
    "M3.27",
    "M3.28",
+   "M3.4",
+   "M3.8",
    "M3.9",
    "M4.1",
    "M4.2",
@@ -150,10 +154,8 @@
    "M3.25",
    "M3.26",
    "M3.3",
-   "M3.4",
    "M3.5",
    "M3.7",
-   "M3.8",
    "M4.4"
   ],
   "na": [
@@ -179,11 +181,9 @@
    "M3.25",
    "M3.26",
    "M3.3",
-   "M3.4",
    "M3.5",
    "M3.6",
    "M3.7",
-   "M3.8",
    "M4.4"
   ],
   "na_by_reason": {
@@ -202,11 +202,9 @@
     "M3.25",
     "M3.26",
     "M3.3",
-    "M3.4",
     "M3.5",
     "M3.6",
     "M3.7",
-    "M3.8",
     "M4.4"
    ],
    "repaired": [
@@ -225,7 +223,7 @@
   "n_operators": {
    "M1": 66,
    "M2": 70,
-   "M3": 61,
+   "M3": 63,
    "M4": 60
   }
  },
@@ -864,11 +862,11 @@
    "spec_id": "M3.4",
    "cls": "M3",
    "path": "rt-check",
-   "admissible": false,
-   "prohibition": "absent",
-   "status": "pending",
+   "admissible": true,
+   "prohibition": "",
+   "status": "implemented",
    "desc": "tensor footprint >= 4 GB, 5-D product (family C)",
-   "note": "family C needs 5 dims, each small, with a product >= 2^30 elements. The suite's maximum rank is 4. MISSING SURFACE: a rank-5 case"
+   "note": "gpu_adapt.hpp:351-355 -- the family-C obligation is the rank-5 product CeilTo128Byte(bpe * dst dim0) * dim1 * dim2 * dim3 * dim4 < 2^32. Realised on `dma_rank5`/`r5dyn`, a rank-5 global->shared .transp whose dim0 is symbolic, so the assessment is a runtime_check; the mutation lifts a trailing literal dim so the product crosses 2^32 well inside the legal runtime range"
   },
   {
    "spec_id": "M3.5",
@@ -903,12 +901,12 @@
   {
    "spec_id": "M3.8",
    "cls": "M3",
-   "path": "rt-check",
-   "admissible": false,
-   "prohibition": "absent",
-   "status": "pending",
+   "path": "ct-check",
+   "admissible": true,
+   "prohibition": "",
+   "status": "implemented",
    "desc": "DMA rank = 6 (outside the assessed [1,5])",
-   "note": "MISSING SURFACE: a rank-6 DMA needs a rank-6 tensor; the suite's maximum rank is 4"
+   "note": "gpu_adapt.hpp:337 RankLE5 -- the rank in dma.transp(not slice nor deslice) must be in [1,5]. Realised on `dma_rank5`/`r5base`: a rank-5 base whose mutation adds a 6th dim and a 6-wide permutation, so the compiler refuses it at compile time (Error1). ct-check is assessed, not cost-suppressible, so it takes the one-per-cell ceiling rather than the -rtc curve"
   },
   {
    "spec_id": "M3.9",

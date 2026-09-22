@@ -17,6 +17,9 @@ OPS = {
                  "which sums."),
   'conv2d':     ("y = conv2d(x, w, stride, padding, dilation); standard NCHW 2-D convolution "
                  "(optionally strided/padded/dilated)."),
+  'dma_rank5':  ("rank-5 dma.transp descriptor surface used only by the M3 mutation specs "
+                 "(r5dyn: global->shared with a symbolic leading dim; r5base: a "
+                 "well-formed rank-5 permutation). Not a benchmark operator."),
   'elemwise_add':("y = lhs + rhs; elementwise with broadcast (shapes equal or broadcastable)."),
   'embedding':  ("y = w[id]; gather rows of w (vocab_size x embed_dim) indexed by integer ids. "
                  "Output = id.shape + [embed_dim]."),

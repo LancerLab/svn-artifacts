@@ -16,18 +16,18 @@
   },
   "summary": {
     "n_specs": 77,
-    "choreo_realized": 53,
-    "choreo_unrealized": 24,
+    "choreo_realized": 55,
+    "choreo_unrealized": 22,
     "recorded_by_a_sota_lane": 14,
-    "recorded_over_choreo": 0.2642,
+    "recorded_over_choreo": 0.2545,
     "recorded_over_all_specs": 0.1818,
-    "achievable_by_a_sota_lane": 61,
-    "achievable_over_all_specs": 0.7922,
-    "achievable_among_choreo_realized": 53,
+    "achievable_by_a_sota_lane": 63,
+    "achievable_over_all_specs": 0.8182,
+    "achievable_among_choreo_realized": 55,
     "achievable_over_choreo": 1.0,
-    "choreo_only_and_achievable": 39,
+    "choreo_only_and_achievable": 41,
     "choreo_only_and_recorded": 14,
-    "constitutional_n_a_anywhere": 45,
+    "constitutional_n_a_anywhere": 47,
     "lane_recorded_counts": {
       "triton": 8,
       "mlir-low": 6,
@@ -35,13 +35,13 @@
       "iree": 2
     },
     "lane_achievable_counts": {
-      "triton": 42,
+      "triton": 44,
       "mlir-linalg": 34,
       "mlir-low": 16,
       "iree": 34
     },
     "lane_recorded_over_achievable": {
-      "triton": 0.1905,
+      "triton": 0.1818,
       "mlir-linalg": 0.1765,
       "mlir-low": 0.375,
       "iree": 0.0588
@@ -81,10 +81,8 @@
       "M2.18",
       "M3.2",
       "M3.3",
-      "M3.4",
       "M3.5",
       "M3.7",
-      "M3.8",
       "M3.11",
       "M3.13",
       "M3.23",
@@ -92,7 +90,7 @@
       "M3.25",
       "M3.26"
     ],
-    "n_suite_surface_gaps": 17,
+    "n_suite_surface_gaps": 15,
     "undecided_lanes": []
   },
   "denominators": [
@@ -2946,44 +2944,47 @@
       "path_class": "rt-check",
       "mechanism": "tensor footprint >= 4 GB, 5-D product (family C)",
       "choreo": {
-        "realized": false,
-        "n_mutants": 0,
-        "cases": [],
-        "admissible": false,
-        "registry_status": "pending",
-        "prohibition": "absent",
-        "note": "family C needs 5 dims, each small, with a product >= 2^30 elements. The suite's maximum rank is 4. MISSING SURFACE: a rank-5 case",
-        "n_operators": 0,
-        "n_distinct_realisations": 0
+        "realized": true,
+        "n_mutants": 1,
+        "cases": [
+          "r5dyn"
+        ],
+        "admissible": true,
+        "registry_status": "implemented",
+        "prohibition": null,
+        "note": "gpu_adapt.hpp:351-355 -- the family-C obligation is the rank-5 product CeilTo128Byte(bpe * dst dim0) * dim1 * dim2 * dim3 * dim4 < 2^32. Realised on `dma_rank5`/`r5dyn`, a rank-5 global->shared .transp whose dim0 is symbolic, so the assessment is a runtime_check; the mutation lifts a trailing literal dim so the product crosses 2^32 well inside the legal runtime range",
+        "n_operators": 1,
+        "n_distinct_realisations": 1
       },
       "lanes": {
         "triton": {
-          "status": "blocked-by-suite",
-          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
-          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
-          "needs": "a new base case -- see the suite-gap register"
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "triton/results/stats.json S8_expressibility[hw] = partial",
+          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "mlir-linalg": {
-          "status": "blocked-by-suite",
-          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
-          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
-          "needs": "a new base case -- see the suite-gap register"
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-linalg/stats.json S8_expressibility[hw] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-low": {
-          "status": "blocked-by-suite",
-          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
-          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
-          "needs": "a new base case -- see the suite-gap register"
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-low/stats.json S8_expressibility[hw] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "blocked-by-suite",
-          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
-          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
-          "needs": "a new base case -- see the suite-gap register"
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         }
-      },
-      "na_kind": "suite-surface",
-      "na_kind_correction": "registry says prohibition='absent'; the note says MISSING SURFACE.  This is our gap, not the model's."
+      }
     },
     {
       "unit": "M3.5",
@@ -3127,47 +3128,50 @@
     {
       "unit": "M3.8",
       "class": "M3",
-      "path_class": "rt-check",
+      "path_class": "ct-check",
       "mechanism": "DMA rank = 6 (outside the assessed [1,5])",
       "choreo": {
-        "realized": false,
-        "n_mutants": 0,
-        "cases": [],
-        "admissible": false,
-        "registry_status": "pending",
-        "prohibition": "absent",
-        "note": "MISSING SURFACE: a rank-6 DMA needs a rank-6 tensor; the suite's maximum rank is 4",
-        "n_operators": 0,
-        "n_distinct_realisations": 0
+        "realized": true,
+        "n_mutants": 1,
+        "cases": [
+          "r5base"
+        ],
+        "admissible": true,
+        "registry_status": "implemented",
+        "prohibition": null,
+        "note": "gpu_adapt.hpp:337 RankLE5 -- the rank in dma.transp(not slice nor deslice) must be in [1,5]. Realised on `dma_rank5`/`r5base`: a rank-5 base whose mutation adds a 6th dim and a 6-wide permutation, so the compiler refuses it at compile time (Error1). ct-check is assessed, not cost-suppressible, so it takes the one-per-cell ceiling rather than the -rtc curve",
+        "n_operators": 1,
+        "n_distinct_realisations": 1
       },
       "lanes": {
         "triton": {
-          "status": "blocked-by-suite",
-          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
-          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
-          "needs": "a new base case -- see the suite-gap register"
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "triton/results/stats.json S8_expressibility[hw] = partial",
+          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "mlir-linalg": {
-          "status": "blocked-by-suite",
-          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
-          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
-          "needs": "a new base case -- see the suite-gap register"
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-linalg/stats.json S8_expressibility[hw] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-low": {
-          "status": "blocked-by-suite",
-          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
-          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
-          "needs": "a new base case -- see the suite-gap register"
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-low/stats.json S8_expressibility[hw] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "blocked-by-suite",
-          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
-          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
-          "needs": "a new base case -- see the suite-gap register"
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         }
-      },
-      "na_kind": "suite-surface",
-      "na_kind_correction": "registry says prohibition='absent'; the note says MISSING SURFACE.  This is our gap, not the model's."
+      }
     },
     {
       "unit": "M3.9",

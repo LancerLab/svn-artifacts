@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-22T15:40:47",
+  "generated_at": "2026-09-22T17:22:29",
   "lanes_ready": [
     "choreo",
     "triton",
@@ -2510,13 +2510,13 @@
     "register_source": "choreo/raw/spec_registry.json",
     "denominator": {
       "n_specs": 77,
-      "n_applicable": 49,
-      "n_not_applicable": 28,
+      "n_applicable": 51,
+      "n_not_applicable": 26,
       "n_out_of_scope": 0,
       "rule": "admissible specs (rt-check/unchecked/ct-check + the L row reported separately) form the detection denominator; an inadmissible spec is a recorded verdict with a named prohibition and is NOT open work (specs \u00a72)"
     },
     "prohibition": {
-      "absent": 20,
+      "absent": 18,
       "derived": 0,
       "repaired": 5,
       "harness-owned": 0,
@@ -2534,7 +2534,7 @@
         "absent": 1
       },
       "rt-check": {
-        "absent": 12
+        "absent": 10
       },
       "unchecked": {
         "absent": 3

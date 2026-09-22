@@ -1,0 +1,9 @@
+#include "common.hpp"
+__co__ auto r5base(f32 [2,4,8,16,32] input) {
+  f32 [4,8,16,32,2] output;
+  parallel p by 1 : block
+    parallel q by 32 : thread {
+      dma.transp<1,2,3,4,0> input => output;
+    }
+  return output;
+}

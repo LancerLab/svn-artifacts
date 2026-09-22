@@ -524,10 +524,8 @@
       "M2.18",
       "M3.2",
       "M3.3",
-      "M3.4",
       "M3.5",
       "M3.7",
-      "M3.8",
       "M3.11",
       "M3.13",
       "M3.19",
@@ -540,7 +538,7 @@
       "M4.4"
     ],
     "definition": "Declared in the registry with status `pending` and zero operators, and NOT in p2_never_generated. Writing one of these WOULD create a test.",
-    "why": "They make `unwritten` look like work-in-progress when it is an empty set. Note M1.15-M1.18, M2.18, M3.2-M3.13 and M4.4 are nonetheless FAMILY-MEMBERS (M1-g, M1-d, M2-h, M3-b/c/d/e/f and M4-d): the family is real and keeps its slot, the spec_id is what is abandoned. Do NOT delete them from `families` -- that would make M1-d and M1-g look like families with no declaration at all.",
+    "why": "They make `unwritten` look like work-in-progress when it is an empty set. Note M1.15-M1.18, M2.18, M3.2/M3.3/M3.5/M3.7/M3.11/M3.13 and M4.4 are nonetheless FAMILY-MEMBERS (M1-g, M1-d, M2-h, M3-b/c/e and M4-d): the family is real and keeps its slot, the spec_id is what is abandoned. Do NOT delete them from `families` -- that would make M1-d and M1-g look like families with no declaration at all. M3.4 and M3.8 have LEFT this list: the rank-5/6 `dma_rank5` re-realisation gave M3-d and M3-f operators that the compiler actually assesses, so their family members are no longer abandoned.",
     "does_not_exist": [
       "M2.20",
       "M2.22"
@@ -550,14 +548,6 @@
   "known_debt": {
     "note": "Coverage debt that is REAL and TRACKED. `method_taxonomy --check` reports these as DEBT (exit 0) instead of FAIL (exit 1), so the checker is usable as a gate before the debt is paid. The discipline is the same as the `mutants.no-duplicate-injection` ledger: a finding that is NOT listed here is a FAIL (new debt, never seen before); a finding that IS listed but no longer holds is also a FAIL (stale entry). Nothing can be silently added to or removed from this list. Keys are the exact machine keys the checker emits: `<family>:<finding>`.",
     "items": {
-      "M3-d:no admissible declaration": {
-        "finding": "no admissible declaration",
-        "observed": "the family's only spec_id M3.4 is `pending, rt-check, admissible: false, prohibition: absent`",
-        "why_real": "M3.4 'dim. footprint' carries the prohibition `absent`: the model does not forbid the state, so no obligation assesses it and no operator can ever enter the denominator. Note the spec is on rt-check and merely unwritten -- which is exactly why `R_f < 2, needs the declared realisation written` was the wrong label. Writing M3.4 would raise R_f and leave R_a at 0.",
-        "must_not_print_as": "one of the families that just need their declared spec written",
-        "fix": "W1: either give the model a prohibition for the per-dimension footprint bound (so the family becomes testable), or declare M3-d n/a `absent`. Deciding which is a design call, not a coding one.",
-        "clears_when": "M3-d gains an admissible spec_id, or is declared n/a `absent`"
-      },
       "M3-e:no admissible declaration": {
         "finding": "no admissible declaration",
         "observed": "R_f=1 on M3.6, which ships 8 operators, all `admissible: false`; M3.7 and M3.11 are likewise `absent`",
@@ -565,14 +555,6 @@
         "must_not_print_as": "a family already at R_f 1 and therefore half done",
         "fix": "W1: give the model a prohibition for descriptor-granularity alignment, rather than adding more operators of the kind that already exist and already cannot be assessed.",
         "clears_when": "M3-e gains an admissible spec_id"
-      },
-      "M3-f:no admissible declaration": {
-        "finding": "no admissible declaration",
-        "observed": "the family's only spec_id M3.8 is `pending, rt-check, admissible: false, prohibition: absent`",
-        "why_real": "M3.8 'descriptor rank' carries the prohibition `absent`, so no operator on it may enter the denominator. Same shape as M3-d: an rt-check spec that is unrunnable for a model reason, not withheld for want of effort.",
-        "must_not_print_as": "one of the families that just need their declared spec written",
-        "fix": "W1: give the model a prohibition for an out-of-range descriptor rank, or declare M3-f n/a `absent`.",
-        "clears_when": "M3-f gains an admissible spec_id, or is declared n/a `absent`"
       }
     }
   },

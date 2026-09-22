@@ -98,7 +98,7 @@ MINIMAL_SET = {
     # carry a `shared` and/or `local` tile whose extent stays symbolic in the
     # dynamic build (verified with `choreo -t cc -i` + `-sa=muchk`).
     "M3": ["matmul", "conv2d", "batch_norm", "layer_normalization",
-           "max_pool2d"],
+           "max_pool2d", "dma_rank5"],
     # layer_normalization and softmax are here because M1.6 (empty range /
     # zero stride) is registered as class M4, and its instances live on those
     # categories. Stage 1 of selection is a floor per (spec_id, category): a
@@ -335,10 +335,15 @@ SPEC_REGISTRY = {
                        "count check. MISSING SURFACE: a strided view"),
     "M3.4": _spec("M3", "rt-check", "tensor footprint >= 4 GB, 5-D product "
                               "(family C)",
-                  admissible=False, prohibition="absent",
-                  note="family C needs 5 dims, each small, with a product "
-                       ">= 2^30 elements. The suite's maximum rank is 4. "
-                       "MISSING SURFACE: a rank-5 case"),
+                  status="implemented",
+                  note="gpu_adapt.hpp:351-355 -- the family-C obligation is "
+                       "the rank-5 product CeilTo128Byte(bpe * dst dim0) * "
+                       "dim1 * dim2 * dim3 * dim4 < 2^32. Realised on "
+                       "`dma_rank5`/`r5dyn`, a rank-5 global->shared .transp "
+                       "whose dim0 is symbolic, so the assessment is a "
+                       "runtime_check; the mutation lifts a trailing literal "
+                       "dim so the product crosses 2^32 well inside the legal "
+                       "runtime range"),
     "M3.5": _spec("M3", "rt-check", "swizzle-incompatible box shape",
                   admissible=False, prohibition="absent",
                   note="MISSING SURFACE: no case in the suite writes an "
@@ -357,10 +362,16 @@ SPEC_REGISTRY = {
                   note="MISSING SURFACE: box geometry is inferred by the "
                        "lowering, never written in source; the only direct "
                        "lever is an extent change, which allocates"),
-    "M3.8": _spec("M3", "rt-check", "DMA rank = 6 (outside the assessed [1,5])",
-                  admissible=False, prohibition="absent",
-                  note="MISSING SURFACE: a rank-6 DMA needs a rank-6 tensor; "
-                       "the suite's maximum rank is 4"),
+    "M3.8": _spec("M3", "ct-check", "DMA rank = 6 (outside the assessed [1,5])",
+                  status="implemented",
+                  note="gpu_adapt.hpp:337 RankLE5 -- the rank in "
+                       "dma.transp(not slice nor deslice) must be in [1,5]. "
+                       "Realised on `dma_rank5`/`r5base`: a rank-5 base whose "
+                       "mutation adds a 6th dim and a 6-wide permutation, so "
+                       "the compiler refuses it at compile time (Error1). "
+                       "ct-check is assessed, not cost-suppressible, so it "
+                       "takes the one-per-cell ceiling rather than the -rtc "
+                       "curve"),
     "M3.9": _spec("M3", "rt-check", "pad-field overrun (dma.pad / padding_mid beyond "
                               "the assessed range)"),
     "M3.10": _spec("M3", "rt-check", "last-dim / rank-5 mid-padding violates "
@@ -1855,6 +1866,33 @@ M3 += [
        "per-thread budget is exceeded in a size the static check cannot fold",
        ("l1_input.span(3)/5] l1_out;",
         "l1_input.span(3)/5 * l1_input.span(2)] l1_out;"), spec_id="M3.28"),
+]
+
+# ---- M3.4 / M3.8 -- the rank-5 DMA surface -------------------------------
+# The suite's maximum rank was 4, so family C (a rank-5 footprint product) and
+# the rank-6 out-of-range side of RankLE5 had no source case at all. `dma_rank5`
+# is a mutation-only category carrying the two rank-5 hosts:
+#   r5dyn   global->shared .transp with a symbolic dim0 -- family C is assessed
+#           at run time, so lifting a trailing literal dim moves the violation
+#           into the legal runtime range (rt-check).
+#   r5base  a well-formed rank-5 .transp; adding a 6th dim and a 6-wide
+#           permutation takes the rank outside [1,5] (RankLE5, ct-check).
+# Both base cases compile rc=0 under the pinned flags, and both mutated forms
+# were verified to reach the named assessment before the edits were written.
+M3 += [
+    _m("M3.4.dma5dyn.footprint", "M3", 4, "stride", "dma_rank5", "r5dyn",
+       "rank-5 footprint product lifted past 4 GB by a trailing literal dim: "
+       "the family-C obligation is assessed at run time (dim0 symbolic) and the "
+       "mutant violates it well inside the legal runtime range",
+       ("f32 [N,2,1,1,1] input", "f32 [N,4096,1,1,1] input", 1),
+       ("f32 [N,1,1,1,2]", "f32 [N,1,1,1,4096]", 2)),
+    _m("M3.8.dma5.rank6", "M3", 8, "dim-mismatch", "dma_rank5", "r5base",
+       "DMA rank raised to 6: a 6th dim and a 6-wide permutation take the "
+       "descriptor outside the assessed [1,5], so the compiler refuses it at "
+       "compile time (RankLE5)",
+       ("f32 [2,4,8,16,32] input", "f32 [2,4,8,16,32,2] input", 1),
+       ("f32 [4,8,16,32,2] output", "f32 [4,8,16,32,2,2] output", 1),
+       ("dma.transp<1,2,3,4,0>", "dma.transp<1,2,3,4,5,0>", 1)),
 ]
 
 # ===========================================================================

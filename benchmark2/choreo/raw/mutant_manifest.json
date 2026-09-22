@@ -10,13 +10,13 @@
  "level2": false,
  "rtc": null,
  "accounting": {
-  "candidates": 257,
-  "selected": 130,
+  "candidates": 259,
+  "selected": 132,
   "attribution": 4,
   "dropped": 123,
   "na": 0,
   "skipped": 0,
-  "emitted": 134
+  "emitted": 136
  },
  "family_depth": {
   "M1-a": 8,
@@ -38,9 +38,9 @@
   "M3-a": 4,
   "M3-b": 3,
   "M3-c": 1,
-  "M3-d": 0,
+  "M3-d": 1,
   "M3-e": 4,
-  "M3-f": 0,
+  "M3-f": 1,
   "M3-g": 2,
   "M3-h": 8,
   "M4-a": 6,
@@ -67,9 +67,9 @@
   "M3-a": 4,
   "M3-b": 5,
   "M3-c": 7,
-  "M3-d": 8,
+  "M3-d": 7,
   "M3-e": 4,
-  "M3-f": 8,
+  "M3-f": 7,
   "M3-g": 6,
   "M4-a": 2,
   "M4-b": 2,
@@ -94,10 +94,8 @@
    "M3.13",
    "M3.2",
    "M3.3",
-   "M3.4",
    "M3.5",
-   "M3.7",
-   "M3.8"
+   "M3.7"
   ],
   "M4": [
    "M4.4"
@@ -111,23 +109,23 @@
  "registry": {
   "n_specs": 77,
   "status_counts": {
-   "implemented": 54,
-   "pending": 23
+   "implemented": 56,
+   "pending": 21
   },
   "admissible_counts": {
-   "true": 49,
-   "false": 28
+   "true": 51,
+   "false": 26
   },
   "prohibition_counts": {
-   "absent": 20,
+   "absent": 18,
    "repaired": 5,
    "observation": 3
   },
   "path_counts": {
-   "rt-check": 54,
+   "rt-check": 53,
    "unchecked": 10,
    "avoided": 5,
-   "ct-check": 1,
+   "ct-check": 2,
    "L": 7
   },
   "implemented": [
@@ -176,7 +174,9 @@
    "M3.20",
    "M3.27",
    "M3.28",
+   "M3.4",
    "M3.6",
+   "M3.8",
    "M3.9",
    "M4.1",
    "M4.2",
@@ -228,6 +228,8 @@
    "M3.16",
    "M3.27",
    "M3.28",
+   "M3.4",
+   "M3.8",
    "M3.9",
    "M4.1",
    "M4.2",
@@ -257,10 +259,8 @@
    "M3.25",
    "M3.26",
    "M3.3",
-   "M3.4",
    "M3.5",
    "M3.7",
-   "M3.8",
    "M4.4"
   ],
   "na": [
@@ -286,11 +286,9 @@
    "M3.25",
    "M3.26",
    "M3.3",
-   "M3.4",
    "M3.5",
    "M3.6",
    "M3.7",
-   "M3.8",
    "M4.4"
   ],
   "na_by_reason": {
@@ -309,11 +307,9 @@
     "M3.25",
     "M3.26",
     "M3.3",
-    "M3.4",
     "M3.5",
     "M3.6",
     "M3.7",
-    "M3.8",
     "M4.4"
    ],
    "repaired": [
@@ -332,7 +328,7 @@
   "n_operators": {
    "M1": 66,
    "M2": 70,
-   "M3": 61,
+   "M3": 63,
    "M4": 60
   }
  },
@@ -3769,6 +3765,34 @@
   {
    "toolchain": "choreo",
    "class": "M3",
+   "spec": 4,
+   "paper_category": "stride",
+   "mutant_id": "M3.4.dma5dyn.footprint",
+   "category": "dma_rank5",
+   "case": "r5dyn",
+   "level": 1,
+   "base_path": "benchmark/choreo/dma_rank5/r5dyn.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/dma_rank5/M3.4.dma5dyn.footprint__r5dyn.co",
+   "kernel_hash": "5b65ecb6c656",
+   "mutant_hash": "5a8152c45f00",
+   "settings_hash": "331391c57242",
+   "local_headers": [
+    "common.hpp"
+   ],
+   "desc": "rank-5 footprint product lifted past 4 GB by a trailing literal dim: the family-C obligation is assessed at run time (dim0 symbolic) and the mutant violates it well inside the legal runtime range",
+   "diff": "--- a/dma_rank5/r5dyn.co\n+++ b/dma_rank5/r5dyn.co\n@@ -1,7 +1,7 @@\n #include \"common.hpp\"\n-__co__ auto r5dyn(f32 [N,2,1,1,1] input) {\n-  f32 [N,1,1,1,2] output;\n+__co__ auto r5dyn(f32 [N,4096,1,1,1] input) {\n+  f32 [N,1,1,1,4096] output;\n   parallel p by 1 : block {\n-    shared f32 [N,1,1,1,2] tile;\n+    shared f32 [N,1,1,1,4096] tile;\n     parallel q by 32 : thread {\n       dma.transp<0,2,3,4,1> input => tile;\n",
+   "spec_version": "v2.1",
+   "spec_id": "M3.4",
+   "path_class": "rt-check",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": true,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M3",
    "spec": 2,
    "paper_category": "stride",
    "mutant_id": "M3.s2.mm1.rhs1",
@@ -3876,6 +3900,34 @@
    "admissible": false,
    "spec_admissible": false,
    "needs_rtc_curve": true,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M3",
+   "spec": 8,
+   "paper_category": "dim-mismatch",
+   "mutant_id": "M3.8.dma5.rank6",
+   "category": "dma_rank5",
+   "case": "r5base",
+   "level": 1,
+   "base_path": "benchmark/choreo/dma_rank5/r5base.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/dma_rank5/M3.8.dma5.rank6__r5base.co",
+   "kernel_hash": "71275da4ffb1",
+   "mutant_hash": "fdc7cc7bd9f6",
+   "settings_hash": "331391c57242",
+   "local_headers": [
+    "common.hpp"
+   ],
+   "desc": "DMA rank raised to 6: a 6th dim and a 6-wide permutation take the descriptor outside the assessed [1,5], so the compiler refuses it at compile time (RankLE5)",
+   "diff": "--- a/dma_rank5/r5base.co\n+++ b/dma_rank5/r5base.co\n@@ -1,8 +1,8 @@\n #include \"common.hpp\"\n-__co__ auto r5base(f32 [2,4,8,16,32] input) {\n-  f32 [4,8,16,32,2] output;\n+__co__ auto r5base(f32 [2,4,8,16,32,2] input) {\n+  f32 [4,8,16,32,2,2] output;\n   parallel p by 1 : block\n     parallel q by 32 : thread {\n-      dma.transp<1,2,3,4,0> input => output;\n+      dma.transp<1,2,3,4,5,0> input => output;\n     }\n   return output;\n",
+   "spec_version": "v2.1",
+   "spec_id": "M3.8",
+   "path_class": "ct-check",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": false,
    "attribution_only": null
   },
   {
