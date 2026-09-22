@@ -1,4 +1,4 @@
 [submodule "croqtile"]
 	path = croqtile
 	url = https://github.com/LancerLab/croqtile.git
-	branch = main
+	branch = ledger-artifacts
