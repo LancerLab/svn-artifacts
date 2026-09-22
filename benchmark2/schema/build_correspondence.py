@@ -112,8 +112,19 @@ MLIR_LINALG_SPEC = {
     "M2.14": "M2.1 bump-leading-extent(rhs) applied to matmul -> K pm1",
 }
 IREE_SPEC = {
-    "M2.1": "elemwise_add rhs d1 pm1; layer_norm beta/gamma len pm1",
-    "M2.14": "iree/mutants/M2/matmul/iree-matmul-*-rhs-K pm1",
+    "M2.1": "layer_norm beta/gamma len pm1",
+    "M2.3": "elemwise_add rhs trailing-extent pm1",
+    "M2.6": "seq/hid extents transposed (matmul lhs, transpose, concat, conv2d)",
+    "M2.7": "input rank dropped (matmul lhs, transpose, reduce_mean, softmax)",
+    "M2.8": "norm gamma broadcast extent set to 1",
+    "M2.9": "batch/group extents swapped (matmul lhs, transpose, concat, conv2d)",
+    "M2.10": "square input transposed (transpose, batch_norm, concat, matmul rhs)",
+    "M2.13": "shape-equal / layout-unequal view (transpose, batch_norm, concat, matmul lhs)",
+    "M2.14": "matmul rhs contraction dim K pm1",
+    "M2.16": "size-1 rank insert, ElementCount preserved (matmul lhs, transpose, reduce_mean, softmax)",
+    "M2.17": "dynamic split on a non-divisible extent (silent drop; unchecked)",
+    "M2.19": "norm dynamic (symbolic) beta/gamma extent pm1",
+    "M2.21": "norm gamma 3rd broadcast extent neither 1 nor equal",
 }
 
 # Sites where the lane's own spec label differs from the register's but the

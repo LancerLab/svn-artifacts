@@ -18,21 +18,21 @@
     "n_specs": 77,
     "choreo_realized": 55,
     "choreo_unrealized": 22,
-    "recorded_by_a_sota_lane": 14,
-    "recorded_over_choreo": 0.2545,
-    "recorded_over_all_specs": 0.1818,
+    "recorded_by_a_sota_lane": 24,
+    "recorded_over_choreo": 0.4364,
+    "recorded_over_all_specs": 0.3117,
     "achievable_by_a_sota_lane": 63,
     "achievable_over_all_specs": 0.8182,
     "achievable_among_choreo_realized": 55,
     "achievable_over_choreo": 1.0,
-    "choreo_only_and_achievable": 41,
-    "choreo_only_and_recorded": 14,
+    "choreo_only_and_achievable": 31,
+    "choreo_only_and_recorded": 24,
     "constitutional_n_a_anywhere": 47,
     "lane_recorded_counts": {
       "triton": 8,
       "mlir-low": 6,
       "mlir-linalg": 6,
-      "iree": 2
+      "iree": 13
     },
     "lane_achievable_counts": {
       "triton": 44,
@@ -44,7 +44,7 @@
       "triton": 0.1818,
       "mlir-linalg": 0.1765,
       "mlir-low": 0.375,
-      "iree": 0.0588
+      "iree": 0.3824
     },
     "union_metric_caveat": "`achievable_by_a_sota_lane` is the union over lanes and reaches 100% because each obligation class is declared expressible by at least one lane.  It answers 'could ANY lane express this?' and must not be quoted as a per-lane rate.  Quote `lane_recorded_over_achievable` instead.",
     "n_duplicate_findings": 30,
@@ -169,10 +169,10 @@
     {
       "lane": "mlir-linalg",
       "class": "M2",
-      "n_mutants": 70,
+      "n_mutants": 32,
       "power_floor": 35,
-      "status": "ok",
-      "annotation": "meets the power floor"
+      "status": "under-powered",
+      "annotation": "32 < 35: a rate must not be reported from this cell"
     },
     {
       "lane": "mlir-linalg",
@@ -233,10 +233,10 @@
     {
       "lane": "iree",
       "class": "M2",
-      "n_mutants": 23,
+      "n_mutants": 63,
       "power_floor": 35,
-      "status": "under-powered",
-      "annotation": "23 < 35: a rate must not be reported from this cell"
+      "status": "ok",
+      "annotation": "meets the power floor"
     },
     {
       "lane": "iree",
@@ -1907,7 +1907,7 @@
         },
         "iree": {
           "status": "recorded",
-          "evidence": "iree/mutants/M2/* (elemwise_add rhs d1 pm1; layer_norm beta/gamma len pm1)"
+          "evidence": "iree/mutants/M2/* (layer_norm beta/gamma len pm1)"
         }
       }
     },
@@ -1994,10 +1994,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "iree/mutants/M2/* (elemwise_add rhs trailing-extent pm1)"
         }
       }
     },
@@ -2133,10 +2131,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "iree/mutants/M2/* (seq/hid extents transposed (matmul lhs, transpose, concat, conv2d))"
         }
       }
     },
@@ -2183,10 +2179,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "iree/mutants/M2/* (input rank dropped (matmul lhs, transpose, reduce_mean, softmax))"
         }
       }
     },
@@ -2230,10 +2224,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "iree/mutants/M2/* (norm gamma broadcast extent set to 1)"
         }
       }
     },
@@ -2279,10 +2271,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "iree/mutants/M2/* (batch/group extents swapped (matmul lhs, transpose, concat, conv2d))"
         }
       }
     },
@@ -2326,10 +2316,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "iree/mutants/M2/* (square input transposed (transpose, batch_norm, concat, matmul rhs))"
         }
       }
     },
@@ -2467,10 +2455,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "iree/mutants/M2/* (shape-equal / layout-unequal view (transpose, batch_norm, concat, matmul lhs))"
         }
       }
     },
@@ -2511,7 +2497,7 @@
         },
         "iree": {
           "status": "recorded",
-          "evidence": "iree/mutants/M2/* (iree/mutants/M2/matmul/iree-matmul-*-rhs-K pm1)"
+          "evidence": "iree/mutants/M2/* (matmul rhs contraction dim K pm1)"
         }
       },
       "na_kind": "model-unknown"
@@ -2605,10 +2591,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "iree/mutants/M2/* (size-1 rank insert, ElementCount preserved (matmul lhs, transpose, reduce_mean, softmax))"
         }
       }
     },
@@ -2653,10 +2637,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "iree/mutants/M2/* (dynamic split on a non-divisible extent (silent drop; unchecked))"
         }
       }
     },
@@ -2746,10 +2728,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "iree/mutants/M2/* (norm dynamic (symbolic) beta/gamma extent pm1)"
         }
       }
     },
@@ -2794,10 +2774,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "iree/mutants/M2/* (norm gamma 3rd broadcast extent neither 1 nor equal)"
         }
       }
     },
