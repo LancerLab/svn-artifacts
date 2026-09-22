@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from collections import Counter, defaultdict
+
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent       # benchmark2/
@@ -126,10 +126,20 @@ def cmd_stats():
         s9[r["category"]] = {"unconditional_guards": r["unconditional_guards"],
                              "criterion_ref": r["criterion_ref"]}
 
-    per_cat = defaultdict(Counter)
+    # Kernel gate per category. Compile, run and ref-check are counted in
+    # separate keys -- a compile-ok that fails to run must not be reported as a
+    # run_ok, and the two verdicts have their own totals.
+    kernel_gate = {}
     for r in kernels:
-        per_cat[r["category"]][r["compile"]] += 1
-        per_cat[r["category"]][r.get("run", "-")] += 1
+        g = kernel_gate.setdefault(r["category"], {
+            "total": 0, "compiled": 0, "run_ok": 0, "ref_pass": 0})
+        g["total"] += 1
+        if r["compile"] == "ok":
+            g["compiled"] += 1
+        if r.get("run") == "ok":
+            g["run_ok"] += 1
+        if r["ref_check"] == "pass":
+            g["ref_pass"] += 1
 
     # I3: full-size gate failures — auditable disposition per kernel
     full_failures = []
@@ -157,12 +167,7 @@ def cmd_stats():
             "criterion_ref": "entry dynamic dims (not statically foldable)",
         },
         "S12_sanitizer_supplement": s12,
-        "kernel_gate": {
-            cat: {"compiled": c["ok"], "run_ok": c["ok"], "ref_pass": p}
-            for cat, c in sorted(per_cat.items())
-            for p in [sum(1 for r in kernels
-                          if r["category"] == cat and r["ref_check"] == "pass")]
-        },
+        "kernel_gate": kernel_gate,
         "full_size_failures": full_failures,
         "totals": {
             "kernels": len(kernels),
