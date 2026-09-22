@@ -32,6 +32,7 @@ CLASSES = GD.CLASSES
 BLOCKED = "unattributed(no spec_id)"
 CONFLICT = "UNCOMPARED-conflict"
 OUT = "out-of-scope"
+NO_DATA = "no-data"
 
 # `method-taxonomy.target()`'s per-family budget. Not a tunable: it is
 # `kernel_component x realisation_component` = 4 x 2, and lowering it here would
@@ -73,7 +74,8 @@ def fams_all(rows):
 
 def in_scope(row):
     st = row["state"]
-    return st != OUT and not st.startswith("carved-out")
+    return (st != OUT and not st.startswith("carved-out")
+            and not st.startswith(NO_DATA))
 
 
 def resolves_family(rows):
@@ -87,8 +89,13 @@ def resolves_family(rows):
     against N=8 is *over-delivery*, not the absence of an axis. The heuristic
     hid 48 unwritten `mlir-linalg` instances behind a label that said they were
     not countable.
+
+    `no-data` also fails the test: with the lane's raw file absent there is no
+    instance list to resolve, so the lane has no family axis *here* even though
+    it would have one on a checkout that carries its raw results.
     """
-    return not any(r["state"].startswith("unattributed") for r in rows)
+    return not any(r["state"].startswith(("unattributed", NO_DATA))
+                   for r in rows)
 
 
 def cell(row, resolves, plan):
@@ -105,6 +112,8 @@ def cell(row, resolves, plan):
     st = row["state"]
     if st == OUT or st.startswith("carved-out"):
         return "out"
+    if st.startswith(NO_DATA):
+        return "no data"
     if st.startswith(BLOCKED.split("(")[0]):
         return "blocked"
     if st == CONFLICT:
@@ -152,9 +161,11 @@ def main(argv):
         fams[c].sort()
 
     resolves = {}
+    no_data = {}
     for lane in LANES:
-        resolves[lane] = resolves_family([r for r in rows
-                                          if r["lane"] == lane and in_scope(r)])
+        lane_rows = [r for r in rows if r["lane"] == lane]
+        resolves[lane] = resolves_family(lane_rows)
+        no_data[lane] = any(r["state"].startswith(NO_DATA) for r in lane_rows)
 
     # The plan comes from the taxonomy's scope model (`gen_dashboard`), not from
     # the worklist rows. Summing `need` over the rows that happen to exist would
@@ -187,6 +198,9 @@ def main(argv):
                "class axis -- an instrument disagreement, **not** a gap |")
     out.append("| `n/a` | the lane does not resolve its instances to a family "
                "(class-first composition) -- see section 5 |")
+    out.append("| `no data` | the lane's raw results are absent from this "
+               "checkout (it is gitignored), so its numbers are unknown here, "
+               "**not** zero |")
     out.append("| `out` | the lane does not run this class |")
     out.append("")
     out.append(f"`planned` is `N_per_family = {N}` wherever the family is in a "
@@ -209,7 +223,8 @@ def main(argv):
         s = sum(1 for r in rs if resolves[lane]
                 and num(r, "have") >= num(r, "ceiling")
                 and num(r, "have") < plan[(lane, r["family"])])
-        axis = "yes" if resolves[lane] else "**no**"
+        axis = ("**no data**" if no_data[lane]
+                else "yes" if resolves[lane] else "**no**")
         p = lane_plan[lane]
         out.append(f"| `{lane}` | {n_fam} | {p} | **{h}** | {p - h} | {s} | {axis} |")
         tot_p += p
@@ -303,13 +318,15 @@ def main(argv):
     out.append("")
 
     # ------------------------------------------------- no family axis lanes
-    out.append("## 5. Lanes whose rows carry no `spec_id`")
+    out.append("## 5. Lanes whose instances cannot be attributed")
     out.append("")
-    out.append("Two lanes emit records with a `class` but no `spec_id`, so their "
-               "instances can be counted per class and never per family. Their "
-               "`implemented` column above reads 0 for that reason alone, and "
-               "the instances that do exist are named here so the shortfall is "
-               "not overstated.")
+    out.append("A lane lands here for one of two reasons. `triton` emits "
+               "records with a `class` but no `spec_id`, so its instances can "
+               "be counted per class and never per family. `iree` gitignores "
+               "its raw results, so a fresh clone has no instance list at all. "
+               "In both cases `implemented` above is not a measurement -- it is "
+               "0 because nothing could be attributed -- and the instances that "
+               "do exist are named here so the shortfall is not overstated.")
     out.append("")
     out.append("| lane | why | planned | implemented | discarded instances | "
                "the fix |")
@@ -323,9 +340,6 @@ def main(argv):
                   "atom` -- so the mapping to taxonomy specs is knowable. It "
                   "has not been written down, which is not the same as being "
                   "unknowable.",
-        "iree": "same as `triton`: `class: M2` with a `mutant_id` that already "
-                "names the fault (`iree-layer_normalization-10-gamma-len-1`), "
-                "and no `spec_id`.",
     }
     fix = {
         "triton": "map its local family integers onto taxonomy spec_ids in "
@@ -333,13 +347,21 @@ def main(argv):
                   "then re-derive. Note its surface is 6 M1 and 2 M3 local "
                   "families against the taxonomy's 8 and 8: emitting `spec_id` "
                   "attributes what exists, it does not reach 168.",
-        "iree": "emit `spec_id` per row the same way. Same caveat: the "
-                "taxonomy names 8 M2 families and 4 of iree's are carved out, "
-                "so attribution will not reach 88 on its own.",
     }
     for lane in LANES:
+        if resolves[lane]:
+            continue
+        if no_data[lane]:
+            out.append(
+                f"| `{lane}` | its raw results file is absent from this "
+                f"checkout (gitignored, hundreds of MB), so there is no "
+                f"instance list to attribute. | {lane_plan[lane]} | **n/a** | "
+                f"**n/a** | re-run the lane on a checkout that has the raw "
+                f"results, or commit a census the way `mlir-low` and "
+                f"`mlir-linalg` do. |")
+            continue
         rs = [r for r in rows if r["lane"] == lane and in_scope(r)]
-        if not rs or resolves[lane]:
+        if not rs:
             continue
         # The rows carry the count of instances that exist but could not be
         # attributed: "lane has N <class> instance(s) but its raw rows carry no
@@ -358,12 +380,13 @@ def main(argv):
                    f"**{sum(num(r, 'have') for r in rs)}** | **{disc}** | "
                    f"{fix.get(lane, '')} |")
     out.append("")
-    out.append("`implemented 0` in these rows is an attribution failure, not a "
-               "dead lane: the discarded column counts instances that ran and "
-               "were recorded without a `spec_id`. Fix the instrument first -- "
-               "but do not read the result as a smaller job. Once attributed, "
-               "whatever families the surface actually covers will show up as "
-               "short, and the rest as genuinely unwritten.")
+    out.append("`implemented 0` in these rows is not a dead lane. For `triton` "
+               "the discarded column counts instances that ran and were "
+               "recorded without a `spec_id`; for `iree` there is no instance "
+               "list in this checkout. Fix the instrument first -- but do not "
+               "read the result as a smaller job. Once attributed, whatever "
+               "families the surface actually covers will show up as short, and "
+               "the rest as genuinely unwritten.")
     out.append("")
 
     dst.write_text("\n".join(out) + "\n")

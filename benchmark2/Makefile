@@ -184,6 +184,9 @@ fill-dashboard:
 #                             NOT a gap. Resolve before assigning.
 #   unattributed(no spec_id)  the lane's rows carry no spec_id, so no family can
 #                             be assigned. Fix the collector, not the corpus.
+#   no-data(<path>)           the lane's raw results file is absent from this
+#                             checkout (it is gitignored), so its numbers are
+#                             UNKNOWN, not zero. Never read as a shortfall.
 #   carved-out(<why>)         a stated lane_scope exclusion
 #   out-of-scope              the lane does not run this class
 #

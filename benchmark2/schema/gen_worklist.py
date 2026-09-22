@@ -110,6 +110,23 @@ def missing_surface():
 
 MSURF = missing_surface()
 
+# Each lane's material source. Some lanes gitignore their raw results
+# (`benchmark2/iree/.gitignore` ignores `raw/` -- 561 MB), so a fresh clone can
+# be missing a lane's file entirely. `load()` returns an empty list for a
+# missing file, which is indistinguishable from a lane that measured nothing:
+# the rows would fall through to the scope model and read as `in-scope` with a
+# full shortfall, inventing work out of an absent file. Track absence explicitly
+# and label it, so a reader can tell "measured zero" from "not in this
+# checkout". Mirrors `gen_dashboard.py`'s SOURCES.
+SOURCES = {
+    "choreo": BASE / "choreo" / "raw" / "mutant_manifest.json",
+    "triton": BASE / "triton" / "raw" / "mutants.jsonl",
+    "mlir-low": BASE / "mlir-low" / "raw" / "mutants.jsonl",
+    "mlir-linalg": BASE / "mlir-linalg" / "raw" / "mutants.jsonl",
+    "iree": BASE / "iree" / "raw" / "mutants.jsonl",
+}
+lane_missing = {L: not SOURCES[L].is_file() for L in LANES}
+
 # ------------------------------------------------------------------ corpora
 
 # choreo -- the only lane with a mutant_manifest.json, and therefore the only
@@ -301,12 +318,19 @@ for cls in CLASSES:
         # understate the lane's real position, so say so instead.
         unattributed = (lane not in ("choreo",) and not lane_fam[lane]
                         and lane_cls[lane].get(cls, 0) > 0)
+        missing = lane_missing[lane]
+        src_rel = SOURCES[lane].relative_to(BASE)
         for f in fams:
             if not T.runs_class(lane, cls):
                 state = "out-of-scope"
             elif ax == "uncompared":
                 # in the taxonomy's scope, absent from the axis. A conflict.
                 state = "UNCOMPARED-conflict"
+            elif missing:
+                # The lane's raw file is absent from this checkout. Its numbers
+                # are unknown here, not zero; do not fall through to the scope
+                # model and report a shortfall the data cannot support.
+                state = "no-data(%s)" % src_rel
             elif unattributed:
                 state = "unattributed(no spec_id)"
             elif LANE_SCOPE.get(lane, {}).get(f):
@@ -320,6 +344,26 @@ for cls in CLASSES:
                 short = 0
             else:
                 short = max(0, N - have)
+            if short:
+                blk = blocker(cls, f, rf, ra)
+            elif state == "UNCOMPARED-conflict":
+                blk = ("in_scope_lanes[%s] lists this lane but class-axis "
+                       "holds it at `uncompared` (declared scope decision, "
+                       "not a gap). Resolve the two instruments before "
+                       "assigning work." % cls)
+            elif state.startswith("unattributed"):
+                blk = ("lane has %d %s instance(s) but its raw rows carry no "
+                       "spec_id, so no family can be assigned. First task: "
+                       "emit spec_id (and family) on every row, then re-derive "
+                       "this column." % (lane_cls[lane].get(cls, 0), cls))
+            elif state.startswith("no-data"):
+                blk = ("NO DATA: %s is absent from this checkout, so this "
+                       "family's numbers are UNKNOWN here, not zero -- do not "
+                       "assign or report them. It is the lane's raw results "
+                       "file, gitignored because of its size; re-run the lane "
+                       "on a checkout that has it." % src_rel)
+            else:
+                blk = ""
             rows.append({
                 "lane": lane,
                 "class": cls,
@@ -341,18 +385,7 @@ for cls in CLASSES:
                     else ""),
                 "fill_plan": fill_plan(cls, depth.get(f, {}), have)
                              if lane == "choreo" else "",
-                "blocker": (blocker(cls, f, rf, ra) if short else "") or
-                           ("in_scope_lanes[%s] lists this lane but "
-                            "class-axis holds it at `uncompared` (declared "
-                            "scope decision, not a gap). Resolve the two "
-                            "instruments before assigning work."
-                            % cls if state == "UNCOMPARED-conflict" else
-                            "lane has %d %s instance(s) but its raw rows carry "
-                            "no spec_id, so no family can be assigned. First "
-                            "task: emit spec_id (and family) on every row, "
-                            "then re-derive this column."
-                            % (lane_cls[lane].get(cls, 0), cls)
-                            if state.startswith("unattributed") else ""),
+                "blocker": blk,
                 "guarded": "yes" if (lane == "choreo" and state == "in-scope")
                            else "no",
             })
@@ -384,6 +417,7 @@ def main():
     tot = defaultdict(int)
     conflict = defaultdict(int)
     unattr = defaultdict(int)
+    nodata = defaultdict(int)
     for r in rows:
         if r["state"] == "in-scope":
             tot[r["lane"]] += r["short"]
@@ -391,6 +425,8 @@ def main():
             conflict[r["lane"]] += 1
         elif r["state"].startswith("unattributed"):
             unattr[r["lane"]] += 1
+        elif r["state"].startswith("no-data"):
+            nodata[r["lane"]] += 1
     print("wrote %s (%d rows)" % (out, len(rows)))
     print("in-scope shortfall: " + ", ".join(
         "%s=%d" % (l, tot[l]) for l in LANES if tot[l]) +
@@ -404,6 +440,10 @@ def main():
         print("BLOCKED, cannot be assigned: no spec_id on the lane's rows: " +
               ", ".join("%s=%d families" % (l, n)
                         for l, n in unattr.items()))
+    if nodata:
+        print("NO DATA (raw file absent here; NOT measured zero): " +
+              ", ".join("%s=%d families" % (l, n)
+                        for l, n in nodata.items()))
 
 
 if __name__ == "__main__":
