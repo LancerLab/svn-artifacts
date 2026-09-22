@@ -268,7 +268,7 @@ def main():
     w(">")
     w("> **Separate and weaker: `n_target_per_class = 40`** "
       "(`class-axis.json`). That is the mlir collectors' own internal "
-      "per-class gate, not a budget. `mlir-low` clears it (48 \u2265 40) while "
+      "per-class gate, not a budget. `mlir-low` clears it (64 \u2265 40) while "
       "still being under its M1 cell of 64. It is never the coverage "
       "denominator here. The mlir lanes are also not distributed across "
       "their class's 8 families \u2014 `mlir-low`'s M1 work lands on 4 "
@@ -317,7 +317,7 @@ def main():
     w("")
     w("`instances` is deduplicated; `rows` is what `measured_today` counts. "
       "They diverge because the mlir lanes run each mutant **twice** (rtv "
-      "`off`/`on`): 96 rows = 48 instances, 120 rows = 50. **Do not read "
+      "`off`/`on`): 144 rows = 72 instances, 120 rows = 50. **Do not read "
       "`rows` as coverage.**")
     _missing = [l for l in LANES if fam_missing.get(l)]
     if _missing:
@@ -380,7 +380,7 @@ def main():
        "`iree`'s M4 is unverified here -- see the `n/a` note above."))
     w("")
     w("**A lane is not its census label.** `mlir-low`'s census says "
-      "`class: M1`, but 8 of its 48 instances are class M4 (`M1.6` "
+      "`class: M1`, but 8 of its 72 instances are class M4 (`M1.6` "
       "\u2192 `M4-d`). The split above is by `spec_id` \u2192 family "
       "\u2192 class, not by the census label. Watch for the same re-homing "
       "in any lane carrying `M1.6` or `M1.7`.")

@@ -1,10 +1,10 @@
 {
   "class": "M1",
-  "n_records": 96,
-  "n_injected": 48,
-  "expected_injected": 48,
+  "n_records": 144,
+  "n_injected": 72,
+  "expected_injected": 72,
   "n_target_per_class": 40,
-  "delta_vs_target": 8,
+  "delta_vs_target": 32,
   "categories": [
     "relu",
     "transpose",
@@ -16,12 +16,12 @@
   "n_repeat": 16,
   "by_rtv": {
     "off": {
-      "never": 45,
+      "never": 69,
       "runtime": 3
     },
     "on": {
-      "never": 10,
-      "runtime": 38
+      "never": 26,
+      "runtime": 46
     }
   },
   "problems": []

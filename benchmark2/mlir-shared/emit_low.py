@@ -173,13 +173,24 @@ def _perturb(e: Emitter, idx: list[str], st: Structural | None, axis: int) -> li
       * `transposed-stride` -- swap the last two read indices (spec 4)
       * `offset-overrun`    -- `j + extent`, wholly past the end (spec 5)
       * `zero-stride`       -- `j * 0`, in range but every iteration reads element
-                               0 (spec 6, the iteration-validity residue)
+                                0 (spec 6, the iteration-validity residue)
+
+    The v2.1 additions the memref surface can realise:
+      * `broadcast-index`   -- reuse a different induction variable for this axis
+                               (spec 12, family M1-d). In range at small size, so
+                               the miss is silent rather than an RTV catch.
+      * `tile-coord`        -- advance the index by a whole tile (spec 14, family
+                               M1-e); the in-tile offset is intact, the tile
+                               coordinate is one past the tiled extent.
+      * `overlap-write`     -- not a read perturbation; `_write_perturb` wraps the
+                               store index instead (spec 11, family M1-h). Ignored
+                               here so the read stays clean.
 
     Calling this before the loop is opened emits `affine.apply` referencing an
     induction variable that does not exist yet -- a use-before-def the verifier
     rejects.
     """
-    if st is None or st.kind == "drop-mask":
+    if st is None or st.kind in ("drop-mask", "overlap-write"):
         return idx
     k = st.axis
     if st.kind == "off-by-one":
@@ -194,9 +205,40 @@ def _perturb(e: Emitter, idx: list[str], st: Structural | None, axis: int) -> li
         if k < 1:
             raise NotExpressible("transposed-stride needs at least two axes to swap")
         idx[k], idx[k - 1] = idx[k - 1], idx[k]
+    elif st.kind == "broadcast-index":
+        # Reuse the outermost induction variable for this axis (M1.12). The
+        # wrong variable is in range at the small battery size, which is what
+        # makes the defect silent: no bounds check fires.
+        if k < 1:
+            raise NotExpressible("broadcast-index needs a rank >= 2 to reuse an axis")
+        idx[k] = idx[0]
+    elif st.kind == "tile-coord":
+        # Advance by one whole tile (M1.14). `st.tile` is the axis extent, so the
+        # tile size comes from the same rule the clean nest uses.
+        idx[k] = _apply(e, f"d0 + {_tile_for(st.tile)}", idx[k])
     else:
         raise KeyError(f"unhandled M1 structural kind {st.kind!r}")
     return idx
+
+
+def _write_perturb(
+    e: Emitter, widx: list[str], st: Structural | None, axis: int
+) -> list[str]:
+    """Apply an M1 defect that lives in the **store** index, not the read.
+
+    Only `overlap-write` (spec 11, family M1-h) is a write-side defect: the store
+    index is wrapped into a region `st.tile` slots wide, so several concurrent
+    loop iterations address the same live slot and the last one wins. Every other
+    kind leaves the store untouched (the defect belongs in the read expression).
+
+    `axis` is supplied by the caller because it indexes *this* store's coordinate
+    list, which is not always the read list's `st.axis` (transpose reverses the
+    store coordinates).
+    """
+    if st is None or st.kind != "overlap-write":
+        return widx
+    widx[axis] = _apply(e, f"d0 mod {st.tile}", widx[axis])
+    return widx
 
 
 # --------------------------------------------------------------------------
@@ -524,7 +566,8 @@ def _low_relu(e: Emitter, case: C.Case, st: Structural | None):
         # numpy.maximum, which is what the reference oracle uses.
         r = e.new("r")
         e.emit(f"{r} = arith.maximumf {v}, {z} : f32")
-        e.emit(f"affine.store {r}, {out}[{', '.join(ivs)}] : {out_t}")
+        widx = _write_perturb(e, list(ivs), st, nd - 1)
+        e.emit(f"affine.store {r}, {out}[{', '.join(widx)}] : {out_t}")
     return out, out_t, out_r
 
 
@@ -548,7 +591,9 @@ def _low_transpose(e: Emitter, case: C.Case, st: Structural | None):
     with _tiled(e, ivs, bounds, ext, st, axis) as ridx:
         v = e.new("v")
         e.emit(f"{v} = affine.load {inp}[{', '.join(ridx)}] : {inp_t}")
-        widx = list(reversed(ivs))
+        # The store reverses the loop indices, so the tiled axis (ivs[nd-1]) is
+        # coordinate 0 here; overlap-write wraps that coordinate.
+        widx = _write_perturb(e, list(reversed(ivs)), st, 0)
         e.emit(f"affine.store {v}, {out}[{', '.join(widx)}] : {out_t}")
     return out, out_t, out_r
 
@@ -618,7 +663,7 @@ def _low_softmax(e: Emitter, case: C.Case, st: Structural | None):
         k = e.new("k")
         e.emit(f"affine.for {k} = 0 to {ext} {{")
         e.indent += 1
-        widx3 = list(outer) + [k]
+        widx3 = _write_perturb(e, list(outer) + [k], st, axis)
         ev = e.new("v")
         e.emit(f"{ev} = affine.load {out}[{', '.join(widx3)}] : {out_t}")
         nv = e.new("t")
@@ -724,7 +769,7 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
         e.emit(f"{bi} = affine.load {bias}[{k}] : {bias_t}")
         m2 = e.new("t")
         e.emit(f"{m2} = arith.addf {m1}, {bi} : f32")
-        widx = list(outer) + [k]
+        widx = _write_perturb(e, list(outer) + [k], st, axis)
         e.emit(f"affine.store {m2}, {out}[{', '.join(widx)}] : {out_t}")
         e.indent -= 1
         e.emit("}")

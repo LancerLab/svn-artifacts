@@ -87,8 +87,9 @@ DEFAULT_SPEC_VERSION = "v1"
 #     outcome  ['compile', 'runtime', 'never', 'n/a']
 #     stage    ['compile', 'runtime', 'none']
 #
-# Checked against every committed record before this table was written:
-# mlir-linalg 120/120 agree, mlir-low 96/96, triton 29/29 -- 245 of 245.
+# Checked against every committed record before this table was written
+# (mlir-linalg 120/120, mlir-low 96/96, triton 29/29 -- 245 of 245), and
+# re-checked on the v2.1 refresh: mlir-low 144/144 agree.
 #
 # `stage` is kept as a required field rather than dropped, because the S1 tables
 # are read per stage ("caught by the typecheck" vs "caught at runtime") and a

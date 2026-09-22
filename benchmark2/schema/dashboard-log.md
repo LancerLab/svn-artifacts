@@ -7,6 +7,40 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ---
 
+## 2026-09-22 — `mlir-low` realises the three v2.1 M1 families; its M1 cell goes 40 → 64
+
+`mlir-low` held 40 of M1's 64 instances, with `M1-d`, `M1-e` and `M1-h` empty.
+The three v2.1 specs behind those families are now realised on the memref/affine
+surface (`mlir-shared/compose.py::M1_SPECS`, `mutate.py::_m1_structural`,
+`emit_low.py`): `M1.12` broadcast-index reuse → `M1-d`, `M1.14` tile-coordinate
+overflow → `M1-e`, `M1.11` overlap-write → `M1-h`. `expected_injected` is pinned
+at 72 and the raw corpus was regenerated (`run.sh all --small`, `M1_REPEAT=16`).
+
+- `mlir-low` M1: 48 injections / 96 rows → **72 injections / 144 rows**
+  (`minimal-census` 72/72, zero `n/a`). Cell **40/64 → 64/64**: `M1-a` 24,
+  `M1-b`/`M1-c`/`M1-d`/`M1-e`/`M1-h` 8 each.
+- Two families are reported short rather than padded. **`M1-f`** (`M1.19`,
+  carrier width): memref indices are `index`/i64 and the suite has no `__inf__`,
+  so the narrow-i32 carrier does not exist here. **`M1-g`** (`M1.15`/`M1.16`/
+  `M1.17`/`M1.20`, rank/arity): `dimof`/`select`/rank-5/`view` are choreo-DSL
+  constructs with no memref analogue; `specs/mutation-specs-v2.md` §6.1 already
+  marks M1.16/M1.17 not expressible. Both are §9.5.0 *absent feature* on this
+  surface. `worklist.csv` mlir-low shortfall **40 → 16**.
+- S1 (`M1`): RTV-on `never:10, runtime:38` → **`never:26, runtime:46`**; RTV
+  contrast off `never:69, runtime:3`, so **43 rows change verdict** with the
+  harness. `_validate_m1.py`: 72/72 injections validate, **zero `noop` false
+  successes**; `M1.11`/`M1.12` are `never,corrupts` in both modes, `M1.14` is
+  `runtime,corrupts` under RTV-on.
+- S12: **38/48 → 46/72 flagged**. The 26 misses now include 8× `M1.11` and
+  8× `M1.12` — in-bounds corruptions ASan is structurally blind to, the same
+  class as the existing `M1.6` misses.
+- `make test-guards`: **GREEN**, 27 controls (run `PY=python3.10`; system 3.8
+  lacks `ast.unparse`). `make guards` still reports the branch's pre-existing
+  drift (40 findings across other lanes' M2/M3/M4 and choreo M1) — **no finding
+  names `mlir-low`**, and `m1.b`/`m1.c`/`m1.d`/`m1.e`/`m1.h` now pass for this
+  lane. Pre-existing dirty files (`{mlir-low,mlir-linalg}/raw/setup.json`,
+  `triton/*`) were not touched.
+
 ## 2026-09-22 — `triton` gets `spec_id`; its 27 M1 + 2 M3 instances become assignable
 
 The triton raw rows carried `class` and `category` and no `spec_id`, so all 8 M1

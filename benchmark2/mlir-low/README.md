@@ -65,15 +65,15 @@ mask whose out-of-bounds write is genuinely UB.
 
 | | |
 |---|---|
-| injection specs | M1.1–M1.6 (6 specs) |
+| injection specs | M1.1–M1.6 plus v2.1 M1.11/M1.12/M1.14 (9 specs) |
 | categories (§5's M1 minimal set) | `relu`, `transpose`, `softmax`, `layer_normalization` |
 | shapes | static + dynamic |
-| **injections** | 6 × 4 × 2 = **48** |
+| **injections** | 9 × 4 × 2 = **72** |
 | §0 target N per class | 40 |
-| delta | **+8** (owner-approved 2026-09-09, auditable over-count — never trimmed) |
-| mutants | **48** — M1 specs have no sub-variants, so one injection is exactly one mutant |
-| records | **96** — 48 × 2 RTV modes |
-| `n/a` cells | **0** — `transposed-stride` raised no `NotExpressible` on any of the four |
+| delta | **+32** (v1's +8 plus 3 v2.1 specs × 8, auditable over-count — never trimmed) |
+| mutants | **72** — M1 specs have no sub-variants, so one injection is exactly one mutant |
+| records | **144** — 72 × 2 RTV modes |
+| `n/a` cells | **0** — no M1 spec raised `NotExpressible` on any of the four |
 
 M2 and M3 are `n/a` on this surface (`n_na: 40` each): M2's specs are tensor-level
 shape-contract defects, which do not exist once everything is a `memref`, and M3 is
@@ -90,14 +90,14 @@ check cannot silently degrade if the composed set grows.
 | statistic | value |
 |---|---|
 | kernel gate | **16/16 green** (8 small + 8 full), 0 gate failures |
-| S1 M1 | `n_injected: 48, n_compile: 0, n_runtime: 38, n_never: 10, n_na: 0` |
+| S1 M1 | `n_injected: 72, n_compile: 0, n_runtime: 46, n_never: 26, n_na: 0` |
 | S8 | `elem {yes:4}`, `shape {no:4}`, `loop {no:4}`, `hw {no:4}` |
 | S9 | **108** kernel guards (layer_normalization 42, softmax 26, relu 20, transpose 20) |
-| S12 M1 | `flagged_and_exercised: 38` of 48 — 38 flagged, 10 genuine misses |
+| S12 M1 | `flagged_and_exercised: 46` of 72 — 46 flagged, 26 genuine misses |
 
 `n_compile: 0` is the headline difference from `mlir-linalg`. At memref level there
 is **no shape contract left to check** — every operand is a bare pointer with a
-layout, so nothing rejects a wrong extent at lowering. All 48 injections reach a
+layout, so nothing rejects a wrong extent at lowering. All 72 injections reach a
 binary and run. Detection is therefore entirely a *runtime* phenomenon here, which is
 why RTV matters so much on this surface and not at all on the other.
 
@@ -105,7 +105,7 @@ why RTV matters so much on this surface and not at all on the other.
 
 | | RTV off | RTV on | effect |
 |---|---|---|---|
-| `low` M1 | `never:45, runtime:3` | `never:10, runtime:38` | **35 records flip** |
+| `low` M1 | `never:69, runtime:3` | `never:26, runtime:46` | **43 records flip** |
 | `linalg` M2 | `compile:34, never:20, n/a:6` | identical | **no change at all** |
 
 Bare MLIR on an out-of-bounds `memref.load` **silently returns garbage with exit 0**.
@@ -148,14 +148,14 @@ with RTV **off** (RTV's own `cf.assert` would abort before the faulty access and
 the sanitizer silent). The chain, its four LLVM-21 defects, and the false-negative
 gate are documented in `../mlir-shared/README.md`.
 
-Result: **38 of 48 flagged** (`heap-buffer-overflow`), with all 48 exercised and
+Result: **46 of 72 flagged** (`heap-buffer-overflow`), with all 72 exercised and
 `instrumented` 7–13 sites each. This lane is the positive control for S12: the M1
 defects really are memory faults, so an external checker sees most of them — against
 `mlir-linalg`'s 0 of 54, where the defects are shape faults.
 
-### The 10 misses, audited individually
+### The 26 misses, audited individually
 
-All 10 carry `instrumented` > 0, so all are genuine sanitizer negatives rather than
+All 26 carry `instrumented` > 0, so all are genuine sanitizer negatives rather than
 instrumentation failures.
 
 * **8× M1.6** (zero-stride / empty-range) — 2 each on `layer_normalization`, `relu`,
@@ -163,6 +163,13 @@ instrumentation failures.
   access at all**: a zero stride or an empty range keeps every address inside the
   buffer. There is nothing for ASan to report. The output is still wrong, so the
   mutant records `outcome=never, manifest=corrupts`.
+* **8× M1.11** (read-after-write aliasing / overlap-write) — 4 categories × both
+  shapes. The kind shrinks the shared tile, so neighbouring writes alias each other
+  but every store still lands inside the buffer: an in-bounds write-after-write
+  hazard, invisible to a bounds checker. Records `never, corrupts`.
+* **8× M1.12** (broadcast-index reuse) — 4 categories × both shapes. The read index
+  is replaced by another index already in range, so the load is in-bounds but reads
+  the wrong element. Records `never, corrupts`.
 * **2× M1.4** (transposed-stride) — `relu` **dynamic** and `transpose` **dynamic**
   only. Static M1.4 on both *is* flagged.
 
@@ -186,44 +193,46 @@ step: `DYNAMIC_SLOT` binds axis 0 of `relu`/`softmax`/`transpose` to
 `3x3` and `transpose`'s becomes `3x3` too — equal trailing extents, hence clean,
 while their static forms keep `(2,3)` and are flagged.
 
-Consequence for the paper: **S12's M1 flagged count is 38/48 at small size and 36/48
-at full size.** The committed artifact reports the small-size figure and the
-size-dependence is documented here rather than hidden. This is the same category of
-finding as M1.6 — *a corruption that never leaves the allocation is invisible to any
-memory checker* — and it is reported as a finding, not patched away by choosing dims
-that force observability, because that would distort the kernel (the same reasoning
-as owner decision 3 in `../mlir-shared/README.md`).
+Consequence for the paper: **S12's M1 flagged count is 46/72 at small size**
+(committed); the pre-v2.1 full-size run reported 36/48 and has not been rerun for
+the v2.1 specs (M1.11/M1.12/M1.14). The committed artifact reports the small-size
+figure and the size-dependence is documented here rather than hidden. This is the
+same category of finding as M1.6 — *a corruption that never leaves the allocation
+is invisible to any memory checker* — and it is reported as a finding, not patched
+away by choosing dims that force observability, because that would distort the
+kernel (the same reasoning as owner decision 3 in `../mlir-shared/README.md`).
 
 ## Full-size validation
 
 Full-size extents are ~1000× larger (`relu` is `32×512×8×8` ≈ 1.05M elements), so
-this is a real exposure test rather than a repeat:
+this is a real exposure test rather than a repeat. The full column predates the
+v2.1 spec additions and was not rerun:
 
 | check | small | full |
 |---|---|---|
 | e2 | 8/8 green | 8/8 green |
-| minimal | 96 rec / 48 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK |
-| s12 | 48 sanitized, reconciled, 38 flagged | 48 sanitized, reconciled, 36 flagged |
+| minimal | 144 rec / 72 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK (pre-v2.1) |
+| s12 | 72 sanitized, reconciled, 46 flagged | 48 sanitized, reconciled, 36 flagged (pre-v2.1) |
 | S9 | 108 | 132 |
 
 The full-size `minimal` was run with `M1_REPEAT=1` rather than the committed `16`,
 because 16 repeats at full size is hours of wall-clock and the repeat count exists to
-sample *nondeterminism*, not to test size correctness. Its RTV split therefore reads
-`never:46, runtime:2` against the committed `never:45, runtime:3`: the one
+sample *nondeterminism*, not to test size correctness. Its RTV split reads
+`never:46, runtime:2` over the 48-record pre-v2.1 corpus. The one
 nondeterministic cell that can actually flip (`relu/static` M1.1 RTV-off) sampled
 once instead of 16 times.
-That cell is a genuine coin flip — the committed small-size record logged
-`12x never/noop, 4x runtime/corrupts` (p(noop)=0.75), the separate 30-run study in
-`../mlir-shared/README.md` measured 0.633, and three later draws measured 0.44,
+That cell is a genuine coin flip — the current committed small-size draw logged
+`9x never/noop, 7x runtime/corrupts` (p(noop)=0.5625), the separate 30-run study in
+`../mlir-shared/README.md` measured 0.633, and earlier draws measured 0.75, 0.44,
 0.44 and 0.31 — so which bucket it lands in varies run to run by construction. That is the
 expected consequence of N=1, not a size effect: the injection census, the §5.1
 expectation check, and every deterministic cell are unchanged. The committed artifact
 keeps `M1_REPEAT=16` at small size. Pooling every sampled run of that cell
-available as of 2026-09-10 gives $p(\text{noop})=0.532$ (50/94 across five
-independent draws), so the risk of the tally cell flipping on a re-run is
-**4.1e-5 (~1 in 24,000) at the point estimate** — but $p$ is itself only known by
-sampling and the five draws disagree, so the honest 95% interval spans ~1 in 1600
-to ~1 in 685,000. See `../mlir-shared/README.md` for the full table. What is not
+gives $p(\text{noop})=0.536$ (59/110 across six independent draws), so the risk of
+the tally cell flipping on a re-run is
+**4.7e-5 (~1 in 21,000) at the point estimate** — but $p$ is itself only known by
+sampling and the six draws disagree, so the honest 95% interval spans ~1 in 1,800
+to ~1 in 446,000. See `../mlir-shared/README.md` for the full table. What is not
 uncertain is the direction: `N=5` was ~4-10%, and `N=16` is at least two orders of
 magnitude better, about three at the point estimate.
 

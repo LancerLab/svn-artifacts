@@ -193,7 +193,7 @@
     {
       "lane": "mlir-low",
       "class": "M1",
-      "n_mutants": 48,
+      "n_mutants": 72,
       "power_floor": 35,
       "status": "ok",
       "annotation": "meets the power floor"
