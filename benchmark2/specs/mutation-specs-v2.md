@@ -285,10 +285,10 @@ Cost rule extension (from `hardware-constraint-inventory.md` §5.4): violate a
 bound by **stride, not length; do not allocate**. M3.12 is the sole exception —
 it shrinks an allocation, and must never grow one.
 
-**M3.13–M3.16 are the v2.1 verified additions** (path classes and evidence in §9.6.2).
+**M3.13–M3.16 are the v2.1 verified additions** (outcomes and evidence in §9.6.2).
 M3.13 and M3.14/M3.15 are semantically distinct: M3.13 mutates a **value the compiler
 assesses**, while M3.14/M3.15 target dimensions on **paths that carry no check at all**
-(`P3`) — the same numeric bound, reached through a different cell of the DMA matrix. They
+(`unchecked`) — the same numeric bound, reached through a different cell of the DMA matrix. They
 must be reported separately, because only the first is reachable by raising `-rtc`.
 
 **M3.11 is the only spec whose manifestation is architecture-dependent** — the
@@ -771,62 +771,77 @@ Both studies name the same triggering axes (tile F6; torch.compile
 view axis the view-family specs (M1.4/M1.5/M2.10/M2.13) — the best-attested
 class in the literature — are untested in our own experiment.
 
-## §9.6 Check-path classification — a screening rule for new specs
+## §9.6 Outcome classification — a screening rule for new specs
 
 Added 2026-09-10. Full derivation and evidence: `mutation-expansion-m1m2m3.md`.
 
-### §9.6.1 The four paths
+### §9.6.1 The five outcomes
 
-Every obligation in the target is discharged by exactly one of four paths. The **path
-class**, not the feature's importance, decides whether a mutation can be a test at all.
+A mutation's outcome is one of five values, and the same five are used in every lane.
+The outcome says what the lane **does** with a well-formed mutated program — it is not a
+statement about how the lane reports to the user. A compile-time warning about the bug
+and a compile-time error about the bug are the same outcome: the lane caught it.
 
-| Path | Mechanism | Mutant can survive? | Miss mechanism |
+| Outcome | The lane… | Well-formed mutant runs? | Meaning |
 |---|---|---|---|
-| **P1 assessed** | `CreateAssessment` / `Assess` → one of the four `UsageType`s | yes | cost-suppressed (`-rtc`) |
-| **P2 hard-error** | `Error1` / `Error` — the compiler refuses the state | **no** | *repaired* → **N/A** |
-| **P3 unchecked** | no check on this path; accepted silently | yes | not emitted to runtime |
-| **P4 warning-only** | `Warning` then continue | yes | not emitted to runtime |
+| **avoided** | derives/restores the invariant, or routes around the state | no | N/A — not a gap |
+| **unexpressible** | cannot be handed the defect; no legal program states it | no | N/A — not a gap |
+| **ct-check** | detects it at compile time (warning **or** error) | — | caught before execution |
+| **rt-check** | emits a runtime check that can fire | yes | caught at runtime, cost-suppressible (`-rtc`) |
+| **unchecked** | emits nothing; accepted silently | yes | silent by construction — the miss surface |
 
-**Mutatable surface = `P1 ∪ P3 ∪ P4`.** A spec whose only governing path is `P2` is
-**not applicable** by §9.5.0, prohibition *repaired* — and that is a positive verdict, not
-a gap.
+Two rules are load-bearing:
+
+1. **We generate only well-formed programs.** A mutant that fails to compile because *our*
+   mutation produced malformed code (wrong arity, undefined symbol, illegal composition) is
+   a **generator defect, not a result**: fix it, or the mutation is `unexpressible`.
+2. **A compile-time diagnostic about the bug is `ct-check`, whatever its severity.** We
+   study whether the bug is caught, not how it is reported. `ct-check` does not distinguish
+   warning from error.
 
 **Screening rule (normative for new specs).** Before a spec enters a generation run, name
-its path. If the path is `P2`, the spec is N/A and must not be generated.
+its outcome(s). A spec that can only be `avoided` or `unexpressible` is **not applicable**
+by §9.5.0 and produces no mutants. `ct-check`, `rt-check`, and `unchecked` specs are all
+generated and recorded.
+
+`L` (launch-status) is **not** one of the five: it is a separate attribution axis for
+resource/feature/launch limits, which carry observations rather than value verdicts. See
+`attribution_only`.
 
 **Two obligation populations.** `StaticFail(pred, UsageType)` (`shapeinfer.cpp:36-52`) is a
 **counter**, not an assessment creator: statically true → counted; statically false → the
-caller raises `Error1`; **not statically known → nothing**. So a feature governed only by
-`StaticFail` is **silent for every runtime variation**: it has two disjoint mutant
-populations (static → `P2` noop; symbolic → `P3` silent) and a spec must separate them or
-its noop rate is an artefact of the split. This is the mechanism behind gap specs
-M1.15/M1.17 and behind the whole `view`/`subspan` family in §9.6.2.
+caller raises an error (`ct-check`); **not statically known → nothing** (`unchecked`). So a
+feature governed only by `StaticFail` is **silent for every runtime variation**: it has two
+disjoint mutant populations (static → `ct-check`; symbolic → `unchecked`) and a spec must
+separate them or its noop rate is an artefact of the split. This is the mechanism behind
+gap specs M1.15/M1.17 and behind the whole `view`/`subspan` family in §9.6.2.
 
 **Retrospective check.** This classification explains v1's **70% M3 noop rate** (§3.0):
-every discarded v1 M3 spec was either resource-only (*no observable effect*) or a state the
-compiler refuses statically (`P2`). Screening by path class would have predicted the entire
-discard population before any injection.
+every discarded v1 M3 spec was either resource-only (*no observable effect*), `avoided`
+(the invariant is derived), or a state the compiler refuses statically (`ct-check`).
+Naming the outcome would have predicted the entire discard population before any injection.
 
 ### §9.6.2 Verified additions
 
 Verified against `/home/garfee/dev/choreo` in the expansion pass. **Applicable; may be
-generated.** Their path class fixes the injection budget: `P1` specs need the §9.2 `-rtc`
-curve sweep; **`P3`/`P4` specs need one injection per `(spec × surface)` cell, because no
-obligation exists at any threshold** — sweeping `-rtc` for them wastes budget.
+generated.** Their outcome fixes the injection budget: `rt-check` specs need the §9.2
+`-rtc` curve sweep; **`unchecked` specs need one injection per `(spec × surface)` cell,
+because no obligation exists at any threshold** — sweeping `-rtc` for them wastes budget.
+`ct-check` specs need neither: the compile step already records them.
 
-| ID | Class | Spec | Path | Evidence |
+| ID | Class | Spec | Outcome | Evidence |
 |---|---|---|---|---|
-| **M1.20** | M1 | `view` / `subspan` **offset, stride, rank arity** — validated only when statically known | **P3** (symbolic) / P2 (static) | `shapeinfer.cpp:1610-1612`, `:1647-1657` (`StaticFail` + `Error1`); no `SubSpan`/`View` handler in `semacheck.cpp` |
-| **M1.21** | M1 | `tileat`/`at` index vs. tiled extent; `step`/`stride` tail on a non-divisible extent | P1 (per-dim) / **P2–P3** (composition) | `semacheck.cpp:440-460`, `:1613-1618`; `shapeinfer.cpp:1647-1657` |
-| **M2.15** | M2 | `pad_low` ↔ `pad_high` **swapped** (length preserved, placement differs) | P1, **sum-only check** | `semacheck.cpp:1076-1100` — `f[i]+low+mid+high == t[i]` is a length identity, blind to placement. **The M2 dual of M2.10** |
-| **M2.16** | M2 | `span_as` preserving `ElementCount()` with a different rank/split | P1, **count-only check** | `semacheck.cpp:947` |
-| **M2.17** | M2 | `span_as` / `reshape` on **runtime-shaped** data — check skipped entirely | **P3** | `semacheck.cpp:946-950` — guarded by `!RuntimeShaped()` on both sides |
-| **M2.18** | M2 | `reshape` on a non-contiguous span (warning-only path) | **P4** | `semacheck.cpp:1195+` `Warning(rop->LOC(), …)` |
-| **M2.19** | M2 | DMA extent mismatch where ≥ 1 extent is **symbolic** — hard error escaped | **P3** | `semacheck.cpp:1140-1145` — `emit_error` forced false |
-| **M2.21** | M2 | MSB broadcast extent neither 1 nor equal (rank-unequal path checks trailing dims only) | P1, **trailing-dims-only** | `semacheck.cpp:466-500` |
-| **M3.14** | M3 | **linear `.copy` with a dim ≥ 2²⁴ — the check is absent** | **P3** | `gpu_adapt.hpp:320` — `// linear copy` … `// omitted`; the other six cells of the DMA matrix call `CheckDimSize` |
-| **M3.15** | M3 | **`.pad` with a dim ≥ 2²⁴ — the pad path never calls `CheckDimSize`** | **P3** | `gpu_adapt.hpp:360-450` — `RankLE5`, pad ranges, `padding_mid` only |
-| **M3.16** | M3 | TMA box inner alignment with a **symbolic** leading dim — no check | **P3** | `gpu_adapt.hpp:640` — `// TODO: emit runtime assessment` |
+| **M1.20** | M1 | `view` / `subspan` **offset, stride, rank arity** — validated only when statically known | **unchecked** (symbolic) / ct-check (static) | `shapeinfer.cpp:1610-1612`, `:1647-1657` (`StaticFail` + `Error1`); no `SubSpan`/`View` handler in `semacheck.cpp` |
+| **M1.21** | M1 | `tileat`/`at` index vs. tiled extent; `step`/`stride` tail on a non-divisible extent | rt-check (per-dim) / **ct-check–unchecked** (composition) | `semacheck.cpp:440-460`, `:1613-1618`; `shapeinfer.cpp:1647-1657` |
+| **M2.15** | M2 | `pad_low` ↔ `pad_high` **swapped** (length preserved, placement differs) | rt-check, **sum-only check** | `semacheck.cpp:1076-1100` — `f[i]+low+mid+high == t[i]` is a length identity, blind to placement. **The M2 dual of M2.10** |
+| **M2.16** | M2 | `span_as` preserving `ElementCount()` with a different rank/split | rt-check, **count-only check** | `semacheck.cpp:947` |
+| **M2.17** | M2 | `span_as` / `reshape` on **runtime-shaped** data — check skipped entirely | **unchecked** | `semacheck.cpp:946-950` — guarded by `!RuntimeShaped()` on both sides |
+| **M2.18** | M2 | `reshape` on a non-contiguous span (warning-only path) | **ct-check** | `semacheck.cpp:1195+` `Warning(rop->LOC(), …)` |
+| **M2.19** | M2 | DMA extent mismatch where ≥ 1 extent is **symbolic** — hard error escaped | **unchecked** | `semacheck.cpp:1140-1145` — `emit_error` forced false |
+| **M2.21** | M2 | MSB broadcast extent neither 1 nor equal (rank-unequal path checks trailing dims only) | rt-check, **trailing-dims-only** | `semacheck.cpp:466-500` |
+| **M3.14** | M3 | **linear `.copy` with a dim ≥ 2²⁴ — the check is absent** | **unchecked** | `gpu_adapt.hpp:320` — `// linear copy` … `// omitted`; the other six cells of the DMA matrix call `CheckDimSize` |
+| **M3.15** | M3 | **`.pad` with a dim ≥ 2²⁴ — the pad path never calls `CheckDimSize`** | **unchecked** | `gpu_adapt.hpp:360-450` — `RankLE5`, pad ranges, `padding_mid` only |
+| **M3.16** | M3 | TMA box inner alignment with a **symbolic** leading dim — no check | **unchecked** | `gpu_adapt.hpp:640` — `// TODO: emit runtime assessment` |
 
 **Cost rule (restated).** These need no large allocation: violate a bound **by stride, not
 length**.
@@ -834,7 +849,7 @@ length**.
 ### §9.6.3 Prospective specs (provisional — do not generate)
 
 Traced from the feature surface but **not yet verified**. Each must be screened by §9.6.1
-before it enters a run; several will resolve to **N/A** (`P2`, *repaired*).
+before it enters a run; several will resolve to **avoided** or **unexpressible**.
 
 M1.22 (`zfill` fill region ≠ DMA box) · M1.23 (fragment lane index for the wrong fragment
 layout) · M2.20 (`squeeze`/`reshape` rank change with a pre-op index) · M2.22
@@ -849,7 +864,7 @@ Verification commands: `mutation-expansion-m1m2m3.md` §7.
 ### §9.6.4 Found defects to report
 
 Independent of any mutation — these are omissions in the shipped checker, each of which is
-also the reason the corresponding spec is `P3`-silent:
+also the reason the corresponding spec is `unchecked`:
 
 | # | Defect | Evidence |
 |---|---|---|
@@ -875,10 +890,11 @@ Always additionally in scope: the `(int)` index-carrier truncation at
   normative for *reporting*: a mutation whose corrupted state the model forbids is
   reported as **not applicable** with the prohibition cited, and is never counted as a
   miss. §9.5.1–§9.5.3 record the verdicts that follow from it.
-- §9.6 (**check-path classification**) is normative for *generation*: a new spec must name
-  its path class, and a spec whose only path is `P2` (*repaired*) is not applicable and
-  must not be generated. §9.6.2 is additive to the class tables; §9.6.3 is provisional.
+- §9.6 (**outcome classification**) is normative for *generation*: a new spec must name
+  its outcome(s), and a spec that can only be `avoided` or `unexpressible` is not
+  applicable and produces no mutants. §9.6.2 is additive to the class tables; §9.6.3 is
+  provisional.
 - A future v3 must state which cells it invalidates. **One thing is reserved for v3:** the
-  `P3`/`P4` specs of §9.6.2 change what a "miss" *means* (silence by construction rather
-  than by cost), so the §7 oracle and the §9.5.0 denominator must both name the path class.
+  `unchecked` specs of §9.6.2 change what a "miss" *means* (silence by construction rather
+  than by cost), so the §7 oracle and the §9.5.0 denominator must both name the outcome.
   That is a change to the reporting contract, not to the spec set, and needs owner sign-off.

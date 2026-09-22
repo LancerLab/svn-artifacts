@@ -89,10 +89,10 @@
           "noop"
         ],
         "path_class": [
-          "P1",
-          "P2",
-          "P3",
-          "P4",
+          "rt-check",
+          "avoided",
+          "unchecked",
+          "ct-check",
           "L"
         ],
         "prohibition": [
@@ -147,10 +147,10 @@
           "M4"
         ],
         "path_class": [
-          "P1",
-          "P2",
-          "P3",
-          "P4",
+          "rt-check",
+          "avoided",
+          "unchecked",
+          "ct-check",
           "L"
         ],
         "applicable": [

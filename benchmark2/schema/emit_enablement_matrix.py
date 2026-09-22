@@ -14,8 +14,8 @@ Cell vocabulary (see LEGEND):
          action item, not a limitation.
   n/a    the model has no construct of this kind (constitutional), or the
          check is contractually the writer's (delegation).  A scope claim.
-  rep    the register classifies the defect as model-REPAIRED (P2 hard error).
-         P2 mutants are never generated, so this can never become a rate.
+  rep    the register classifies the defect as model-REPAIRED (outcome `avoided`).
+         `avoided` mutants are never generated, so this can never become a rate.
   noop   noop by construction: nothing to forbid (e.g. a zero-trip loop).
   blk    OUR base kernels lack the construct.  Not a lane's gap and not a model
          claim -- a hole in the benchmark.
@@ -43,7 +43,7 @@ LEGEND = [
     ("REC", "mutant recorded in the lane's committed corpus (supports a rate)"),
     ("expr", "lane's own S8 says expressible; no mutant -> that lane's gap"),
     ("n/a", "no construct of this kind (scope claim), or delegated"),
-    ("rep", "model-repaired (P2 hard error); mutants never generated"),
+    ("rep", "model-repaired (outcome `avoided`); mutants never generated"),
     ("noop", "noop by construction -- nothing to forbid"),
     ("blk", "OUR suite lacks the base case -- nobody can generate it"),
 ]

@@ -17,7 +17,7 @@ Now the list lives in one JSON file and every consumer derives from it:
     import class_axis as AX
     AX.mutation_classes()      # ["M1","M2","M3","M4"]  -- the class axis
     AX.obligation_classes()    # ["elem","shape","loop","hw"] -- S8's axis
-    AX.path_classes()          # ["P1","P2","P3","P4","L"] -- orthogonal
+    AX.path_classes()          # ["rt-check","avoided","unchecked","ct-check","L"]
     AX.lane_status("iree")     # {"M1": "n/a", "M2": "measured", ...}
 
 `schema/check_class_axis.py` fails the build if any consumer restates a literal
@@ -68,7 +68,9 @@ def obligation_classes() -> list[str]:
 
 
 def path_classes() -> list[str]:
-    """`P1|P2|P3|P4|L`. Orthogonal to the class axis; `L` lives only here."""
+    """`rt-check|avoided|unchecked|ct-check|L`. Orthogonal to the class axis;
+    `L` lives only here. The values are the outcome vocabulary
+    (mutation-specs-v2.md section 9.6.1)."""
     return list(axis()["path_classes"])
 
 

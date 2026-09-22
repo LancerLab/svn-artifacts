@@ -19,18 +19,20 @@ real defect in this file rather than an expected mismatch.
 Ground rules (specs v2.1 §0, §6, §7):
   * 4 classes: M1 element-access, M2 shape-compatibility, M3 hardware/target
     constraint, M4 iteration-validity.
-  * Every spec names a **path class** (§9.6): P1 assessed, P2 hard-error,
-    P3 unchecked, P4 warning-only, L launch-status. "L" is a PATH, not a
-    class: it is attribution-only and never enters an admissible denominator
-    (§4). The launch/target-limit specs that carry it live in M3.17-M3.26 --
-    the former standalone `L` class was FOLDED INTO M3, because a launch-
-    geometry / resource / feature-gating limit IS a target constraint.
+  * Every spec names an **outcome** (§9.6.1): `rt-check`, `avoided`,
+    `unchecked`, `ct-check`, or `L`. "L" is not one of the five: it is a
+    separate launch-status attribution axis, never entering an admissible
+    denominator (§4). The launch/target-limit specs that carry it live in
+    M3.17-M3.26 -- the former standalone `L` class was FOLDED INTO M3, because
+    a launch-geometry / resource / feature-gating limit IS a target
+    constraint.
   * A transform that does not change the source is a `noop` and is rejected.
   * Counts are reached by enumerating defect *magnitudes* within a spec (e.g.
     K % 16 with residues 2/4/6/8/12), never by inventing defects outside §1-§4.
-  * **Budget follows the path** (§9.6.1): P1 cells get the `-rtc` curve sweep;
-    P3/P4 cells get ONE injection per (spec x surface) cell; P2 and
-    noop-by-construction specs get ZERO injections and are recorded as N/A.
+  * **Budget follows the outcome** (§9.6.1): `rt-check` cells get the `-rtc`
+    curve sweep; `unchecked`/`ct-check` cells get ONE injection per
+    (spec x surface) cell; `avoided` and noop-by-construction specs get ZERO
+    injections and are recorded as N/A.
 """
 
 from __future__ import annotations
@@ -123,7 +125,7 @@ LEVEL2_SET = {
 # This is GATE 1. Every mutation spec the suite claims to cover has one entry
 # here, carrying the three things v2.1 added to the vocabulary:
 #
-#   path          P1 assessed | P2 hard-error | P3 unchecked | P4 warning-only
+#   path          rt-check | avoided | unchecked | ct-check
 #                 ("L" = launch-status, attribution-only, never admissible)
 #   admissible    may this spec contribute to the admissible denominator?
 #                 False for noop-by-construction specs and for every L spec.
@@ -133,7 +135,8 @@ LEVEL2_SET = {
 #                                surface in `note` so the gap is actionable
 #                   derived      the prohibition is not stated, only derived
 #                   repaired     the model FORBIDS the state, so the compiler
-#                                refuses it and there is no test to run (P2)
+#                                refuses it and there is no test to run
+#                                (outcome: avoided)
 #                   harness-owned the check lives in the harness, not the
 #                                compiler (the E2 obligation suite)
 #                   observation  attribution-only (the launch-status class):
@@ -171,13 +174,13 @@ def _spec(cls, path, desc, admissible=True, prohibition="", status="pending",
 
 SPEC_REGISTRY = {
     # ---- M1 element-access (21 specs, specs §1) -------------------------
-    "M1.1": _spec("M1", "P1", "dropped boundary mask", status="implemented"),
-    "M1.2": _spec("M1", "P1", "p#n off-by-one", status="implemented"),
-    "M1.3": _spec("M1", "P1", "negative index", status="implemented"),
-    "M1.4": _spec("M1", "P1", "transposed / non-contiguous stride",
+    "M1.1": _spec("M1", "rt-check", "dropped boundary mask", status="implemented"),
+    "M1.2": _spec("M1", "rt-check", "p#n off-by-one", status="implemented"),
+    "M1.3": _spec("M1", "rt-check", "negative index", status="implemented"),
+    "M1.4": _spec("M1", "rt-check", "transposed / non-contiguous stride",
                   status="implemented"),
-    "M1.5": _spec("M1", "P1", "offset-view overrun", status="implemented"),
-    "M1.6": _spec("M4", "P1", "zero-stride / empty range",
+    "M1.5": _spec("M1", "rt-check", "offset-view overrun", status="implemented"),
+    "M1.6": _spec("M4", "rt-check", "zero-stride / empty range",
                   admissible=False, prohibition="absent",
                   status="implemented",
                   note="class is M4, not M1: the edit is on an M1 index "
@@ -188,42 +191,42 @@ SPEC_REGISTRY = {
                        "enforce, because the range is correctly empty. "
                        "Retained for the miss audit, excluded from the "
                        "admissible denominator"),
-    "M1.7": _spec("M4", "P1", "reversed loop bound (upper < lower) -> overrun "
+    "M1.7": _spec("M4", "rt-check", "reversed loop bound (upper < lower) -> overrun "
                               "instead of empty",
                   note="class is M4, not M1: same re-homing as M1.6 -- the "
                        "defect is M4's 'reversed bound' (family M4-e), so "
                        "the operator must not be counted in M1's cell"),
-    "M1.8": _spec("M1", "P1", "stride scaling (stride x 2)"),
-    "M1.9": _spec("M1", "P1", "base offset applied WITHOUT shrinking the extent"),
-    "M1.10": _spec("M1", "P1", "tile-boundary rounding (floor vs ceil on the "
+    "M1.8": _spec("M1", "rt-check", "stride scaling (stride x 2)"),
+    "M1.9": _spec("M1", "rt-check", "base offset applied WITHOUT shrinking the extent"),
+    "M1.10": _spec("M1", "rt-check", "tile-boundary rounding (floor vs ceil on the "
                                "last tile)"),
-    "M1.11": _spec("M1", "P1", "read-after-write aliasing overlap"),
-    "M1.12": _spec("M1", "P1", "wrong loop variable for a dimension "
+    "M1.11": _spec("M1", "rt-check", "read-after-write aliasing overlap"),
+    "M1.12": _spec("M1", "rt-check", "wrong loop variable for a dimension "
                                "(broadcast index reuse)"),
-    "M1.13": _spec("M1", "P1", "symbolic-bound overrun (index beyond a bound "
+    "M1.13": _spec("M1", "rt-check", "symbolic-bound overrun (index beyond a bound "
                                "over a runtime parameter)"),
-    "M1.14": _spec("M1", "P1", "chunkat tile-coordinate over/underflow while "
+    "M1.14": _spec("M1", "rt-check", "chunkat tile-coordinate over/underflow while "
                                "the element index stays in bounds",
                   note="load-bearing: the only spec targeting a check the "
                        "compiler wrote and then disabled (272 chunkat "
                        "obligations, 0 enabled at -rtc=entry)"),
-    "M1.15": _spec("M1", "P3", "dimof index >= rank, non-constant index",
+    "M1.15": _spec("M1", "unchecked", "dimof index >= rank, non-constant index",
                   admissible=False, prohibition="absent",
                   note="gap spec: the dimof-rank mechanism neither exists in "
                        "the source suite nor, per specs §1.1, emits any "
                        "runtime obligation (0/974). MISSING SURFACE: a case "
                        "using `dimof` with a runtime index"),
-    "M1.16": _spec("M1", "P3", "select factor out of range (f >= count | f < 0)",
+    "M1.16": _spec("M1", "unchecked", "select factor out of range (f >= count | f < 0)",
                   admissible=False, prohibition="absent",
                   note="semacheck.cpp:2032-2038, the no-static-factor path is "
                        "unassessed (defect F10) -- but no case in the suite "
                        "uses `select`, so the rule is never reached. "
                        "MISSING SURFACE: a case with a runtime select factor"),
-    "M1.17": _spec("M1", "P3", "5th-index access on a rank-5 view",
+    "M1.17": _spec("M1", "unchecked", "5th-index access on a rank-5 view",
                   admissible=False, prohibition="absent",
                   note="MISSING SURFACE: the suite's maximum rank is 4, so a "
                        "rank-5 view cannot be constructed"),
-    "M1.18": _spec("M1", "P1", "index in range by `interval` but out of range "
+    "M1.18": _spec("M1", "rt-check", "index in range by `interval` but out of range "
                                "by `canonical` (or vice versa)",
                   admissible=False, prohibition="absent",
                   note="specs v2.1 states the intent but gives no "
@@ -231,86 +234,88 @@ SPEC_REGISTRY = {
                        "(shapeinfer). MISSING SURFACE: a case whose index map "
                        "makes `interval` and `canonical` disagree -- must be "
                        "identified before this spec can be written"),
-    "M1.19": _spec("M1", "P3", "index-carrier overflow (realization b, "
+    "M1.19": _spec("M1", "unchecked", "index-carrier overflow (realization b, "
                                "narrow-carrier)", status="implemented",
                   note="adopted from §9.5.1; the (int) cast at "
                        "cute_codegen.cpp:1757 is also a latent shipped defect"),
-    "M1.20": _spec("M1", "P3", "view / subspan offset, stride, rank arity "
+    "M1.20": _spec("M1", "unchecked", "view / subspan offset, stride, rank arity "
                                "(_StaticFail_-only; symbols neither refused "
                                "nor checked)", status="implemented",
-                  note="P3 for a symbolic offset, P2 (repaired) for a static "
-                       "one -- the split must be explicit or the noop rate is "
-                       "an artefact"),
-    "M1.21": _spec("M1", "P1", "tileat/at index vs the tiled extent; step/"
+                   note="unchecked for a symbolic offset, avoided (repaired) "
+                        "for a static one -- the split must be explicit or the "
+                        "noop rate is an artefact"),
+    "M1.21": _spec("M1", "rt-check", "tileat/at index vs the tiled extent; step/"
                                "stride tail on a non-divisible extent",
                   status="implemented",
-                  note="P1 per-dim, P2-P3 for the composition"),
+                   note="rt-check per-dim, avoided/unchecked for the "
+                        "composition"),
 
     # ---- M2 shape-compatibility (20 specs, specs §2) --------------------
-    "M2.1": _spec("M2", "P1", "wrong leading extent for a secondary operand",
+    "M2.1": _spec("M2", "rt-check", "wrong leading extent for a secondary operand",
                   status="implemented"),
-    "M2.2": _spec("M2", "P1", "DMA src/dst extent disagreement",
+    "M2.2": _spec("M2", "rt-check", "DMA src/dst extent disagreement",
                   status="implemented"),
-    "M2.3": _spec("M2", "P1", "binary op on mismatched shapes",
+    "M2.3": _spec("M2", "rt-check", "binary op on mismatched shapes",
                   status="implemented"),
-    "M2.4": _spec("M2", "P1", "wrong output leading extent",
+    "M2.4": _spec("M2", "rt-check", "wrong output leading extent",
                   status="implemented"),
-    "M2.5": _spec("M2", "P1", "partial write (omitted tail tile) / duplicate "
+    "M2.5": _spec("M2", "rt-check", "partial write (omitted tail tile) / duplicate "
                               "write (overlapping tile)", status="implemented"),
-    "M2.6": _spec("M2", "P1", "two extents transposed"),
-    "M2.7": _spec("M2", "P1", "reduced-rank view (a dimension dropped)"),
-    "M2.8": _spec("M2", "P1", "broadcast extent set to 1 instead of N"),
-    "M2.9": _spec("M2", "P1", "batch/group dimension swapped"),
-    "M2.10": _spec("M2", "P1", "transpose permutation on a SQUARE operand "
+    "M2.6": _spec("M2", "rt-check", "two extents transposed"),
+    "M2.7": _spec("M2", "rt-check", "reduced-rank view (a dimension dropped)"),
+    "M2.8": _spec("M2", "rt-check", "broadcast extent set to 1 instead of N"),
+    "M2.9": _spec("M2", "rt-check", "batch/group dimension swapped"),
+    "M2.10": _spec("M2", "rt-check", "transpose permutation on a SQUARE operand "
                                "(extents equal, memory order changes)",
                    note="view/metadata family -- best-attested class in both "
                         "empirical corpora; report as its own sub-table"),
-    "M2.11": _spec("M2", "P1", "DMA to-buffer element-count undersize on a "
+    "M2.11": _spec("M2", "rt-check", "DMA to-buffer element-count undersize on a "
                                "LogicalEqual path"),
-    "M2.12": _spec("M2", "P2", "rank mismatch through .pad (overlap still "
+    "M2.12": _spec("M2", "avoided", "rank mismatch through .pad (overlap still "
                                "satisfies f + pad == t)",
                    admissible=False, prohibition="repaired",
                    note="semacheck.cpp:1081-1090 is a hard Error1 producing NO "
                         "ledger row -- not applicable (specs §2.1)"),
-    "M2.13": _spec("M2", "P1", "shape-equal / layout-unequal (every extent "
+    "M2.13": _spec("M2", "rt-check", "shape-equal / layout-unequal (every extent "
                                "agrees, the affine map does not)",
                    note="view/metadata family"),
-    "M2.14": _spec("M2", "P1", "matmul contraction-dim (K) mismatch masked by "
+    "M2.14": _spec("M2", "rt-check", "matmul contraction-dim (K) mismatch masked by "
                                "broadcast"),
-    "M2.15": _spec("M2", "P1", "pad_low <-> pad_high SWAPPED (length preserved, "
+    "M2.15": _spec("M2", "rt-check", "pad_low <-> pad_high SWAPPED (length preserved, "
                                "placement differs)", status="implemented",
                    note="semacheck.cpp:1076-1100 is a SUM -- blind to "
                         "placement; the M2 dual of M2.10"),
-    "M2.16": _spec("M2", "P1", "span_as preserving ElementCount() with a "
+    "M2.16": _spec("M2", "rt-check", "span_as preserving ElementCount() with a "
                                "different rank/split", status="implemented",
                    note="semacheck.cpp:947 compares COUNT, not shape"),
-    "M2.17": _spec("M2", "P3", "span_as / reshape on runtime-shaped data -- "
+    "M2.17": _spec("M2", "unchecked", "span_as / reshape on runtime-shaped data -- "
                                "check skipped entirely", status="implemented",
                    note="semacheck.cpp:946-950 guarded by !RuntimeShaped() on "
                         "both sides"),
-    "M2.18": _spec("M2", "P4", "reshape on a non-contiguous span "
+    "M2.18": _spec("M2", "ct-check", "reshape on a non-contiguous span "
                                "(warning-only path)",
                   admissible=False, prohibition="absent",
                   note="semacheck.cpp:1195+ Warning(rop->LOC(), ...) -- the "
-                       "only P4 spec, so this gap leaves the warning-then-"
+                       "only ct-check-from-warning spec, so this gap leaves "
+                       "the warning-then-"
                        "continue path with ZERO coverage. MISSING SURFACE: a "
                        "strided view. Every reshape case applies span_as to "
                        "a contiguous parameter, and preserving "
                        "ElementCount() rules out slicing; a non-contiguous "
                        "span needs a stride the source suite never writes"),
-    "M2.19": _spec("M2", "P3", "DMA extent mismatch where >=1 extent is "
+    "M2.19": _spec("M2", "unchecked", "DMA extent mismatch where >=1 extent is "
                                "symbolic -- hard error escaped",
                   status="implemented",
                   note="semacheck.cpp:1140-1145 -- emit_error forced false"),
-    "M2.21": _spec("M2", "P1", "MSB broadcast extent neither 1 nor equal "
+    "M2.21": _spec("M2", "rt-check", "MSB broadcast extent neither 1 nor equal "
                                "(rank-unequal path checks trailing dims only)",
                   note="semacheck.cpp:466-500"),
 
     # ---- M3 hardware-constraint (16 specs, specs §3) --------------------
-    "M3.1": _spec("M3", "P1", "contraction extent not divisible by the "
+    "M3.1": _spec("M3", "rt-check", "contraction extent not divisible by the "
                               "tensor-core atom (tail dropped)",
                   status="implemented"),
-    "M3.2": _spec("M3", "P1", "descriptor dimension >= 2^24 (family A)",
+    "M3.2": _spec("M3", "rt-check", "descriptor dimension >= 2^24 (family A)",
                   admissible=False, prohibition="absent",
                   note="specs §3.3 requires the bound be violated by a STRIDE, "
                        "not a length (a length would allocate). The source "
@@ -319,7 +324,7 @@ SPEC_REGISTRY = {
                        "ElementCount check (M2.16, defect F6) fires first -- "
                        "so a naive realization measures M2.16, not M3.2. "
                        "MISSING SURFACE: a strided view"),
-    "M3.3": _spec("M3", "P1", "TMA box byte-size >= 2^24 after 128-byte "
+    "M3.3": _spec("M3", "rt-check", "TMA box byte-size >= 2^24 after 128-byte "
                               "ceiling (family B)",
                   admissible=False, prohibition="absent",
                   note="family B needs a 128-byte-ceiled row extent >= 2^24, "
@@ -328,18 +333,18 @@ SPEC_REGISTRY = {
                        "impossible (the row would exceed the whole tensor), "
                        "so every realization either allocates or trips the "
                        "count check. MISSING SURFACE: a strided view"),
-    "M3.4": _spec("M3", "P1", "tensor footprint >= 4 GB, 5-D product "
+    "M3.4": _spec("M3", "rt-check", "tensor footprint >= 4 GB, 5-D product "
                               "(family C)",
                   admissible=False, prohibition="absent",
                   note="family C needs 5 dims, each small, with a product "
                        ">= 2^30 elements. The suite's maximum rank is 4. "
                        "MISSING SURFACE: a rank-5 case"),
-    "M3.5": _spec("M3", "P1", "swizzle-incompatible box shape",
+    "M3.5": _spec("M3", "rt-check", "swizzle-incompatible box shape",
                   admissible=False, prohibition="absent",
                   note="MISSING SURFACE: no case in the suite writes an "
                        "explicit swizzle mode, so swizzle width <-> box "
                        "geometry is not source-expressible"),
-    "M3.6": _spec("M3", "P1", "leading dim not aligned to descriptor "
+    "M3.6": _spec("M3", "rt-check", "leading dim not aligned to descriptor "
                               "granularity ON A VECTORIZED ACCESS",
                   admissible=False, prohibition="absent",
                   status="implemented",
@@ -347,20 +352,20 @@ SPEC_REGISTRY = {
                        "is a noop because the reference k_matmul is SCALAR, so "
                        "an unaligned scalar load is legal. Retained as a named "
                        "control until the vectorized realization is written."),
-    "M3.7": _spec("M3", "P1", "TMA inner-box geometry not 128-bit aligned",
+    "M3.7": _spec("M3", "rt-check", "TMA inner-box geometry not 128-bit aligned",
                   admissible=False, prohibition="absent",
                   note="MISSING SURFACE: box geometry is inferred by the "
                        "lowering, never written in source; the only direct "
                        "lever is an extent change, which allocates"),
-    "M3.8": _spec("M3", "P1", "DMA rank = 6 (outside the assessed [1,5])",
+    "M3.8": _spec("M3", "rt-check", "DMA rank = 6 (outside the assessed [1,5])",
                   admissible=False, prohibition="absent",
                   note="MISSING SURFACE: a rank-6 DMA needs a rank-6 tensor; "
                        "the suite's maximum rank is 4"),
-    "M3.9": _spec("M3", "P1", "pad-field overrun (dma.pad / padding_mid beyond "
+    "M3.9": _spec("M3", "rt-check", "pad-field overrun (dma.pad / padding_mid beyond "
                               "the assessed range)"),
-    "M3.10": _spec("M3", "P1", "last-dim / rank-5 mid-padding violates "
+    "M3.10": _spec("M3", "rt-check", "last-dim / rank-5 mid-padding violates "
                                "padding_mid[rank-1] == 0"),
-    "M3.11": _spec("M3", "P1", "shared operand base not 128-byte aligned on "
+    "M3.11": _spec("M3", "rt-check", "shared operand base not 128-byte aligned on "
                                "sm_90+",
                    admissible=False, prohibition="absent",
                    note="ARCH-DEPENDENT: a noop on sm_86 (SHARED alignment "
@@ -368,10 +373,10 @@ SPEC_REGISTRY = {
                         "-arch (specs §9.4 q7). MISSING SURFACE: the suite "
                         "never writes an explicit shared base offset, so the "
                         "alignment cannot be perturbed from source"),
-    "M3.12": _spec("M3", "P2", "shared tile exactly at the capacity bound "
+    "M3.12": _spec("M3", "avoided", "shared tile exactly at the capacity bound "
                                "(+/-1 KiB edge)",
                    admissible=False, prohibition="repaired",
-                   note="RECLASSIFIED P1 -> P2. memcheck.hpp:106-123 "
+                   note="RECLASSIFIED rt-check -> avoided. memcheck.hpp:106-123 "
                         "(CheckCtMemUsage) raises Error1 when compile-time "
                         "SHARED/LOCAL usage exceeds the limit, so the model "
                         "FORBIDS the state and the compiler refuses it: there "
@@ -380,7 +385,7 @@ SPEC_REGISTRY = {
                         "tiles are not. This also explains the 28/40 M3 noops "
                         "in the committed v1 baseline -- v1 s3 was exactly "
                         "this family (specs §3.0)"),
-    "M3.13": _spec("M3", "P1", "swizzle width <-> box inner dim <-> shared "
+    "M3.13": _spec("M3", "rt-check", "swizzle width <-> box inner dim <-> shared "
                                "alignment, narrowed",
                    admissible=False, prohibition="absent",
                    note="the injected state must SURVIVE the compiler's own "
@@ -388,25 +393,25 @@ SPEC_REGISTRY = {
                         "sub-case the repair misses is injectable (R3), and "
                         "no case in the suite writes an explicit swizzle. "
                         "MISSING SURFACE: a swizzled shared descriptor"),
-    "M3.14": _spec("M3", "P3", "linear .copy with a dimension >= 2^24 -- the "
+    "M3.14": _spec("M3", "unchecked", "linear .copy with a dimension >= 2^24 -- the "
                                "check is absent", status="implemented",
                    note="gpu_adapt.hpp:320 `// linear copy` ... `// omitted`; "
                         "the other six cells of the DMA matrix call "
                         "CheckDimSize (defect F1)"),
-    "M3.15": _spec("M3", "P3", ".pad with a dimension >= 2^24 -- the pad path "
+    "M3.15": _spec("M3", "unchecked", ".pad with a dimension >= 2^24 -- the pad path "
                                "never calls CheckDimSize", status="implemented",
                    note="gpu_adapt.hpp:360-450 (defect F2)"),
-    "M3.16": _spec("M3", "P3", "TMA box inner alignment with a SYMBOLIC leading "
+    "M3.16": _spec("M3", "unchecked", "TMA box inner alignment with a SYMBOLIC leading "
                                "dim -- no assessment", status="implemented",
                    note="gpu_adapt.hpp:640 `// TODO: emit runtime assessment` "
                         "(defect F3)"),
 
     # ---- M4 iteration-validity (5 specs, specs §9.1) --------------------
-    "M4.1": _spec("M4", "P1", "with-in mdspan dim mutated to 0 -- control",
+    "M4.1": _spec("M4", "rt-check", "with-in mdspan dim mutated to 0 -- control",
                   note="LoopBound, forced to ENTRY cost, enabled 11/11"),
-    "M4.2": _spec("M4", "P1", "parallelby bound mutated to 0 (a legal but "
+    "M4.2": _spec("M4", "rt-check", "parallelby bound mutated to 0 (a legal but "
                            "empty iteration space)", status="implemented"),
-    "M4.6": _spec("M4", "P1", "parallelby bound mutated to negative -- "
+    "M4.6": _spec("M4", "rt-check", "parallelby bound mutated to negative -- "
                            "invalid, so unlike an empty space it must be "
                            "rejected", status="implemented",
                   note="split out of M4.2 so one operator is not evidence for "
@@ -414,29 +419,29 @@ SPEC_REGISTRY = {
                        "bound) have different oracle expectations, and while "
                        "they shared a spec_id M4.2 was the sole realisation "
                        "of M4-b and one of M4-a's two (defect D1)"),
-    "M4.3": _spec("M4", "P1", "parallelby bound symbolic and zero only at "
+    "M4.3": _spec("M4", "rt-check", "parallelby bound symbolic and zero only at "
                               "runtime"),
-    "M4.4": _spec("M4", "P1", "bound > 0 but the iteration space is empty "
+    "M4.4": _spec("M4", "rt-check", "bound > 0 but the iteration space is empty "
                               "(zero-trip loop)", admissible=False,
                   prohibition="absent",
                   note="deliberate noop control -- there is nothing to "
                        "forbid: a zero-trip loop is legal and its body never "
                        "executes. If it is ever counted as admissible the "
                        "oracle has regressed"),
-    "M4.5": _spec("M4", "P1", "stride/step = 0 in an iteration"),
-    "M4.7": _spec("M4", "P1", "padded extent goes NEGATIVE -- the "
+    "M4.5": _spec("M4", "rt-check", "stride/step = 0 in an iteration"),
+    "M4.7": _spec("M4", "rt-check", "padded extent goes NEGATIVE -- the "
                           "negative-padding corner the GSC study names",
                   status="implemented",
-                  note="re-realises M2.12's negative-padding trigger on P1 "
-                       "(method-taxonomy.json `reassigned.M2.12`): the rank "
-                       "repair through `.pad` was P2/`repaired` and so never "
+                  note="re-realises M2.12's negative-padding trigger on "
+                       "rt-check (method-taxonomy.json `reassigned.M2.12`): the "
+                       "rank repair through `.pad` was avoided/`repaired` and so never "
                        "generated. The edit is on the padded-extent "
                        "derivation, not on a loop literal, which is what keeps "
                        "it distinct from the empty-range control M4-d"),
-    "M4.8": _spec("M4", "P1", "padded extent goes EMPTY -- the zero-length "
+    "M4.8": _spec("M4", "rt-check", "padded extent goes EMPTY -- the zero-length "
                           "half of the GSC corner-case trigger",
                   status="implemented",
-                  note="the second P1 realisation of M4-g, so the family is "
+                  note="the second rt-check realisation of M4-g, so the family is "
                        "not evidence from a single operator (defect D1). An "
                        "empty padded extent is a legal zero-trip loop whose "
                        "body never runs, so the expected verdict is a miss, "
@@ -467,7 +472,7 @@ SPEC_REGISTRY = {
                      "(local8/local16): same observation channel (launch "
                      "rejected), the §4 text names block/cluster extent. "
                      "KEPT VERBATIM for the same reason as L1"),
-    "M3.19": _spec("M3", "P2", "__launch_bounds__ understated vs actual block "
+    "M3.19": _spec("M3", "avoided", "__launch_bounds__ understated vs actual block "
                 "size", admissible=False, prohibition="repaired",
                 note="was L3, upgraded absent -> repaired on direct evidence: "
                      "`choreo -gs -t cute -arch=sm_86` on "
@@ -475,21 +480,22 @@ SPEC_REGISTRY = {
                      "[[launch_bounds]] maxThreadsPerBlock (8) is less than "
                      "the computed thread count (64).` The model DERIVES the "
                      "required extent and refuses any understatement, so there "
-                     "is no test to run (P2). The suite still never writes the "
+                     "is no test to run (avoided). The suite still never writes the "
                      "attribute, but that is no longer the operative reason"),
     "M3.20": _spec("M3", "L", "block extent not a multiple of 32 / of 128",
                 admissible=False, prohibition="observation",
                 note="the one L spec with an operator: the block extent is "
                      "source-visible (`parallel p by N`), so this class is "
                      "exercised end to end"),
-    "M3.21": _spec("M3", "P2", "shared tile exceeds per-SM capacity",
+    "M3.21": _spec("M3", "avoided", "shared tile exceeds per-SM capacity",
                 admissible=False, prohibition="repaired",
                 note="RECLASSIFIED: the v2.1 L-class membership assumed the "
                      "launch-rejected channel, but the check the compiler "
                      "actually performs is memcheck.hpp:106-123 CheckCtMemUsage "
-                     "-> Error1, a hard compile-time refusal (P2). Same "
+                     "-> Error1, a hard compile-time refusal, so the model forbids it "
+                     "(avoided). Same "
                      "mechanism as M3.12, one step past the limit"),
-    "M3.22": _spec("M3", "P2", "WGMMA used below sm_90", admissible=False,
+    "M3.22": _spec("M3", "avoided", "WGMMA used below sm_90", admissible=False,
                 prohibition="repaired",
                 note="was L6, upgraded absent -> repaired on direct evidence: "
                      "`choreo -gs -t cute -arch=sm_86` on "
@@ -498,7 +504,7 @@ SPEC_REGISTRY = {
                      "sm_86.` (x14); the same file compiles clean under "
                      "`-arch=sm_90a`. This is the K5 feature-gating discharge: "
                      "the compiler refuses the feature below sm_90, so there "
-                     "is no test to run (P2)"),
+                     "is no test to run (avoided)"),
     "M3.23": _spec("M3", "L", "shared operand used outside WGMMA", admissible=False,
                 prohibition="absent",
                 note="MISSING SURFACE: no WGMMA in the suite, so 'outside "
@@ -517,15 +523,15 @@ SPEC_REGISTRY = {
                  note="MISSING SURFACE: no case in the suite declares a "
                       "cluster"),
 
-    # ---- M3.27/M3.28 on-chip capacity on a SYMBOLIC extent (P1) ----------
-    # The P1 realisations of family M3-h. M3.12 is the declared one and is
-    # P2/repaired: CheckCtMemUsage refuses a tile whose byte size it can fold,
+    # ---- M3.27/M3.28 on-chip capacity on a SYMBOLIC extent (rt-check) ----
+    # The rt-check realisations of family M3-h. M3.12 is the declared one and is
+    # avoided/repaired: CheckCtMemUsage refuses a tile whose byte size it can fold,
     # and M3.12's own note draws the consequence -- "a runtime channel exists
     # only when an extent is symbolic". These two supply that extent, so the
     # tile is not refused at compile time and the family is no longer
     # unrealisable as declared. Distinct from M3.17/M3.18 (path L, prohibition
     # `observation`): these are admissible and can witness a miss.
-    "M3.27": _spec("M3", "P1", "shared tile exceeds the device budget, but only "
+    "M3.27": _spec("M3", "rt-check", "shared tile exceeds the device budget, but only "
                           "for a runtime-shaped (symbolic) extent",
                status="implemented",
                note="memcheck.hpp:267-287 (CheckCtMemUsage) compares "
@@ -534,7 +540,7 @@ SPEC_REGISTRY = {
                     "constant, so the total it contributes is not a constant "
                     "either and the check cannot fire: the oversized tile is "
                     "launched, and only a runtime channel can judge it"),
-    "M3.28": _spec("M3", "P1", "per-thread local tile exceeds the per-thread "
+    "M3.28": _spec("M3", "rt-check", "per-thread local tile exceeds the per-thread "
                           "budget, but only for a runtime-shaped (symbolic) "
                           "extent",
                status="implemented",
@@ -585,7 +591,7 @@ class Mut:
 
       spec_id       v2.1 id, e.g. "M1.20"; the field new tables key on
       spec          the v1 integer, retained so v1-era results stay comparable
-      path_class    P1 | P2 | P3 | P4 | L
+      path_class    rt-check | avoided | unchecked | ct-check | L
       prohibition   "" unless the spec is not applicable
       admissible    may this mutant enter the admissible denominator?
       level         1 or 2 (widening level, specs §5)
@@ -632,16 +638,18 @@ class Mut:
         """Not applicable: the model FORBIDS the corrupted state, so the
         compiler repairs it and there is no test to run (specs §9.5.0).
 
-        Only P2. Admissibility is a separate, reporting-only concept: an L
-        operator IS generated (it grows the never-attribution table) and is
-        merely excluded from the admissible denominator.
+        Only `avoided` (the retired P2). Admissibility is a separate,
+        reporting-only concept: an L operator IS generated (it grows the
+        never-attribution table) and is merely excluded from the admissible
+        denominator.
         """
-        return self.path_class == "P2"
+        return self.path_class == "avoided"
 
     @property
     def needs_rtc_curve(self):
-        """P1 is the only path a threshold can reach (specs §9.6.1)."""
-        return self.path_class == "P1"
+        """`rt-check` is the only outcome a threshold can reach
+        (specs §9.6.1)."""
+        return self.path_class == "rt-check"
 
     def as_meta(self):
         """The v2.1 fields, for the manifest and the register."""
@@ -1307,10 +1315,10 @@ def categories_for(cls, level2=False):
 # v2.1 additions (specs §1-§4, §9.6.2)
 #
 # Every operator below anchors on source text that a v1 operator already
-# matched, so GATE 2 is a check rather than a hope. Budget follows the path
-# (§9.6.1): P1 specs get several operators per category so the -rtc curve has
-# something to sweep; P3/P4 specs get ONE per (spec x category) cell, because
-# no obligation exists at any threshold.
+# matched, so GATE 2 is a check rather than a hope. Budget follows the outcome
+# (§9.6.1): rt-check specs get several operators per category so the -rtc curve
+# has something to sweep; unchecked/ct-check specs get ONE per
+# (spec x category) cell, because no obligation exists at any threshold.
 # ===========================================================================
 
 # ---- M1.7 reversed loop bound -> overrun, not empty -----------------------
@@ -1484,7 +1492,7 @@ M1 += [
 # ---- M1.20 view / subspan offset, stride, rank arity (StaticFail-only) ----
 # _StaticFail_ is a COUNTER, not an assessment creator (shapeinfer.cpp:36-52):
 # not-statically-known -> nothing at all. So a SYMBOLIC arity change is silent
-# at every -rtc. P3 -> one injection per cell.
+# at every -rtc. unchecked -> one injection per cell.
 M1 += [
     _m("M1.20.tp1.arity", "M1", 20, "wrong-shape", "transpose",
        "1_bert_32x512x768_32x768x512",
@@ -1594,7 +1602,7 @@ M2 += [
        ("shared f32 [1, 1, K, L] as, bs;", "shared f32 [1, 1, K - 1, L] as, bs;")),
 ]
 
-# ---- M2.12 rank mismatch through .pad -- NOT APPLICABLE (P2, repaired) ----
+# ---- M2.12 rank mismatch through .pad -- N/A (avoided, repaired) ----------
 # semacheck.cpp:1081-1090 is a hard Error1 that produces no ledger row at all.
 # Recorded in SPEC_REGISTRY with prohibition "repaired"; no operator exists and
 # none may be written (specs §9.5.0). This is a positive verdict, not a gap.
@@ -1637,7 +1645,7 @@ M2 += [
 
 # ---- M2.17 span_as / reshape on runtime-shaped data (check skipped) -------
 # semacheck.cpp:946-950 is guarded by !RuntimeShaped() on BOTH sides, so a
-# symbolic operand escapes the size check entirely. P3 -> one per cell.
+# symbolic operand escapes the size check entirely. unchecked -> one per cell.
 M2 += [
     _m("M2.17.ln3.rtshaped", "M2", 17, "dim-mismatch", "layer_normalization",
        "3_attention_32xNx512x64_64_64",
@@ -1650,13 +1658,13 @@ M2 += [
        ("f32 [I, J_OUT, K, L] out;", "f32 [I, J_OUT, K + 1, L] out;")),
 ]
 
-# ---- M2.18 reshape on a non-contiguous span -- WARNING ONLY (P4) ----------
-# semacheck.cpp:1195+ emits `Warning(rop->LOC(), ...)` and continues. P4 specs
-# need one injection per cell, and the finding is the warning, not the miss.
+# ---- M2.18 reshape on a non-contiguous span -- ct-check (warning) ---------
+# semacheck.cpp:1195+ emits `Warning(rop->LOC(), ...)` and continues. ct-check
+# specs need one injection per cell, and the finding is the warning, not the miss.
 
 # ---- M2.19 DMA extent mismatch with a symbolic extent ---------------------
 # semacheck.cpp:1140-1145 forces emit_error false when either extent is
-# symbolic: the hard error is escaped. P3.
+# symbolic: the hard error is escaped. unchecked.
 M2 += [
     _m("M2.19.mm11.symdma", "M2", 19, "dim-mismatch", "matmul",
        "11_dynamic_32xSx768_768x768_32xSx768",
@@ -1672,9 +1680,9 @@ M2 += [
 
 # ---- M3.14 linear .copy with a dim >= 2^24 -- the check is ABSENT ---------
 # gpu_adapt.hpp:320 `// linear copy` ... `// omitted`. The other six cells of
-# the DMA matrix call CheckDimSize; this one does not (defect F1). P3.
+# the DMA matrix call CheckDimSize; this one does not (defect F1). unchecked.
 #
-# M3-b is the ONLY M3 family whose budget is not already exhausted, and P3
+# M3-b is the ONLY M3 family whose budget is not already exhausted, and unchecked
 # gives ONE instance per (spec x category) cell (`ceiling()` returns N_CELLS,
 # not N_REALISATIONS, when `needs_rtc_curve` is false). So the family's whole
 # remaining headroom is "the F1 cell on M3's second allowed category":
@@ -1717,7 +1725,7 @@ M3 += [
 
 # ---- M3.16 TMA box inner alignment with a SYMBOLIC leading dim ------------
 # gpu_adapt.hpp:640 `// TODO: emit runtime assessment` -- no check at all
-# (defect F3). P3.
+# (defect F3). unchecked.
 M3 += [
     _m("M3.16.cv1.symbox", "M3", 16, "dim-mismatch", "conv2d",
        _C1,
@@ -1730,7 +1738,7 @@ M3 += [
 # ---- M3.9 pad-field overrun ---------------------------------------------
 # gpu_adapt.hpp:360-450 assesses `RankLE5`, the per-dim pad ranges and the
 # `padding_mid` vector -- and nothing else. The pad FIELDS are therefore on an
-# assessed path (P1), unlike M3.14/M3.15 which sit on the unchecked 2^24
+# assessed path (rt-check), unlike M3.14/M3.15 which sit on the unchecked 2^24
 # magnitude path. The overrun is bounded (+1 element on one dim) so the padded
 # tile stays the same size class and the mutant never allocates: what moves is
 # the *placement*, which is value-observable through the im2col index map.
@@ -1783,7 +1791,7 @@ M3 += [
 # `N = i.span(0)` is the literal batch 32, so `8 * N` constant-folds to 256 and
 # the tile becomes a 1 MB compile-time constant that CheckCtMemUsage rejects
 # (verified: `choreo -t cute -sa=muchk` errors "shared memory OUT OF BOUND!",
-# so an `N`-based operator is compile-DETECTED, not the P1 miss it claims).
+# so an `N`-based operator is compile-DETECTED, not the rt-check miss it claims).
 # `H = i.span(2)` is `attn_h`, a kernel parameter in the dynamic build, so
 # `8 * H` stays symbolic (`[1024, (::CONV2D::attn_h * 8)]`) and the check is
 # silent.
@@ -1808,7 +1816,7 @@ M3 += [
 #   matmul              N
 #   max_pool2d          channels/height/width
 # Every edit was verified to stay symbolic under `choreo -t cc -i` and to leave
-# CheckCtMemUsage (target `muchk`) silent -- the P1 capacity miss M3-h names.
+# CheckCtMemUsage (target `muchk`) silent -- the rt-check capacity miss M3-h names.
 _BN10 = "10_dynamic_16x512xHxW_512_512_16x512xHxW"
 _LN10 = "10_dynamic_16x512xHxW_HxW_HxW"
 _MM10 = "10_dynamic_128x1280_1280xN_128xN"
@@ -1936,11 +1944,11 @@ M4 += [
         "dma.copy l1_Y => Y.chunkat(q#_q, qq * 0);")),
 ]
 
-# ---- M4-g degenerate pad (specs §4; M2.12's trigger re-realised on P1) ----
+# ---- M4-g degenerate pad (specs §4; M2.12's trigger re-realised on rt-check) ----
 # The im2col loop runs over the padded extent. Mutating the derivation of that
 # extent -- not the loop literal, which is M4-a/M4.1's surface -- makes the loop
 # bound degenerate at its source, in the padding arithmetic. This is the
-# negative-padding corner case of the GSC study: M2.12 routed it to a P2 rank
+# negative-padding corner case of the GSC study: M2.12 routed it to a avoided rank
 # repair and so never generated it, which left the family with no realisation
 # at all.
 M4 += [
@@ -2242,7 +2250,7 @@ for _x in M1 + M2 + M3 + M4:
 # block, SPEC_REGISTRY[sid]["status"] is exactly one of:
 #
 #   "implemented"  >=1 operator loaded for this spec
-#   "na"           not applicable (P2, or declared inadmissible) -- recorded,
+#   "na"           not applicable (avoided, or declared inadmissible) -- recorded,
 #                  never generated (specs §9.5.0). A positive verdict.
 #   "pending"      applicable and screened, operator not written yet
 #
@@ -2268,11 +2276,11 @@ for _sid, _meta in SPEC_REGISTRY.items():
     _meta["status"] = "implemented" if _sid in operator_specs else "pending"
 
     # -- axis 2: may the spec enter the admissible denominator? -----------
-    # P2 (the compiler repairs the state) and the noop controls are
+    # `avoided` (the model repairs the state) and the noop controls are
     # inadmissible *by classification*, whether or not an operator exists --
     # which is why this cannot be folded into `status`:
     # M1.6/M3.6/M4.4/M3.17/M3.18/M3.20 are generated on purpose.
-    if _meta["path"] == "P2" or _sid in NOOP_BY_CONSTRUCTION:
+    if _meta["path"] == "avoided" or _sid in NOOP_BY_CONSTRUCTION:
         _meta["admissible"] = False
 
     if not _meta["admissible"]:
@@ -2408,7 +2416,7 @@ def check_family_partition():
     if unaccounted:
         raise ValueError(
             "%d registered spec(s) belong to no family and are not declared "
-            "attribution-only or P2: %s. A spec in no bucket is a test "
+            "attribution-only or avoided: %s. A spec in no bucket is a test "
             "outside the budget, so it can never be counted and never be "
             "missed." % (len(unaccounted), ", ".join(unaccounted)))
 
@@ -2419,7 +2427,7 @@ def check_family_partition():
     if both:
         raise ValueError(
             "%d spec(s) are both a family realisation and filed as "
-            "attribution-only / P2: %s" % (len(both), ", ".join(both)))
+            "attribution-only / avoided: %s" % (len(both), ", ".join(both)))
 
     covered = len(owned) + len(_attr) + len(_p2)
     if covered != len(SPEC_REGISTRY):

@@ -77,7 +77,7 @@ REGISTRY = MUT.SPEC_REGISTRY if MUT else {}
 # family. Three reasons, none of them a defect:
 #   attribution_only  -- a record kept for the accounting, not a class cell
 #                        (the whole M3-L launch-gating set);
-#   P2 never generated -- the compiler refuses or repairs the state, so no
+#   avoided specs are never generated -- the compiler repairs the state, so no
 #                        instance can exist (M2.12, M3.19, M3.21, M3.22);
 #   dead declarations  -- the declared DSL surface never existed.
 # A raw row carrying one of these is fine and is counted separately. Anything
@@ -86,9 +86,9 @@ REGISTRY = MUT.SPEC_REGISTRY if MUT else {}
 # the drift this column exists to make visible.
 ATTR_ONLY = {s for r in TAX.get("attribution_only", {}).values()
              for s in r.get("spec_ids", [])}
-P2 = set(TAX.get("p2_never_generated", {}).get("spec_ids", []))
+AVOIDED = set(TAX.get("avoided_never_generated", {}).get("spec_ids", []))
 DEAD = set(TAX.get("dead_declarations", {}).get("spec_ids", []))
-DECLARED_NONFAMILY = ATTR_ONLY | P2 | DEAD
+DECLARED_NONFAMILY = ATTR_ONLY | AVOIDED | DEAD
 
 # The class axis is the SECOND instrument. It states, per lane, whether a class
 # is `measured`, `n/a`, `uncompared` or `not_ready`. A class that the method
@@ -103,7 +103,7 @@ AX_UNCMP = AX.get("uncompared_reason", "")
 def generatable(sid):
     m = REGISTRY.get(sid)
     return bool(m) and (m.get("status") == "implemented"
-                        and m.get("path") != "P2"
+                        and m.get("path") != "avoided"
                         and m.get("prohibition") != "repaired")
 
 
@@ -268,7 +268,7 @@ def family_ceiling(cls: str, fam: str) -> int:
 
       * `n_realisations` (2) -- a family holds at most 2 instances per category;
       * the CELL ceiling -- a `(spec_id, category)` cell holds one instance, or
-        two when that spec is P1, because there the curve is the point;
+        two when that spec is rt-check, because there the curve is the point;
       * the candidate table -- a cell cannot supply more instances than it has
         candidates, so a cell with one incumbent supplies one, not two.
 

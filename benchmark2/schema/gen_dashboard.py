@@ -130,7 +130,7 @@ def fam_sort(f):
 def generatable(sid):
     m = REGISTRY.get(sid)
     return bool(m) and (m.get("status") == "implemented"
-                        and m.get("path") != "P2"
+                        and m.get("path") != "avoided"
                         and m.get("prohibition") != "repaired")
 
 
@@ -426,7 +426,7 @@ def main():
     ra0 = [f for f in sorted(FAMILIES, key=fam_sort)
            if spec_health(f)[1] > 0 and spec_health(f)[2] == 0]
     w("- **`R_f = 0`** \u2014 no generatable declaration. **Writing operators "
-      "cannot fix this**; it needs a new spec on a P1 path. %d families: %s." %
+      "cannot fix this**; it needs a new spec on an rt-check path. %d families: %s." %
       (len(rf0), ", ".join("`%s`" % f for f in rf0)))
     w("- **`R_f > 0` but `R_a = 0`** \u2014 declarations exist and are "
       "generatable, but none is *admissible*, so nothing can enter the "

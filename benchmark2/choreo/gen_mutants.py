@@ -13,17 +13,17 @@ mutant path, kernel_hash, mutant_hash, settings_hash, the human-readable defect
 description, and the unified diff. `collect` turns it into `mutant` records per
 schema/record-schema.json.
 
-GATE 2 -- path-class-aware selection (specs §9.6.1, specs/expansion-workflow.md
+GATE 2 -- outcome-aware selection (specs §9.6.1, specs/expansion-workflow.md
 §3/§4). The old flat "40 per class" rule is wrong under v2.1 because budget
-follows the PATH, not the importance of the feature:
+follows the OUTCOME, not the importance of the feature:
 
-  P1  assessed    up to N_PER_FAMILY per method family, THEN re-run the whole
-                  class at each -rtc level so the cost-threshold curve exists
-  P3  unchecked   exactly ONE operator per (spec x category) cell -- no
-                  threshold reaches this spec, so more instances buy nothing
-  P4  warning     same as P3
-  L   launch      one per (spec x category) cell, attribution-only
-  P2  hard-error  NEVER generated; recorded as N/A (specs §9.5.0)
+  rt-check   up to N_PER_FAMILY per method family, THEN re-run the whole class
+             at each -rtc level so the cost-threshold curve exists
+  unchecked  exactly ONE operator per (spec x category) cell -- no threshold
+             reaches this spec, so more instances buy nothing
+  ct-check   same as unchecked
+  L          one per (spec x category) cell, attribution-only
+  avoided    NEVER generated; recorded as N/A (specs §9.5.0)
 
 The budget is per **(class, method family)** -- that is the unit of requirement
 (b) -- and within a family it is `N_kernels kernels x N_realisations
@@ -32,8 +32,8 @@ cannot express this: it lets a family with seven declarations absorb the budget
 while a family with one gets a single instance, which is precisely how the
 corpus passed "40 per class" while 19 of 31 families sat at `R_f < 2`.
 
-Selection is therefore: take every non-P1 cell first (mandatory), then
-round-robin P1 candidates over the family's categories, taking candidates in
+Selection is therefore: take every non-rt-check cell first (mandatory), then
+round-robin rt-check candidates over the family's categories, taking candidates in
 declaration order within each, until the family holds N_PER_FAMILY. Fully
 deterministic: the same mutations.py always yields the same corpus.
 
@@ -90,11 +90,11 @@ from schema import method_taxonomy as T  # noqa: E402
 # claim about the prose rather than about the corpus.
 N_PER_FAMILY = T.N_PER_FAMILY          # 8 = 4 kernels x 2 realisations
 N_REALISATIONS = T.N_REALISATIONS      # 2 -- the cap per kernel (category)
-N_CELLS = 1                            # P3/P4/L: one instance per (spec, cat)
+N_CELLS = 1                            # unchecked/ct-check/L: one instance per (spec, cat)
 LANE = "choreo"
 
 # ---- check paths that are MUTATABLE ---------------------------------------
-MUTATABLE_PATHS = ("P1", "P3", "P4", "L")
+MUTATABLE_PATHS = ("rt-check", "unchecked", "ct-check", "L")
 
 # ---- the -rtc levels the curve is swept over (specs §9.6.1) ---------------
 RTC_LEVELS = ("entry", "low", "medium", "high")
@@ -185,12 +185,12 @@ def select(cands, n_per_family=N_PER_FAMILY, n_realisations=N_REALISATIONS,
 
     Stage 1 -- the two obligations that are not budget. Every declared spec in
     the family must be realised at least once, or "a spec nobody wrote" and "a
-    spec that matches nothing" are indistinguishable. And every non-P1 cell
+    spec that matches nothing" are indistinguishable. And every non-rt-check cell
     (`(spec_id, category)`) must be realised, because a missing injection on
-    P3/P4/L is a silent noop rather than a surviving mutant. The floor is per
-    SPEC, not per cell: demanding every P1 cell would demand more instances
+    unchecked/ct-check/L is a silent noop rather than a surviving mutant. The floor is per
+    SPEC, not per cell: demanding every rt-check cell would demand more instances
     than the family has slots wherever one spec is declared on several
-    surfaces, and the first guarantee to break would be (b) itself. For P3/P4/L
+    surfaces, and the first guarantee to break would be (b) itself. For unchecked/ct-check/L
     one per cell is the whole budget, not a floor -- nothing sweeps those paths,
     so a second instance buys nothing. A family whose obligations alone exceed N
     is REFUSED, never truncated: truncating drops a guarantee to balance a
@@ -203,7 +203,7 @@ def select(cands, n_per_family=N_PER_FAMILY, n_realisations=N_REALISATIONS,
     item (W1), and borrowing instances to fill it would satisfy (b) by
     relabelling.
 
-    P2 candidates are never chosen -- the compiler repairs the state, so there
+    avoided candidates are never chosen -- the compiler repairs the state, so there
     is no test (specs §9.5.0) -- and they are not "dropped" either: they are
     recorded N/A in `raw/spec_registry.json`.
 
@@ -213,7 +213,7 @@ def select(cands, n_per_family=N_PER_FAMILY, n_realisations=N_REALISATIONS,
 
       out of scope   the lane's surface cannot express the family (a
                      prohibition, see method_taxonomy.na_reason)
-      cell budget    a non-P1 cell is already covered; P3/P4/L take exactly one
+      cell budget    a non-rt-check cell is already covered; unchecked/ct-check/L take exactly one
                      instance per (spec_id, category) by construction
       category cap   the category already holds n_realisations in this family
       family budget  the family already holds n_per_family
@@ -278,7 +278,7 @@ def select(cands, n_per_family=N_PER_FAMILY, n_realisations=N_REALISATIONS,
         # deterministic and a re-run is a no-op.
         cells = collections.OrderedDict()
         for c in members:
-            if c.is_na:                  # P2 -- repaired, never generated
+            if c.is_na:                  # avoided -- repaired, never generated
                 continue
             cells.setdefault((c.spec_id, c.category), []).append(c)
 
@@ -287,11 +287,11 @@ def select(cands, n_per_family=N_PER_FAMILY, n_realisations=N_REALISATIONS,
         cell_used = collections.Counter()
 
         def ceiling(c):
-            # P3/P4/L: no threshold reaches those paths, so a second instance
+            # unchecked/ct-check/L: no threshold reaches those paths, so a second instance
             # in the same cell re-measures a constant. "One injection per cell"
             # is that path's WHOLE budget, not a floor -- and it is a ceiling
             # on the CELL, so a spec declared on two surfaces still gets two.
-            # P1: a cell is a floor of one, but the curve is the point, so the
+            # rt-check: a cell is a floor of one, but the curve is the point, so the
             # cell ceiling is the category ceiling.
             return n_cells if not c.needs_rtc_curve else n_realisations
 
@@ -311,13 +311,13 @@ def select(cands, n_per_family=N_PER_FAMILY, n_realisations=N_REALISATIONS,
         #   * every declared spec in the family is realised at least once, or
         #     "a spec nobody wrote" and "a spec that matches nothing" look
         #     identical -- which is the whole reason GATE 2 exists;
-        #   * every non-P1 cell is realised, because on those paths a missing
+        #   * every non-rt-check cell is realised, because on those paths a missing
         #     injection is a silent noop rather than a surviving mutant.
         #
         # The floor is on SPECS, not on (spec, category) cells. Demanding every
-        # P1 cell would demand more instances than the family has slots
+        # rt-check cell would demand more instances than the family has slots
         # wherever a spec is declared on several surfaces -- M1-a alone has 13
-        # P1 cells against a family budget of 8 -- and the first thing to break
+        # rt-check cells against a family budget of 8 -- and the first thing to break
         # would be requirement (b) itself. The observation is realised on one
         # surface is not a forgotten spec.
         by_spec = collections.OrderedDict()
@@ -326,7 +326,7 @@ def select(cands, n_per_family=N_PER_FAMILY, n_realisations=N_REALISATIONS,
 
         free = {k[1]: n_realisations for k in cells}
 
-        # Non-P1 obligations are per CELL and their kernel is not a choice, so
+        # Non-rt-check obligations are per CELL and their kernel is not a choice, so
         # they are reserved first: a matching that spent their kernel on a
         # flexible spec could not give it back.
         for sid, keys in by_spec.items():
@@ -338,7 +338,7 @@ def select(cands, n_per_family=N_PER_FAMILY, n_realisations=N_REALISATIONS,
                 free[key[1]] -= 1
                 put(cells[key][0])
 
-        # P1 obligations are one instance per SPEC, and which kernel it lands
+        # rt-check obligations are one instance per SPEC, and which kernel it lands
         # on is a choice, so it is solved as a matching rather than a loop.
         p1 = [sid for sid, keys in by_spec.items()
               if cells[keys[0]][0].needs_rtc_curve]
@@ -510,7 +510,7 @@ def compose(level2=False, n_per_family=N_PER_FAMILY,
         have = {c.spec_id for c in cands}
         unrealised = sorted(s for f in T.families_of(cls)
                             for s in T.specs_of(f)
-                            if s not in T.P2 and s not in have)
+                            if s not in T.AVOIDED and s not in have)
 
         # A spec with operators that still got no instance. `select()` gives
         # every declared spec a floor instance whenever a kernel has room, so
@@ -639,7 +639,7 @@ def emit(plan, out_dir, dry_run=False):
             # `as_meta()` supplies spec/spec_id/path_class/prohibition/
             # admissible/spec_admissible. It does NOT supply `applicable`: that
             # is collect.py's serialization of `admissible`, and `is_na` is a
-            # DIFFERENT question (P2 only), so deriving `applicable` from
+            # DIFFERENT question (avoided only), so deriving `applicable` from
             # `is_na` here would stamp L1/L2/L4 and the noop controls as
             # applicable and quietly corrupt the denominator.
             rec.update(mut.as_meta())
@@ -657,7 +657,7 @@ def report(plan, records, skipped, rtc=None, n_per_family=N_PER_FAMILY,
     print(f"target: N = {n_per_family} per (class x method family) per "
           f"in-scope lane, as {n_per_family // n_realisations} kernels x "
           f"{n_realisations} realisations, lane={lane}")
-    print(f"{'class':<6}{'candidates':>11}{'chosen':>8}{'P1':>6}{'cells':>7}"
+    print(f"{'class':<6}{'candidates':>11}{'chosen':>8}{'rt-check':>8}{'cells':>7}"
           f"{'N/A':>6}{'dropped':>9}{'budget':>8}")
     for cls in sorted(plan):
         p = plan[cls]
@@ -831,7 +831,7 @@ def main():
                          "(default %s)" % LANE)
     ap.add_argument("--rtc", choices=RTC_LEVELS, default=None,
                     help="stamp the -rtc level this corpus will be run at "
-                         "(specs §9.6.1: the curve is a RUN parameter; P1 "
+                         "(specs §9.6.1: the curve is a RUN parameter; rt-check "
                          "classes are re-run at every level)")
     ap.add_argument("--n-per-family", type=int, default=N_PER_FAMILY,
                     help="instances per (class x method family), from "
@@ -842,7 +842,7 @@ def main():
                          "N = kernels x realisations (default %d)"
                          % N_REALISATIONS)
     ap.add_argument("--n-cells", type=int, default=N_CELLS,
-                    help="injections per (spec x category) cell for P3/P4/L "
+                    help="injections per (spec x category) cell for unchecked/ct-check/L "
                          "(default %d)" % N_CELLS)
     ap.add_argument("--dry-run", action="store_true",
                     help="classify and report without writing any mutant")

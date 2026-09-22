@@ -113,7 +113,7 @@ STALE = [
      "same supersession; `L` is not a mutation class."),
     ("specs/mutation-specs-v2.md", r'^\s*#+\s*4\.\s*Launch-status class',
      "§4 still presents `L` as a class. It is the M3.17-M3.26 launch-status "
-     "*path*, classified P2."),
+     "*outcome*, classified `avoided`."),
     ("mlir-shared/compose.py", r'#\s*"M1"\s*\|\s*"M2"\s*\|\s*"M3"',
      "compose.Mutation.klass was documented as a 3-class field; M4 is also a "
      "class (though no M4 mutant is composed here)."),
@@ -1448,12 +1448,12 @@ def families_select_conformance() -> list[str]:
             want = T.family_of(row.get("spec_id", ""))
             got = row.get("family")
             if want is None and got is None:
-                pass        # attribution_only / P2 / reassigned: no cell to leave
+                pass        # attribution_only / avoided / reassigned: no cell to leave
             elif want is None and got is not None:
                 bad.append(
                     f"{g} {lane}: {row.get('mutant_id')} is dropped as family "
                     f"{got}, but spec {row.get('spec_id')} belongs to no family "
-                    f"(it is attribution_only, P2 or reassigned). A drop cannot "
+                    f"(it is attribution_only, avoided or reassigned). A drop cannot "
                     f"explain a shortfall in a cell its spec is not in.")
             elif got is None:
                 bad.append(
@@ -1884,7 +1884,7 @@ CHECKS += [
      _taxonomy_guard(gid("families", "no-shared-instance"))),
     (gid("families", "dead-vs-unwritten"),
      "a dead declaration is a subset of the unwritten specs, and the rest are "
-     "P2", _taxonomy_guard(gid("families", "dead-vs-unwritten"))),
+     "`avoided`", _taxonomy_guard(gid("families", "dead-vs-unwritten"))),
     (gid("families", "ids-canonical"),
      "every spec_id is spelled the way the registry spells it",
      _taxonomy_guard(gid("families", "ids-canonical"))),

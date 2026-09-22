@@ -80,7 +80,7 @@ MEASURED_TODAY: dict[str, int] = _T["measured_today"]
 VIEW_MEMBERS: list[str] = _T["view_family"]["members"]
 PROHIBITIONS: list[str] = _T["prohibitions"]
 DEAD: list[str] = _T["dead_declarations"]["spec_ids"]
-P2: list[str] = _T["p2_never_generated"]["spec_ids"]
+AVOIDED: list[str] = _T["avoided_never_generated"]["spec_ids"]
 DEBT: dict[str, dict] = _T["known_debt"]["items"]
 ATTRIBUTION_ONLY: dict[str, list[str]] = {
     k: v["spec_ids"] for k, v in _T["attribution_only"].items()
@@ -156,20 +156,20 @@ def spec_ids() -> list[str]:
 def _generatable(spec_id: str, registry: dict) -> bool:
     """An operator exists and the spec is not structurally refused."""
     e = registry.get(spec_id, {})
-    return e.get("status") == "implemented" and e.get("path") != "P2"
+    return e.get("status") == "implemented" and e.get("path") != "avoided"
 
 
 def _refused(spec_id: str, registry: dict) -> bool:
-    """Path P2 -- the compiler refuses or repairs the state, so NO operator
+    """Path AVOIDED -- the compiler refuses or repairs the state, so NO operator
     for this spec_id could ever produce an instance, now or later.
 
     This is deliberately NOT the same as `status != implemented`. A spec that
-    is merely unwritten on a P1/P3 path is work waiting to be done; a spec on
-    P2 is work that CANNOT be done under this declaration. Merging the two is
+    is merely unwritten on an rt-check/unchecked path is work waiting to be done; a spec on
+    AVOIDED is work that CANNOT be done under this declaration. Merging the two is
     what made M3-h (refused) read like M3-d (unwritten) -- they need opposite
     responses.
     """
-    return registry.get(spec_id, {}).get("path") == "P2"
+    return registry.get(spec_id, {}).get("path") == "avoided"
 
 
 def _admissible(spec_id: str, registry: dict) -> bool:
@@ -182,7 +182,7 @@ def _admissible(spec_id: str, registry: dict) -> bool:
 def r_f(family: str, registry: dict | None = None) -> int:
     """R_f -- realisation DEPTH: how many realised operators the family has.
 
-    Counts spec_ids with status `implemented` that are not on P2. This is the
+    Counts spec_ids with status `implemented` that are not on AVOIDED. This is the
     number that must reach 2 before N = 8 is realisable.
 
     Pass `registry` (mutations.SPEC_REGISTRY) to measure; without it, returns
@@ -211,10 +211,10 @@ def needs_new_realisation(family: str, registry: dict) -> bool:
 
 
 def unrealisable_as_declared(family: str, registry: dict) -> bool:
-    """Every declared spec is on P2, so no amount of writing these spec_ids
+    """Every declared spec is on AVOIDED, so no amount of writing these spec_ids
     yields a test. Distinguishes 'needs a NEW realisation' (M3-h, whose only
-    declaration M3.12 is P2/repaired) from 'needs these written' (M3-d, whose
-    M3.4 is P1 and merely unwritten)."""
+    declaration M3.12 is AVOIDED/repaired) from 'needs these written' (M3-d, whose
+    M3.4 is rt-check and merely unwritten)."""
     specs = specs_of(family)
     if not specs:
         return False
@@ -229,8 +229,8 @@ def no_admissible_test(family: str, registry: dict) -> bool:
 def no_admissible_declaration(family: str, registry: dict) -> bool:
     """Declares specs, but EVERY one of them is inadmissible.
 
-    Differs from `unrealisable_as_declared`, which is about P2 -- a spec the
-    compiler refuses to generate. Here the spec may well be on P1 and merely
+    Differs from `unrealisable_as_declared`, which is about AVOIDED -- a spec the
+    compiler refuses to generate. Here the spec may well be on rt-check and merely
     unwritten; it carries a prohibition (`absent`, usually) that means no
     obligation assesses it, so no operator on it may enter the denominator.
 
@@ -267,10 +267,10 @@ def summary(registry: dict) -> dict[str, list[str]]:
 
       no_declaration  the family declares no spec at all -- invent one (M4-g)
       unrealisable_as_declared
-                      every declared spec is on P2, so the compiler refuses the
+                      every declared spec is on AVOIDED, so the compiler refuses the
                       state: a NEW realisation is needed, not the declared one
                       (M3-h)
-      model_gap       every declared spec is inadmissible but NOT on P2 -- the
+      model_gap       every declared spec is inadmissible but NOT on AVOIDED -- the
                       model does not forbid the state (`absent`), so no
                       operator may enter the denominator however many are
                       written (M3-d, M3-e, M3-f). The remedy is a prohibition
@@ -311,7 +311,7 @@ def n_a_families(registry: dict, in_scope_only: bool = False) -> dict[str, str]:
     """Families that cannot produce an instance at all, with the prohibition.
 
     A family is n/a for a lane when none of its spec_ids can generate: every
-    one is either not `implemented`, or sits on path P2, or carries a
+    one is either not `implemented`, or sits on path AVOIDED, or carries a
     prohibition. This is a MEASURED verdict and it carries a reason -- the
     difference between "the lane cannot express this" and "nobody wrote it" is
     the reason string, and collapsing the two is what makes a coverage table
@@ -325,7 +325,7 @@ def n_a_families(registry: dict, in_scope_only: bool = False) -> dict[str, str]:
             continue
         live = [s for s in specs
                 if registry.get(s, {}).get("status") == "implemented"
-                and registry.get(s, {}).get("path") != "P2"
+                and registry.get(s, {}).get("path") != "avoided"
                 and not registry.get(s, {}).get("prohibition")]
         if not live:
             r0 = registry.get(specs[0], {})
@@ -499,7 +499,7 @@ def check(registry: dict | None = None, declared: list[str] | None = None,
         accounted = set(seen_ids)
         for ids in ATTRIBUTION_ONLY.values():
             accounted |= set(ids)
-        for s in P2:
+        for s in AVOIDED:
             accounted.add(s)
         for s in _T["reassigned"]:
             accounted.add(s)
@@ -507,11 +507,11 @@ def check(registry: dict | None = None, declared: list[str] | None = None,
             if s not in accounted:
                 bad.append(f"families.partition {s} is declared but in no family and in no "
                            f"exclusion: add it to `families` or to "
-                           f"`reassigned`/`p2_never_generated`/"
+                           f"`reassigned`/`avoided_never_generated`/"
                            f"`attribution_only`")
         for bucket, ids in (("attribution_only", [i for v in
                              ATTRIBUTION_ONLY.values() for i in v]),
-                            ("p2_never_generated", P2)):
+                            ("avoided_never_generated", AVOIDED)):
             for s in ids:
                 if s in seen_ids:
                     bad.append(f"families.partition {s} is in {bucket} AND in "
@@ -545,7 +545,7 @@ def check(registry: dict | None = None, declared: list[str] | None = None,
                 report(f, "unrealisable as declared",
                        f"families.admissibility {f} is unrealisable as "
                        f"declared: every spec_id "
-                       f"{specs_of(f)} is on P2 (refused/repaired), so it "
+                       f"{specs_of(f)} is on AVOIDED (refused/repaired), so it "
                        f"needs a NEW realisation, not the declared one")
             elif no_admissible_declaration(f, registry):
                 report(f, "no admissible declaration",
@@ -565,7 +565,7 @@ def check(registry: dict | None = None, declared: list[str] | None = None,
     #   unwritten         -- no operator has been written (status == pending)
     #
     # They were briefly assumed to be equal, which made a 21-vs-23 gap look
-    # like a bookkeeping bug. It is not: a spec can be P2 (the compiler
+    # like a bookkeeping bug. It is not: a spec can be AVOIDED (the compiler
     # repairs the state, so no mutation is generatable) while its declared
     # surface very much exists. Those specs are unwritten for a different
     # reason and need a different remedy, so folding them into
@@ -573,12 +573,12 @@ def check(registry: dict | None = None, declared: list[str] | None = None,
     # is already there.
     if registry is not None:
         dead = set(_T["dead_declarations"]["spec_ids"])
-        # Structural fact, NOT the `p2_never_generated` reporting list. That
-        # list is the specs whose ONLY defect is P2, so it deliberately omits
+        # Structural fact, NOT the `avoided_never_generated` reporting list. That
+        # list is the specs whose ONLY defect is AVOIDED, so it deliberately omits
         # M3.12 (already reported by `unrealisable as declared`). Using it here
         # would demand that M3.12 be dead as well, which is the opposite of
         # true -- M3.12 exists and is exactly why M3-h needs a new realisation.
-        p2 = {s for s, v in registry.items() if v.get("path") == "P2"}
+        avoided = {s for s, v in registry.items() if v.get("path") == "avoided"}
         unwritten = {s for s, v in registry.items()
                      if v.get("status") == "pending"}
         if not dead <= unwritten:
@@ -588,11 +588,11 @@ def check(registry: dict | None = None, declared: list[str] | None = None,
                        "operator"
                        % ", ".join(sorted(dead - unwritten)))
         extra = unwritten - dead
-        expected = p2 - dead
+        expected = avoided - dead
         if extra != expected:
             bad.append(
                 "families.dead-vs-unwritten an unwritten spec that is not "
-                "`dead` must be P2 "
+                "`dead` must be AVOIDED "
                 "(refused, surface present). Got %s, expected %s"
                 % (sorted(extra), sorted(expected)))
 
@@ -606,7 +606,7 @@ def check(registry: dict | None = None, declared: list[str] | None = None,
     for _f in _FAM:
         _all_ids |= set(specs_of(_f))
     _all_ids |= set(_T["dead_declarations"]["spec_ids"])
-    _all_ids |= set(P2)
+    _all_ids |= set(AVOIDED)
     for _ids in ATTRIBUTION_ONLY.values():
         _all_ids |= set(_ids)
     _all_ids |= set(_T["reassigned"])
@@ -733,7 +733,7 @@ def _report(registry: dict | None) -> None:
     print()
     print(f"  attribution-only (NOT in a class cell): "
           f"{ {k: len(v) for k, v in ATTRIBUTION_ONLY.items()} }")
-    print(f"  P2 / never generated: {P2}")
+    print(f"  AVOIDED / never generated: {AVOIDED}")
     print(f"  dead declarations: {len(DEAD)}")
     if registry:
         thin = thin_families(registry)
@@ -743,7 +743,7 @@ def _report(registry: dict | None) -> None:
               f"({len(thin) - len(zero)} at 1, {len(zero)} at 0)")
         print(f"    MODEL GAP -- every declared spec is inadmissible, so no "
               f"operator could enter the denominator: {sorted(s['model_gap'])}")
-        print(f"    unrealisable as declared (every spec on P2): "
+        print(f"    unrealisable as declared (every spec on AVOIDED): "
               f"{s['unrealisable_as_declared']}")
         print(f"    inadmissible by construction (noop control, not a work "
               f"item): {s['noop_control']}")

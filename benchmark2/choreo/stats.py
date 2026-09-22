@@ -1786,7 +1786,7 @@ def s13(residue, latency, present):
 #
 # `L` is a PATH, not a class: it appears here and in no `class` enum. The 2026-09-14
 # revision moved the launch-status operators OUT of the class axis and into M3
-# (M3.17-M3.26) while keeping their P2 attribution, so a record's `class` is M3
+# (M3.17-M3.26) while keeping their launch (`L`) attribution, so a record's `class` is M3
 # and its `path_class` may be L. From the axis, not restated -- see AX.path_classes().
 PATH_CLASSES = tuple(AX.path_classes())
 PROHIBITIONS = ("absent", "derived", "repaired", "harness-owned", "observation")
@@ -2150,7 +2150,7 @@ def s14_path_class(mutants, specs, obligations, present):
             "n_not_applicable": n_not_applicable,
             "n_out_of_scope": sum(1 for v in reg.values()
                                   if v["applicable"] and v["status"] != "implemented"),
-            "rule": "admissible specs (P1/P3/P4 + the L row reported separately) "
+            "rule": "admissible specs (rt-check/unchecked/ct-check + the L row reported separately) "
                     "form the detection denominator; an inadmissible spec is a "
                     "recorded verdict with a named prohibition and is NOT open "
                     "work (specs §2)",

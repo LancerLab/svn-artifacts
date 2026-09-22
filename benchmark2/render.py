@@ -399,7 +399,7 @@ def table_e1_path_class(summary):
     """tab:e1-path-class — the S14 register: who is in the detection
     denominator, and the two rates that must never be confused.
 
-    Rows are path classes (P1 is the only one with cells in the frozen v1
+    Rows are outcomes (rt-check is the only one with cells in the frozen v1
     baseline); the last block carries the register verdicts and the
     applicability audit, because a denominator is only as good as the record
     that justifies it."""
@@ -427,10 +427,10 @@ def table_e1_path_class(summary):
               "specs with cells are contradicted by the record-level ground "
               "truth).")
 
-    header = ["Path class", "Cells", "Injected", "Applicable", "Detected",
+    header = ["Outcome", "Cells", "Injected", "Applicable", "Detected",
               "Rate"]
     rows = []
-    for pc in ("P1", "P2", "P3", "P4", "L"):
+    for pc in ("rt-check", "avoided", "unchecked", "ct-check", "L"):
         c = per_path.get(pc)
         if not c:
             continue
@@ -475,8 +475,8 @@ def table_e1_path_class(summary):
               "`Detected` figure is a raw count with no denominator. ")
     return _tex_table(
         "tab:e1-path-class",
-        "E1 detection by path class (S14). P1 is the fully assessed path; "
-        "P3/P4 are unchecked and warning-only, and L is launch-status, which "
+        "E1 detection by outcome (S14). rt-check is the runtime-checked path; "
+        "unchecked/ct-check emit nothing or only a compile diagnostic, and L is launch-status, which "
         "carries no detection denominator by construction. The two rates at "
         "the bottom are different questions and neither may be quoted under "
         "the other's denominator.",

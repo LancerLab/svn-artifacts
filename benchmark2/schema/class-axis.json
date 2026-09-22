@@ -15,11 +15,19 @@
     "hw"
   ],
   "path_classes": [
-    "P1",
-    "P2",
-    "P3",
-    "P4",
+    "rt-check",
+    "avoided",
+    "unchecked",
+    "ct-check",
     "L"
+  ],
+  "_path_classes_note": "The pipeline `path_class` field now carries the canonical outcome vocabulary (mutation-specs-v2.md section 9.6.1), not the retired P1-P4 codes. It lists the four outcomes a stated defect can take plus `L`. `unexpressible` is not a path value: a spec the suite cannot state still has a path, and the N/A reason lives in `prohibition`/`admissible`. Legacy mapping: P1->rt-check, P2->avoided, P3->unchecked, P4->ct-check, L->L.",
+  "outcome_classes": [
+    "avoided",
+    "unexpressible",
+    "ct-check",
+    "rt-check",
+    "unchecked"
   ],
   "class_statuses": [
     "measured",

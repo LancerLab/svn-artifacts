@@ -15,19 +15,19 @@
     "blocked-by-suite": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts."
   },
   "summary": {
-    "n_specs": 73,
-    "choreo_realized": 50,
-    "choreo_unrealized": 23,
+    "n_specs": 77,
+    "choreo_realized": 53,
+    "choreo_unrealized": 24,
     "recorded_by_a_sota_lane": 14,
-    "recorded_over_choreo": 0.28,
-    "recorded_over_all_specs": 0.1918,
-    "achievable_by_a_sota_lane": 57,
-    "achievable_over_all_specs": 0.7808,
-    "achievable_among_choreo_realized": 50,
+    "recorded_over_choreo": 0.2642,
+    "recorded_over_all_specs": 0.1818,
+    "achievable_by_a_sota_lane": 61,
+    "achievable_over_all_specs": 0.7922,
+    "achievable_among_choreo_realized": 53,
     "achievable_over_choreo": 1.0,
-    "choreo_only_and_achievable": 36,
+    "choreo_only_and_achievable": 39,
     "choreo_only_and_recorded": 14,
-    "constitutional_n_a_anywhere": 41,
+    "constitutional_n_a_anywhere": 45,
     "lane_recorded_counts": {
       "triton": 8,
       "mlir-low": 6,
@@ -35,21 +35,21 @@
       "iree": 2
     },
     "lane_achievable_counts": {
-      "triton": 38,
+      "triton": 42,
       "mlir-linalg": 34,
       "mlir-low": 16,
       "iree": 34
     },
     "lane_recorded_over_achievable": {
-      "triton": 0.2105,
+      "triton": 0.1905,
       "mlir-linalg": 0.1765,
       "mlir-low": 0.375,
       "iree": 0.0588
     },
     "union_metric_caveat": "`achievable_by_a_sota_lane` is the union over lanes and reaches 100% because each obligation class is declared expressible by at least one lane.  It answers 'could ANY lane express this?' and must not be quoted as a per-lane rate.  Quote `lane_recorded_over_achievable` instead.",
-    "n_duplicate_findings": 29,
+    "n_duplicate_findings": 30,
     "n_exact_duplicate_mutants": 6,
-    "n_cross_spec_same_site": 5,
+    "n_cross_spec_same_site": 6,
     "n_constant_only_mutants": 24,
     "n_mechanism_mismatches": 5,
     "specs_with_duplicates": [
@@ -452,10 +452,6 @@
         [
           "f32 [32, 128, 1, 1] w",
           "f32 [32, 512, 1, 1] w"
-        ],
-        [
-          "auto w = choreo::make_spandata<choreo::f32>(32, 128, 1, 1);",
-          "auto w = choreo::make_spandata<choreo::f32>(32, 512, 1, 1);"
         ]
       ],
       "n_redundant": 1,
@@ -565,6 +561,30 @@
     },
     {
       "kind": "cross-spec-same-site",
+      "category": "relu",
+      "case": "11_dynamic_32xSx768_32xSx768",
+      "specs": [
+        "M1.11",
+        "M2.11",
+        "M2.21"
+      ],
+      "mutant_ids": [
+        "M1.11.rl1.alt",
+        "M2.11.rl1.alt",
+        "M2.21.rl11.msbbcast"
+      ],
+      "site": "shared f32 [N, N, N, N] inp_s, out_s;",
+      "constants": [
+        "shared f32 [1, 1, 32, 1] inp_s, out_s;",
+        "shared f32 [1, 1, 63, 1] inp_s, out_s;",
+        "shared f32 [1, 1, 64, 1] inp_s, out_s;",
+        "shared f32 [2, 1, 64, 1] inp_s, out_s;"
+      ],
+      "n_redundant": 2,
+      "disposition": "several specs claim one declaration with different constants; adjudicate which spec owns the site and fold the others in as variants-of, or re-site them on a distinct declaration"
+    },
+    {
+      "kind": "cross-spec-same-site",
       "category": "transpose",
       "case": "1_bert_32x512x768_32x768x512",
       "specs": [
@@ -624,10 +644,9 @@
       ],
       "site": "with index = {m_tile, n_tile, k_tile} in [N, N, N] {",
       "constants": [
-        "with index = {m_tile, n_tile, k_tile} in [1, 32, 31] {",
-        "with index = {m_tile, n_tile, k_tile} in [1, 32, 32] {",
-        "with index = {m_tile, n_tile, k_tile} in [1, 6, 6] {",
-        "with index = {m_tile, n_tile, k_tile} in [1, 6, 7] {"
+        "with index = {m_tile, n_tile, k_tile} in [32, 32, 31] {",
+        "with index = {m_tile, n_tile, k_tile} in [32, 32, 32] {",
+        "with index = {m_tile, n_tile, k_tile} in [32, 33, 32] {"
       ],
       "n_redundant": 1,
       "disposition": "several specs claim one declaration with different constants; adjudicate which spec owns the site and fold the others in as variants-of, or re-site them on a distinct declaration"
@@ -667,8 +686,8 @@
       ],
       "edit": [
         [
-          "dma.copy l1_out => output.chunkat(i#p, _, _)",
-          "dma.copy l1_out => output.chunkat(i#p + 1, _, _)"
+          "dma.copy l1_out => output.chunkat(i#p, q, _)",
+          "dma.copy l1_out => output.chunkat(i#p + 1, q, _)"
         ]
       ],
       "n_redundant": 1,
@@ -1000,13 +1019,12 @@
     {
       "unit": "M1.1",
       "class": "M1",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "dropped boundary mask",
       "choreo": {
         "realized": true,
-        "n_mutants": 2,
+        "n_mutants": 1,
         "cases": [
-          "11_dynamic_32xSx768_32xSx768",
           "3_attention_32xNx512x64_64_64"
         ],
         "admissible": true,
@@ -1042,17 +1060,14 @@
     {
       "unit": "M1.2",
       "class": "M1",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "p#n off-by-one",
       "choreo": {
         "realized": true,
-        "n_mutants": 7,
+        "n_mutants": 3,
         "cases": [
-          "11_dynamic_32xSx768_32xSx768",
           "1_bert_32x512x768_32x512x768",
-          "1_bert_32x512x768_32x768x512",
-          "1_bert_32x512x768_768_768",
-          "3_attention_32xNx512x64_64_64"
+          "1_bert_32x512x768_32x768x512"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -1087,14 +1102,13 @@
     {
       "unit": "M1.3",
       "class": "M1",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "negative index",
       "choreo": {
         "realized": true,
-        "n_mutants": 4,
+        "n_mutants": 2,
         "cases": [
           "1_bert_32x512x768_32x512x768",
-          "1_bert_32x512x768_32x768x512",
           "1_bert_32x512x768_768_768"
         ],
         "admissible": true,
@@ -1130,11 +1144,11 @@
     {
       "unit": "M1.4",
       "class": "M1",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "transposed / non-contiguous stride",
       "choreo": {
         "realized": true,
-        "n_mutants": 2,
+        "n_mutants": 3,
         "cases": [
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_32x768x512"
@@ -1172,7 +1186,7 @@
     {
       "unit": "M1.5",
       "class": "M1",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "offset-view overrun",
       "choreo": {
         "realized": true,
@@ -1181,7 +1195,8 @@
           "11_dynamic_32xSx768_32xSx768",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_32x768x512",
-          "1_bert_32x512x768_768_768"
+          "1_bert_32x512x768_768_768",
+          "3_attention_32xNx512x64_64_64"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -1216,22 +1231,22 @@
     {
       "unit": "M1.8",
       "class": "M1",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "stride scaling (stride x 2)",
       "choreo": {
         "realized": true,
         "n_mutants": 3,
         "cases": [
+          "11_dynamic_32xSx768_768_768",
           "1_bert_32x512x768_32x512x768",
-          "1_bert_32x512x768_32x768x512",
           "1_bert_32x512x768_768_768"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 3,
-        "n_distinct_realisations": 3
+        "n_operators": 4,
+        "n_distinct_realisations": 4
       },
       "lanes": {
         "triton": {
@@ -1263,14 +1278,13 @@
     {
       "unit": "M1.9",
       "class": "M1",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "base offset applied WITHOUT shrinking the extent",
       "choreo": {
         "realized": true,
-        "n_mutants": 3,
+        "n_mutants": 1,
         "cases": [
-          "1_bert_32x512x768_32x512x768",
-          "1_bert_32x512x768_32x768x512"
+          "1_bert_32x512x768_32x512x768"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -1309,7 +1323,7 @@
     {
       "unit": "M1.10",
       "class": "M1",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "tile-boundary rounding (floor vs ceil on the last tile)",
       "choreo": {
         "realized": true,
@@ -1354,12 +1368,14 @@
     {
       "unit": "M1.11",
       "class": "M1",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "read-after-write aliasing overlap",
       "choreo": {
         "realized": true,
-        "n_mutants": 2,
+        "n_mutants": 4,
         "cases": [
+          "11_dynamic_32xSx768_32x768xS",
+          "11_dynamic_32xSx768_32xSx768",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_32x768x512"
         ],
@@ -1367,8 +1383,8 @@
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 2,
-        "n_distinct_realisations": 2
+        "n_operators": 4,
+        "n_distinct_realisations": 4
       },
       "lanes": {
         "triton": {
@@ -1400,12 +1416,14 @@
     {
       "unit": "M1.12",
       "class": "M1",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "wrong loop variable for a dimension (broadcast index reuse)",
       "choreo": {
         "realized": true,
-        "n_mutants": 2,
+        "n_mutants": 4,
         "cases": [
+          "11_dynamic_32xSx768_32xSx768",
+          "11_dynamic_32xSx768_768_768",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_768_768"
         ],
@@ -1413,8 +1431,8 @@
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 2,
-        "n_distinct_realisations": 2
+        "n_operators": 4,
+        "n_distinct_realisations": 4
       },
       "lanes": {
         "triton": {
@@ -1446,14 +1464,13 @@
     {
       "unit": "M1.13",
       "class": "M1",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "symbolic-bound overrun (index beyond a bound over a runtime parameter)",
       "choreo": {
         "realized": true,
-        "n_mutants": 2,
+        "n_mutants": 1,
         "cases": [
-          "11_dynamic_32xSx768_32x768xS",
-          "11_dynamic_32xSx768_32xSx768"
+          "11_dynamic_32xSx768_32x768xS"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -1492,12 +1509,13 @@
     {
       "unit": "M1.14",
       "class": "M1",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "chunkat tile-coordinate over/underflow while the element index stays in bounds",
       "choreo": {
         "realized": true,
-        "n_mutants": 3,
+        "n_mutants": 5,
         "cases": [
+          "11_dynamic_32xSx768_32xSx768",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_32x768x512"
         ],
@@ -1538,7 +1556,7 @@
     {
       "unit": "M1.15",
       "class": "M1",
-      "path_class": "P3",
+      "path_class": "unchecked",
       "mechanism": "dimof index >= rank, non-constant index",
       "choreo": {
         "realized": false,
@@ -1583,7 +1601,7 @@
     {
       "unit": "M1.16",
       "class": "M1",
-      "path_class": "P3",
+      "path_class": "unchecked",
       "mechanism": "select factor out of range (f >= count | f < 0)",
       "choreo": {
         "realized": false,
@@ -1628,7 +1646,7 @@
     {
       "unit": "M1.17",
       "class": "M1",
-      "path_class": "P3",
+      "path_class": "unchecked",
       "mechanism": "5th-index access on a rank-5 view",
       "choreo": {
         "realized": false,
@@ -1673,7 +1691,7 @@
     {
       "unit": "M1.18",
       "class": "M1",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "index in range by `interval` but out of range by `canonical` (or vice versa)",
       "choreo": {
         "realized": false,
@@ -1718,7 +1736,7 @@
     {
       "unit": "M1.19",
       "class": "M1",
-      "path_class": "P3",
+      "path_class": "unchecked",
       "mechanism": "index-carrier overflow (realization b, narrow-carrier)",
       "choreo": {
         "realized": true,
@@ -1763,7 +1781,7 @@
     {
       "unit": "M1.20",
       "class": "M1",
-      "path_class": "P3",
+      "path_class": "unchecked",
       "mechanism": "view / subspan offset, stride, rank arity (_StaticFail_-only; symbols neither refused nor checked)",
       "choreo": {
         "realized": true,
@@ -1774,7 +1792,7 @@
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
-        "note": "P3 for a symbolic offset, P2 (repaired) for a static one -- the split must be explicit or the noop rate is an artefact",
+        "note": "unchecked for a symbolic offset, avoided (repaired) for a static one -- the split must be explicit or the noop rate is an artefact",
         "n_operators": 2,
         "n_distinct_realisations": 2
       },
@@ -1808,21 +1826,22 @@
     {
       "unit": "M1.21",
       "class": "M1",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "tileat/at index vs the tiled extent; step/stride tail on a non-divisible extent",
       "choreo": {
         "realized": true,
-        "n_mutants": 2,
+        "n_mutants": 3,
         "cases": [
+          "11_dynamic_32xSx768_768_768",
           "1_bert_32x512x768_32x768x512",
           "1_bert_32x512x768_768_768"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
-        "note": "P1 per-dim, P2-P3 for the composition",
-        "n_operators": 2,
-        "n_distinct_realisations": 2
+        "note": "rt-check per-dim, avoided/unchecked for the composition",
+        "n_operators": 3,
+        "n_distinct_realisations": 3
       },
       "lanes": {
         "triton": {
@@ -1854,17 +1873,13 @@
     {
       "unit": "M2.1",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "wrong leading extent for a secondary operand",
       "choreo": {
         "realized": true,
-        "n_mutants": 9,
+        "n_mutants": 1,
         "cases": [
-          "11_dynamic_32xSx768_768x768_32xSx768",
-          "1_bert_32x512x768_32x512x768_32x512x1536",
-          "1_bert_32x512x768_768_768",
-          "1_bert_32x512x768_768x768_32x512x768",
-          "3_attention_32xNx512x64_64_64"
+          "1_bert_32x512x768_768_768"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -1901,13 +1916,12 @@
     {
       "unit": "M2.2",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "DMA src/dst extent disagreement",
       "choreo": {
         "realized": true,
-        "n_mutants": 4,
+        "n_mutants": 1,
         "cases": [
-          "1_bert_32x512x768_32x512x768_32x512x1536",
           "1_bert_32x512x768_768x768_32x512x768"
         ],
         "admissible": true,
@@ -1947,14 +1961,13 @@
     {
       "unit": "M2.3",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "binary op on mismatched shapes",
       "choreo": {
         "realized": true,
-        "n_mutants": 2,
+        "n_mutants": 1,
         "cases": [
-          "1_bert_32x512x768_768_768",
-          "1_bert_32x512x768_768x768_32x512x768"
+          "1_bert_32x512x768_768_768"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -1993,16 +2006,13 @@
     {
       "unit": "M2.4",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "wrong output leading extent",
       "choreo": {
         "realized": true,
-        "n_mutants": 6,
+        "n_mutants": 1,
         "cases": [
-          "11_dynamic_32xSx768_768x768_32xSx768",
-          "1_bert_32x512x768_32x512x768_32x512x1536",
-          "1_bert_32x512x768_768_768",
-          "1_bert_32x512x768_768x768_32x512x768"
+          "1_bert_32x512x768_32x512x768_32x512x1536"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -2041,7 +2051,7 @@
     {
       "unit": "M2.5",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "partial write (omitted tail tile) / duplicate write (overlapping tile)",
       "choreo": {
         "realized": true,
@@ -2086,12 +2096,13 @@
     {
       "unit": "M2.6",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "two extents transposed",
       "choreo": {
         "realized": true,
-        "n_mutants": 2,
+        "n_mutants": 3,
         "cases": [
+          "11_dynamic_32xSx768_768x768_32xSx768",
           "1_bert_32x512x768_32x512x768_32x512x1536",
           "1_bert_32x512x768_768x768_32x512x768"
         ],
@@ -2099,8 +2110,8 @@
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 2,
-        "n_distinct_realisations": 2
+        "n_operators": 3,
+        "n_distinct_realisations": 3
       },
       "lanes": {
         "triton": {
@@ -2134,12 +2145,14 @@
     {
       "unit": "M2.7",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "reduced-rank view (a dimension dropped)",
       "choreo": {
         "realized": true,
-        "n_mutants": 2,
+        "n_mutants": 4,
         "cases": [
+          "11_dynamic_32xSx768_768x768_32xSx768",
+          "15_gpt_16x512x1536_16x512x1536_16x512x3072",
           "1_bert_32x512x768_32x512x768_32x512x1536",
           "1_bert_32x512x768_768x768_32x512x768"
         ],
@@ -2147,8 +2160,8 @@
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 2,
-        "n_distinct_realisations": 2
+        "n_operators": 4,
+        "n_distinct_realisations": 4
       },
       "lanes": {
         "triton": {
@@ -2182,11 +2195,11 @@
     {
       "unit": "M2.8",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "broadcast extent set to 1 instead of N",
       "choreo": {
         "realized": true,
-        "n_mutants": 1,
+        "n_mutants": 2,
         "cases": [
           "1_bert_32x512x768_768_768"
         ],
@@ -2229,21 +2242,22 @@
     {
       "unit": "M2.9",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "batch/group dimension swapped",
       "choreo": {
         "realized": true,
-        "n_mutants": 2,
+        "n_mutants": 3,
         "cases": [
           "11_dynamic_32xS1x768_32xS2x768_32xS1pS2x768",
-          "3_attention_32xNx512x64_64_64"
+          "3_attention_32xNx512x64_64_64",
+          "6_dynamic_128xCx112x112_112x112_112x112"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 2,
-        "n_distinct_realisations": 2
+        "n_operators": 3,
+        "n_distinct_realisations": 3
       },
       "lanes": {
         "triton": {
@@ -2277,7 +2291,7 @@
     {
       "unit": "M2.10",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "transpose permutation on a SQUARE operand (extents equal, memory order changes)",
       "choreo": {
         "realized": true,
@@ -2324,21 +2338,21 @@
     {
       "unit": "M2.11",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "DMA to-buffer element-count undersize on a LogicalEqual path",
       "choreo": {
         "realized": true,
         "n_mutants": 2,
         "cases": [
-          "1_bert_32x512x768_32x512x768",
-          "1_bert_32x512x768_32x512x768_32x512x1536"
+          "11_dynamic_32xSx768_32xSx768",
+          "1_bert_32x512x768_32x512x768"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 2,
-        "n_distinct_realisations": 2
+        "n_operators": 3,
+        "n_distinct_realisations": 3
       },
       "lanes": {
         "triton": {
@@ -2372,7 +2386,7 @@
     {
       "unit": "M2.12",
       "class": "M2",
-      "path_class": "P2",
+      "path_class": "avoided",
       "mechanism": "rank mismatch through .pad (overlap still satisfies f + pad == t)",
       "choreo": {
         "realized": false,
@@ -2418,7 +2432,7 @@
     {
       "unit": "M2.13",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "shape-equal / layout-unequal (every extent agrees, the affine map does not)",
       "choreo": {
         "realized": true,
@@ -2465,14 +2479,12 @@
     {
       "unit": "M2.14",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "matmul contraction-dim (K) mismatch masked by broadcast",
       "choreo": {
-        "realized": true,
-        "n_mutants": 1,
-        "cases": [
-          "1_bert_32x512x768_768x768_32x512x768"
-        ],
+        "realized": false,
+        "n_mutants": 0,
+        "cases": [],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
@@ -2503,12 +2515,13 @@
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (iree/mutants/M2/matmul/iree-matmul-*-rhs-K pm1)"
         }
-      }
+      },
+      "na_kind": "model-unknown"
     },
     {
       "unit": "M2.15",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "pad_low <-> pad_high SWAPPED (length preserved, placement differs)",
       "choreo": {
         "realized": true,
@@ -2556,20 +2569,21 @@
     {
       "unit": "M2.16",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "span_as preserving ElementCount() with a different rank/split",
       "choreo": {
         "realized": true,
-        "n_mutants": 1,
+        "n_mutants": 2,
         "cases": [
-          "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1"
+          "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+          "20_static_16x1024x13x13_255x1024x1x1_16x255x13x13_1_0_1"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": "semacheck.cpp:947 compares COUNT, not shape",
-        "n_operators": 1,
-        "n_distinct_realisations": 1
+        "n_operators": 2,
+        "n_distinct_realisations": 2
       },
       "lanes": {
         "triton": {
@@ -2603,7 +2617,7 @@
     {
       "unit": "M2.17",
       "class": "M2",
-      "path_class": "P3",
+      "path_class": "unchecked",
       "mechanism": "span_as / reshape on runtime-shaped data -- check skipped entirely",
       "choreo": {
         "realized": true,
@@ -2651,7 +2665,7 @@
     {
       "unit": "M2.18",
       "class": "M2",
-      "path_class": "P4",
+      "path_class": "ct-check",
       "mechanism": "reshape on a non-contiguous span (warning-only path)",
       "choreo": {
         "realized": false,
@@ -2660,7 +2674,7 @@
         "admissible": false,
         "registry_status": "pending",
         "prohibition": "absent",
-        "note": "semacheck.cpp:1195+ Warning(rop->LOC(), ...) -- the only P4 spec, so this gap leaves the warning-then-continue path with ZERO coverage. MISSING SURFACE: a strided view. Every reshape case applies span_as to a contiguous parameter, and preserving ElementCount() rules out slicing; a non-contiguous span needs a stride the source suite never writes",
+        "note": "semacheck.cpp:1195+ Warning(rop->LOC(), ...) -- the only ct-check-from-warning spec, so this gap leaves the warning-then-continue path with ZERO coverage. MISSING SURFACE: a strided view. Every reshape case applies span_as to a contiguous parameter, and preserving ElementCount() rules out slicing; a non-contiguous span needs a stride the source suite never writes",
         "n_operators": 0,
         "n_distinct_realisations": 0
       },
@@ -2696,7 +2710,7 @@
     {
       "unit": "M2.19",
       "class": "M2",
-      "path_class": "P3",
+      "path_class": "unchecked",
       "mechanism": "DMA extent mismatch where >=1 extent is symbolic -- hard error escaped",
       "choreo": {
         "realized": true,
@@ -2744,7 +2758,7 @@
     {
       "unit": "M2.21",
       "class": "M2",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "MSB broadcast extent neither 1 nor equal (rank-unequal path checks trailing dims only)",
       "choreo": {
         "realized": true,
@@ -2792,14 +2806,12 @@
     {
       "unit": "M3.1",
       "class": "M3",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "contraction extent not divisible by the tensor-core atom (tail dropped)",
       "choreo": {
         "realized": true,
-        "n_mutants": 25,
+        "n_mutants": 4,
         "cases": [
-          "11_dynamic_32xSx768_768x768_32xSx768",
-          "11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1",
           "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
           "1_bert_32x512x768_768x768_32x512x768"
         ],
@@ -2841,7 +2853,7 @@
     {
       "unit": "M3.2",
       "class": "M3",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "descriptor dimension >= 2^24 (family A)",
       "choreo": {
         "realized": false,
@@ -2886,7 +2898,7 @@
     {
       "unit": "M3.3",
       "class": "M3",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "TMA box byte-size >= 2^24 after 128-byte ceiling (family B)",
       "choreo": {
         "realized": false,
@@ -2931,7 +2943,7 @@
     {
       "unit": "M3.4",
       "class": "M3",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "tensor footprint >= 4 GB, 5-D product (family C)",
       "choreo": {
         "realized": false,
@@ -2976,7 +2988,7 @@
     {
       "unit": "M3.5",
       "class": "M3",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "swizzle-incompatible box shape",
       "choreo": {
         "realized": false,
@@ -3021,14 +3033,12 @@
     {
       "unit": "M3.6",
       "class": "M3",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "leading dim not aligned to descriptor granularity ON A VECTORIZED ACCESS",
       "choreo": {
         "realized": true,
-        "n_mutants": 8,
+        "n_mutants": 4,
         "cases": [
-          "11_dynamic_32xSx768_768x768_32xSx768",
-          "11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1",
           "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
           "1_bert_32x512x768_768x768_32x512x768"
         ],
@@ -3072,7 +3082,7 @@
     {
       "unit": "M3.7",
       "class": "M3",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "TMA inner-box geometry not 128-bit aligned",
       "choreo": {
         "realized": false,
@@ -3117,7 +3127,7 @@
     {
       "unit": "M3.8",
       "class": "M3",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "DMA rank = 6 (outside the assessed [1,5])",
       "choreo": {
         "realized": false,
@@ -3162,11 +3172,11 @@
     {
       "unit": "M3.9",
       "class": "M3",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "pad-field overrun (dma.pad / padding_mid beyond the assessed range)",
       "choreo": {
         "realized": true,
-        "n_mutants": 2,
+        "n_mutants": 1,
         "cases": [
           "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D"
         ],
@@ -3210,11 +3220,11 @@
     {
       "unit": "M3.10",
       "class": "M3",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "last-dim / rank-5 mid-padding violates padding_mid[rank-1] == 0",
       "choreo": {
         "realized": true,
-        "n_mutants": 2,
+        "n_mutants": 1,
         "cases": [
           "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D"
         ],
@@ -3258,7 +3268,7 @@
     {
       "unit": "M3.11",
       "class": "M3",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "shared operand base not 128-byte aligned on sm_90+",
       "choreo": {
         "realized": false,
@@ -3301,7 +3311,7 @@
     {
       "unit": "M3.12",
       "class": "M3",
-      "path_class": "P2",
+      "path_class": "avoided",
       "mechanism": "shared tile exactly at the capacity bound (+/-1 KiB edge)",
       "choreo": {
         "realized": false,
@@ -3310,7 +3320,7 @@
         "admissible": false,
         "registry_status": "pending",
         "prohibition": "repaired",
-        "note": "RECLASSIFIED P1 -> P2. memcheck.hpp:106-123 (CheckCtMemUsage) raises Error1 when compile-time SHARED/LOCAL usage exceeds the limit, so the model FORBIDS the state and the compiler refuses it: there is no test to run. A runtime channel exists only when an extent is symbolic, which the suite's shared tiles are not. This also explains the 28/40 M3 noops in the committed v1 baseline -- v1 s3 was exactly this family (specs \u00a73.0)",
+        "note": "RECLASSIFIED rt-check -> avoided. memcheck.hpp:106-123 (CheckCtMemUsage) raises Error1 when compile-time SHARED/LOCAL usage exceeds the limit, so the model FORBIDS the state and the compiler refuses it: there is no test to run. A runtime channel exists only when an extent is symbolic, which the suite's shared tiles are not. This also explains the 28/40 M3 noops in the committed v1 baseline -- v1 s3 was exactly this family (specs \u00a73.0)",
         "n_operators": 0,
         "n_distinct_realisations": 0
       },
@@ -3348,7 +3358,7 @@
     {
       "unit": "M3.13",
       "class": "M3",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "swizzle width <-> box inner dim <-> shared alignment, narrowed",
       "choreo": {
         "realized": false,
@@ -3393,20 +3403,21 @@
     {
       "unit": "M3.14",
       "class": "M3",
-      "path_class": "P3",
+      "path_class": "unchecked",
       "mechanism": "linear .copy with a dimension >= 2^24 -- the check is absent",
       "choreo": {
         "realized": true,
-        "n_mutants": 1,
+        "n_mutants": 2,
         "cases": [
+          "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
           "1_bert_32x512x768_768x768_32x512x768"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": "gpu_adapt.hpp:320 `// linear copy` ... `// omitted`; the other six cells of the DMA matrix call CheckDimSize (defect F1)",
-        "n_operators": 1,
-        "n_distinct_realisations": 1
+        "n_operators": 2,
+        "n_distinct_realisations": 2
       },
       "lanes": {
         "triton": {
@@ -3441,7 +3452,7 @@
     {
       "unit": "M3.15",
       "class": "M3",
-      "path_class": "P3",
+      "path_class": "unchecked",
       "mechanism": ".pad with a dimension >= 2^24 -- the pad path never calls CheckDimSize",
       "choreo": {
         "realized": true,
@@ -3489,7 +3500,7 @@
     {
       "unit": "M3.16",
       "class": "M3",
-      "path_class": "P3",
+      "path_class": "unchecked",
       "mechanism": "TMA box inner alignment with a SYMBOLIC leading dim -- no assessment",
       "choreo": {
         "realized": true,
@@ -3634,7 +3645,7 @@
     {
       "unit": "M3.19",
       "class": "M3",
-      "path_class": "P2",
+      "path_class": "avoided",
       "mechanism": "__launch_bounds__ understated vs actual block size",
       "choreo": {
         "realized": false,
@@ -3643,7 +3654,7 @@
         "admissible": false,
         "registry_status": "pending",
         "prohibition": "repaired",
-        "note": "was L3, upgraded absent -> repaired on direct evidence: `choreo -gs -t cute -arch=sm_86` on tests/gpu/codegen/cute/launch_bounds.co reports `error: [[launch_bounds]] maxThreadsPerBlock (8) is less than the computed thread count (64).` The model DERIVES the required extent and refuses any understatement, so there is no test to run (P2). The suite still never writes the attribute, but that is no longer the operative reason",
+        "note": "was L3, upgraded absent -> repaired on direct evidence: `choreo -gs -t cute -arch=sm_86` on tests/gpu/codegen/cute/launch_bounds.co reports `error: [[launch_bounds]] maxThreadsPerBlock (8) is less than the computed thread count (64).` The model DERIVES the required extent and refuses any understatement, so there is no test to run (avoided). The suite still never writes the attribute, but that is no longer the operative reason",
         "n_operators": 0,
         "n_distinct_realisations": 0
       },
@@ -3729,7 +3740,7 @@
     {
       "unit": "M3.21",
       "class": "M3",
-      "path_class": "P2",
+      "path_class": "avoided",
       "mechanism": "shared tile exceeds per-SM capacity",
       "choreo": {
         "realized": false,
@@ -3738,7 +3749,7 @@
         "admissible": false,
         "registry_status": "pending",
         "prohibition": "repaired",
-        "note": "RECLASSIFIED: the v2.1 L-class membership assumed the launch-rejected channel, but the check the compiler actually performs is memcheck.hpp:106-123 CheckCtMemUsage -> Error1, a hard compile-time refusal (P2). Same mechanism as M3.12, one step past the limit",
+        "note": "RECLASSIFIED: the v2.1 L-class membership assumed the launch-rejected channel, but the check the compiler actually performs is memcheck.hpp:106-123 CheckCtMemUsage -> Error1, a hard compile-time refusal, so the model forbids it (avoided). Same mechanism as M3.12, one step past the limit",
         "n_operators": 0,
         "n_distinct_realisations": 0
       },
@@ -3776,7 +3787,7 @@
     {
       "unit": "M3.22",
       "class": "M3",
-      "path_class": "P2",
+      "path_class": "avoided",
       "mechanism": "WGMMA used below sm_90",
       "choreo": {
         "realized": false,
@@ -3785,7 +3796,7 @@
         "admissible": false,
         "registry_status": "pending",
         "prohibition": "repaired",
-        "note": "was L6, upgraded absent -> repaired on direct evidence: `choreo -gs -t cute -arch=sm_86` on tests/gpu/end2end/wgmma_ss.co reports `error: group-4 level is not supported by the target architecture: sm_86.` (x14); the same file compiles clean under `-arch=sm_90a`. This is the K5 feature-gating discharge: the compiler refuses the feature below sm_90, so there is no test to run (P2)",
+        "note": "was L6, upgraded absent -> repaired on direct evidence: `choreo -gs -t cute -arch=sm_86` on tests/gpu/end2end/wgmma_ss.co reports `error: group-4 level is not supported by the target architecture: sm_86.` (x14); the same file compiles clean under `-arch=sm_90a`. This is the K5 feature-gating discharge: the compiler refuses the feature below sm_90, so there is no test to run (avoided)",
         "n_operators": 0,
         "n_distinct_realisations": 0
       },
@@ -4001,25 +4012,121 @@
       "na_kind_correction": "registry says prohibition='absent'; the note says MISSING SURFACE.  This is our gap, not the model's."
     },
     {
+      "unit": "M3.27",
+      "class": "M3",
+      "path_class": "rt-check",
+      "mechanism": "shared tile exceeds the device budget, but only for a runtime-shaped (symbolic) extent",
+      "choreo": {
+        "realized": true,
+        "n_mutants": 3,
+        "cases": [
+          "10_dynamic_16x512xHxW_512_512_16x512xHxW",
+          "10_dynamic_16x512xHxW_HxW_HxW",
+          "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1"
+        ],
+        "admissible": true,
+        "registry_status": "implemented",
+        "prohibition": null,
+        "note": "memcheck.hpp:267-287 (CheckCtMemUsage) compares COMPILE-TIME byte totals against the limit and raises Error1 (that is M3.12). A runtime-shaped extent is not a constant, so the total it contributes is not a constant either and the check cannot fire: the oversized tile is launched, and only a runtime channel can judge it",
+        "n_operators": 3,
+        "n_distinct_realisations": 3
+      },
+      "lanes": {
+        "triton": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "triton/results/stats.json S8_expressibility[hw] = partial",
+          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "mlir-linalg": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-linalg/stats.json S8_expressibility[hw] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "mlir-low": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-low/stats.json S8_expressibility[hw] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "iree": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        }
+      }
+    },
+    {
+      "unit": "M3.28",
+      "class": "M3",
+      "path_class": "rt-check",
+      "mechanism": "per-thread local tile exceeds the per-thread budget, but only for a runtime-shaped (symbolic) extent",
+      "choreo": {
+        "realized": true,
+        "n_mutants": 5,
+        "cases": [
+          "10_dynamic_128x1280_1280xN_128xN",
+          "10_dynamic_16x512xHxW_512_512_16x512xHxW",
+          "10_dynamic_16x512xHxW_HxW_HxW",
+          "10_dynamic_32xCxHxW_32xCxHd5xWd5",
+          "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1"
+        ],
+        "admissible": true,
+        "registry_status": "implemented",
+        "prohibition": null,
+        "note": "the LOCAL half of M3-h, same mechanism as M3.27. The static check has two local bands (memcheck.hpp:288-306, warn-only between the best-practice budget and the hard cap), so an over-budget local tile is exactly where a compiler that only checks SHARED stays silent",
+        "n_operators": 5,
+        "n_distinct_realisations": 5
+      },
+      "lanes": {
+        "triton": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "triton/results/stats.json S8_expressibility[hw] = partial",
+          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "mlir-linalg": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-linalg/stats.json S8_expressibility[hw] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "mlir-low": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-low/stats.json S8_expressibility[hw] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "iree": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        }
+      }
+    },
+    {
       "unit": "M4.1",
       "class": "M4",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "with-in mdspan dim mutated to 0 -- control",
       "choreo": {
         "realized": true,
-        "n_mutants": 11,
+        "n_mutants": 5,
         "cases": [
           "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
           "14_efficientnet_64x1280x7x7_64x7x7x1280",
-          "14_mobilenet_128x32x112x112_32x32x3x3_128x32x112x112_S_P_D",
-          "16_resnet_64x3x224x224_64x3x7x7_64x64x112x112_S_P_D",
-          "18_unet_16x64x128x128_128x64x3x3_16x128x128x128_S_P_D",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_32x768x512",
-          "21_vit_32x768x14x14_1000x768x7x7_32x1000x7x7_S_P_D",
-          "2_cnn_128x128x28x28_128x128x28x28",
-          "6_dynamic_64x64x56x56_128x64x3x3_64x128x56x56_S_P_D",
-          "8_dynamic_64x256x28x28_Cx256x3x3_64xCx28x28_S_P_D"
+          "2_cnn_128x128x28x28_128x128x28x28"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -4061,17 +4168,13 @@
     {
       "unit": "M4.2",
       "class": "M4",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "parallelby bound mutated to 0 (a legal but empty iteration space)",
       "choreo": {
         "realized": true,
-        "n_mutants": 5,
+        "n_mutants": 1,
         "cases": [
-          "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
-          "14_efficientnet_64x1280x7x7_64x7x7x1280",
-          "17_mobilenet_128xx96x112x112_128x112x112x96",
-          "19_transformer_32x512x2048_32x512x2048",
-          "9_dynamic_64x128xHxW_64x128xHxW"
+          "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -4113,14 +4216,16 @@
     {
       "unit": "M4.3",
       "class": "M4",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "parallelby bound symbolic and zero only at runtime",
       "choreo": {
         "realized": true,
-        "n_mutants": 4,
+        "n_mutants": 6,
         "cases": [
           "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
           "11_dynamic_32xSx768_32x768xS",
+          "18_resnet_64x256x56x56_64x256x56x56",
+          "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
           "1_bert_32x512x768_32x768x512",
           "2_cnn_128x128x28x28_128x128x28x28"
         ],
@@ -4128,8 +4233,8 @@
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 7,
-        "n_distinct_realisations": 7
+        "n_operators": 8,
+        "n_distinct_realisations": 8
       },
       "lanes": {
         "triton": {
@@ -4164,7 +4269,7 @@
     {
       "unit": "M4.4",
       "class": "M4",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "bound > 0 but the iteration space is empty (zero-trip loop)",
       "choreo": {
         "realized": false,
@@ -4211,14 +4316,16 @@
     {
       "unit": "M4.5",
       "class": "M4",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "stride/step = 0 in an iteration",
       "choreo": {
         "realized": true,
-        "n_mutants": 4,
+        "n_mutants": 6,
         "cases": [
           "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
           "11_dynamic_32xSx768_32x768xS",
+          "17_mobilenet_128x96x112x112_128x96x112x112",
+          "18_unet_16x64x128x128_128x64x3x3_16x128x128x128_S_P_D",
           "2_cnn_128x128x28x28_128x128x28x28",
           "2_cnn_128x128x28x28_128x28x28x128"
         ],
@@ -4226,8 +4333,8 @@
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 5,
-        "n_distinct_realisations": 5
+        "n_operators": 7,
+        "n_distinct_realisations": 7
       },
       "lanes": {
         "triton": {
@@ -4262,18 +4369,17 @@
     {
       "unit": "M1.6",
       "class": "M4",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "zero-stride / empty range",
       "choreo": {
         "realized": true,
-        "n_mutants": 11,
+        "n_mutants": 8,
         "cases": [
           "11_dynamic_32xSx768_32x768xS",
           "11_dynamic_32xSx768_32xSx768",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_32x768x512",
-          "1_bert_32x512x768_768_768",
-          "3_attention_32xNx512x64_64_64"
+          "1_bert_32x512x768_768_768"
         ],
         "admissible": false,
         "registry_status": "implemented",
@@ -4310,22 +4416,25 @@
     {
       "unit": "M4.6",
       "class": "M4",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "parallelby bound mutated to negative -- invalid, so unlike an empty space it must be rejected",
       "choreo": {
         "realized": true,
-        "n_mutants": 3,
+        "n_mutants": 6,
         "cases": [
+          "11_dynamic_32xSx768_32x768xS",
+          "11_dynamic_32xSx768_32xSx768",
           "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
           "1_bert_32x512x768_32x768x512",
-          "2_cnn_128x128x28x28_128x128x28x28"
+          "2_cnn_128x128x28x28_128x128x28x28",
+          "2_dynamic_Nx64x56x56_128x64x3x3_Nx128x56x56_S_P_D"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": "split out of M4.2 so one operator is not evidence for two families: M4-a (zero bound) and M4-b (negative bound) have different oracle expectations, and while they shared a spec_id M4.2 was the sole realisation of M4-b and one of M4-a's two (defect D1)",
-        "n_operators": 4,
-        "n_distinct_realisations": 4
+        "n_operators": 6,
+        "n_distinct_realisations": 6
       },
       "lanes": {
         "triton": {
@@ -4360,7 +4469,7 @@
     {
       "unit": "M1.7",
       "class": "M4",
-      "path_class": "P1",
+      "path_class": "rt-check",
       "mechanism": "reversed loop bound (upper < lower) -> overrun instead of empty",
       "choreo": {
         "realized": true,
@@ -4375,6 +4484,102 @@
         "note": "class is M4, not M1: same re-homing as M1.6 -- the defect is M4's 'reversed bound' (family M4-e), so the operator must not be counted in M1's cell",
         "n_operators": 2,
         "n_distinct_realisations": 2
+      },
+      "lanes": {
+        "triton": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "triton/results/stats.json S8_expressibility[loop] = yes",
+          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "mlir-linalg": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-linalg/stats.json S8_expressibility[loop] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "mlir-low": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-low/stats.json S8_expressibility[loop] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "iree": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        }
+      }
+    },
+    {
+      "unit": "M4.7",
+      "class": "M4",
+      "path_class": "rt-check",
+      "mechanism": "padded extent goes NEGATIVE -- the negative-padding corner the GSC study names",
+      "choreo": {
+        "realized": true,
+        "n_mutants": 1,
+        "cases": [
+          "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D"
+        ],
+        "admissible": true,
+        "registry_status": "implemented",
+        "prohibition": null,
+        "note": "re-realises M2.12's negative-padding trigger on rt-check (method-taxonomy.json `reassigned.M2.12`): the rank repair through `.pad` was avoided/`repaired` and so never generated. The edit is on the padded-extent derivation, not on a loop literal, which is what keeps it distinct from the empty-range control M4-d",
+        "n_operators": 1,
+        "n_distinct_realisations": 1
+      },
+      "lanes": {
+        "triton": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "triton/results/stats.json S8_expressibility[loop] = yes",
+          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "mlir-linalg": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-linalg/stats.json S8_expressibility[loop] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "mlir-low": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/mlir-low/stats.json S8_expressibility[loop] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "iree": {
+          "status": "constitutional-n-a",
+          "kind": "constitutional",
+          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
+          "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        }
+      }
+    },
+    {
+      "unit": "M4.8",
+      "class": "M4",
+      "path_class": "rt-check",
+      "mechanism": "padded extent goes EMPTY -- the zero-length half of the GSC corner-case trigger",
+      "choreo": {
+        "realized": true,
+        "n_mutants": 1,
+        "cases": [
+          "14_mobilenet_128x32x112x112_32x32x3x3_128x32x112x112_S_P_D"
+        ],
+        "admissible": true,
+        "registry_status": "implemented",
+        "prohibition": null,
+        "note": "the second rt-check realisation of M4-g, so the family is not evidence from a single operator (defect D1). An empty padded extent is a legal zero-trip loop whose body never runs, so the expected verdict is a miss, not a refusal",
+        "n_operators": 1,
+        "n_distinct_realisations": 1
       },
       "lanes": {
         "triton": {

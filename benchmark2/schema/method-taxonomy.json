@@ -93,12 +93,20 @@
     "iree": 88,
     "total": 744
   },
-  "paths": {
-    "P1": "assessed -- the value is checked and the check can fire. The mutatable surface.",
-    "P2": "hard error -- NEVER generated. A spec whose only path is P2 cannot produce an instance and its N/A is structural, not a gap.",
-    "P3": "unchecked -- reachable but no check runs. Where the misses live.",
-    "P4": "warning-only -- reachable, diagnosed, not rejected.",
-    "L": "launch -- attribution axis only; carries observations, not value verdicts. See attribution_only."
+  "outcomes": {
+    "avoided": "the model derives/restores the invariant, or routes around the state. No legal mutant.",
+    "unexpressible": "no legal program states the defect. No mutant.",
+    "ct-check": "legal mutated program; the lane detects it at compile time (warning OR error). Caught.",
+    "rt-check": "legal mutated program; the lane emits a runtime check that can fire. Cost-suppressible.",
+    "unchecked": "legal mutated program; the lane emits nothing. Silent by construction -- where the misses live."
+  },
+  "outcomes_note": "Canonical across all lanes (mutation-specs-v2.md section 9.6). The retired P1-P4 check-path codes map: P1->rt-check, P2->avoided when the model repairs the state and ct-check when the compiler refuses a well-formed program, P3->unchecked, P4->ct-check. L (launch) is a separate attribution axis (see attribution_only).",
+  "retired_paths": {
+    "P1": "assessed",
+    "P2": "hard-error-or-repaired",
+    "P3": "unchecked",
+    "P4": "warning-only",
+    "L": "launch"
   },
   "prohibitions": [
     "absent",
@@ -112,7 +120,7 @@
     "rule": "A realisation is a TEST only if R1 and R2 and R3 and R4. Otherwise the cell is n/a with the prohibition named and is EXCLUDED from that lane's denominator.",
     "R1": "expressible in the lane's toolchain",
     "R2": "independent of the family's other realisation (distinct structural edit)",
-    "R3": "survives repair -- path is not P2 and prohibition is not `repaired`",
+    "R3": "survives repair -- path is not `avoided` and prohibition is not `repaired`",
     "R4": "attributable -- the spec_id maps to exactly one family (gate `families.partition`)"
   },
   "view_family": {
@@ -455,7 +463,7 @@
     "M2.12": {
       "from": "M2-c",
       "to": null,
-      "why": "Rank mismatch through .pad is path P2 / prohibition `repaired`, so it is NEVER generated and cannot be a realisation. Its negative-padding trigger is re-realised on P1 as M4-g."
+      "why": "Rank mismatch through .pad is `avoided` / prohibition `repaired`, so it is NEVER generated and cannot be a realisation. Its negative-padding trigger is re-realised on `rt-check` as M4-g."
     }
   },
   "split": {
@@ -496,16 +504,16 @@
       "why": "These carry `path: L` and prohibition `observation`: launch-status and target-limit observations, not value verdicts. They were filed under `cls: M3` in the registry, which puts rows in M3's admissible denominator that M3's claim does not cover -- `docs.no-superseded-claim` in check_class_axis.py already flags the document that says the launch class must not enter M3's admissible N. Kept for attribution, EXCLUDED from M3's 8 families and from M3's class cell."
     }
   },
-  "p2_never_generated": {
+  "avoided_never_generated": {
     "spec_ids": [
       "M2.12",
       "M3.19",
       "M3.21",
       "M3.22"
     ],
-    "why": "Path P2 with prohibition `repaired`: the compiler refuses the state or repairs it before the check runs, so the spec can NEVER produce an instance and its verdict is structural, not a gap. These are NOT `unwritten` -- writing them would not create a test. They are the R3 (survives repair) failures. They are also in NO family, which is why they are excluded here.",
-    "distinct_from_a_family_member": "M3.12 is ALSO P2/repaired but it is M3-h's declared realisation, so it stays in `families` and is reported by the `unrealisable_as_declared` check instead of being filed here. The two buckets must not be merged: this one means 'nothing to do', that one means 'the family needs a different realisation'.",
-    "note": "M3.12's own registry note records why: 'RECLASSIFIED P1 -> P2. memcheck.hpp:106-123 raises Error1 when compile-time SHARED/LOCAL usage exceeds the limit... there is no test to run.' It also names the cause of the 28/40 M3 noops in the committed v1 baseline."
+    "why": "Outcome `avoided` with prohibition `repaired`: the compiler refuses the state or repairs it before the check runs, so the spec can NEVER produce an instance and its verdict is structural, not a gap. These are NOT `unwritten` -- writing them would not create a test. They are the R3 (survives repair) failures. They are also in NO family, which is why they are excluded here.",
+    "distinct_from_a_family_member": "M3.12 is ALSO `avoided`/repaired but it is M3-h's declared realisation, so it stays in `families` and is reported by the `unrealisable_as_declared` check instead of being filed here. The two buckets must not be merged: this one means 'nothing to do', that one means 'the family needs a different realisation'.",
+    "note": "M3.12's own registry note records why: 'RECLASSIFIED rt-check -> avoided. memcheck.hpp:106-123 raises Error1 when compile-time SHARED/LOCAL usage exceeds the limit... there is no test to run.' It also names the cause of the 28/40 M3 noops in the committed v1 baseline."
   },
   "dead_declarations": {
     "spec_ids": [
@@ -544,8 +552,8 @@
     "items": {
       "M3-d:no admissible declaration": {
         "finding": "no admissible declaration",
-        "observed": "the family's only spec_id M3.4 is `pending, P1, admissible: false, prohibition: absent`",
-        "why_real": "M3.4 'dim. footprint' carries the prohibition `absent`: the model does not forbid the state, so no obligation assesses it and no operator can ever enter the denominator. Note the spec is on P1 and merely unwritten -- which is exactly why `R_f < 2, needs the declared realisation written` was the wrong label. Writing M3.4 would raise R_f and leave R_a at 0.",
+        "observed": "the family's only spec_id M3.4 is `pending, rt-check, admissible: false, prohibition: absent`",
+        "why_real": "M3.4 'dim. footprint' carries the prohibition `absent`: the model does not forbid the state, so no obligation assesses it and no operator can ever enter the denominator. Note the spec is on rt-check and merely unwritten -- which is exactly why `R_f < 2, needs the declared realisation written` was the wrong label. Writing M3.4 would raise R_f and leave R_a at 0.",
         "must_not_print_as": "one of the families that just need their declared spec written",
         "fix": "W1: either give the model a prohibition for the per-dimension footprint bound (so the family becomes testable), or declare M3-d n/a `absent`. Deciding which is a design call, not a coding one.",
         "clears_when": "M3-d gains an admissible spec_id, or is declared n/a `absent`"
@@ -560,8 +568,8 @@
       },
       "M3-f:no admissible declaration": {
         "finding": "no admissible declaration",
-        "observed": "the family's only spec_id M3.8 is `pending, P1, admissible: false, prohibition: absent`",
-        "why_real": "M3.8 'descriptor rank' carries the prohibition `absent`, so no operator on it may enter the denominator. Same shape as M3-d: a P1 spec that is unrunnable for a model reason, not withheld for want of effort.",
+        "observed": "the family's only spec_id M3.8 is `pending, rt-check, admissible: false, prohibition: absent`",
+        "why_real": "M3.8 'descriptor rank' carries the prohibition `absent`, so no operator on it may enter the denominator. Same shape as M3-d: an rt-check spec that is unrunnable for a model reason, not withheld for want of effort.",
         "must_not_print_as": "one of the families that just need their declared spec written",
         "fix": "W1: give the model a prohibition for an out-of-range descriptor rank, or declare M3-f n/a `absent`.",
         "clears_when": "M3-f gains an admissible spec_id, or is declared n/a `absent`"
@@ -571,11 +579,11 @@
   "measured_depth": {
     "note": "Two orthogonal depths per family, both measured against the registry. R_f is how many realisations exist; R_a is how many of those can serve as a TEST. A family with R_f > 0 and R_a == 0 has operators but no admissible test -- a sharper statement than R_f == 0 and invisible if only R_f is printed.",
     "R_f_definition": "spec_ids in the family with status `implemented`",
-    "R_a_definition": "spec_ids in the family with status `implemented` AND admissible is true AND path is not P2",
+    "R_a_definition": "spec_ids in the family with status `implemented` AND admissible is true AND path is not `avoided`",
     "findings": {
       "M3-e": "R_f 1, R_a 0. M3.6 `leading dim not aligned to descriptor granularity` ships 8 operators but is declared `admissible: false` with prohibition `absent`, so alignment currently has operators and no test. This is a coverage hole that the R_f-only view reports as a healthy 1.",
       "M4-d": "R_f 1, R_a 0 by design -- it is the declared noop control, so its instances must be inadmissible for the admissible floor to mean anything.",
-      "M3-h": "R_f 2, R_a 2 after the P1 re-realisations M3.27/M3.28. The declared M3.12 is still P2 (compile-time capacity is refused), but a runtime-shaped extent escapes the static check, which is exactly the channel M3-h is about. Before this the family read as unrealisable as declared rather than merely unwritten."
+      "M3-h": "R_f 2, R_a 2 after the rt-check re-realisations M3.27/M3.28. The declared M3.12 is still `avoided` (compile-time capacity is refused), but a runtime-shaped extent escapes the static check, which is exactly the channel M3-h is about. Before this the family read as unrealisable as declared rather than merely unwritten."
     }
   },
   "spec_status": {

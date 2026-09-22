@@ -17,10 +17,10 @@
    "observation": 3
   },
   "path_counts": {
-   "P1": 54,
-   "P3": 10,
-   "P2": 5,
-   "P4": 1,
+   "rt-check": 54,
+   "unchecked": 10,
+   "avoided": 5,
+   "ct-check": 1,
    "L": 7
   },
   "implemented": [
@@ -233,7 +233,7 @@
   {
    "spec_id": "M1.1",
    "cls": "M1",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -243,7 +243,7 @@
   {
    "spec_id": "M1.10",
    "cls": "M1",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -253,7 +253,7 @@
   {
    "spec_id": "M1.11",
    "cls": "M1",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -263,7 +263,7 @@
   {
    "spec_id": "M1.12",
    "cls": "M1",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -273,7 +273,7 @@
   {
    "spec_id": "M1.13",
    "cls": "M1",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -283,7 +283,7 @@
   {
    "spec_id": "M1.14",
    "cls": "M1",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -293,7 +293,7 @@
   {
    "spec_id": "M1.15",
    "cls": "M1",
-   "path": "P3",
+   "path": "unchecked",
    "admissible": false,
    "prohibition": "absent",
    "status": "pending",
@@ -303,7 +303,7 @@
   {
    "spec_id": "M1.16",
    "cls": "M1",
-   "path": "P3",
+   "path": "unchecked",
    "admissible": false,
    "prohibition": "absent",
    "status": "pending",
@@ -313,7 +313,7 @@
   {
    "spec_id": "M1.17",
    "cls": "M1",
-   "path": "P3",
+   "path": "unchecked",
    "admissible": false,
    "prohibition": "absent",
    "status": "pending",
@@ -323,7 +323,7 @@
   {
    "spec_id": "M1.18",
    "cls": "M1",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": false,
    "prohibition": "absent",
    "status": "pending",
@@ -333,7 +333,7 @@
   {
    "spec_id": "M1.19",
    "cls": "M1",
-   "path": "P3",
+   "path": "unchecked",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -343,7 +343,7 @@
   {
    "spec_id": "M1.2",
    "cls": "M1",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -353,27 +353,27 @@
   {
    "spec_id": "M1.20",
    "cls": "M1",
-   "path": "P3",
+   "path": "unchecked",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
    "desc": "view / subspan offset, stride, rank arity (_StaticFail_-only; symbols neither refused nor checked)",
-   "note": "P3 for a symbolic offset, P2 (repaired) for a static one -- the split must be explicit or the noop rate is an artefact"
+   "note": "unchecked for a symbolic offset, avoided (repaired) for a static one -- the split must be explicit or the noop rate is an artefact"
   },
   {
    "spec_id": "M1.21",
    "cls": "M1",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
    "desc": "tileat/at index vs the tiled extent; step/stride tail on a non-divisible extent",
-   "note": "P1 per-dim, P2-P3 for the composition"
+   "note": "rt-check per-dim, avoided/unchecked for the composition"
   },
   {
    "spec_id": "M1.3",
    "cls": "M1",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -383,7 +383,7 @@
   {
    "spec_id": "M1.4",
    "cls": "M1",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -393,7 +393,7 @@
   {
    "spec_id": "M1.5",
    "cls": "M1",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -403,7 +403,7 @@
   {
    "spec_id": "M1.6",
    "cls": "M4",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": false,
    "prohibition": "absent",
    "status": "implemented",
@@ -413,7 +413,7 @@
   {
    "spec_id": "M1.7",
    "cls": "M4",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -423,7 +423,7 @@
   {
    "spec_id": "M1.8",
    "cls": "M1",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -433,7 +433,7 @@
   {
    "spec_id": "M1.9",
    "cls": "M1",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -443,7 +443,7 @@
   {
    "spec_id": "M2.1",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -453,7 +453,7 @@
   {
    "spec_id": "M2.10",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -463,7 +463,7 @@
   {
    "spec_id": "M2.11",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -473,7 +473,7 @@
   {
    "spec_id": "M2.12",
    "cls": "M2",
-   "path": "P2",
+   "path": "avoided",
    "admissible": false,
    "prohibition": "repaired",
    "status": "pending",
@@ -483,7 +483,7 @@
   {
    "spec_id": "M2.13",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -493,7 +493,7 @@
   {
    "spec_id": "M2.14",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -503,7 +503,7 @@
   {
    "spec_id": "M2.15",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -513,7 +513,7 @@
   {
    "spec_id": "M2.16",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -523,7 +523,7 @@
   {
    "spec_id": "M2.17",
    "cls": "M2",
-   "path": "P3",
+   "path": "unchecked",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -533,17 +533,17 @@
   {
    "spec_id": "M2.18",
    "cls": "M2",
-   "path": "P4",
+   "path": "ct-check",
    "admissible": false,
    "prohibition": "absent",
    "status": "pending",
    "desc": "reshape on a non-contiguous span (warning-only path)",
-   "note": "semacheck.cpp:1195+ Warning(rop->LOC(), ...) -- the only P4 spec, so this gap leaves the warning-then-continue path with ZERO coverage. MISSING SURFACE: a strided view. Every reshape case applies span_as to a contiguous parameter, and preserving ElementCount() rules out slicing; a non-contiguous span needs a stride the source suite never writes"
+   "note": "semacheck.cpp:1195+ Warning(rop->LOC(), ...) -- the only ct-check-from-warning spec, so this gap leaves the warning-then-continue path with ZERO coverage. MISSING SURFACE: a strided view. Every reshape case applies span_as to a contiguous parameter, and preserving ElementCount() rules out slicing; a non-contiguous span needs a stride the source suite never writes"
   },
   {
    "spec_id": "M2.19",
    "cls": "M2",
-   "path": "P3",
+   "path": "unchecked",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -553,7 +553,7 @@
   {
    "spec_id": "M2.2",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -563,7 +563,7 @@
   {
    "spec_id": "M2.21",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -573,7 +573,7 @@
   {
    "spec_id": "M2.3",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -583,7 +583,7 @@
   {
    "spec_id": "M2.4",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -593,7 +593,7 @@
   {
    "spec_id": "M2.5",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -603,7 +603,7 @@
   {
    "spec_id": "M2.6",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -613,7 +613,7 @@
   {
    "spec_id": "M2.7",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -623,7 +623,7 @@
   {
    "spec_id": "M2.8",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -633,7 +633,7 @@
   {
    "spec_id": "M2.9",
    "cls": "M2",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -643,7 +643,7 @@
   {
    "spec_id": "M3.1",
    "cls": "M3",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -653,7 +653,7 @@
   {
    "spec_id": "M3.10",
    "cls": "M3",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -663,7 +663,7 @@
   {
    "spec_id": "M3.11",
    "cls": "M3",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": false,
    "prohibition": "absent",
    "status": "pending",
@@ -673,17 +673,17 @@
   {
    "spec_id": "M3.12",
    "cls": "M3",
-   "path": "P2",
+   "path": "avoided",
    "admissible": false,
    "prohibition": "repaired",
    "status": "pending",
    "desc": "shared tile exactly at the capacity bound (+/-1 KiB edge)",
-   "note": "RECLASSIFIED P1 -> P2. memcheck.hpp:106-123 (CheckCtMemUsage) raises Error1 when compile-time SHARED/LOCAL usage exceeds the limit, so the model FORBIDS the state and the compiler refuses it: there is no test to run. A runtime channel exists only when an extent is symbolic, which the suite's shared tiles are not. This also explains the 28/40 M3 noops in the committed v1 baseline -- v1 s3 was exactly this family (specs \u00a73.0)"
+   "note": "RECLASSIFIED rt-check -> avoided. memcheck.hpp:106-123 (CheckCtMemUsage) raises Error1 when compile-time SHARED/LOCAL usage exceeds the limit, so the model FORBIDS the state and the compiler refuses it: there is no test to run. A runtime channel exists only when an extent is symbolic, which the suite's shared tiles are not. This also explains the 28/40 M3 noops in the committed v1 baseline -- v1 s3 was exactly this family (specs \u00a73.0)"
   },
   {
    "spec_id": "M3.13",
    "cls": "M3",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": false,
    "prohibition": "absent",
    "status": "pending",
@@ -693,7 +693,7 @@
   {
    "spec_id": "M3.14",
    "cls": "M3",
-   "path": "P3",
+   "path": "unchecked",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -703,7 +703,7 @@
   {
    "spec_id": "M3.15",
    "cls": "M3",
-   "path": "P3",
+   "path": "unchecked",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -713,7 +713,7 @@
   {
    "spec_id": "M3.16",
    "cls": "M3",
-   "path": "P3",
+   "path": "unchecked",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -743,17 +743,17 @@
   {
    "spec_id": "M3.19",
    "cls": "M3",
-   "path": "P2",
+   "path": "avoided",
    "admissible": false,
    "prohibition": "repaired",
    "status": "pending",
    "desc": "__launch_bounds__ understated vs actual block size",
-   "note": "was L3, upgraded absent -> repaired on direct evidence: `choreo -gs -t cute -arch=sm_86` on tests/gpu/codegen/cute/launch_bounds.co reports `error: [[launch_bounds]] maxThreadsPerBlock (8) is less than the computed thread count (64).` The model DERIVES the required extent and refuses any understatement, so there is no test to run (P2). The suite still never writes the attribute, but that is no longer the operative reason"
+   "note": "was L3, upgraded absent -> repaired on direct evidence: `choreo -gs -t cute -arch=sm_86` on tests/gpu/codegen/cute/launch_bounds.co reports `error: [[launch_bounds]] maxThreadsPerBlock (8) is less than the computed thread count (64).` The model DERIVES the required extent and refuses any understatement, so there is no test to run (avoided). The suite still never writes the attribute, but that is no longer the operative reason"
   },
   {
    "spec_id": "M3.2",
    "cls": "M3",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": false,
    "prohibition": "absent",
    "status": "pending",
@@ -773,22 +773,22 @@
   {
    "spec_id": "M3.21",
    "cls": "M3",
-   "path": "P2",
+   "path": "avoided",
    "admissible": false,
    "prohibition": "repaired",
    "status": "pending",
    "desc": "shared tile exceeds per-SM capacity",
-   "note": "RECLASSIFIED: the v2.1 L-class membership assumed the launch-rejected channel, but the check the compiler actually performs is memcheck.hpp:106-123 CheckCtMemUsage -> Error1, a hard compile-time refusal (P2). Same mechanism as M3.12, one step past the limit"
+   "note": "RECLASSIFIED: the v2.1 L-class membership assumed the launch-rejected channel, but the check the compiler actually performs is memcheck.hpp:106-123 CheckCtMemUsage -> Error1, a hard compile-time refusal, so the model forbids it (avoided). Same mechanism as M3.12, one step past the limit"
   },
   {
    "spec_id": "M3.22",
    "cls": "M3",
-   "path": "P2",
+   "path": "avoided",
    "admissible": false,
    "prohibition": "repaired",
    "status": "pending",
    "desc": "WGMMA used below sm_90",
-   "note": "was L6, upgraded absent -> repaired on direct evidence: `choreo -gs -t cute -arch=sm_86` on tests/gpu/end2end/wgmma_ss.co reports `error: group-4 level is not supported by the target architecture: sm_86.` (x14); the same file compiles clean under `-arch=sm_90a`. This is the K5 feature-gating discharge: the compiler refuses the feature below sm_90, so there is no test to run (P2)"
+   "note": "was L6, upgraded absent -> repaired on direct evidence: `choreo -gs -t cute -arch=sm_86` on tests/gpu/end2end/wgmma_ss.co reports `error: group-4 level is not supported by the target architecture: sm_86.` (x14); the same file compiles clean under `-arch=sm_90a`. This is the K5 feature-gating discharge: the compiler refuses the feature below sm_90, so there is no test to run (avoided)"
   },
   {
    "spec_id": "M3.23",
@@ -833,7 +833,7 @@
   {
    "spec_id": "M3.27",
    "cls": "M3",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -843,7 +843,7 @@
   {
    "spec_id": "M3.28",
    "cls": "M3",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -853,7 +853,7 @@
   {
    "spec_id": "M3.3",
    "cls": "M3",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": false,
    "prohibition": "absent",
    "status": "pending",
@@ -863,7 +863,7 @@
   {
    "spec_id": "M3.4",
    "cls": "M3",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": false,
    "prohibition": "absent",
    "status": "pending",
@@ -873,7 +873,7 @@
   {
    "spec_id": "M3.5",
    "cls": "M3",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": false,
    "prohibition": "absent",
    "status": "pending",
@@ -883,7 +883,7 @@
   {
    "spec_id": "M3.6",
    "cls": "M3",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": false,
    "prohibition": "absent",
    "status": "implemented",
@@ -893,7 +893,7 @@
   {
    "spec_id": "M3.7",
    "cls": "M3",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": false,
    "prohibition": "absent",
    "status": "pending",
@@ -903,7 +903,7 @@
   {
    "spec_id": "M3.8",
    "cls": "M3",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": false,
    "prohibition": "absent",
    "status": "pending",
@@ -913,7 +913,7 @@
   {
    "spec_id": "M3.9",
    "cls": "M3",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -923,7 +923,7 @@
   {
    "spec_id": "M4.1",
    "cls": "M4",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -933,7 +933,7 @@
   {
    "spec_id": "M4.2",
    "cls": "M4",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -943,7 +943,7 @@
   {
    "spec_id": "M4.3",
    "cls": "M4",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -953,7 +953,7 @@
   {
    "spec_id": "M4.4",
    "cls": "M4",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": false,
    "prohibition": "absent",
    "status": "pending",
@@ -963,7 +963,7 @@
   {
    "spec_id": "M4.5",
    "cls": "M4",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -973,7 +973,7 @@
   {
    "spec_id": "M4.6",
    "cls": "M4",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
@@ -983,22 +983,22 @@
   {
    "spec_id": "M4.7",
    "cls": "M4",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
    "desc": "padded extent goes NEGATIVE -- the negative-padding corner the GSC study names",
-   "note": "re-realises M2.12's negative-padding trigger on P1 (method-taxonomy.json `reassigned.M2.12`): the rank repair through `.pad` was P2/`repaired` and so never generated. The edit is on the padded-extent derivation, not on a loop literal, which is what keeps it distinct from the empty-range control M4-d"
+   "note": "re-realises M2.12's negative-padding trigger on rt-check (method-taxonomy.json `reassigned.M2.12`): the rank repair through `.pad` was avoided/`repaired` and so never generated. The edit is on the padded-extent derivation, not on a loop literal, which is what keeps it distinct from the empty-range control M4-d"
   },
   {
    "spec_id": "M4.8",
    "cls": "M4",
-   "path": "P1",
+   "path": "rt-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
    "desc": "padded extent goes EMPTY -- the zero-length half of the GSC corner-case trigger",
-   "note": "the second P1 realisation of M4-g, so the family is not evidence from a single operator (defect D1). An empty padded extent is a legal zero-trip loop whose body never runs, so the expected verdict is a miss, not a refusal"
+   "note": "the second rt-check realisation of M4-g, so the family is not evidence from a single operator (defect D1). An empty padded extent is a legal zero-trip loop whose body never runs, so the expected verdict is a miss, not a refusal"
   }
  ]
 }

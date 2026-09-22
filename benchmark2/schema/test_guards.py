@@ -68,7 +68,7 @@ def registry() -> dict:
 
 def generatable(spec_id: str) -> bool:
     e = registry().get(spec_id) or {}
-    return e.get("status") == "implemented" and e.get("path") != "P2"
+    return e.get("status") == "implemented" and e.get("path") != "avoided"
 
 
 # ---------------------------------------------------------------------------

@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-09-11T19:22:57",
+  "generated_at": "2026-09-22T15:40:47",
   "lanes_ready": [
     "choreo",
+    "triton",
     "mlir-linalg",
     "mlir-low",
-    "iree",
-    "triton"
+    "iree"
   ],
   "lanes_missing": [
     "tilelang"
@@ -23,6 +23,12 @@
       "S13",
       "S14"
     ],
+    "triton": [
+      "S1",
+      "S8",
+      "S9",
+      "S12"
+    ],
     "mlir-linalg": [
       "S1",
       "S8",
@@ -36,12 +42,6 @@
       "S12"
     ],
     "iree": [
-      "S1",
-      "S8",
-      "S9",
-      "S12"
-    ],
-    "triton": [
       "S1",
       "S8",
       "S9",
@@ -70,75 +70,13 @@
         "n_runtime": 0,
         "n_never": 10,
         "n_na": 0
-      }
-    },
-    "mlir-linalg": {
-      "M1": {
+      },
+      "M4": {
         "n_injected": 0,
         "n_compile": 0,
         "n_runtime": 0,
         "n_never": 0,
-        "n_na": 40
-      },
-      "M2": {
-        "n_injected": 50,
-        "n_compile": 34,
-        "n_runtime": 0,
-        "n_never": 10,
-        "n_na": 6
-      },
-      "M3": {
-        "n_injected": 0,
-        "n_compile": 0,
-        "n_runtime": 0,
-        "n_never": 0,
-        "n_na": 40
-      }
-    },
-    "mlir-low": {
-      "M1": {
-        "n_injected": 48,
-        "n_compile": 0,
-        "n_runtime": 38,
-        "n_never": 10,
         "n_na": 0
-      },
-      "M2": {
-        "n_injected": 0,
-        "n_compile": 0,
-        "n_runtime": 0,
-        "n_never": 0,
-        "n_na": 40
-      },
-      "M3": {
-        "n_injected": 0,
-        "n_compile": 0,
-        "n_runtime": 0,
-        "n_never": 0,
-        "n_na": 40
-      }
-    },
-    "iree": {
-      "M1": {
-        "n_injected": 0,
-        "n_compile": 0,
-        "n_runtime": 0,
-        "n_never": 0,
-        "n_na": 40
-      },
-      "M2": {
-        "n_injected": 23,
-        "n_compile": 0,
-        "n_runtime": 19,
-        "n_never": 4,
-        "n_na": 0
-      },
-      "M3": {
-        "n_injected": 0,
-        "n_compile": 0,
-        "n_runtime": 0,
-        "n_never": 0,
-        "n_na": 40
       }
     },
     "triton": {
@@ -162,11 +100,120 @@
         "n_runtime": 0,
         "n_never": 0,
         "n_na": 0
+      },
+      "M4": {
+        "n_injected": 0,
+        "n_compile": 0,
+        "n_runtime": 0,
+        "n_never": 0,
+        "n_na": 0
+      }
+    },
+    "mlir-linalg": {
+      "M1": {
+        "n_injected": 0,
+        "n_compile": 0,
+        "n_runtime": 0,
+        "n_never": 0,
+        "n_na": 40
+      },
+      "M2": {
+        "n_injected": 50,
+        "n_compile": 34,
+        "n_runtime": 0,
+        "n_never": 10,
+        "n_na": 6
+      },
+      "M3": {
+        "n_injected": 0,
+        "n_compile": 0,
+        "n_runtime": 0,
+        "n_never": 0,
+        "n_na": 40
+      },
+      "M4": {
+        "n_injected": 0,
+        "n_compile": 0,
+        "n_runtime": 0,
+        "n_never": 0,
+        "n_na": 0
+      }
+    },
+    "mlir-low": {
+      "M1": {
+        "n_injected": 48,
+        "n_compile": 0,
+        "n_runtime": 38,
+        "n_never": 10,
+        "n_na": 0
+      },
+      "M2": {
+        "n_injected": 0,
+        "n_compile": 0,
+        "n_runtime": 0,
+        "n_never": 0,
+        "n_na": 40
+      },
+      "M3": {
+        "n_injected": 0,
+        "n_compile": 0,
+        "n_runtime": 0,
+        "n_never": 0,
+        "n_na": 40
+      },
+      "M4": {
+        "n_injected": 0,
+        "n_compile": 0,
+        "n_runtime": 0,
+        "n_never": 0,
+        "n_na": 0
+      }
+    },
+    "iree": {
+      "M1": {
+        "n_injected": 0,
+        "n_compile": 0,
+        "n_runtime": 0,
+        "n_never": 0,
+        "n_na": 40
+      },
+      "M2": {
+        "n_injected": 23,
+        "n_compile": 0,
+        "n_runtime": 19,
+        "n_never": 4,
+        "n_na": 0
+      },
+      "M3": {
+        "n_injected": 0,
+        "n_compile": 0,
+        "n_runtime": 0,
+        "n_never": 0,
+        "n_na": 40
+      },
+      "M4": {
+        "n_injected": 0,
+        "n_compile": 0,
+        "n_runtime": 0,
+        "n_never": 0,
+        "n_na": 0
       }
     }
   },
   "S12_sanitizer_supplement": {
     "choreo": {},
+    "triton": {
+      "M1": {
+        "flagged_and_exercised": 23,
+        "total": 27,
+        "flagged": 23
+      },
+      "M3": {
+        "flagged_and_exercised": 0,
+        "total": 2,
+        "flagged": 0
+      }
+    },
     "mlir-linalg": {
       "M2": {
         "flagged_and_exercised": 0,
@@ -260,21 +307,31 @@
         "total": 23,
         "flagged": 0
       }
-    },
-    "triton": {
-      "M1": {
-        "flagged_and_exercised": 23,
-        "total": 27,
-        "flagged": 23
-      },
-      "M3": {
-        "flagged_and_exercised": 0,
-        "total": 2,
-        "flagged": 0
-      }
     }
   },
   "S8_expressibility": {
+    "triton": {
+      "elem": {
+        "yes": 15,
+        "partial": 0,
+        "no": 0
+      },
+      "hw": {
+        "yes": 0,
+        "partial": 15,
+        "no": 0
+      },
+      "loop": {
+        "yes": 15,
+        "partial": 0,
+        "no": 0
+      },
+      "shape": {
+        "yes": 0,
+        "partial": 0,
+        "no": 15
+      }
+    },
     "mlir-linalg": {
       "elem": {
         "yes": 7,
@@ -340,31 +397,10 @@
         "partial": 0,
         "no": 1
       }
-    },
-    "triton": {
-      "elem": {
-        "yes": 15,
-        "partial": 0,
-        "no": 0
-      },
-      "hw": {
-        "yes": 0,
-        "partial": 15,
-        "no": 0
-      },
-      "loop": {
-        "yes": 15,
-        "partial": 0,
-        "no": 0
-      },
-      "shape": {
-        "yes": 0,
-        "partial": 0,
-        "no": 15
-      }
     }
   },
   "S9_remainder": {
+    "triton": "n/a (no generated checks)",
     "mlir-linalg": {
       "per_category": {
         "concat": 36,
@@ -410,8 +446,7 @@
       },
       "total": 157,
       "criterion_ref": "entry dynamic dims (not statically foldable)"
-    },
-    "triton": "n/a (no generated checks)"
+    }
   },
   "S2_before_device": {
     "status": "ok",
@@ -422,15 +457,24 @@
     "n_runtime": 11,
     "n_never": 37,
     "n_na": 0,
-    "n_discarded_noop": 48,
+    "n_discarded_noop": 4,
+    "n_undecidable": 44,
+    "undecidable_means": "the unmutated base fails its own reference check, so no manifest verdict exists for this cell. Excluded from n_injected like a noop, but NOT evidence that the mutation does not corrupt output -- it is unmeasured. Never add it to n_discarded_noop: that would report a measurement failure as a clean negative.",
     "pct_before_device": 48.6111,
     "never_is_zero": false,
     "never_is_zero_status": "RETIRED (R-D2, 2026-09-10) \u2014 a non-zero `never` is no longer a failure; an UNATTRIBUTED one is. Do not report this as pass/fail.",
     "per_class_before_device": {
       "M1": 13,
       "M2": 20,
-      "M3": 2
+      "M3": 2,
+      "M4": 0
     },
+    "control_classes": [
+      "M4"
+    ],
+    "n_injected_excluding_control": 72,
+    "n_before_device_excluding_control": 35,
+    "pct_before_device_excluding_control": 48.6111,
     "settings_hash": [
       "28fee96c8330",
       "55b2395980bd",
@@ -2465,35 +2509,35 @@
     "feeds": "E1 path-class register (\u00a75.2; new float tab:e1-path-class)",
     "register_source": "choreo/raw/spec_registry.json",
     "denominator": {
-      "n_specs": 72,
-      "n_applicable": 44,
+      "n_specs": 77,
+      "n_applicable": 49,
       "n_not_applicable": 28,
       "n_out_of_scope": 0,
-      "rule": "admissible specs (P1/P3/P4 + the L row reported separately) form the detection denominator; an inadmissible spec is a recorded verdict with a named prohibition and is NOT open work (specs \u00a72)"
+      "rule": "admissible specs (rt-check/unchecked/ct-check + the L row reported separately) form the detection denominator; an inadmissible spec is a recorded verdict with a named prohibition and is NOT open work (specs \u00a72)"
     },
     "prohibition": {
-      "absent": 22,
+      "absent": 20,
       "derived": 0,
-      "repaired": 3,
+      "repaired": 5,
       "harness-owned": 0,
       "observation": 3
     },
     "prohibition_by_path": {
       "L": {
         "observation": 3,
-        "absent": 6
+        "absent": 4
       },
-      "P1": {
+      "avoided": {
+        "repaired": 5
+      },
+      "ct-check": {
+        "absent": 1
+      },
+      "rt-check": {
         "absent": 12
       },
-      "P2": {
-        "repaired": 3
-      },
-      "P3": {
+      "unchecked": {
         "absent": 3
-      },
-      "P4": {
-        "absent": 1
       }
     },
     "per_path": {
@@ -2502,45 +2546,57 @@
         "n_compile": 2,
         "n_detected": 2,
         "n_detected_pct": null,
-        "n_discarded_noop": 5,
         "n_injected": 2,
-        "n_never_share_of_misses": null
+        "n_never_share_of_misses": null,
+        "n_undecidable": 5
       },
-      "P1": {
+      "UNRESOLVED": {
+        "n_cells": 10,
+        "n_compile": 6,
+        "n_detected": 6,
+        "n_detected_pct": null,
+        "n_injected": 7,
+        "n_never": 1,
+        "n_never_share_of_misses": null,
+        "n_undecidable": 3
+      },
+      "rt-check": {
         "n_admissible": 60,
-        "n_cells": 113,
-        "n_compile": 22,
-        "n_detected": 33,
+        "n_cells": 103,
+        "n_compile": 16,
+        "n_detected": 27,
         "n_detected_admissible": 27,
         "n_detected_pct": 45.0,
-        "n_discarded_noop": 43,
-        "n_injected": 70,
-        "n_never": 37,
+        "n_discarded_noop": 4,
+        "n_injected": 63,
+        "n_never": 36,
         "n_never_admissible": 33,
         "n_never_share_of_misses": 100.0,
-        "n_runtime": 11
+        "n_runtime": 11,
+        "n_undecidable": 36
       }
     },
     "per_spec": {
-      "L1": {
-        "class": "L",
-        "n_cells": 7,
-        "n_compile": 2,
-        "n_detected": 2,
-        "n_discarded_noop": 5,
-        "n_injected": 2,
-        "path_class": "L",
-        "prohibition": "observation"
+      "(unresolved)": {
+        "class": "M1",
+        "n_cells": 10,
+        "n_compile": 6,
+        "n_detected": 6,
+        "n_injected": 7,
+        "n_never": 1,
+        "n_undecidable": 3,
+        "path_class": "UNRESOLVED",
+        "prohibition": ""
       },
       "M1.1": {
         "class": "M1",
         "n_admissible": 1,
         "n_cells": 2,
-        "n_discarded_noop": 1,
         "n_injected": 1,
         "n_never": 1,
         "n_never_admissible": 1,
-        "path_class": "P1",
+        "n_undecidable": 1,
+        "path_class": "rt-check",
         "prohibition": ""
       },
       "M1.2": {
@@ -2549,23 +2605,23 @@
         "n_cells": 9,
         "n_detected": 4,
         "n_detected_admissible": 4,
-        "n_discarded_noop": 2,
         "n_injected": 7,
         "n_never": 3,
         "n_never_admissible": 3,
         "n_runtime": 4,
-        "path_class": "P1",
+        "n_undecidable": 2,
+        "path_class": "rt-check",
         "prohibition": ""
       },
       "M1.3": {
         "class": "M1",
         "n_admissible": 6,
         "n_cells": 7,
-        "n_discarded_noop": 1,
         "n_injected": 6,
         "n_never": 6,
         "n_never_admissible": 6,
-        "path_class": "P1",
+        "n_undecidable": 1,
+        "path_class": "rt-check",
         "prohibition": ""
       },
       "M1.4": {
@@ -2576,30 +2632,19 @@
         "n_detected": 3,
         "n_detected_admissible": 3,
         "n_injected": 3,
-        "path_class": "P1",
+        "path_class": "rt-check",
         "prohibition": ""
       },
       "M1.5": {
         "class": "M1",
         "n_admissible": 6,
         "n_cells": 9,
-        "n_discarded_noop": 3,
         "n_injected": 6,
         "n_never": 6,
         "n_never_admissible": 6,
-        "path_class": "P1",
+        "n_undecidable": 3,
+        "path_class": "rt-check",
         "prohibition": ""
-      },
-      "M1.6": {
-        "class": "M1",
-        "n_cells": 10,
-        "n_compile": 6,
-        "n_detected": 6,
-        "n_discarded_noop": 3,
-        "n_injected": 7,
-        "n_never": 1,
-        "path_class": "P1",
-        "prohibition": "absent"
       },
       "M2.1": {
         "class": "M2",
@@ -2608,10 +2653,11 @@
         "n_compile": 4,
         "n_detected": 10,
         "n_detected_admissible": 10,
-        "n_discarded_noop": 4,
+        "n_discarded_noop": 3,
         "n_injected": 10,
         "n_runtime": 6,
-        "path_class": "P1",
+        "n_undecidable": 1,
+        "path_class": "rt-check",
         "prohibition": ""
       },
       "M2.2": {
@@ -2621,11 +2667,11 @@
         "n_compile": 5,
         "n_detected": 5,
         "n_detected_admissible": 5,
-        "n_discarded_noop": 2,
         "n_injected": 6,
         "n_never": 1,
         "n_never_admissible": 1,
-        "path_class": "P1",
+        "n_undecidable": 2,
+        "path_class": "rt-check",
         "prohibition": ""
       },
       "M2.3": {
@@ -2635,11 +2681,12 @@
         "n_compile": 1,
         "n_detected": 1,
         "n_detected_admissible": 1,
-        "n_discarded_noop": 2,
+        "n_discarded_noop": 1,
         "n_injected": 2,
         "n_never": 1,
         "n_never_admissible": 1,
-        "path_class": "P1",
+        "n_undecidable": 1,
+        "path_class": "rt-check",
         "prohibition": ""
       },
       "M2.4": {
@@ -2649,12 +2696,12 @@
         "n_compile": 3,
         "n_detected": 4,
         "n_detected_admissible": 4,
-        "n_discarded_noop": 2,
         "n_injected": 8,
         "n_never": 4,
         "n_never_admissible": 4,
         "n_runtime": 1,
-        "path_class": "P1",
+        "n_undecidable": 2,
+        "path_class": "rt-check",
         "prohibition": ""
       },
       "M2.5": {
@@ -2664,31 +2711,52 @@
         "n_injected": 4,
         "n_never": 4,
         "n_never_admissible": 4,
-        "path_class": "P1",
+        "path_class": "rt-check",
         "prohibition": ""
       },
       "M3.1": {
         "class": "M3",
         "n_admissible": 7,
         "n_cells": 25,
-        "n_discarded_noop": 18,
         "n_injected": 7,
         "n_never": 7,
         "n_never_admissible": 7,
-        "path_class": "P1",
+        "n_undecidable": 18,
+        "path_class": "rt-check",
         "prohibition": ""
+      },
+      "M3.17": {
+        "class": "M3",
+        "n_cells": 7,
+        "n_compile": 2,
+        "n_detected": 2,
+        "n_injected": 2,
+        "n_undecidable": 5,
+        "path_class": "L",
+        "prohibition": "observation"
       },
       "M3.6": {
         "class": "M3",
         "n_cells": 8,
-        "n_discarded_noop": 5,
         "n_injected": 3,
         "n_never": 3,
-        "path_class": "P1",
+        "n_undecidable": 5,
+        "path_class": "rt-check",
         "prohibition": "absent"
       }
     },
-    "unresolved_spec_cells": [],
+    "unresolved_spec_cells": [
+      "M1.s6.ln1.empty",
+      "M1.s6.ln1.zerostride",
+      "M1.s6.ln3.empty",
+      "M1.s6.rl1.empty",
+      "M1.s6.rl11.empty",
+      "M1.s6.sm1.empty",
+      "M1.s6.sm1.zerostride",
+      "M1.s6.sm11.empty",
+      "M1.s6.tp1.empty",
+      "M1.s6.tp11.empty"
+    ],
     "applicability_audit": {
       "question": "does each inadmissible spec's DESIGN claim survive the record-level ground truth?",
       "status": "CONTRADICTED",
@@ -2696,21 +2764,21 @@
       "n_contradicting": 2,
       "rows": [
         {
-          "spec_id": "M1.6",
+          "spec_id": "(unresolved)",
           "class": "M1",
-          "path_class": "P1",
-          "prohibition": "absent",
-          "desc": "zero-stride / empty range",
+          "path_class": "UNRESOLVED",
+          "prohibition": "",
+          "desc": null,
           "n_injected": 7,
           "n_detected": 6,
           "n_never": 1,
           "contradicts_design_claim": true,
-          "design_note": "noop by construction -- there is no prohibition to enforce, because the range is correctly empty. Retained for the miss audit, excluded from the admissible denominator"
+          "design_note": null
         },
         {
           "spec_id": "M3.6",
           "class": "M3",
-          "path_class": "P1",
+          "path_class": "rt-check",
           "prohibition": "absent",
           "desc": "leading dim not aligned to descriptor granularity ON A VECTORIZED ACCESS",
           "n_injected": 3,
@@ -2720,8 +2788,8 @@
           "design_note": "replaces v1 M3 s2: the v1 realization (lhs1/rhs1/w1/i1) is a noop because the reference k_matmul is SCALAR, so an unaligned scalar load is legal. Retained as a named control until the vectorized realization is written."
         },
         {
-          "spec_id": "L1",
-          "class": "L",
+          "spec_id": "M3.17",
+          "class": "M3",
           "path_class": "L",
           "prohibition": "observation",
           "desc": "shared-memory tile exceeds the device limit",
@@ -2737,8 +2805,11 @@
     "reconciliation": {
       "against": "S1_detection_matrix / S2_before_device",
       "n_cells": 120,
+      "n_cells_non_detection": 0,
+      "n_cells_compared": 120,
       "n_injected": 72,
-      "n_discarded_noop": 48,
+      "n_discarded_noop": 4,
+      "n_undecidable": 44,
       "n_never": 37,
       "n_detected_all_paths": 35,
       "admissible_injected": 60,
@@ -2748,14 +2819,19 @@
       "inadmissible_detected": 8,
       "matches_S1S2": true,
       "interpretation": "S2's headline rate divides by ALL injected cells; the admissible rate divides only by the cells the register says choreo was fair to ask about. Both must be printed: 8 of S2's detections land on cells the register calls inadmissible, so quoting S2's rate as an admissible-denominator rate would overstate it.",
+      "n_cells_unaccounted": 0,
       "checks": {
         "n_injected": {
           "s14": 72,
           "s1s2": 72
         },
         "n_discarded_noop": {
-          "s14": 48,
-          "s1s2": 48
+          "s14": 4,
+          "s1s2": 4
+        },
+        "n_undecidable": {
+          "s14": 44,
+          "s1s2": 44
         },
         "n_never": {
           "s14": 37,
@@ -2873,15 +2949,19 @@
   },
   "toolchain_identity": {
     "toolchain": "choreo",
-    "version": "a9758246483bb961a347c8c8500f277045add937",
-    "version_basis": "mtime<=commit-date",
-    "checkout_head": "ea937008681827996ded5ccbca9ad2fe7706aee7",
-    "checkout_branch": "svn-artifacts",
+    "version": "fc3ce48c96f391d72f8cdc4c9abd61c429258c13",
+    "version_basis": "binary-newer-than-head",
+    "checkout_head": "fc3ce48c96f391d72f8cdc4c9abd61c429258c13",
+    "checkout_branch": "HEAD",
     "checkout_dirty_source_files": [],
     "binary": "croqtile/build-release/choreo",
-    "binary_sha1_12": "424d9c38c30b",
-    "binary_mtime": 1789035991.498727,
-    "binary_stale_vs_checkout": true
+    "binary_sha1_12": "cd08a2d07d72",
+    "binary_mtime": 1790054440.8010244,
+    "binary_stale_vs_checkout": false,
+    "binary_stale_basis": "source-mtime",
+    "binary_predates_source": false,
+    "binary_newest_source_mtime": 1790051686.2732368,
+    "version_label_disagrees_with_head": false
   },
   "kernel_counts_per_category": {
     "batch_norm": 21,
