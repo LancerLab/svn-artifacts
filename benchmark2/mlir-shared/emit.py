@@ -978,14 +978,16 @@ def _emit_elemwise_add(e: Emitter, case: C.Case,
 
 
 def _emit_pad(e: Emitter, case: C.Case, st: Structural | None) -> tuple[str, str]:
-    """Pad `inp` along axis 0 with a sentinel, leaving the other axes untouched.
+    """Pad `inp` along `PAD_AXIS[category]` with a sentinel, other axes untouched.
 
     This is the family M2-g surface (spec M2.15). The clean kernel pads `PAD_LOW`
     before and `PAD_HIGH` after; the mutant swaps the two. `tensor.pad` takes the
     low/high amounts as static attributes, so the swap is a pure placement change
     that keeps the result type -- and therefore every shape check -- identical.
     The sentinel lands at a different offset, which the order-sensitive checksum
-    sees even though the padded *length* does not change.
+    sees even though the padded *length* does not change. The rank/axis variants
+    (`pad_last`/`pad_mid`/`pad_r3`) reuse this emitter with a different axis; the
+    swap always applies to the axis that actually carries the pad.
     """
     inp_dims, out_dims = case.dims["inp"], case.dims["out"]
     inp_r = concrete(inp_dims, case.dyn, "inp")
@@ -998,8 +1000,11 @@ def _emit_pad(e: Emitter, case: C.Case, st: Structural | None) -> tuple[str, str
     low, high = C.PAD_LOW, C.PAD_HIGH
     if st is not None and st.kind == "pad-swap":
         low, high = high, low
-    lows = [low] + [0] * (nd - 1)
-    highs = [high] + [0] * (nd - 1)
+    ax = C.PAD_AXIS[case.category]
+    lows = [0] * nd
+    highs = [0] * nd
+    lows[ax] = low
+    highs[ax] = high
 
     sentinel = e.new("c")
     e.emit(f"{sentinel} = arith.constant {f32_lit(C.PAD_SENTINEL)} : f32")
@@ -1175,13 +1180,23 @@ EMITTERS = {
     "relu": _emit_relu,
     "transpose": _emit_transpose,
     "transpose_square": _emit_transpose,
+    "transpose_cube": _emit_transpose,
     "concat": _emit_concat,
     "softmax": _emit_softmax,
     "layer_normalization": _emit_layer_norm,
     "elemwise_add": _emit_elemwise_add,
     "pad": _emit_pad,
+    "pad_last": _emit_pad,
+    "pad_mid": _emit_pad,
+    "pad_r3": _emit_pad,
     "reshape": _emit_reshape,
+    "reshape_r3": _emit_reshape,
+    "reshape_r4": _emit_reshape,
+    "reshape_r5": _emit_reshape,
     "broadcast": _emit_broadcast,
+    "broadcast_r2": _emit_broadcast,
+    "broadcast_r4": _emit_broadcast,
+    "broadcast_r5": _emit_broadcast,
 }
 
 

@@ -154,7 +154,13 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
             # "DMA source/destination extent disagreement". The linalg analogue is
             # an output whose extent no longer agrees with what the *inputs*
             # imply. Perturb a trailing axis so this stays distinct from M2.4,
-            # which perturbs the leading axis.
+            # which perturbs the leading axis. Output-only, so it would apply to
+            # any category; it is held to the core set so the rank/axis variants
+            # added to lift M2-d/g/h do not re-open the saturated M2-a battery.
+            if cat not in C.CORE_M2_CATS:
+                raise NotApplicable(
+                    f"M2.2: {cat!r} is a mutation-only variant of another "
+                    f"family's surface")
             out = dims["out"]
             axis = len(out) - 1
             bump("out", axis)
@@ -178,12 +184,22 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
                 )
 
         elif mut.spec == 4:
-            # "output tensor declared with a wrong leading extent".
+            # "output tensor declared with a wrong leading extent". Output-only,
+            # held to the core set for the same reason as M2.2.
+            if cat not in C.CORE_M2_CATS:
+                raise NotApplicable(
+                    f"M2.4: {cat!r} is a mutation-only variant of another "
+                    f"family's surface")
             bump("out", 0)
 
         elif mut.spec == 5:
             # "partial write (omitted tail tile) / duplicate write (overlapping
-            # tile)" -- structural, handled by the emitter.
+            # tile)" -- structural, handled by the emitter. Output-only, held to
+            # the core set so M2-f stays byte-identical.
+            if cat not in C.CORE_M2_CATS:
+                raise NotApplicable(
+                    f"M2.5: {cat!r} is a mutation-only variant of another "
+                    f"family's surface")
             out_r = _concrete(case, "out")
             axis = len(out_r) - 1
             extent = out_r[axis]
@@ -260,7 +276,7 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
             # the square transpose composes this; on a non-square transpose a
             # wrong permutation would change the output shape and be caught
             # trivially, which is not this defect.
-            if cat != "transpose_square":
+            if cat not in C.TRANSPOSE_SQUARE_CATS:
                 raise NotApplicable(
                     f"M2.10: {cat!r} has no square operand whose permutation "
                     f"can be changed with extents intact")
@@ -273,7 +289,8 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
             # map -- and therefore the element mapping -- changes.
             op = {"matmul": "lhs", "concat": "a",
                   "layer_normalization": "lhs", "elemwise_add": "lhs",
-                  "softmax": "inp", "transpose_square": "inp"}.get(cat)
+                  "softmax": "inp", "transpose_square": "inp",
+                  "transpose_cube": "inp"}.get(cat)
             if op is None:
                 raise NotApplicable(f"M2.13: {cat!r} is not an M2 category")
             pair = _equal_pair(_concrete(case, op))
@@ -288,7 +305,7 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
             # preserved, so every extent agrees and the sum-only check is blind;
             # only the placement of the data moves. Only the `pad` kernel carries
             # a pad amount to swap, so the other categories are honestly n/a.
-            if cat != "pad":
+            if cat not in C.PAD_CATS:
                 raise NotApplicable(
                     f"M2.15: {cat!r} composes no padded span whose low/high "
                     f"placement can be swapped")
@@ -300,7 +317,7 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
             # runtime-shaped, so a wrong runtime extent survives. A static operand
             # is not runtime-shaped, so there is nothing to skip and the defect is
             # honestly not expressible there.
-            if cat != "reshape":
+            if cat not in C.RESHAPE_CATS:
                 raise NotApplicable(
                     f"M2.17: {cat!r} composes no runtime-shaped flatten")
             if not case.is_dynamic():
@@ -313,7 +330,7 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
             # "reshape a non-contiguous span" (v2.1 family M2-h): the strided
             # sub-span is reread with stride 1, so the flatten linearises the
             # wrong elements. Only the reshape kernel composes such a span.
-            if cat != "reshape":
+            if cat not in C.RESHAPE_CATS:
                 raise NotApplicable(
                     f"M2.18: {cat!r} composes no non-contiguous sub-span")
             structural = Structural(kind="reshape-contiguous")
@@ -324,7 +341,7 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
             # The rank-unequal compatibility walk compares only the trailing dims
             # (semacheck.cpp:543-595), so this passes. Only the broadcast kernel
             # composes a rank-unequal pair whose leading extent is a broadcast.
-            if cat != "broadcast":
+            if cat not in C.BROADCAST_CATS:
                 raise NotApplicable(
                     f"M2.21: {cat!r} composes no rank-unequal broadcast whose "
                     f"leading extent can be mis-declared")
@@ -335,7 +352,7 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
             # rank-1 secondary operand is declared (1,) and indexed with a
             # constant, so its single element is spread over every position. Only
             # the broadcast kernel carries a rank-1 operand that broadcasts.
-            if cat != "broadcast":
+            if cat not in C.BROADCAST_CATS:
                 raise NotApplicable(
                     f"M2.8: {cat!r} composes no broadcast extent that can be set "
                     f"to 1")

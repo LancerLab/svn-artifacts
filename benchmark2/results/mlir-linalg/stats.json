@@ -13,28 +13,28 @@
       "note": "no expressible M1 mutant on this surface; all spec N=40 mutants => n/a. no element-access defect is expressible on the tensor/linalg entry surface: there are no addressable memory locations before lowering (mutation-specs-v2.md 5)"
     },
     "M2": {
-      "n_injected": 45,
+      "n_injected": 64,
       "n_compile": 23,
       "n_runtime": 0,
-      "n_never": 22,
+      "n_never": 41,
       "n_na": 0,
       "by_rtv": {
         "off": {
-          "n_injected": 45,
+          "n_injected": 64,
           "n_compile": 23,
           "n_runtime": 0,
-          "n_never": 22,
+          "n_never": 41,
           "n_na": 0
         },
         "on": {
-          "n_injected": 45,
+          "n_injected": 64,
           "n_compile": 23,
           "n_runtime": 0,
-          "n_never": 22,
+          "n_never": 41,
           "n_na": 0
         }
       },
-      "note": "measured on the linalg surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 106 mutant records reduce to 45 injections."
+      "note": "measured on the linalg surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 144 mutant records reduce to 64 injections."
     },
     "M3": {
       "n_injected": 0,
@@ -71,55 +71,65 @@
   },
   "S8_expressibility": {
     "elem": {
-      "yes": 11,
+      "yes": 21,
       "partial": 0,
       "no": 0
     },
     "shape": {
-      "yes": 8,
+      "yes": 14,
       "partial": 0,
-      "no": 3
+      "no": 7
     },
     "loop": {
       "yes": 0,
       "partial": 0,
-      "no": 11
+      "no": 21
     },
     "hw": {
       "yes": 0,
       "partial": 0,
-      "no": 11
+      "no": 21
     }
   },
   "S9_remainder": {
     "per_category": {
       "broadcast": 10,
+      "broadcast_r2": 10,
+      "broadcast_r4": 10,
+      "broadcast_r5": 10,
       "concat": 36,
       "elemwise_add": 10,
       "layer_normalization": 48,
       "matmul": 14,
       "pad": 12,
+      "pad_last": 12,
+      "pad_mid": 16,
+      "pad_r3": 16,
       "relu": 6,
       "reshape": 15,
+      "reshape_r3": 20,
+      "reshape_r4": 25,
+      "reshape_r5": 30,
       "softmax": 30,
       "transpose": 6,
+      "transpose_cube": 6,
       "transpose_square": 6
     },
-    "total": 193,
+    "total": 348,
     "criterion_ref": "RTV-generated cf.assert at loc(kernel); loc(oracle) guards excluded (folding them in inflated S9 by ~17% overall, ~67% on relu)",
     "note": "never summed with the other MLIR lane's remainder (mutation-specs.md \u00a77): the low lane's kernels are hand-tiled with an explicit boundary guard, so their guard structure is not comparable"
   },
   "S12_sanitizer_supplement": {
     "M2": {
       "flagged_and_exercised": 0,
-      "total": 53,
+      "total": 72,
       "flagged": 0,
-      "exercised": 30,
+      "exercised": 49,
       "not_instrumented": 0,
       "rejected_before_run": 23,
       "misses": {
         "M2.10/dynamic": {
-          "n": 1,
+          "n": 2,
           "instrumented_min": 16,
           "instrumented_max": 16
         },
@@ -134,27 +144,27 @@
           "instrumented_max": 41
         },
         "M2.15/dynamic": {
-          "n": 1,
+          "n": 4,
           "instrumented_min": 17,
-          "instrumented_max": 17
+          "instrumented_max": 19
         },
         "M2.15/static": {
-          "n": 1,
+          "n": 4,
           "instrumented_min": 17,
-          "instrumented_max": 17
+          "instrumented_max": 19
         },
         "M2.17/dynamic": {
-          "n": 1,
+          "n": 4,
           "instrumented_min": 18,
           "instrumented_max": 18
         },
         "M2.18/dynamic": {
-          "n": 1,
+          "n": 4,
           "instrumented_min": 18,
           "instrumented_max": 18
         },
         "M2.21/dynamic": {
-          "n": 1,
+          "n": 4,
           "instrumented_min": 20,
           "instrumented_max": 20
         },
@@ -174,7 +184,7 @@
           "instrumented_max": 44
         },
         "M2.8/dynamic": {
-          "n": 1,
+          "n": 4,
           "instrumented_min": 20,
           "instrumented_max": 20
         }
@@ -210,6 +220,33 @@
   },
   "kernel_gate": {
     "broadcast": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
+    "broadcast_r2": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
+    "broadcast_r4": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
+    "broadcast_r5": {
       "small": {
         "composed": 2,
         "compiled": 2,
@@ -291,6 +328,33 @@
         "rtv_on_ref_pass": 2
       }
     },
+    "pad_last": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
+    "pad_mid": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
+    "pad_r3": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
     "relu": {
       "small": {
         "composed": 2,
@@ -308,6 +372,33 @@
       }
     },
     "reshape": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
+    "reshape_r3": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
+    "reshape_r4": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
+    "reshape_r5": {
       "small": {
         "composed": 2,
         "compiled": 2,
@@ -348,6 +439,15 @@
         "rtv_on_ref_pass": 2
       }
     },
+    "transpose_cube": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
     "transpose_square": {
       "small": {
         "composed": 2,
@@ -360,30 +460,30 @@
   },
   "gate_failures": [],
   "totals": {
-    "kernels": 36,
-    "compiled": 36,
-    "ran_ok": 36,
-    "ref_pass": 36,
-    "mutant_records": 106,
-    "sanitizer_records": 53,
-    "expressibility_records": 44,
+    "kernels": 56,
+    "compiled": 56,
+    "ran_ok": 56,
+    "ref_pass": 56,
+    "mutant_records": 144,
+    "sanitizer_records": 72,
+    "expressibility_records": 84,
     "gate_failures": 0
   },
   "census": {
     "class": "M2",
-    "n_injected": 45,
-    "expected_injected": 45,
-    "n_records": 106,
+    "n_injected": 64,
+    "expected_injected": 64,
+    "n_records": 144,
     "n_target_per_class": 40,
-    "delta_vs_target": 5,
+    "delta_vs_target": 24,
     "by_rtv": {
       "off": {
         "compile": 23,
-        "never": 22
+        "never": 41
       },
       "on": {
         "compile": 23,
-        "never": 22
+        "never": 41
       }
     },
     "battery_size": "small",
@@ -393,18 +493,28 @@
   "scope": {
     "categories_composed": [
       "broadcast",
+      "broadcast_r2",
+      "broadcast_r4",
+      "broadcast_r5",
       "concat",
       "elemwise_add",
       "layer_normalization",
       "matmul",
       "pad",
+      "pad_last",
+      "pad_mid",
+      "pad_r3",
       "relu",
       "reshape",
+      "reshape_r3",
+      "reshape_r4",
+      "reshape_r5",
       "softmax",
       "transpose",
+      "transpose_cube",
       "transpose_square"
     ],
-    "n_composed": 11,
+    "n_composed": 21,
     "categories_missing": [
       "batch_norm",
       "conv2d",
@@ -416,6 +526,6 @@
     ],
     "n_missing": 7,
     "manifest_total": 15,
-    "note": "manifest.md \u00a71 counts 15 categories; this lane composes 11. S8 and the kernel gate are emitted over the composed subset ONLY \u2014 the 7 missing categories (batch_norm, conv2d, embedding, gelu, max_pool2d, reduce_mean, sigmoid) have no emitter on this surface yet, so their expressibility is UNMEASURED, not 'no'. Fabricating a 'no' row for them would understate the SOTA baseline. FLAGGED FOLLOW-UP for the coordinator: S8's denominator here is 11, not 15, so it is not directly comparable to the triton/iree rows whose denominator is 15."
+    "note": "manifest.md \u00a71 counts 15 categories; this lane composes 21. S8 and the kernel gate are emitted over the composed subset ONLY \u2014 the 7 missing categories (batch_norm, conv2d, embedding, gelu, max_pool2d, reduce_mean, sigmoid) have no emitter on this surface yet, so their expressibility is UNMEASURED, not 'no'. Fabricating a 'no' row for them would understate the SOTA baseline. FLAGGED FOLLOW-UP for the coordinator: S8's denominator here is 21, not 15, so it is not directly comparable to the triton/iree rows whose denominator is 15."
   }
 }

@@ -324,10 +324,47 @@ LEVEL1_M2_CATS: list[str] = ["layer_normalization", "matmul", "concat"]
 # `broadcast` is the M2-d surface (family "broadcast"): a rank-unequal binary add
 # whose trailing-dims-only compatibility walk leaves the leading extent open.
 LEVEL2_M2_CATS: list[str] = ["elemwise_add", "softmax", "transpose_square",
-                             "pad", "reshape", "broadcast"]
+                             "pad", "reshape", "broadcast",
+                             # Rank/axis variants of the second-M2-e, M2-d, M2-g
+                             # and M2-h surfaces. Each is a structurally distinct
+                             # mutation-only kernel that reuses its family's
+                             # emitter at a different rank or pad axis, so a
+                             # family can hold its 4x2 budget without a second
+                             # cell on one structure. They are variants, not new
+                             # defects: the spec_ids and paper categories are the
+                             # family's existing ones.
+                             "transpose_cube",
+                             "pad_last", "pad_mid", "pad_r3",
+                             "reshape_r3", "reshape_r4", "reshape_r5",
+                             "broadcast_r2", "broadcast_r4", "broadcast_r5"]
 M2_CATS: list[str] = LEVEL1_M2_CATS + LEVEL2_M2_CATS
 LEVEL_OF: dict[str, str] = {c: "1" for c in LEVEL1_M2_CATS}
 LEVEL_OF.update({c: "2" for c in LEVEL2_M2_CATS})
+
+# Category families for the structural surfaces above. A mutation spec that is
+# only meaningful on one structure (a pad amount to swap, a rank-unequal
+# broadcast, a square transpose, a strided flatten) tests membership here rather
+# than string-matching one category name, so adding a rank/axis variant cannot
+# silently become a second host for the wrong defect.
+TRANSPOSE_CATS: tuple[str, ...] = ("transpose", "transpose_square",
+                                   "transpose_cube")
+# Square only: M2.10 changes the permutation and needs extents that stay legal.
+TRANSPOSE_SQUARE_CATS: tuple[str, ...] = ("transpose_square", "transpose_cube")
+PAD_CATS: tuple[str, ...] = ("pad", "pad_last", "pad_mid", "pad_r3")
+RESHAPE_CATS: tuple[str, ...] = ("reshape", "reshape_r3", "reshape_r4",
+                                 "reshape_r5")
+BROADCAST_CATS: tuple[str, ...] = ("broadcast", "broadcast_r2", "broadcast_r4",
+                                   "broadcast_r5")
+# The axis each pad kernel pads (M2.15 swaps low/high on this axis). The others
+# are copied through by `tensor.pad`.
+PAD_AXIS: dict[str, int] = {"pad": 0, "pad_last": 1, "pad_mid": 1, "pad_r3": 0}
+# The M2 categories that existed before the rank/axis variants. Specs M2.2/M2.4/
+# M2.5 are output-only and apply to any composed category; holding them to this
+# core set keeps the already-saturated M2-a/M2-f selections byte-identical when
+# the variants join the battery (the variants host their own family's spec only).
+CORE_M2_CATS: tuple[str, ...] = ("layer_normalization", "matmul", "concat",
+                                 "elemwise_add", "softmax", "transpose_square",
+                                 "pad", "reshape", "broadcast")
 
 # §0's per-class injection target. Level-1 alone is 30 (under target); adding both
 # §5 level-2 M2 categories gives 5 specs x 5 cats x 2 shapes = 50. The +10
@@ -472,6 +509,30 @@ SMALL_DIMS: dict[str, dict[str, tuple[int | None, ...]]] = {
     # `lhs` is the unchecked position both defects live in. `out` is `lhs` with
     # that leading extent dropped.
     "broadcast": {"lhs": (1, 2, 3), "bias": (3,), "out": (2, 3)},
+    # M2-e second surface: a CUBE transpose. Rank 3 with every extent equal, so
+    # M2.10's identity permutation and M2.13's equal-extent swap both keep every
+    # shape legal and only move memory.
+    "transpose_cube": {"inp": (3, 3, 3), "out": (3, 3, 3)},
+    # M2-g variants: the same pad total on a different axis and/or rank. The
+    # padded axis is `PAD_AXIS[category]`; every other extent is copied.
+    "pad_last": {"inp": (2, 3), "out": (2, 3 + PAD_LOW + PAD_HIGH)},
+    "pad_mid": {"inp": (2, 3, 4), "out": (2, 3 + PAD_LOW + PAD_HIGH, 4)},
+    "pad_r3": {"inp": (2, 3, 4), "out": (2 + PAD_LOW + PAD_HIGH, 3, 4)},
+    # M2-h variants: the same strided flatten at rank 3/4/5. The flatten drops
+    # the last axis by RESHAPE_STRIDE and collapses the rest to one dimension.
+    "reshape_r3": {"inp": (2, 3, 4),
+                   "out": (2 * 3 * (4 // RESHAPE_STRIDE),)},
+    "reshape_r4": {"inp": (2, 2, 3, 4),
+                   "out": (2 * 2 * 3 * (4 // RESHAPE_STRIDE),)},
+    "reshape_r5": {"inp": (2, 2, 2, 3, 4),
+                   "out": (2 * 2 * 2 * 3 * (4 // RESHAPE_STRIDE),)},
+    # M2-d variants: the same rank-unequal broadcast one rank shallower/deeper.
+    # The leading extent of `lhs` is the legitimate broadcast (1); the trailing
+    # extent of `lhs` is the symbolic `N`, which is also `bias`'s only extent.
+    "broadcast_r2": {"lhs": (1, 3), "bias": (3,), "out": (3,)},
+    "broadcast_r4": {"lhs": (1, 2, 3, 2), "bias": (2,), "out": (2, 3, 2)},
+    "broadcast_r5": {"lhs": (1, 2, 2, 3, 2), "bias": (2,),
+                     "out": (2, 2, 3, 2)},
 }
 
 # Full-size extents, taken from the first concrete case in each settings file.
@@ -491,6 +552,20 @@ FULL_DIMS: dict[str, dict[str, tuple[int | None, ...]]] = {
     "pad": {"inp": (32, 64), "out": (32 + PAD_LOW + PAD_HIGH, 64)},
     "reshape": {"inp": (32, 64), "out": (32 * (64 // RESHAPE_STRIDE),)},
     "broadcast": {"lhs": (1, 32, 64), "bias": (64,), "out": (32, 64)},
+    "transpose_cube": {"inp": (64, 64, 64), "out": (64, 64, 64)},
+    "pad_last": {"inp": (32, 64), "out": (32, 64 + PAD_LOW + PAD_HIGH)},
+    "pad_mid": {"inp": (32, 8, 64), "out": (32, 8 + PAD_LOW + PAD_HIGH, 64)},
+    "pad_r3": {"inp": (32, 8, 64), "out": (32 + PAD_LOW + PAD_HIGH, 8, 64)},
+    "reshape_r3": {"inp": (32, 8, 64),
+                   "out": (32 * 8 * (64 // RESHAPE_STRIDE),)},
+    "reshape_r4": {"inp": (32, 4, 8, 64),
+                   "out": (32 * 4 * 8 * (64 // RESHAPE_STRIDE),)},
+    "reshape_r5": {"inp": (32, 2, 4, 8, 64),
+                   "out": (32 * 2 * 4 * 8 * (64 // RESHAPE_STRIDE),)},
+    "broadcast_r2": {"lhs": (1, 64), "bias": (64,), "out": (64,)},
+    "broadcast_r4": {"lhs": (1, 4, 8, 64), "bias": (64,), "out": (4, 8, 64)},
+    "broadcast_r5": {"lhs": (1, 2, 4, 8, 64), "bias": (64,),
+                     "out": (2, 4, 8, 64)},
 }
 
 # Which operand(s) carry a dynamic extent, per category (mirrors the settings'
@@ -517,9 +592,33 @@ DYNAMIC_SLOT: dict[str, tuple[tuple[str, int], ...]] = {
     # concrete 1 (a dynamic `?` there would not be distinguishable from the
     # legitimate-broadcast clean case), and the trailing bias extent is N.
     "broadcast": (("lhs", 1),),
+    # The cube transpose keeps all three axes symbolic so the dynamic build stays
+    # square (each binds to the same `_DYN_VALUE`).
+    "transpose_cube": (("inp", 0), ("inp", 1), ("inp", 2)),
+    # The pad axis itself stays statically known; the non-padded leading axis is
+    # the symbolic one, so the dynamic build has one runtime extent to trace.
+    "pad_last": (("inp", 0),),
+    "pad_mid": (("inp", 0),),
+    "pad_r3": (("inp", 0),),
+    "reshape_r3": (("inp", 0),),
+    "reshape_r4": (("inp", 0),),
+    "reshape_r5": (("inp", 0),),
+    # The trailing (symbolic N) extent of `lhs`; `bias`'s only extent is the same
+    # static value, so it needs no separate binding.
+    "broadcast_r2": (("lhs", 1),),
+    "broadcast_r4": (("lhs", 1),),
+    "broadcast_r5": (("lhs", 1),),
 }
 
 _DYN_VALUE = 3
+
+# Categories whose symbolic extent must equal a *static* partner extent, so
+# binding it to `_DYN_VALUE` (3) would disagree with that partner at full size.
+# `broadcast_r2` is the shallowest broadcast: its one non-leading `lhs` extent
+# is the trailing axis, which must equal `bias`'s only (static) extent -- at
+# small size that is 3 by coincidence, at full it is 64. Follow the partner
+# instead of a fixed value. Values name (operand, axis) to read.
+_DYN_FOLLOW: dict[str, tuple[str, int]] = {"broadcast_r2": ("bias", 0)}
 
 # Concat axis, per the settings signature `ele_concat_J`.
 CONCAT_AXIS = 1
@@ -550,22 +649,29 @@ def _derive_output(category: str, dims: dict[str, tuple[int | None, ...]],
         dims["out"] = tuple(out)
         if out[ax] is None:
             dyn["out.%d" % ax] = total
-    elif category in ("transpose", "transpose_square"):
+    elif category in TRANSPOSE_CATS:
         dims["out"] = tuple(reversed(dims["inp"]))
         for axis, d in enumerate(dims["inp"]):
             if d is None:
                 dyn[f"out.{len(dims['inp']) - 1 - axis}"] = dyn[f"inp.{axis}"]
-    elif category == "pad":
-        # Axis 0 grows by the pad total; the other axes are copied through. The
-        # total (PAD_LOW + PAD_HIGH) is what the sum-only check validates, and it
-        # is exactly the quantity M2.15 holds fixed while moving the split.
+    elif category in PAD_CATS:
+        # The pad axis (`PAD_AXIS[category]`) grows by the pad total; the other
+        # axes are copied through. The total (PAD_LOW + PAD_HIGH) is what the
+        # sum-only check validates, and it is exactly the quantity M2.15 holds
+        # fixed while moving the split.
+        ax = PAD_AXIS[category]
         pad_total = PAD_LOW + PAD_HIGH
         out = list(dims["inp"])
-        out[0] = None if dims["inp"][0] is None else dims["inp"][0] + pad_total
+        out[ax] = None if dims["inp"][ax] is None else dims["inp"][ax] + pad_total
         dims["out"] = tuple(out)
-        if dims["inp"][0] is None:
-            dyn["out.0"] = dyn["inp.0"] + pad_total
-    elif category == "reshape":
+        # The non-padded axes copy through, so a dynamic extent on any of them
+        # (the variants put the symbolic axis *off* the pad axis) must propagate
+        # to the output too, not just the pad axis.
+        for k, d in enumerate(dims["inp"]):
+            if d is None:
+                dyn[f"out.{k}"] = (dyn[f"inp.{k}"] + pad_total
+                                   if k == ax else dyn[f"inp.{k}"])
+    elif category in RESHAPE_CATS:
         # Flatten the strided view: the last axis shrinks by RESHAPE_STRIDE and
         # the whole thing collapses to one flat dimension.
         view = list(dims["inp"])
@@ -581,7 +687,7 @@ def _derive_output(category: str, dims: dict[str, tuple[int | None, ...]],
             # DYNAMIC_SLOT declares only axis 0 dynamic, so `prod` is the static
             # remainder and the runtime flatten extent is the bound axis times it.
             dyn["out.0"] = dyn["inp.0"] * prod
-    elif category == "broadcast":
+    elif category in BROADCAST_CATS:
         # The leading `lhs` extent is the broadcast dim (1 in the clean case);
         # the output is that operand with the leading extent dropped.
         dims["out"] = dims["lhs"][1:]
@@ -616,8 +722,15 @@ def make_case(category: str, size: str = "small", dynamic: bool = False) -> Case
             cur[axis] = None
             dims[op] = tuple(cur)
             # All slots of one category share the symbolic dim (e.g. `N` on both
-            # `lhs` and `rhs` of elemwise_add), so they bind to one value.
-            dyn[f"{op}.{axis}"] = _DYN_VALUE
+            # `lhs` and `rhs` of elemwise_add), so they bind to one value. A
+            # category whose symbolic axis must match a static partner takes that
+            # partner's extent (see `_DYN_FOLLOW`).
+            fol = _DYN_FOLLOW.get(category)
+            if fol is not None:
+                fop, fax = fol
+                dyn[f"{op}.{axis}"] = table[category][fop][fax]
+            else:
+                dyn[f"{op}.{axis}"] = _DYN_VALUE
 
     _derive_output(category, dims, dyn)
 
@@ -649,17 +762,18 @@ def reference(case: Case) -> np.ndarray:
         x = input_values(case.numel("inp")).reshape(case.shape("inp"))
         e = np.exp(x - x.max(axis=-1, keepdims=True))
         return (e / e.sum(axis=-1, keepdims=True)).astype(np.float32)
-    if cat in ("transpose", "transpose_square"):
+    if cat in TRANSPOSE_CATS:
         x = input_values(case.numel("inp")).reshape(case.shape("inp"))
         return np.transpose(x).astype(np.float32)
-    if cat == "pad":
+    if cat in PAD_CATS:
         x = input_values(case.numel("inp")).reshape(case.shape("inp"))
-        pads = [(PAD_LOW, PAD_HIGH)] + [(0, 0)] * (x.ndim - 1)
+        pads = [(0, 0)] * x.ndim
+        pads[PAD_AXIS[cat]] = (PAD_LOW, PAD_HIGH)
         return np.pad(x, pads, constant_values=PAD_SENTINEL).astype(np.float32)
-    if cat == "reshape":
+    if cat in RESHAPE_CATS:
         x = input_values(case.numel("inp")).reshape(case.shape("inp"))
         return x[..., ::RESHAPE_STRIDE].reshape(-1).astype(np.float32)
-    if cat == "broadcast":
+    if cat in BROADCAST_CATS:
         # settings: `y = lhs + bias` with `bias` broadcast over the trailing axis
         # of `lhs`; the leading extent of `lhs` is itself a broadcast (1). `bias`
         # takes offset 1000 so the two operands' value streams stay distinct.

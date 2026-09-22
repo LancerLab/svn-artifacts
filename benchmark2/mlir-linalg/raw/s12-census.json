@@ -1,17 +1,17 @@
 {
   "class": "M2",
   "size": "small",
-  "n_sanitized": 53,
+  "n_sanitized": 72,
   "n_not_expressible": 0,
-  "n_mutants_rtv_off": 53,
+  "n_mutants_rtv_off": 72,
   "reconciled": true,
   "tally": {
     "flagged=false/fault=none/exercised=false": 23,
-    "flagged=false/fault=none/exercised=true": 30
+    "flagged=false/fault=none/exercised=true": 49
   },
   "unflagged_by_spec": {
     "M2.10/dynamic": {
-      "n": 1,
+      "n": 2,
       "instrumented_min": 16,
       "instrumented_max": 16
     },
@@ -26,27 +26,27 @@
       "instrumented_max": 41
     },
     "M2.15/dynamic": {
-      "n": 1,
+      "n": 4,
       "instrumented_min": 17,
-      "instrumented_max": 17
+      "instrumented_max": 19
     },
     "M2.15/static": {
-      "n": 1,
+      "n": 4,
       "instrumented_min": 17,
-      "instrumented_max": 17
+      "instrumented_max": 19
     },
     "M2.17/dynamic": {
-      "n": 1,
+      "n": 4,
       "instrumented_min": 18,
       "instrumented_max": 18
     },
     "M2.18/dynamic": {
-      "n": 1,
+      "n": 4,
       "instrumented_min": 18,
       "instrumented_max": 18
     },
     "M2.21/dynamic": {
-      "n": 1,
+      "n": 4,
       "instrumented_min": 20,
       "instrumented_max": 20
     },
@@ -66,7 +66,7 @@
       "instrumented_max": 44
     },
     "M2.8/dynamic": {
-      "n": 1,
+      "n": 4,
       "instrumented_min": 20,
       "instrumented_max": 20
     }

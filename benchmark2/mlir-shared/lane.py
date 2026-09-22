@@ -139,13 +139,21 @@ SURFACES = {
         "emitter": E.emit_kernel,
         "categories": ["matmul", "relu", "softmax", "transpose", "concat",
                        "layer_normalization", "elemwise_add",
-                       "transpose_square", "pad", "reshape", "broadcast"],
+                       "transpose_square", "pad", "reshape", "broadcast",
+                       # Rank/axis variants that host the M2-e second surface and
+                       # the M2-d/g/h families' budget. They compose and gate
+                       # exactly like their base categories; only the battery
+                       # treats them as the mutation-only hosts they are.
+                       "transpose_cube",
+                       "pad_last", "pad_mid", "pad_r3",
+                       "reshape_r3", "reshape_r4", "reshape_r5",
+                       "broadcast_r2", "broadcast_r4", "broadcast_r5"],
         # The mutation battery is NOT the composed set. `categories` above is
-        # what E2 gates and what S8/S9 report over (7 composed kernels);
-        # `battery_cats` is what M2 actually injects into — mutation-specs.md §5
-        # names five M2 categories. relu and transpose compose and carry RTV
-        # guards but are not M2 injection targets; iterating `categories` here
-        # silently produced 70 injections instead of the spec-count arithmetic.
+        # what E2 gates and what S8/S9 report over; `battery_cats` is
+        # `compose.M2_CATS` (the level-1/level-2 M2 categories). relu and
+        # transpose compose and carry RTV guards but are not M2 injection
+        # targets; iterating `categories` here silently produced 70 injections
+        # instead of the spec-count arithmetic.
         "battery_cats": list(C.M2_CATS),
         # The historical §5.1 Cartesian arithmetic (10 spec ids x cats x 2
         # shapes), kept only for reference. M2 no longer compares against it:

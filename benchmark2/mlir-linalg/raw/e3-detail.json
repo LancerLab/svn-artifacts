@@ -12,7 +12,17 @@
     "transpose_square": 6,
     "pad": 12,
     "reshape": 15,
-    "broadcast": 10
+    "broadcast": 10,
+    "transpose_cube": 6,
+    "pad_last": 12,
+    "pad_mid": 16,
+    "pad_r3": 16,
+    "reshape_r3": 20,
+    "reshape_r4": 25,
+    "reshape_r5": 30,
+    "broadcast_r2": 10,
+    "broadcast_r4": 10,
+    "broadcast_r5": 10
   },
   "elem_measured": {
     "matmul": true,
@@ -25,12 +35,28 @@
     "transpose_square": true,
     "pad": true,
     "reshape": true,
-    "broadcast": true
+    "broadcast": true,
+    "transpose_cube": true,
+    "pad_last": true,
+    "pad_mid": true,
+    "pad_r3": true,
+    "reshape_r3": true,
+    "reshape_r4": true,
+    "reshape_r5": true,
+    "broadcast_r2": true,
+    "broadcast_r4": true,
+    "broadcast_r5": true
   },
   "shape_diagnostics": {
     "concat": true,
     "pad": true,
-    "reshape": true
+    "reshape": true,
+    "pad_last": true,
+    "pad_mid": true,
+    "pad_r3": true,
+    "reshape_r3": true,
+    "reshape_r4": true,
+    "reshape_r5": true
   },
   "shape_compile_rejections": {
     "layer_normalization": 10,
@@ -43,22 +69,32 @@
   },
   "shape_evidence_basis": {
     "broadcast": "mutation-only",
+    "broadcast_r2": "diagnostic-only (no shape diagnostic)",
+    "broadcast_r4": "diagnostic-only (no shape diagnostic)",
+    "broadcast_r5": "diagnostic-only (no shape diagnostic)",
     "concat": "mutation+diagnostic",
     "elemwise_add": "mutation-only",
     "layer_normalization": "mutation-only",
     "matmul": "mutation-only",
     "pad": "mutation+diagnostic",
+    "pad_last": "diagnostic-only",
+    "pad_mid": "diagnostic-only",
+    "pad_r3": "diagnostic-only",
     "relu": "diagnostic-only (no shape diagnostic)",
     "reshape": "diagnostic-only",
+    "reshape_r3": "diagnostic-only",
+    "reshape_r4": "diagnostic-only",
+    "reshape_r5": "diagnostic-only",
     "softmax": "mutation-only",
     "transpose": "diagnostic-only (no shape diagnostic)",
+    "transpose_cube": "diagnostic-only (no shape diagnostic)",
     "transpose_square": "diagnostic-only (no shape diagnostic)"
   },
   "assert_diagnostic_classes": {
-    "^ out-of-bounds access": 120,
-    "^ subview runs out-of-bounds along dimension N": 24,
-    "^ offset N is out-of-bounds": 24,
-    "^ stride mismatch of dim N": 2,
-    "^ offset mismatch": 1
+    "^ out-of-bounds access": 160,
+    "^ subview runs out-of-bounds along dimension N": 64,
+    "^ offset N is out-of-bounds": 64,
+    "^ stride mismatch of dim N": 14,
+    "^ offset mismatch": 4
   }
 }

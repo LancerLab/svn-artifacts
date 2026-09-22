@@ -1,10 +1,10 @@
 {
   "class": "M2",
-  "n_records": 106,
-  "n_injected": 45,
-  "expected_injected": 45,
+  "n_records": 144,
+  "n_injected": 64,
+  "expected_injected": 64,
   "n_target_per_class": 40,
-  "delta_vs_target": 5,
+  "delta_vs_target": 24,
   "categories": [
     "layer_normalization",
     "matmul",
@@ -14,7 +14,17 @@
     "transpose_square",
     "pad",
     "reshape",
-    "broadcast"
+    "broadcast",
+    "transpose_cube",
+    "pad_last",
+    "pad_mid",
+    "pad_r3",
+    "reshape_r3",
+    "reshape_r4",
+    "reshape_r5",
+    "broadcast_r2",
+    "broadcast_r4",
+    "broadcast_r5"
   ],
   "level2": true,
   "size": "small",
@@ -22,11 +32,11 @@
   "by_rtv": {
     "off": {
       "compile": 23,
-      "never": 22
+      "never": 41
     },
     "on": {
       "compile": 23,
-      "never": 22
+      "never": 41
     }
   },
   "problems": []

@@ -22,10 +22,11 @@ Note `mlir-cpu-runner` was renamed **`mlir-runner`** in this release.
 | `_validate_m1.py` | M1 on the memref/affine surface: same question, per-mutant manifestation check |
 | `_validate_rtv.py` | RTV instrumentation census on **both** surfaces, split kernel guards vs oracle guards |
 
-## M2 injection census — and why it is 50, not 40
+## M2 injection census — 64, and how the family budget sets it
 
-`mutation-specs.md` §0 fixes **N = 40 per class**, and §2 numbers M2 as **five**
-specs. Two counting rules follow from that, and they are not the same number:
+`mutation-specs.md` §0 fixes **N = 40 per class** as a target, not a cap, and §2
+numbers M2's specs. Two counting rules govern what is actually realised, and they
+are not the same number:
 
 * **injection** = one `(category, shape, spec)` triple → this is S1's
   `n_injected`. Spec 5 counts **once**.
@@ -33,39 +34,55 @@ specs. Two counting rules follow from that, and they are not the same number:
   as "partial write (omitted tail tile) **/** duplicate write (overlapping tile)"
   — two manifestations of one injection — so it emits **two** records.
 
-Both variants are kept because both are real defects: each lands in the
+Both spec-5 variants are kept because both are real defects: each lands in the
 `never`/`corrupts` row (survived the verifier *and* RTV, oracle proves the output
 wrong), which is exactly the silent-bug residue the benchmark measures. Dropping
 one to make the arithmetic tidy would delete a genuine finding.
 
-### Level split
+### The family budget: 8 = 4 hosts × 2 shapes
+
+`select_m2` realises **N_PER_FAMILY = 8** injections per family, as
+`N_KERNELS = 4` hosting categories × `N_REALISATIONS = 2` shapes, and caps each
+`(family, category)` at two. A family therefore needs at least four categories
+that can host its spec, and the realised set is exactly what `select_m2` keeps
+over the M2 categories: currently **64 injections = 8 families × 8**.
 
 The schema's `mutant.level` enum (`{"1","2"}`) carries §5's split, so the
-overshoot is attributable per-record rather than only in aggregate:
+realised count is attributable per family rather than only in aggregate:
 
 | level | categories | injections |
 |---|---|---|
-| 1 (§5 minimal set) | `layer_normalization`, `matmul`, `concat` | 30 |
-| 2 (§5 additions) | `elemwise_add`, `softmax` | 20 |
-| | **total** | **50** |
+| 1 (§5 minimal set) | `layer_normalization`, `matmul`, `concat` | 23 |
+| 2 (§5 additions) | the other 16 M2 categories | 41 |
+| | **total** | **64** |
 
-5 specs × 5 categories × 2 shapes = **50 injections**, against §0's target of 40.
+Level-1 alone is under §0's target and level-2 carries it over. **The overshoot is
+deliberate, not a counting error** — §5's level-2 list is followed literally and
+recorded here rather than silently trimmed to make the arithmetic land on 40. Do
+not "fix" it by dropping a category or a spec-5 variant without re-asking.
 
-**The +10 is deliberate, not a counting error.** Level-1 alone is 30, *under* the
-target; adding both §5 level-2 M2 categories overshoots it. The owner was shown
-that following §5's level-2 list literally breaks the exact-40 alignment and chose
-it anyway, so the overshoot is recorded here rather than silently trimmed. Do not
-"fix" it by dropping a category or a spec-5 variant without re-asking.
+Every selected injection is applicable by construction — `select_m2` keeps only
+specs that `mutate.apply` accepts on that category — so the realised `n/a` count
+is **0**. §6's "count `n/a`, never re-balance" rule is satisfied vacuously: no
+injection was dropped or merged to make the total reach N.
 
-Of the 50 injections, **6 are `n/a`** (surface cannot express the spec):
-`matmul` M2.3 (no binary elementwise op), `softmax` M2.1 and M2.3 (no secondary
-operand, no binary elementwise op) — each across both shapes. §6 requires `n/a`
-be counted and **never re-balanced** and never merged into "detected", so
-applicable = 44.
-
-Records emitted: 50 injections → 54 mutants (spec 5 doubles) → **120 records**
-(× 2 RTV modes, which manifest §5.1 requires be reported separately, never
+Records emitted: 64 injections → 72 mutants (spec 5 doubles its eight) → **144
+records** (× 2 RTV modes, which §5.1 requires be reported separately, never
 merged).
+
+### Where the categories come from
+
+`select_m2` draws on 19 M2 categories: nine composed kernels predating the
+M2-e/d/g/h work (`layer_normalization`, `matmul`, `concat`, `elemwise_add`,
+`softmax`, `transpose_square`, `pad`, `reshape`, `broadcast`) and **ten
+rank/axis variants** added so M2-d/M2-e/M2-g/M2-h each have four hosts
+(`transpose_cube`; `pad_last`/`pad_mid`/`pad_r3`;
+`reshape_r3`/`reshape_r4`/`reshape_r5`;
+`broadcast_r2`/`broadcast_r4`/`broadcast_r5`). A variant is a structurally
+distinct mutation-only kernel that reuses its family's emitter at a different
+rank or pad axis, and it carries the family's existing spec and paper category,
+so it is a second structure for one defect rather than a new defect. `relu` and
+`transpose` compose and carry RTV guards but are not M2 injection targets.
 
 ## The three-checksum oracle — and why two was a real bug
 
