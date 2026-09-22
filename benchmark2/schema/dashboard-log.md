@@ -7,6 +7,35 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ---
 
+## 2026-09-23 — `mlir-linalg` fills its M2 family budget; M2 43/64 → 64/64
+
+Every M2 family now holds its `4 hosts × 2 shapes = 8` budget, so M2 instances
+43 → **64** (rows 102 → 144) and the class cell reads **64/64**. `M2-d`/`M2-g`/
+`M2-h` sat at 2/8 and `M2-e` at 7/8 because each family had too few host
+structures: `select_m2` caps each `(family, category)` at two realisations, so a
+mutation-only family needs four categories that can host its single spec. Ten
+**rank/axis variants** supply the missing hosts by reusing each family's emitter
+at a different rank or pad axis (`transpose_cube`;
+`pad_last`/`pad_mid`/`pad_r3`; `reshape_r3`/`reshape_r4`/`reshape_r5`;
+`broadcast_r2`/`broadcast_r4`/`broadcast_r5`). They are structures, not new
+defects: each carries its family's existing spec and paper category.
+
+- M2 *battery*: 45 → **64 injections** (8 families × 8), zero `n/a`,
+  `expected_injected` 45 → 64. `select_m2` draws on 19 M2 categories (9 composed
+  + 10 variants). Specs M2.2/M2.4/M2.5 are output-only and would otherwise spread
+  to the variants, so they are held to the nine pre-variant cores — the already
+  saturated M2-a/M2-f selections stay byte-identical.
+- M2 *families*: 45 → **64 of 64** across M2-a..M2-h; worklist shortfall
+  **19 → 0**.
+- `run.sh all --small`: 56 kernels, 84 expressibility rows, 144 mutant records,
+  **0 gate failures**; S1 `n_never` 41 (same composition — the new cells are
+  in-bounds corruptions caught by the oracle, not by RTV). S12: 72 sanitized,
+  reconciled, 0 flagged.
+- The ten added hosts compose and gate clean on their own: 42 E2 cells pass
+  compile / run / ref / rtv.
+
+---
+
 ## 2026-09-23 — `mlir-low` trims `M1-a` to the single-spec family budget; M1-battery 72 → 56
 
 `M1-a` was the only M1 family reached through more than one spec: `M1.1`/`M1.2`/
