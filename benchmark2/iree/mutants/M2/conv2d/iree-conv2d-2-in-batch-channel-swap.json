@@ -1,0 +1,51 @@
+{
+  "mutant_id": "iree-conv2d-2-in-batch-channel-swap",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "conv2d",
+  "kernel": "2_dynamic_Nx64x56x56_128x64x3x3_Nx128x56x56_S_P_D",
+  "settings_hash": "28fee96c8330",
+  "kernel_hash": "aeede7898326",
+  "spec_id": "M2.9",
+  "family": "M2-b",
+  "mutation": {
+    "kind": "swap",
+    "operand_index": 0,
+    "dim_index": 0,
+    "params": [
+      0,
+      0,
+      1
+    ],
+    "reference_dims": [
+      [
+        7,
+        64,
+        56,
+        56
+      ],
+      [
+        128,
+        64,
+        3,
+        3
+      ]
+    ],
+    "mutant_dims": [
+      [
+        64,
+        7,
+        56,
+        56
+      ],
+      [
+        128,
+        64,
+        3,
+        3
+      ]
+    ]
+  },
+  "outcome": "runtime",
+  "manifest": "corrupts"
+}

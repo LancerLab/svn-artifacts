@@ -1,0 +1,35 @@
+{
+  "mutant_id": "iree-softmax-11-in-rankdrop",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "softmax",
+  "kernel": "11_dynamic_32xSx768_32xSx768",
+  "settings_hash": "d59f419be35e",
+  "kernel_hash": "f2cec7084073",
+  "spec_id": "M2.7",
+  "family": "M2-c",
+  "mutation": {
+    "kind": "rankdrop",
+    "operand_index": 0,
+    "dim_index": 2,
+    "params": [
+      0,
+      2
+    ],
+    "reference_dims": [
+      [
+        32,
+        5,
+        768
+      ]
+    ],
+    "mutant_dims": [
+      [
+        32,
+        5
+      ]
+    ]
+  },
+  "outcome": "runtime",
+  "manifest": "corrupts"
+}

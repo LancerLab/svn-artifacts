@@ -107,6 +107,7 @@ cmd_minimal() {
 }
 
 cmd_e2()   { local f=""; [[ "$SIZE" == "full" ]] && f="--full"; python3 "$LANE/lane.py" e2 $f; }
+cmd_m2()   { python3 "$LANE/lane.py" m2; }
 cmd_e3()   { python3 "$LANE/lane.py" e3; python3 "$LANE/lane.py" expressibility; }
 cmd_semcheck() { python3 "$LANE/semcheck.py"; }
 cmd_oracle()   { python3 "$LANE/mutant_oracle.py"; }
@@ -116,11 +117,11 @@ cmd_collect() { python3 "$LANE/collect_stats.py" collect; }
 cmd_stats()   { python3 "$LANE/collect_stats.py" stats; }
 
 cmd_all() {
-  cmd_setup; cmd_e2; cmd_minimal; cmd_e3; python3 "$LANE/lane.py" s12
+  cmd_setup; cmd_e2; cmd_minimal; cmd_m2; cmd_e3; python3 "$LANE/lane.py" s12
   cmd_semcheck; cmd_oracle; cmd_collect; cmd_stats
 }
 
-usage() { echo "usage: $0 {setup|minimal[--level2]|e2|e3|semcheck|oracle|s12|e4|e5|collect|stats|all} [--small|--full] [--device i]"; }
+usage() { echo "usage: $0 {setup|minimal[--level2]|m2|e2|e3|semcheck|oracle|s12|e4|e5|collect|stats|all} [--small|--full] [--device i]"; }
 
 SUB="${1:-}"; shift || true
 SIZE="small"; LEVEL2=""
@@ -134,7 +135,7 @@ done
 
 mkdir -p "$RAW" "$RESULTS"
 case "$SUB" in
-  setup) cmd_setup;; minimal) cmd_minimal;; e2) cmd_e2;; e3) cmd_e3;;
+  setup) cmd_setup;; minimal) cmd_minimal;; m2) cmd_m2;; e2) cmd_e2;; e3) cmd_e3;;
   semcheck) cmd_semcheck;; oracle) cmd_oracle;; s12) python3 "$LANE/lane.py" s12;;
   e4) cmd_e4;; e5) cmd_e5;; collect) cmd_collect;; stats) cmd_stats;;
   all) cmd_all;; *) usage; exit 1;;

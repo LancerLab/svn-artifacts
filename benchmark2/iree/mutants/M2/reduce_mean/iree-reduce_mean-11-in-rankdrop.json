@@ -1,0 +1,35 @@
+{
+  "mutant_id": "iree-reduce_mean-11-in-rankdrop",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "reduce_mean",
+  "kernel": "11_dynamic_64xTx256_64x256",
+  "settings_hash": "b4ee0b5faac2",
+  "kernel_hash": "089eb38653e9",
+  "spec_id": "M2.7",
+  "family": "M2-c",
+  "mutation": {
+    "kind": "rankdrop",
+    "operand_index": 0,
+    "dim_index": 2,
+    "params": [
+      0,
+      2
+    ],
+    "reference_dims": [
+      [
+        64,
+        8,
+        256
+      ]
+    ],
+    "mutant_dims": [
+      [
+        64,
+        8
+      ]
+    ]
+  },
+  "outcome": "runtime",
+  "manifest": "corrupts"
+}

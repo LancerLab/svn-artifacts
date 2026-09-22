@@ -1,0 +1,48 @@
+{
+  "mutant_id": "iree-batch_norm-13-gamma-bcast-to-1",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "batch_norm",
+  "kernel": "13_dynamic_32x512xV_V_V_32x512xV",
+  "settings_hash": "45f6e81d94c0",
+  "kernel_hash": "b0467d695afc",
+  "spec_id": "M2.8",
+  "family": "M2-d",
+  "mutation": {
+    "kind": "set1",
+    "operand_index": 1,
+    "dim_index": 0,
+    "params": [
+      1,
+      0
+    ],
+    "reference_dims": [
+      [
+        32,
+        512,
+        8
+      ],
+      [
+        8
+      ],
+      [
+        8
+      ]
+    ],
+    "mutant_dims": [
+      [
+        32,
+        512,
+        8
+      ],
+      [
+        1
+      ],
+      [
+        8
+      ]
+    ]
+  },
+  "outcome": "never",
+  "manifest": "corrupts"
+}

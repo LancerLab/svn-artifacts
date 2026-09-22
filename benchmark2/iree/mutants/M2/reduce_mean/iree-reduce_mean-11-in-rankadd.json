@@ -1,0 +1,37 @@
+{
+  "mutant_id": "iree-reduce_mean-11-in-rankadd",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "reduce_mean",
+  "kernel": "11_dynamic_64xTx256_64x256",
+  "settings_hash": "b4ee0b5faac2",
+  "kernel_hash": "089eb38653e9",
+  "spec_id": "M2.16",
+  "family": "M2-c",
+  "mutation": {
+    "kind": "rankadd",
+    "operand_index": 0,
+    "dim_index": 0,
+    "params": [
+      0,
+      0
+    ],
+    "reference_dims": [
+      [
+        64,
+        8,
+        256
+      ]
+    ],
+    "mutant_dims": [
+      [
+        1,
+        64,
+        8,
+        256
+      ]
+    ]
+  },
+  "outcome": "runtime",
+  "manifest": "corrupts"
+}

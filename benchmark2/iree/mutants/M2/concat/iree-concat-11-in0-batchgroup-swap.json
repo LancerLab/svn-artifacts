@@ -1,0 +1,47 @@
+{
+  "mutant_id": "iree-concat-11-in0-batchgroup-swap",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "concat",
+  "kernel": "11_dynamic_32xS1x768_32xS2x768_32xS1pS2x768",
+  "settings_hash": "55b2395980bd",
+  "kernel_hash": "960d78137f7b",
+  "spec_id": "M2.9",
+  "family": "M2-b",
+  "mutation": {
+    "kind": "swap",
+    "operand_index": 0,
+    "dim_index": 0,
+    "params": [
+      0,
+      0,
+      1
+    ],
+    "reference_dims": [
+      [
+        32,
+        4,
+        768
+      ],
+      [
+        32,
+        6,
+        768
+      ]
+    ],
+    "mutant_dims": [
+      [
+        4,
+        32,
+        768
+      ],
+      [
+        32,
+        6,
+        768
+      ]
+    ]
+  },
+  "outcome": "runtime",
+  "manifest": "corrupts"
+}

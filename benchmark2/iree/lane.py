@@ -328,12 +328,14 @@ def _parse_result(log: Path):
             re.findall(r"[-+]?\d+\.?\d*(?:[eE][-+]?\d+)?", seg[seg.find("=") + 1:])]
 
 
-def _run_out(vmfb: Path, func: str, arg_specs, timeout=90) -> tuple[int, Path, str]:
+def _run_out(vmfb: Path, func: str, arg_specs, timeout=90, extra=None) -> tuple[int, Path, str]:
     h = hashlib.md5("\x00".join(arg_specs).encode()).hexdigest()[:10]
     rlog = RAW / f"_mut_{vmfb.stem}_{h}.log"
     cmd = [str(IREE_RUN), f"--module={vmfb}", "--device=cuda", f"--function={func}"]
     for a in arg_specs:
         cmd += ["--input=" + a]
+    if extra:
+        cmd += list(extra)
     try:
         with rlog.open("w") as f:
             r = subprocess.run(cmd, stdout=f, stderr=subprocess.STDOUT, timeout=timeout)
@@ -563,15 +565,437 @@ def cmd_minimal(level2: bool = False):
                     "spec_id": sid, "family": fam,
                 }
                 recs.append(rec)
-    with (RAW / "mutants.jsonl").open("w") as f:
-        for r in recs:
-            f.write(json.dumps(r) + "\n")
+    cmd_attribution()  # rebuild raw/mutants.jsonl from *all* families' defs
     n_runtime = sum(1 for r in recs if r["outcome"] == "runtime")
     lvl = "level-2 " if level2 else ""
     log(f"minimal [{lvl}E1]: {len(recs)} M2 mutants materialised in mutants/, "
         f"{n_runtime} runtime-caught, {len(recs)-n_runtime} never "
         f"(M1/M3 => n/a, see mutants/README.md)")
 
+
+
+# ---------------------------------------------------------------------------
+# M2 families M2-b..M2-e — entry-contract batteries beyond M2-a's extent edits.
+#
+# Every mutant still edits the *caller-side contract* handed to an unchanged
+# compiled kernel (the lane's surface claim: IREE exposes shape contracts, not
+# memory access). `kind` selects the edit:
+#   swap      (aidx,a,b)    two extents transposed             -> M2.6 / M2.9
+#   rankdrop  (aidx,i)      one dimension dropped              -> M2.7
+#   rankadd   (aidx,i)      one size-1 dimension inserted       -> M2.16
+#   set1      (aidx,i)      a broadcast extent set to 1         -> M2.8
+#   setv      (aidx,i,v)    a broadcast extent set to a 3rd val -> M2.21
+#   dataperm  (aidx,perm)   same shape, different memory order  -> M2.10 / M2.13
+#
+# M2.9 ("batch/group dimension swapped") is the dim0<->dim1 swap of a batched
+# operand; M2.6 is any other extent transposition. M2.16 keeps the element
+# count (size-1 insert), M2.7 does not. M2.8 sets the broadcast extent to 1,
+# M2.21 to a third value. M2.10 is a transpose on a *square* operand (extents
+# agree, so only the memory order differs); M2.13 is any other shape-equal /
+# layout-unequal layout.
+#
+# M2-f (M2.5 partial/duplicate write), M2-g (M2.15 pad_low<->pad_high) and
+# M2-h (M2.17 span_as on runtime-shaped data / M2.18 blocked-by-suite) have no
+# caller-side realisation at this surface: see mutants/README.md and the
+# channel summary for the per-spec blocker.
+# ---------------------------------------------------------------------------
+M2_BATTERY = [
+    # family, spec_id, category, kernel, tag, kind, params
+    # --- M2-b extent order ---
+    ("M2-b", "M2.9", "matmul", "11_dynamic_32xSx768_768x768_32xSx768",
+     "lhs-batchgroup-swap", "swap", (0, 0, 1)),
+    ("M2-b", "M2.6", "matmul", "11_dynamic_32xSx768_768x768_32xSx768",
+     "lhs-seq-hid-swap", "swap", (0, 1, 2)),
+    ("M2-b", "M2.9", "transpose", "11_dynamic_32xSx768_32x768xS",
+     "in-batchgroup-swap", "swap", (0, 0, 1)),
+    ("M2-b", "M2.6", "transpose", "11_dynamic_32xSx768_32x768xS",
+     "in-seq-hid-swap", "swap", (0, 1, 2)),
+    ("M2-b", "M2.9", "concat", "11_dynamic_32xS1x768_32xS2x768_32xS1pS2x768",
+     "in0-batchgroup-swap", "swap", (0, 0, 1)),
+    ("M2-b", "M2.6", "concat", "11_dynamic_32xS1x768_32xS2x768_32xS1pS2x768",
+     "in0-seq-hid-swap", "swap", (0, 1, 2)),
+    ("M2-b", "M2.9", "conv2d", "2_dynamic_Nx64x56x56_128x64x3x3_Nx128x56x56_S_P_D",
+     "in-batch-channel-swap", "swap", (0, 0, 1)),
+    ("M2-b", "M2.6", "conv2d", "2_dynamic_Nx64x56x56_128x64x3x3_Nx128x56x56_S_P_D",
+     "in-channel-height-swap", "swap", (0, 1, 2)),
+    # --- M2-c rank ---
+    ("M2-c", "M2.7", "matmul", "11_dynamic_32xSx768_768x768_32xSx768",
+     "lhs-rankdrop", "rankdrop", (0, 2)),
+    ("M2-c", "M2.16", "matmul", "11_dynamic_32xSx768_768x768_32xSx768",
+     "lhs-rankadd", "rankadd", (0, 0)),
+    ("M2-c", "M2.7", "transpose", "11_dynamic_32xSx768_32x768xS",
+     "in-rankdrop", "rankdrop", (0, 2)),
+    ("M2-c", "M2.16", "transpose", "11_dynamic_32xSx768_32x768xS",
+     "in-rankadd", "rankadd", (0, 0)),
+    ("M2-c", "M2.7", "softmax", "11_dynamic_32xSx768_32xSx768",
+     "in-rankdrop", "rankdrop", (0, 2)),
+    ("M2-c", "M2.16", "softmax", "11_dynamic_32xSx768_32xSx768",
+     "in-rankadd", "rankadd", (0, 0)),
+    ("M2-c", "M2.7", "reduce_mean", "11_dynamic_64xTx256_64x256",
+     "in-rankdrop", "rankdrop", (0, 2)),
+    ("M2-c", "M2.16", "reduce_mean", "11_dynamic_64xTx256_64x256",
+     "in-rankadd", "rankadd", (0, 0)),
+    # --- M2-d broadcast ---
+    ("M2-d", "M2.8", "layer_normalization", "10_dynamic_16x512xHxW_HxW_HxW",
+     "gamma-bcast-to-1", "set1", (1, 0)),
+    ("M2-d", "M2.21", "layer_normalization", "10_dynamic_16x512xHxW_HxW_HxW",
+     "gamma-bcast-3rd", "setv", (1, 0, 3)),
+    ("M2-d", "M2.8", "layer_normalization", "13_dynamic_32x512xV_V_V",
+     "gamma-bcast-to-1", "set1", (1, 0)),
+    ("M2-d", "M2.21", "layer_normalization", "13_dynamic_32x512xV_V_V",
+     "gamma-bcast-3rd", "setv", (1, 0, 5)),
+    ("M2-d", "M2.8", "batch_norm", "10_dynamic_16x512xHxW_512_512_16x512xHxW",
+     "gamma-bcast-to-1", "set1", (1, 0)),
+    ("M2-d", "M2.21", "batch_norm", "10_dynamic_16x512xHxW_512_512_16x512xHxW",
+     "gamma-bcast-3rd", "setv", (1, 0, 3)),
+    ("M2-d", "M2.8", "batch_norm", "13_dynamic_32x512xV_V_V_32x512xV",
+     "gamma-bcast-to-1", "set1", (1, 0)),
+    ("M2-d", "M2.21", "batch_norm", "13_dynamic_32x512xV_V_V_32x512xV",
+     "gamma-bcast-3rd", "setv", (1, 0, 5)),
+    # --- M2-e layout (extents intact, view) ---
+    ("M2-e", "M2.10", "matmul", "11_dynamic_32xSx768_768x768_32xSx768",
+     "rhs-square-transpose", "dataperm", (1, (1, 0))),
+    ("M2-e", "M2.13", "matmul", "11_dynamic_32xSx768_768x768_32xSx768",
+     "lhs-layout-unequal", "dataperm", (0, (0, 2, 1))),
+    ("M2-e", "M2.10", "transpose", "10_dynamic_16x512xHxW_16xHxWx512",
+     "in-square-transpose", "dataperm", (0, (0, 1, 3, 2))),
+    ("M2-e", "M2.13", "transpose", "10_dynamic_16x512xHxW_16xHxWx512",
+     "in-layout-unequal", "dataperm", (0, (1, 0, 2, 3))),
+    ("M2-e", "M2.10", "concat", "10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW",
+     "in0-square-transpose", "dataperm", (0, (0, 1, 3, 2))),
+    ("M2-e", "M2.13", "concat", "10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW",
+     "in0-layout-unequal", "dataperm", (0, (1, 0, 2, 3))),
+    ("M2-e", "M2.10", "batch_norm", "10_dynamic_16x512xHxW_512_512_16x512xHxW",
+     "in-square-transpose", "dataperm", (0, (0, 1, 3, 2))),
+    ("M2-e", "M2.13", "batch_norm", "10_dynamic_16x512xHxW_512_512_16x512xHxW",
+     "in-layout-unequal", "dataperm", (0, (1, 0, 2, 3))),
+]
+
+
+def _flat_coords(i: int, shape: list) -> list:
+    c = [0] * len(shape)
+    for ax in range(len(shape) - 1, -1, -1):
+        c[ax] = i % shape[ax]
+        i //= shape[ax]
+    return c
+
+
+def _perm_fill(shape: list, perm) -> "array":
+    """float32 values laid out so the logical tensor is `base.transpose(perm)`."""
+    import array
+    bshape = [shape[p] for p in perm]
+    n = 1
+    for d in bshape:
+        n *= d
+    out = array.array("f")
+    for i in range(n):
+        cb = _flat_coords(i, bshape)
+        ca = [0] * len(shape)
+        for ax in range(len(shape)):
+            ca[perm[ax]] = cb[ax]
+        j = 0
+        for ax in range(len(shape)):
+            j = j * shape[ax] + ca[ax]
+        out.append(float((j % 9) + 1))
+    return out
+
+
+def _bin_spec(dims: list, dtype: str, perm=None) -> str:
+    """Raw little-endian float32 input via a file (no argv length limit)."""
+    import array
+    shape = list(dims)
+    n = 1
+    for d in shape:
+        n *= d
+    if perm is None:
+        vals = array.array("f", [float((i % 9) + 1) for i in range(n)])
+    else:
+        vals = _perm_fill(shape, perm)
+    h = hashlib.md5((str(shape) + str(perm)).encode()).hexdigest()[:12]
+    p = RAW / "_m2bin" / f"{h}.bin"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    if not p.exists():
+        with p.open("wb") as f:
+            f.write(vals.tobytes())
+    return f"{'x'.join(str(d) for d in shape)}x{dtype}=@{p}"
+
+
+def _m2_small_dims(args, feed):
+    """Consistent tiny concrete dims (distinct per dynamic symbol) for the
+    numeric oracle. Static dims are untouched."""
+    sm, nxt = {}, [2]
+    for f in feed:
+        for v in f:
+            if v not in sm:
+                sm[v] = nxt[0]
+                nxt[0] += 1
+    out = []
+    for i, (_n, dims, _t) in enumerate(args):
+        out.append([(sm[feed[i][j]] if dims[j] == "?" else dims[j])
+                    for j in range(len(dims))])
+    return out
+
+
+def _m2_apply(kind: str, params, dims: list):
+    """Apply the entry edit to a copy of `dims`; returns (new_dims, perm, aidx)."""
+    d = list(dims)
+    perm = None
+    if kind == "delta":
+        aidx, i, delta = params
+        d[i] += delta
+    elif kind == "swap":
+        aidx, a, b = params
+        d[a], d[b] = d[b], d[a]
+    elif kind == "rankdrop":
+        aidx, i = params
+        d.pop(i)
+    elif kind == "rankadd":
+        aidx, i = params
+        d.insert(i, 1)
+    elif kind == "set1":
+        aidx, i = params
+        d[i] = 1
+    elif kind == "setv":
+        aidx, i, v = params
+        # A broadcast extent larger than the reference is simply not indexed, so
+        # it never corrupts. Use the largest valid third value below the
+        # reference (>=2), falling back upward only when no such value exists.
+        v = 2 if d[i] > 2 else d[i] + 1
+        d[i] = v
+    elif kind == "dataperm":
+        aidx, perm = params
+    else:
+        raise ValueError(kind)
+    return d, perm, aidx
+
+
+def _m2_measure(cat: str, stem: str, kind: str, params) -> dict | None:
+    """Compile (cached) and measure one entry-contract mutant. Returns a record
+    with outcome/manifest, or None if the reference does not run."""
+    mlir = KERNELS / cat / f"{stem}.mlir"
+    parsed = parse_func(mlir)
+    if parsed is None:
+        return None
+    fname, args, _ret = parsed
+    feed = concrete_feed_dims(cat, stem, [d for _n, d, _t in args], "small")
+    vmfb = RAW / cat / f"{stem}.small.vmfb"
+    if not vmfb.exists():
+        clog = RAW / cat / f"{stem}.small.compile.log"
+        (RAW / cat).mkdir(parents=True, exist_ok=True)
+        if compile_kernel(mlir, vmfb, clog) != "ok":
+            return {"compile": "fail"}
+    ref_specs = [_ramp_input(feed[i], args[i][2]) for i in range(len(args))]
+    rrc, _rlog, rshape = _run_out(vmfb, fname, ref_specs)
+    if rrc != 0:
+        return None
+    mut = [list(x) for x in feed]
+    aidx = params[0]
+    md, perm, _ = _m2_apply(kind, params, mut[aidx])
+    mut[aidx] = md
+    mut_specs = [_ramp_input(mut[i], args[i][2]) for i in range(len(args))]
+    rc, mlog, mshape = _run_out(vmfb, fname, mut_specs)
+    ref_dims_rec = [list(x) for x in feed]
+    if rc != 0:
+        return {"compile": "ok", "outcome": "runtime", "manifest": "corrupts",
+                "reference_dims": ref_dims_rec, "mutant_dims": mut,
+                "kind": kind, "params": list(params)}
+    if mshape != rshape and mshape:
+        return {"compile": "ok", "outcome": "never", "manifest": "corrupts",
+                "reference_dims": ref_dims_rec, "mutant_dims": mut,
+                "kind": kind, "params": list(params)}
+    # same-shape silent run: numeric ground truth with raw-binary inputs.
+    small = _m2_small_dims(args, feed)
+    smd, sperm, _ = _m2_apply(kind, params, small[aidx])
+    smut = [list(x) for x in small]
+    smut[aidx] = smd
+    r2 = [_bin_spec(small[i], args[i][2]) for i in range(len(args))]
+    m2 = [_bin_spec(smut[i], args[i][2],
+                    perm=(sperm if i == aidx else None)) for i in range(len(args))]
+    rr, rl, _ = _run_out(vmfb, fname, r2, extra=["--output_max_element_count=100000"])
+    mm, ml, _ = _run_out(vmfb, fname, m2, extra=["--output_max_element_count=100000"])
+    ro = _parse_result(rl) if rr == 0 else None
+    mo = _parse_result(ml) if mm == 0 else None
+    if ro is None or mo is None:
+        manifest = "corrupts"
+    elif len(ro) != len(mo) or any(abs(a - b) > 1e-3 for a, b in zip(ro, mo)):
+        manifest = "corrupts"
+    else:
+        manifest = "noop"
+    outcome = "never" if manifest == "corrupts" else "noop"
+    return {"compile": "ok", "outcome": outcome, "manifest": manifest,
+            "reference_dims": ref_dims_rec, "mutant_dims": mut,
+            "kind": kind, "params": list(params)}
+
+
+def _m2_17_measure(cat: str, stem: str, aidx: int, dim_idx: int,
+                   ref_v: int, mut_v: int) -> dict | None:
+    """M2.17: reshape/span_as on runtime-shaped data with the check skipped.
+
+    The dynamic-split reshape kernels compute the split factor with a runtime
+    floor division (`arith.divui flat_sz, static_factor`) and never verify
+    divisibility. A caller extent that is not a multiple is accepted (rc=0) and
+    the tail elements are silently dropped. The reference extent is a multiple,
+    so the same kernel is a valid operator; the defect is the absent check.
+    """
+    mlir = KERNELS / cat / f"{stem}.mlir"
+    parsed = parse_func(mlir)
+    if parsed is None:
+        return None
+    fname, args, _ret = parsed
+    small = _m2_small_dims(
+        args, concrete_feed_dims(cat, stem, [d for _n, d, _t in args], "small"))
+    vmfb = RAW / cat / f"{stem}.small.vmfb"
+    if not vmfb.exists():
+        (RAW / cat).mkdir(parents=True, exist_ok=True)
+        if compile_kernel(mlir, vmfb, RAW / cat / f"{stem}.small.compile.log") != "ok":
+            return {"compile": "fail"}
+
+    def run(v):
+        fd = [list(x) for x in small]
+        fd[aidx][dim_idx] = v
+        specs = [_ramp_input(fd[i], args[i][2]) for i in range(len(args))]
+        rc, _log, sh = _run_out(vmfb, fname, specs)
+        return rc, sh, fd
+
+    rrc, _rsh, _rfd = run(ref_v)
+    if rrc != 0:
+        return None
+    mrc, msh, mfd = run(mut_v)
+    rdims = [list(x) for x in small]
+    rdims[aidx][dim_idx] = ref_v
+    if mrc != 0:
+        return {"compile": "ok", "outcome": "runtime", "manifest": "corrupts",
+                "reference_dims": rdims, "mutant_dims": mfd,
+                "kind": "runtime-shape", "params": [aidx, dim_idx, ref_v, mut_v]}
+    in_n = 1
+    for d in mfd[aidx]:
+        in_n *= d
+    out_n = 1
+    for t in re.findall(r"\d+", msh):
+        out_n *= int(t)
+    corrupts = in_n != out_n
+    return {"compile": "ok",
+            "outcome": "never" if corrupts else "noop",
+            "manifest": "corrupts" if corrupts else "noop",
+            "reference_dims": rdims, "mutant_dims": mfd,
+            "kind": "runtime-shape", "params": [aidx, dim_idx, ref_v, mut_v],
+            "in_elems": in_n, "out_elems": out_n}
+
+
+# M2-h = M2.17 (unchecked reshape on runtime-shaped data) + M2.18. M2.18 is
+# blocked-by-suite (choreo: `realized: false`, `registry_status: pending`,
+# `prohibition: absent` -- needs a non-contiguous strided view the base suite
+# never writes), so this battery carries M2.17 only. The base suite supplies
+# two dynamic-split reshape kernels (7, 8); each contributes four distinct
+# runtime extents, so the family target of 8 is met with 2 kernels x 4.
+M2_H_BATTERY = [
+    ("M2-h", "M2.17", "reshape", "7_dynamic_32x197xE_32x197xEd64x64",
+     0, 2, 128, 129, "nondiv-plus-one"),
+    ("M2-h", "M2.17", "reshape", "7_dynamic_32x197xE_32x197xEd64x64",
+     0, 2, 128, 100, "nondiv-fraction"),
+    ("M2-h", "M2.17", "reshape", "7_dynamic_32x197xE_32x197xEd64x64",
+     0, 2, 64, 65, "nondiv-tiny-above"),
+    ("M2-h", "M2.17", "reshape", "7_dynamic_32x197xE_32x197xEd64x64",
+     0, 2, 64, 63, "nondiv-zero-tile"),
+    ("M2-h", "M2.17", "reshape", "8_dynamic_16x1024xD_16x1024xDd64x64",
+     0, 2, 128, 129, "nondiv-plus-one"),
+    ("M2-h", "M2.17", "reshape", "8_dynamic_16x1024xD_16x1024xDd64x64",
+     0, 2, 128, 100, "nondiv-fraction"),
+    ("M2-h", "M2.17", "reshape", "8_dynamic_16x1024xD_16x1024xDd64x64",
+     0, 2, 64, 65, "nondiv-tiny-above"),
+    ("M2-h", "M2.17", "reshape", "8_dynamic_16x1024xD_16x1024xDd64x64",
+     0, 2, 64, 63, "nondiv-zero-tile"),
+]
+
+
+def _m2_emit(recs, meta_by, MUT, family, sid, cat, stem, tag, mutation, r):
+    fam_of = m2_family(sid) or family
+    num = stem.split("_")[0]
+    mid = f"iree-{cat}-{num}-{tag}"
+    if any(x["mutant_id"] == mid for x in recs):
+        mid = f"{mid}-{len(recs)}"
+    m = meta_by.get((cat, stem), {})
+    mdir = MUT / "M2" / cat
+    mdir.mkdir(parents=True, exist_ok=True)
+    (mdir / f"{mid}.json").write_text(json.dumps({
+        "mutant_id": mid, "class": "M2",
+        "paper_category": "dim-mismatch", "category": cat, "kernel": stem,
+        "settings_hash": m.get("settings_hash", ""),
+        "kernel_hash": m.get("kernel_hash", ""),
+        "spec_id": sid, "family": fam_of,
+        "mutation": mutation,
+        "outcome": r["outcome"], "manifest": r["manifest"],
+    }, indent=2) + "\n")
+    recs.append({
+        "toolchain": "iree", "category": cat,
+        "settings_hash": m.get("settings_hash", ""),
+        "kernel": stem, "class": "M2", "paper_category": "dim-mismatch",
+        "mutant_id": mid, "level": "1",
+        "outcome": r["outcome"], "stage": RS.stage_for(r["outcome"]),
+        "manifest": r["manifest"], "kernel_hash": m.get("kernel_hash", ""),
+        "spec_id": sid, "family": fam_of,
+    })
+    log(f"m2: {mid}: {r['outcome']}/{r['manifest']} ({sid}/{fam_of})")
+
+
+def cmd_m2():
+    """M2-b..M2-e and M2-h (M2.17) entry-contract batteries.
+
+    Materialises `mutants/M2/<category>/<id>.json` and `raw/m2_families.jsonl`.
+    `cmd_attribution` folds these into `raw/mutants.jsonl` (the committed
+    attribution extract) along with the M2-a definitions.
+    """
+    MUT = LANE / "mutants"
+    meta_by = {}
+    for _l in (KERNELS / "manifest.jsonl").read_text().splitlines():
+        if not _l.strip():
+            continue
+        _j = json.loads(_l)
+        meta_by[(_j.get("category"), _j.get("stem"))] = _j
+    recs = []
+    for family, sid, cat, stem, tag, kind, params in M2_BATTERY:
+        r = _m2_measure(cat, stem, kind, params)
+        if r is None:
+            log(f"m2: SKIP {cat}/{stem} {tag}: reference did not run")
+            continue
+        if r.get("compile") != "ok":
+            log(f"m2: SKIP {cat}/{stem} {tag}: compile fail")
+            continue
+        if r.get("outcome") == "noop":
+            log(f"m2: DROP {cat}/{stem} {tag}: noop (inert, not a test)")
+            continue
+        _m2_emit(recs, meta_by, MUT, family, sid, cat, stem, tag, {
+            "kind": kind, "operand_index": params[0],
+            "dim_index": params[1] if kind != "dataperm" else -1,
+            "params": list(params),
+            "reference_dims": r["reference_dims"],
+            "mutant_dims": r["mutant_dims"],
+        }, r)
+    for family, sid, cat, stem, aidx, dim_idx, ref_v, mut_v, tag in M2_H_BATTERY:
+        r = _m2_17_measure(cat, stem, aidx, dim_idx, ref_v, mut_v)
+        if r is None:
+            log(f"m2: SKIP {cat}/{stem} {tag}: reference did not run")
+            continue
+        if r.get("compile") != "ok":
+            log(f"m2: SKIP {cat}/{stem} {tag}: compile fail")
+            continue
+        if r.get("outcome") == "noop":
+            log(f"m2: DROP {cat}/{stem} {tag}: noop (inert, not a test)")
+            continue
+        _m2_emit(recs, meta_by, MUT, family, sid, cat, stem, tag, {
+            "kind": "runtime-shape", "operand_index": aidx,
+            "dim_index": dim_idx, "params": [aidx, dim_idx, ref_v, mut_v],
+            "reference_dims": r["reference_dims"],
+            "mutant_dims": r["mutant_dims"],
+        }, r)
+    RAW.mkdir(parents=True, exist_ok=True)
+    with (RAW / "m2_families.jsonl").open("w") as f:
+        for r in recs:
+            f.write(json.dumps(r) + "\n")
+    from collections import Counter
+    c = Counter((r["family"], r["outcome"]) for r in recs)
+    log(f"m2 battery: {len(recs)} mutants materialised; {dict(c)}")
+    cmd_attribution()  # fold M2-a + the new families into raw/mutants.jsonl
 
 
 def _tag_for(cat: str, aidx: int, didx: int, delta: int) -> str:
@@ -600,7 +1024,8 @@ def cmd_attribution():
         m = d.get("mutation", {})
         tag = _tag_for(d["category"], m.get("operand_index", -1),
                        m.get("dim_index", -1), m.get("delta", 0))
-        sid = m2_spec_id(d["category"], tag)
+        sid = d.get("spec_id") or m2_spec_id(d["category"], tag)
+        fam = d.get("family") or m2_family(sid)
         recs.append({
             "toolchain": "iree", "category": d["category"],
             "settings_hash": d.get("settings_hash", ""),
@@ -613,7 +1038,7 @@ def cmd_attribution():
             "stage": RS.stage_for(d.get("outcome", "")),
             "manifest": d.get("manifest", ""),
             "kernel_hash": d.get("kernel_hash", ""),
-            "spec_id": sid, "family": m2_family(sid),
+            "spec_id": sid, "family": fam,
         })
     RAW.mkdir(parents=True, exist_ok=True)
     with (RAW / "mutants.jsonl").open("w") as f:
@@ -673,11 +1098,11 @@ def cmd_s12():
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("cmd", choices=["e2", "expressibility", "e3", "minimal",
-                                    "s12", "attribution"])
+                                    "m2", "s12", "attribution"])
     ap.add_argument("--level2", action="store_true")
     ap.add_argument("--full", action="store_true")
     a = ap.parse_args()
     {"expressibility": cmd_expressibility, "e3": cmd_e3, "s12": cmd_s12,
-     "attribution": cmd_attribution,
+     "attribution": cmd_attribution, "m2": cmd_m2,
      "minimal": (lambda: cmd_minimal(level2=a.level2)),
      "e2": (lambda: cmd_e2(size="full" if a.full else "small"))}[a.cmd]()

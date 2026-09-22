@@ -1,0 +1,48 @@
+{
+  "mutant_id": "iree-matmul-11-lhs-layout-unequal",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "matmul",
+  "kernel": "11_dynamic_32xSx768_768x768_32xSx768",
+  "settings_hash": "ba2aa2b58125",
+  "kernel_hash": "0b1506d74b78",
+  "spec_id": "M2.13",
+  "family": "M2-e",
+  "mutation": {
+    "kind": "dataperm",
+    "operand_index": 0,
+    "dim_index": -1,
+    "params": [
+      0,
+      [
+        0,
+        2,
+        1
+      ]
+    ],
+    "reference_dims": [
+      [
+        32,
+        4,
+        768
+      ],
+      [
+        768,
+        768
+      ]
+    ],
+    "mutant_dims": [
+      [
+        32,
+        4,
+        768
+      ],
+      [
+        768,
+        768
+      ]
+    ]
+  },
+  "outcome": "never",
+  "manifest": "corrupts"
+}

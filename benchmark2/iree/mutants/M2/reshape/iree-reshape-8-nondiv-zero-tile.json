@@ -1,0 +1,38 @@
+{
+  "mutant_id": "iree-reshape-8-nondiv-zero-tile",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "reshape",
+  "kernel": "8_dynamic_16x1024xD_16x1024xDd64x64",
+  "settings_hash": "fc1e3097da54",
+  "kernel_hash": "1ddbf060d459",
+  "spec_id": "M2.17",
+  "family": "M2-h",
+  "mutation": {
+    "kind": "runtime-shape",
+    "operand_index": 0,
+    "dim_index": 2,
+    "params": [
+      0,
+      2,
+      64,
+      63
+    ],
+    "reference_dims": [
+      [
+        16,
+        1024,
+        64
+      ]
+    ],
+    "mutant_dims": [
+      [
+        16,
+        1024,
+        63
+      ]
+    ]
+  },
+  "outcome": "never",
+  "manifest": "corrupts"
+}

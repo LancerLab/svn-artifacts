@@ -1,0 +1,37 @@
+{
+  "mutant_id": "iree-transpose-11-in-rankadd",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "transpose",
+  "kernel": "11_dynamic_32xSx768_32x768xS",
+  "settings_hash": "df847a35dd4b",
+  "kernel_hash": "e21cb5b9c4b0",
+  "spec_id": "M2.16",
+  "family": "M2-c",
+  "mutation": {
+    "kind": "rankadd",
+    "operand_index": 0,
+    "dim_index": 0,
+    "params": [
+      0,
+      0
+    ],
+    "reference_dims": [
+      [
+        32,
+        9,
+        768
+      ]
+    ],
+    "mutant_dims": [
+      [
+        1,
+        32,
+        9,
+        768
+      ]
+    ]
+  },
+  "outcome": "runtime",
+  "manifest": "corrupts"
+}

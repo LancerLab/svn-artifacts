@@ -1,0 +1,55 @@
+{
+  "mutant_id": "iree-concat-10-in0-layout-unequal",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "concat",
+  "kernel": "10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW",
+  "settings_hash": "55b2395980bd",
+  "kernel_hash": "c7d86c504b05",
+  "spec_id": "M2.13",
+  "family": "M2-e",
+  "mutation": {
+    "kind": "dataperm",
+    "operand_index": 0,
+    "dim_index": -1,
+    "params": [
+      0,
+      [
+        1,
+        0,
+        2,
+        3
+      ]
+    ],
+    "reference_dims": [
+      [
+        16,
+        512,
+        7,
+        7
+      ],
+      [
+        16,
+        512,
+        7,
+        7
+      ]
+    ],
+    "mutant_dims": [
+      [
+        16,
+        512,
+        7,
+        7
+      ],
+      [
+        16,
+        512,
+        7,
+        7
+      ]
+    ]
+  },
+  "outcome": "never",
+  "manifest": "corrupts"
+}

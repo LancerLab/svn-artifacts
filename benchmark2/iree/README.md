@@ -14,6 +14,7 @@ benchmark2/iree/run.sh e2 --full      # full-size gate (recorded numbers)
 
 # or, per stage:
 #   run.sh minimal [--level2]   E1 mutants -> raw/mutants.jsonl
+#   run.sh m2                   M2-b..M2-h mutant batteries -> mutants/M2/**, raw/m2_families.jsonl
 #   run.sh e2 [--full]          kernel gate -> raw/kernels.jsonl
 #   run.sh e3                   remainder + expressibility
 #   run.sh s12                  compute-sanitizer -> raw/sanitizer.jsonl

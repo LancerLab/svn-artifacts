@@ -1,0 +1,43 @@
+{
+  "mutant_id": "iree-matmul-11-lhs-rankdrop",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "matmul",
+  "kernel": "11_dynamic_32xSx768_768x768_32xSx768",
+  "settings_hash": "ba2aa2b58125",
+  "kernel_hash": "0b1506d74b78",
+  "spec_id": "M2.7",
+  "family": "M2-c",
+  "mutation": {
+    "kind": "rankdrop",
+    "operand_index": 0,
+    "dim_index": 2,
+    "params": [
+      0,
+      2
+    ],
+    "reference_dims": [
+      [
+        32,
+        4,
+        768
+      ],
+      [
+        768,
+        768
+      ]
+    ],
+    "mutant_dims": [
+      [
+        32,
+        4
+      ],
+      [
+        768,
+        768
+      ]
+    ]
+  },
+  "outcome": "runtime",
+  "manifest": "corrupts"
+}

@@ -1,0 +1,55 @@
+{
+  "mutant_id": "iree-batch_norm-10-in-square-transpose",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "batch_norm",
+  "kernel": "10_dynamic_16x512xHxW_512_512_16x512xHxW",
+  "settings_hash": "45f6e81d94c0",
+  "kernel_hash": "735712f97613",
+  "spec_id": "M2.10",
+  "family": "M2-e",
+  "mutation": {
+    "kind": "dataperm",
+    "operand_index": 0,
+    "dim_index": -1,
+    "params": [
+      0,
+      [
+        0,
+        1,
+        3,
+        2
+      ]
+    ],
+    "reference_dims": [
+      [
+        16,
+        512,
+        5,
+        5
+      ],
+      [
+        512
+      ],
+      [
+        512
+      ]
+    ],
+    "mutant_dims": [
+      [
+        16,
+        512,
+        5,
+        5
+      ],
+      [
+        512
+      ],
+      [
+        512
+      ]
+    ]
+  },
+  "outcome": "never",
+  "manifest": "corrupts"
+}

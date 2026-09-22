@@ -1,0 +1,48 @@
+{
+  "mutant_id": "iree-layer_normalization-13-gamma-bcast-to-1",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "layer_normalization",
+  "kernel": "13_dynamic_32x512xV_V_V",
+  "settings_hash": "8dbff8357c9b",
+  "kernel_hash": "3fd462a2dcf1",
+  "spec_id": "M2.8",
+  "family": "M2-d",
+  "mutation": {
+    "kind": "set1",
+    "operand_index": 1,
+    "dim_index": 0,
+    "params": [
+      1,
+      0
+    ],
+    "reference_dims": [
+      [
+        32,
+        512,
+        8
+      ],
+      [
+        8
+      ],
+      [
+        8
+      ]
+    ],
+    "mutant_dims": [
+      [
+        32,
+        512,
+        8
+      ],
+      [
+        1
+      ],
+      [
+        8
+      ]
+    ]
+  },
+  "outcome": "never",
+  "manifest": "corrupts"
+}
