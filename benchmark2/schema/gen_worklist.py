@@ -202,13 +202,20 @@ for L in LANES:
         continue
     rows = load(BASE / L / "raw" / "mutants.jsonl", [])
     lane_rows[L] = len(rows)
+    # Collapse the repeat ONLY for the lanes that actually repeat. The mlir
+    # lanes run each mutant twice (rtv off/on) under the same
+    # (spec_id, category, shape, kernel); triton carries no rtv and its rows
+    # are distinct instances, so the same key would fold its 27 M1 rows into
+    # 8 categories and report 8 where the dashboard counts 27.
+    dedup = L in ("mlir-low", "mlir-linalg")
     seen = set()
     for r in rows:
-        key = (r.get("spec_id"), r.get("category"), r.get("shape"),
-               r.get("kernel"))
-        if key in seen:
-            continue
-        seen.add(key)
+        if dedup:
+            key = (r.get("spec_id"), r.get("category"), r.get("shape"),
+                   r.get("kernel"))
+            if key in seen:
+                continue
+            seen.add(key)
         f = bucket(L, r.get("class") or "?", r.get("spec_id"))
         if f:
             lane_fam[L][f] += 1
