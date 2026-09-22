@@ -10,7 +10,8 @@
     "layer_normalization": 48,
     "elemwise_add": 10,
     "transpose_square": 6,
-    "pad": 12
+    "pad": 12,
+    "reshape": 15
   },
   "elem_measured": {
     "matmul": true,
@@ -21,18 +22,20 @@
     "layer_normalization": true,
     "elemwise_add": true,
     "transpose_square": true,
-    "pad": true
+    "pad": true,
+    "reshape": true
   },
   "shape_diagnostics": {
     "concat": true,
-    "pad": true
+    "pad": true,
+    "reshape": true
   },
   "shape_compile_rejections": {
     "layer_normalization": 10,
     "matmul": 10,
     "concat": 8,
     "elemwise_add": 8,
-    "softmax": 8,
+    "softmax": 4,
     "pad": 2
   },
   "shape_evidence_basis": {
@@ -42,13 +45,16 @@
     "matmul": "mutation-only",
     "pad": "mutation+diagnostic",
     "relu": "diagnostic-only (no shape diagnostic)",
+    "reshape": "diagnostic-only",
     "softmax": "mutation-only",
     "transpose": "diagnostic-only (no shape diagnostic)",
     "transpose_square": "diagnostic-only (no shape diagnostic)"
   },
   "assert_diagnostic_classes": {
-    "^ out-of-bounds access": 110,
-    "^ subview runs out-of-bounds along dimension N": 20,
-    "^ offset N is out-of-bounds": 20
+    "^ out-of-bounds access": 112,
+    "^ subview runs out-of-bounds along dimension N": 24,
+    "^ offset N is out-of-bounds": 24,
+    "^ stride mismatch of dim N": 2,
+    "^ offset mismatch": 1
   }
 }

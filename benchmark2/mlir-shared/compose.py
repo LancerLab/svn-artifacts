@@ -272,6 +272,18 @@ M2_SPECS: list[Mutation] = [
              target="inp",
              detail="pad_low <-> pad_high swapped: total length preserved, "
                     "placement differs (the check is a sum)"),
+    # family M2-h "metadata path". The clean reshape reads a strided sub-span and
+    # flattens it; M2.17 drops the runtime element-count guard, M2.18 rereads the
+    # span as if it were contiguous.
+    Mutation("M2", 17, "reshape-runtime-extent", "wrong-shape",
+             target="inp",
+             detail="runtime-shaped flatten with a stale extent: the "
+                    "element-count check is skipped when both sides are "
+                    "runtime-shaped"),
+    Mutation("M2", 18, "reshape-noncontiguous-span", "stride",
+             target="inp",
+             detail="a strided sub-span is reread as if contiguous before the "
+                    "flatten (non-contiguous span; the check is warning-only)"),
 ]
 
 # The numbered M2 specs, in order, with variants collapsed. This is the list to
@@ -281,7 +293,7 @@ M2_SPECS: list[Mutation] = [
 # lane-local count.
 M2_SPEC_IDS: list[str] = [
     "M2.1", "M2.2", "M2.3", "M2.4", "M2.5", "M2.6", "M2.7", "M2.9", "M2.10",
-    "M2.13", "M2.15", "M2.16",
+    "M2.13", "M2.15", "M2.16", "M2.17", "M2.18",
 ]
 
 # mutation-specs.md §5 splits M2 coverage into a level-1 minimal set and level-2
@@ -292,9 +304,11 @@ LEVEL1_M2_CATS: list[str] = ["layer_normalization", "matmul", "concat"]
 # `transpose_square` is the M2-e surface (family "layout (extents intact)"):
 # square extents let a wrong permutation keep every shape legal. `pad` is the
 # M2-g surface (family "padding placement"): it is the only composed kernel that
-# carries a pad amount at all, so it is the only home for M2.15.
+# carries a pad amount at all, so it is the only home for M2.15. `reshape` is the
+# M2-h surface (family "metadata path"): a strided sub-span flattened through an
+# explicit runtime shape is the only place the runtime extent can go unchecked.
 LEVEL2_M2_CATS: list[str] = ["elemwise_add", "softmax", "transpose_square",
-                             "pad"]
+                             "pad", "reshape"]
 M2_CATS: list[str] = LEVEL1_M2_CATS + LEVEL2_M2_CATS
 LEVEL_OF: dict[str, str] = {c: "1" for c in LEVEL1_M2_CATS}
 LEVEL_OF.update({c: "2" for c in LEVEL2_M2_CATS})
@@ -385,6 +399,17 @@ def memref_type(dims: tuple[int | None, ...], dtype: str = "f32") -> str:
 PAD_LOW, PAD_HIGH = 1, 2
 PAD_SENTINEL = 7.0
 
+# Reshape / metadata path (family M2-h, specs M2.17/M2.18). The clean kernel
+# reads a STRIDED sub-span -- every `RESHAPE_STRIDE`-th element of the last axis
+# -- and then flattens it through an explicit runtime shape. That single
+# structure is the home of both M2-h defects:
+#   * M2.18 rereads the same span with stride 1, i.e. consumes a non-contiguous
+#     span as if it were contiguous (semacheck.cpp:1049-1054 warns, not errors);
+#   * M2.17 supplies a stale flatten extent. The element-count check is skipped
+#     when source and result are both runtime-shaped (semacheck.cpp:1056), so
+#     the wrong extent survives on the dynamic build.
+RESHAPE_STRIDE = 2
+
 SMALL_DIMS: dict[str, dict[str, tuple[int | None, ...]]] = {
     # --- mlir-linalg (M2) ---
     "matmul": {"lhs": (2, 3), "rhs": (3, 4), "out": (2, 4)},
@@ -409,6 +434,9 @@ SMALL_DIMS: dict[str, dict[str, tuple[int | None, ...]]] = {
     # this kernel, so the clean case genuinely pads and the mutant genuinely
     # swaps the placement -- there is no unpadded baseline to fall back on.
     "pad": {"inp": (2, 3), "out": (2 + PAD_LOW + PAD_HIGH, 3)},
+    # M2-h (family "metadata path"). The strided view drops the last axis by
+    # RESHAPE_STRIDE, so the flattened output is inp[0] * (inp[-1]/STRIDE).
+    "reshape": {"inp": (2, 4), "out": (2 * (4 // RESHAPE_STRIDE),)},
 }
 
 # Full-size extents, taken from the first concrete case in each settings file.
@@ -426,6 +454,7 @@ FULL_DIMS: dict[str, dict[str, tuple[int | None, ...]]] = {
     "transpose": {"inp": (32, 64), "out": (64, 32)},
     "transpose_square": {"inp": (64, 64), "out": (64, 64)},
     "pad": {"inp": (32, 64), "out": (32 + PAD_LOW + PAD_HIGH, 64)},
+    "reshape": {"inp": (32, 64), "out": (32 * (64 // RESHAPE_STRIDE),)},
 }
 
 # Which operand(s) carry a dynamic extent, per category (mirrors the settings'
@@ -445,6 +474,9 @@ DYNAMIC_SLOT: dict[str, tuple[tuple[str, int], ...]] = {
     # Both axes are the same symbolic extent, so the dynamic build stays square.
     "transpose_square": (("inp", 0), ("inp", 1)),
     "pad": (("inp", 0),),
+    # Only the leading axis is dynamic, so the strided view stays concretely
+    # shaped on its last axis and the flatten extent is the one runtime value.
+    "reshape": (("inp", 0),),
 }
 
 _DYN_VALUE = 3
@@ -493,6 +525,22 @@ def _derive_output(category: str, dims: dict[str, tuple[int | None, ...]],
         dims["out"] = tuple(out)
         if dims["inp"][0] is None:
             dyn["out.0"] = dyn["inp.0"] + pad_total
+    elif category == "reshape":
+        # Flatten the strided view: the last axis shrinks by RESHAPE_STRIDE and
+        # the whole thing collapses to one flat dimension.
+        view = list(dims["inp"])
+        view[-1] = None if view[-1] is None else view[-1] // RESHAPE_STRIDE
+        prod, dyn_lead = 1, False
+        for d in view:
+            if d is None:
+                dyn_lead = True
+            else:
+                prod *= d
+        dims["out"] = (None if dyn_lead else prod,)
+        if dyn_lead:
+            # DYNAMIC_SLOT declares only axis 0 dynamic, so `prod` is the static
+            # remainder and the runtime flatten extent is the bound axis times it.
+            dyn["out.0"] = dyn["inp.0"] * prod
     elif category in ("relu", "softmax", "layer_normalization", "elemwise_add"):
         src = "inp" if "inp" in dims else "lhs"
         dims["out"] = dims[src]
@@ -561,6 +609,9 @@ def reference(case: Case) -> np.ndarray:
         x = input_values(case.numel("inp")).reshape(case.shape("inp"))
         pads = [(PAD_LOW, PAD_HIGH)] + [(0, 0)] * (x.ndim - 1)
         return np.pad(x, pads, constant_values=PAD_SENTINEL).astype(np.float32)
+    if cat == "reshape":
+        x = input_values(case.numel("inp")).reshape(case.shape("inp"))
+        return x[..., ::RESHAPE_STRIDE].reshape(-1).astype(np.float32)
     if cat == "concat":
         a = input_values(case.numel("a")).reshape(case.shape("a"))
         b = input_values(case.numel("b"), offset=1000).reshape(case.shape("b"))

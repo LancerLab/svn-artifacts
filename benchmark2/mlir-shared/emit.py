@@ -1015,6 +1015,90 @@ def _emit_pad(e: Emitter, case: C.Case, st: Structural | None) -> tuple[str, str
     return res, out_t
 
 
+def _emit_reshape(e: Emitter, case: C.Case,
+                  st: Structural | None) -> tuple[str, str]:
+    """Read a strided sub-span and flatten it through a runtime shape (M2-h).
+
+    The clean kernel takes every `RESHAPE_STRIDE`-th element of the last axis --
+    a genuinely non-contiguous span -- and flattens it with an explicit shape
+    tensor. Both M2-h defects live on that structure:
+
+    * `reshape-contiguous` (M2.18) rereads the span with stride 1, so the flatten
+      linearises the wrong elements; a non-contiguous span is only warned about
+      on the checker's path (`semacheck.cpp:1049-1054`).
+    * `reshape-short` (M2.17) supplies a stale flatten extent. The element-count
+      check is skipped when source and result are both runtime-shaped
+      (`semacheck.cpp:1056`), so the wrong extent survives -- and it only exists
+      on the dynamic build, where the operand is genuinely runtime-shaped.
+    """
+    inp_dims, out_dims = case.dims["inp"], case.dims["out"]
+    inp_r = concrete(inp_dims, case.dyn, "inp")
+    out_r = concrete(out_dims, case.dyn, "out")
+    inp_t, out_t = C.tensor_type(inp_dims), C.tensor_type(out_dims)
+    nd = len(inp_dims)
+
+    x = emit_formula_tensor(e, inp_dims, inp_r, offset=0, name="inp")
+
+    # The view keeps its extent along the strided axis; only the *stride* moves
+    # (M2.18 rereads the same-shaped span as if it were contiguous). The leading
+    # extent stays dynamic if the operand does -- and it must, so that a bad
+    # flatten extent on that axis is genuinely unchecked (M2.17).
+    sizes: list = list(inp_r)
+    sizes[-1] = inp_r[-1] // C.RESHAPE_STRIDE
+    view_dims = tuple(None if inp_dims[i] is None else sizes[i]
+                      for i in range(nd))
+    view_t = C.tensor_type(view_dims)
+
+    lead = ""
+    if inp_dims[0] is None:
+        c0 = e.new("c")
+        e.emit(f"{c0} = arith.constant 0 : index")
+        lead = e.new("d")
+        e.emit(f"{lead} = tensor.dim {x}, {c0} : {inp_t}")
+        sizes[0] = lead
+
+    stride = 1 if (st is not None and st.kind == "reshape-contiguous") \
+        else C.RESHAPE_STRIDE
+    strides = [1] * nd
+    strides[-1] = stride
+    offs = [0] * nd
+    sl = (f"[{', '.join(map(str, offs))}] "
+          f"[{', '.join(map(str, sizes))}] "
+          f"[{', '.join(map(str, strides))}]")
+    v = e.new("v")
+    e.emit(f"{v} = tensor.extract_slice {x}{sl} : {inp_t} to {view_t}")
+
+    # The flatten target is an explicit runtime shape, which is what makes the
+    # element-count check skippable when the source is also runtime-shaped.
+    if inp_dims[0] is None:
+        rest = 1
+        for i in range(1, nd):
+            rest *= sizes[i]
+        n = e.new("n")
+        if st is not None and st.kind == "reshape-short":
+            # M2.17: the leading extent is used as the whole result, i.e. the
+            # factors after it are dropped. Unchecked because both sides are `?`.
+            n = lead
+        else:
+            cr = e.new("c")
+            e.emit(f"{cr} = arith.constant {rest} : index")
+            e.emit(f"{n} = arith.muli {lead}, {cr} : index")
+    else:
+        n = e.new("n")
+        e.emit(f"{n} = arith.constant {out_r[0]} : index")
+
+    shp = emit_empty(e, (1,), (1,), dtype="index")
+    c0 = e.new("c")
+    e.emit(f"{c0} = arith.constant 0 : index")
+    sh = e.new("sh")
+    e.emit(f"{sh} = tensor.insert {n} into {shp}[{c0}] : tensor<1xindex>")
+
+    r = e.new("rs")
+    e.emit(f"{r} = tensor.reshape {v}({sh}) : "
+           f"({view_t}, tensor<1xindex>) -> {out_t}")
+    return r, out_t
+
+
 EMITTERS = {
     "matmul": _emit_matmul,
     "relu": _emit_relu,
@@ -1025,6 +1109,7 @@ EMITTERS = {
     "layer_normalization": _emit_layer_norm,
     "elemwise_add": _emit_elemwise_add,
     "pad": _emit_pad,
+    "reshape": _emit_reshape,
 }
 
 

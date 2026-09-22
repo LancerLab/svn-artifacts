@@ -1,10 +1,10 @@
 {
   "class": "M2",
-  "n_records": 98,
-  "n_injected": 41,
-  "expected_injected": 41,
+  "n_records": 102,
+  "n_injected": 43,
+  "expected_injected": 43,
   "n_target_per_class": 40,
-  "delta_vs_target": 1,
+  "delta_vs_target": 3,
   "categories": [
     "layer_normalization",
     "matmul",
@@ -12,19 +12,20 @@
     "elemwise_add",
     "softmax",
     "transpose_square",
-    "pad"
+    "pad",
+    "reshape"
   ],
   "level2": true,
   "size": "small",
   "n_repeat": 1,
   "by_rtv": {
     "off": {
-      "compile": 23,
-      "never": 18
+      "compile": 21,
+      "never": 22
     },
     "on": {
-      "compile": 23,
-      "never": 18
+      "compile": 21,
+      "never": 22
     }
   },
   "problems": []

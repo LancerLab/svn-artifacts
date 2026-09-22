@@ -44,6 +44,10 @@ class Structural:
                              overlapping offset.
       * `pad-swap`        -- the pad_low/pad_high amounts are swapped, keeping
                              the padded total but moving the data (M2.15).
+      * `reshape-contiguous` -- a strided sub-span is reread with stride 1
+                             (M2.18).
+      * `reshape-short`   -- the runtime flatten extent is stale, so the result
+                             is silently shortened (M2.17).
       * M1 kinds (`drop-mask`, `off-by-one`, `negative-index`,
         `transposed-stride`, `offset-overrun`, `zero-stride`,
         `overlap-write`, `broadcast-index`, `tile-coord`) -- index/stride
@@ -284,6 +288,30 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
                     f"M2.15: {cat!r} composes no padded span whose low/high "
                     f"placement can be swapped")
             structural = Structural(kind="pad-swap")
+
+        elif mut.spec == 17:
+            # "runtime-shaped flatten with a stale extent" (v2.1 family M2-h):
+            # the element-count check is skipped when BOTH source and result are
+            # runtime-shaped, so a wrong runtime extent survives. A static operand
+            # is not runtime-shaped, so there is nothing to skip and the defect is
+            # honestly not expressible there.
+            if cat != "reshape":
+                raise NotApplicable(
+                    f"M2.17: {cat!r} composes no runtime-shaped flatten")
+            if not case.is_dynamic():
+                raise NotApplicable(
+                    "M2.17: static operand -- the element-count check is not "
+                    "skipped, so a stale extent is caught (not this defect)")
+            structural = Structural(kind="reshape-short")
+
+        elif mut.spec == 18:
+            # "reshape a non-contiguous span" (v2.1 family M2-h): the strided
+            # sub-span is reread with stride 1, so the flatten linearises the
+            # wrong elements. Only the reshape kernel composes such a span.
+            if cat != "reshape":
+                raise NotApplicable(
+                    f"M2.18: {cat!r} composes no non-contiguous sub-span")
+            structural = Structural(kind="reshape-contiguous")
 
         else:
             raise KeyError(f"unknown M2 spec {mut.spec}")

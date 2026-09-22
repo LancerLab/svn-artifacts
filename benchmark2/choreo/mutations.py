@@ -117,10 +117,11 @@ LEVEL2_SET = {
     # intact)"): a square transpose keeps every extent legal under a wrong
     # permutation, so only the memory order changes. `pad` is the M2-g surface
     # (family "padding placement"): it is the only composed kernel that carries a
-    # pad amount, so it is the only home for M2.15. Declared here (not in
-    # MINIMAL_SET) so they widen the coverage set without reclassifying any
-    # existing choreo level-1 category.
-    "M2": ["elemwise_add", "transpose_square", "pad"],
+    # pad amount, so it is the only home for M2.15. `reshape` is the M2-h surface
+    # (family "metadata path"): a strided sub-span flattened through an explicit
+    # runtime shape. Declared here (not in MINIMAL_SET) so they widen the coverage
+    # set without reclassifying any existing choreo level-1 category.
+    "M2": ["elemwise_add", "transpose_square", "pad", "reshape"],
     "M3": ["batch_norm"],
     "M4": [],
 }
