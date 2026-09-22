@@ -766,24 +766,24 @@ M1 = [
 
     # ---- softmax / 1_bert (static) -------------------------------------
     _m("M1.s2.sm1.read", "M1", 2, "oob", "softmax",
-       "1_bert_32x512x768_32x512x768",
+       "15_gpt_16x1024x4096_16x1024x4096",
        "off-by-one on the reduction read index",
        ("l1_input.data.at(0, j, k)", "l1_input.data.at(0, j, k + 1)")),
     _m("M1.s3.sm1.write", "M1", 3, "oob", "softmax",
-       "1_bert_32x512x768_32x512x768",
+       "15_gpt_16x1024x4096_16x1024x4096",
        "negative row index into the shared output tile",
        ("l1_out.at(0, j, k)", "l1_out.at(0, j - 1, k)")),
     _m("M1.s6.sm1.empty", "M4", 6, "stride", "softmax",
-       "1_bert_32x512x768_32x512x768",
+       "15_gpt_16x1024x4096_16x1024x4096",
        "empty reduction range",
        ("foreach {k} in [l1_input.span(2)]", "foreach {k} in [0]")),
     _m("M1.s5.sm1.store", "M1", 5, "oob", "softmax",
-       "1_bert_32x512x768_32x512x768",
+       "15_gpt_16x1024x4096_16x1024x4096",
        "offset write-back chunk overruns the output tensor",
-       ("dma.copy l1_out => output.chunkat(i#p, q, _)",
-        "dma.copy l1_out => output.chunkat(i#p + 1, q, _)")),
+       ("dma.copy l1_out => output.chunkat(i, p#q, _)",
+        "dma.copy l1_out => output.chunkat(i + 1, p#q, _)")),
     _m("M1.s6.sm1.zerostride", "M4", 6, "stride", "softmax",
-       "1_bert_32x512x768_32x512x768",
+       "15_gpt_16x1024x4096_16x1024x4096",
        "zero-stride access: collapse the reduction index",
        ("l1_input.data.at(0, j, k)", "l1_input.data.at(0, j, 0)")),
 
@@ -1404,9 +1404,10 @@ M1 += [
        "moves by one, so the last element reads past the tile",
        ("inp.chunkat(p#i, j, k, _)", "inp.chunkat(p#i, j, k + 1, _)")),
     _m("M1.9.sm1.baseoff", "M1", 9, "oob", "softmax",
-       "1_bert_32x512x768_32x512x768",
-       "base offset without shrinking the extent on the reduction read",
-       ("l1_input.data.at(0, j, k)", "l1_input.data.at(0, j, k + 1)")),
+       "15_gpt_16x1024x4096_16x1024x4096",
+       "base offset without shrinking the extent on the staged load chunk",
+       ("l1_input = dma.copy input.chunkat(i, p#q, _) => local;",
+        "l1_input = dma.copy input.chunkat(i + 1, p#q, _) => local;")),
     _m("M1.9.tp1.baseoff", "M1", 9, "oob", "transpose",
        "1_bert_32x512x768_32x768x512",
        "base offset without shrinking the extent on the transpose source",
@@ -1445,7 +1446,7 @@ M1 += [
 # ---- M1.12 wrong loop variable for a dimension (broadcast index reuse) ----
 M1 += [
     _m("M1.12.sm1.idxreuse", "M1", 12, "stride", "softmax",
-       "1_bert_32x512x768_32x512x768",
+       "15_gpt_16x1024x4096_16x1024x4096",
        "wrong loop variable for a dimension: the reduction index is reused "
        "for the row dimension (broadcast index reuse)",
        ("l1_input.data.at(0, j, k)", "l1_input.data.at(0, k, k)")),
@@ -1453,6 +1454,11 @@ M1 += [
        "1_bert_32x512x768_768_768",
        "wrong loop variable for a dimension on the primary operand",
        ("lhs.at(p#n, j, k)", "lhs.at(p#n, j, j)")),
+    _m("M1.12.sm14.idxreuse", "M1", 12, "stride", "softmax",
+       "14_efficientnet_64x1280x7x7_64x1280x7x7",
+       "broadcast index reuse on the 4-D softmax: the reduction index is "
+       "reused for the innermost spatial dimension",
+       ("l1_input.data.at(0, k, i, j)", "l1_input.data.at(0, k, i, k)")),
 ]
 
 # ---- M1.13 symbolic-bound overrun ----------------------------------------
@@ -1476,11 +1482,11 @@ M1 += [
 # element index, so they belong to M1.14.
 M1 += [
     _m("M1.14.sm1.store", "M1", 14, "oob", "softmax",
-       "1_bert_32x512x768_32x512x768",
+       "15_gpt_16x1024x4096_16x1024x4096",
        "tile-coordinate overrun on the write-back chunk while the element "
        "index inside the tile stays in bounds",
-       ("dma.copy l1_out => output.chunkat(i#p, q, _)",
-        "dma.copy l1_out => output.chunkat(i#p + 1, q, _)")),
+       ("dma.copy l1_out => output.chunkat(i, p#q, _)",
+        "dma.copy l1_out => output.chunkat(i + 1, p#q, _)")),
     _m("M1.14.sm11.store", "M1", 14, "oob", "softmax",
        "11_dynamic_32xSx768_32xSx768",
        "tile-coordinate overrun on the dynamic write-back chunk",
@@ -1499,6 +1505,11 @@ M1 += [
        "1_bert_32x512x768_32x768x512",
        "tile-coordinate overrun on the transpose source chunk",
        ("i.chunkat(p, y, z)", "i.chunkat(p + 1, y, z)")),
+    _m("M1.14.sm14.store", "M1", 14, "oob", "softmax",
+       "14_efficientnet_64x1280x7x7_64x1280x7x7",
+       "tile-coordinate overrun on the 4-D write-back chunk",
+       ("dma.copy l1_out => output.chunkat(batch_idx#p, _, h_tile, w_tile)",
+        "dma.copy l1_out => output.chunkat(batch_idx#p + 1, _, h_tile, w_tile)")),
 ]
 
 # ---- M1.15 / M1.16 / M1.18: screened, no operator yet ---------------------
