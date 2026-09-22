@@ -65,15 +65,16 @@ mask whose out-of-bounds write is genuinely UB.
 
 | | |
 |---|---|
-| injection specs | M1.1, M1.4–M1.6, M1.11, M1.12, M1.14, M1.20 (8 specs) |
+| injection specs | M1.1, M1.4–M1.6, M1.11, M1.12, M1.14, M1.19, M1.20 (9 specs) |
 | categories (§5's M1 minimal set) | `relu`, `transpose`, `softmax`, `layer_normalization` |
+| battery categories | the four above + four mutation-only `*_carrier` hosts (see the M1.19 note) |
 | shapes | static + dynamic |
-| **injections** | 8 × 4 × 2 = **64** |
+| **injections** | 8 × 4 × 2 + 1 × 4 × 2 = **72** |
 | §0 target N per class | 40 |
-| delta | **+24** (v1's +8 plus the v2.1 specs and M1-g, held to the family budget) |
-| mutants | **64** — M1 specs have no sub-variants, so one injection is exactly one mutant |
-| records | **128** — 64 × 2 RTV modes |
-| `n/a` cells | **0** — no M1 spec raised `NotExpressible` on any of the four |
+| delta | **+32** (v1's +8 plus the v2.1 specs, M1-g, and the M1-f carrier hosts) |
+| mutants | **72** — M1 specs have no sub-variants, so one injection is exactly one mutant |
+| records | **144** — 72 × 2 RTV modes |
+| `n/a` cells | **0** — no M1 spec raised `NotExpressible` on any battery category |
 
 `M1.2`/`M1.3` are still declared in `M1_SPECS` but are **not realised on this
 surface**: family `M1-a` is the only M1 family reachable through more than one
@@ -81,8 +82,8 @@ spec, and realising all three would give it 24 instances against the 8 every
 other family holds (`mutation-specs-v2.md` §6). It is realised through the
 lowest-id spec (`M1.1`) only, so `M1-a` matches the single-spec budget of
 `M1-b`..`M1-h`. The other lanes carry `M1.2`/`M1.3` (triton: 6 and 5). `M1.20`
-realises `M1-g` through a symbolic `memref.subview` offset (see the M1.20 note
-below); `M1.19`/`M1-f` stays infeasible on this surface.
+realises `M1-g` through a symbolic `memref.subview` offset, and `M1.19` realises
+`M1-f` through four mutation-only carrier kernels (both noted below).
 
 M2 and M3 are `n/a` on this surface (`n_na: 40` each): M2's specs are tensor-level
 shape-contract defects, which do not exist once everything is a `memref`, and M3 is
@@ -90,23 +91,23 @@ hardware-specific with no GPU here. S1 therefore reports **M1 only** for this la
 
 `minimal` checks its census against a **pinned literal**, not a value derived from the
 categories it iterated — see `../mlir-linalg/README.md` for the tautology this
-prevents. This lane's `categories` and `battery_cats` happen to coincide (all four
-composed categories are M1 targets), but the separation is still enforced so the
-check cannot silently degrade if the composed set grows.
+prevents. This lane separates `categories` (the four operators E2/S8/S9 gate) from
+`battery_cats` (those four plus the four mutation-only carrier hosts the M1 battery
+also drives), so the check cannot silently degrade when the composed set grows.
 
 ## Measured results (small size, committed)
 
 | statistic | value |
 |---|---|
-| kernel gate | **16/16 green** (8 small + 8 full), 0 gate failures |
-| S1 M1 | `n_injected: 64, n_compile: 0, n_runtime: 38, n_never: 26, n_na: 0` |
+| kernel gate | **16/16 green** (4 operator categories × 2 shapes × 2 sizes), 0 gate failures |
+| S1 M1 | `n_injected: 72, n_compile: 0, n_runtime: 46, n_never: 26, n_na: 0` |
 | S8 | `elem {yes:4}`, `shape {no:4}`, `loop {no:4}`, `hw {no:4}` |
 | S9 | **108** kernel guards (layer_normalization 42, softmax 26, relu 20, transpose 20) |
-| S12 M1 | `flagged_and_exercised: 36` of 64 — 36 flagged, 28 genuine misses |
+| S12 M1 | `flagged_and_exercised: 37` of 72 — 37 flagged, 35 genuine misses |
 
 `n_compile: 0` is the headline difference from `mlir-linalg`. At memref level there
 is **no shape contract left to check** — every operand is a bare pointer with a
-layout, so nothing rejects a wrong extent at lowering. All 64 injections reach a
+layout, so nothing rejects a wrong extent at lowering. All 72 injections reach a
 binary and run. Detection is therefore entirely a *runtime* phenomenon here, which is
 why RTV matters so much on this surface and not at all on the other.
 
@@ -114,7 +115,7 @@ why RTV matters so much on this surface and not at all on the other.
 
 | | RTV off | RTV on | effect |
 |---|---|---|---|
-| `low` M1 | `never:61, runtime:3` | `never:26, runtime:38` | **35 records flip** |
+| `low` M1 | `never:66, runtime:6` | `never:26, runtime:46` | **40 records flip** |
 | `linalg` M2 | `compile:34, never:20, n/a:6` | identical | **no change at all** |
 
 Bare MLIR on an out-of-bounds `memref.load` **silently returns garbage with exit 0**.
@@ -157,14 +158,14 @@ with RTV **off** (RTV's own `cf.assert` would abort before the faulty access and
 the sanitizer silent). The chain, its four LLVM-21 defects, and the false-negative
 gate are documented in `../mlir-shared/README.md`.
 
-Result: **36 of 64 flagged** (`heap-buffer-overflow`), with all 64 exercised and
+Result: **37 of 72 flagged** (`heap-buffer-overflow`), with all 72 exercised and
 `instrumented` 7–13 sites each. This lane is the positive control for S12: the M1
-defects really are memory faults, so an external checker sees most of them — against
+defects really are memory faults, so an external checker sees many of them — against
 `mlir-linalg`'s 0 of 54, where the defects are shape faults.
 
-### The 28 misses, audited individually
+### The 35 misses, audited individually
 
-All 28 carry `instrumented` > 0, so all are genuine sanitizer negatives rather than
+All 35 carry `instrumented` > 0, so all are genuine sanitizer negatives rather than
 instrumentation failures.
 
 * **8× M1.6** (zero-stride / empty-range) — 2 each on `layer_normalization`, `relu`,
@@ -186,6 +187,13 @@ instrumentation failures.
   the doubled read index still lands inside the parent's flat span on those cells,
   so no access leaves the allocation; the other six M1.20 cells *are* flagged
   (`0B`–`12B` after the region). Records `never, corrupts`.
+* **7× M1.19** (index-carrier overflow) — the four carrier hosts, with
+  `transpose_carrier` **static** the only flagged cell (`SEGV`); the other seven
+  are silent. The i16 carrier wraps by ±2¹⁵ elements, so the faulty index is
+  ~128 KB outside the allocation — far past ASan's redzone, landing on other
+  mapped pages ASan cannot attribute. RTV flags all eight (the `memref.load`
+  descriptor check is index-level, not page-level), so this is the family where
+  the two checkers disagree most. Records `never, corrupts`.
 
 ### M1.4 is size-dependent, and the rule is exact
 
@@ -207,9 +215,9 @@ step: `DYNAMIC_SLOT` binds axis 0 of `relu`/`softmax`/`transpose` to
 `3x3` and `transpose`'s becomes `3x3` too — equal trailing extents, hence clean,
 while their static forms keep `(2,3)` and are flagged.
 
-Consequence for the paper: **S12's M1 flagged count is 36/64 at small size**
+Consequence for the paper: **S12's M1 flagged count is 37/72 at small size**
 (committed); the pre-v2.1 full-size run reported 36/48 and has not been rerun for
-the v2.1 specs (M1.11/M1.12/M1.14/M1.20). The committed artifact reports the small-size
+the v2.1 specs (M1.11/M1.12/M1.14/M1.19/M1.20). The committed artifact reports the small-size
 figure and the size-dependence is documented here rather than hidden. This is the
 same category of finding as M1.6 — *a corruption that never leaves the allocation
 is invisible to any memory checker* — and it is reported as a finding, not patched
@@ -242,6 +250,38 @@ offset is caught in the instrumented mode. The mutant is still real (all 8 cells
 silent under RTV-off, 6/8 ASan-flagged), but the local model is stronger here than
 the spec assumed.
 
+### M1.19 — the narrow index carrier
+
+`M1.19`'s published record (`M1.19.ln1.carrier.scale`, `paper_category: oob`) is an
+index whose value overflows the **carrier type** it is held in before it is used to
+address a buffer. On GPU lanes the carrier is compiler-owned (a 32-bit `pid*BLOCK`
+product), and there is no way to make it wrap without realising a ≥2³¹-element
+buffer. This lane has no such carrier — `memref<2147483904xf32>` lowers to i64
+GEPs — so, as the dispatch's updated working rule allows, the family is realised by
+**four mutation-only carrier kernels**: relu / transpose / softmax /
+layer-normalization variants whose innermost element index is held in an `i16`
+across an innermost extent of `CARRIER_W = 40000` (> 2¹⁵, ~320 KB per f32 plane).
+The clean kernel is legal; the mutation narrows the carrier, so a j in
+`[2¹⁵, 40000)` wraps to `j − 2¹⁶ < 0` and the read leaves the buffer.
+
+The carrier round-trip is spelled `index → i64 → trunci → i16 → index`, **not**
+`index → i16 → index`: the RTV-on pipeline runs `canonicalize`, which folds the
+direct cast pair back to the source value (equal `index` types) and turns the
+mutant into the clean kernel, while the `trunci`-through-`i64` form has no such
+fold and survives both pipelines. The mutant is mode-dependent like the others:
+
+| mode | verdict | why |
+|---|---|---|
+| RTV-**off** | `never/corrupts`, two cells `runtime/SEGV` | no index check; the wrapped read is silent or crashes |
+| RTV-**on** | `runtime/corrupts` | RTV's `memref.load` descriptor check fires on the negative index |
+
+This is the family where the external sanitizer is weakest (7/8 miss) and the
+in-language RTV the strongest (8/8): the wrap distance, ±2¹⁵ elements ≈ 128 KB,
+is far past ASan's redzone. The `M1-f` cell is therefore complete — 8 instances,
+all exercised, all corrupting — but its detection story is RTV-only. The relocation
+from 2³¹ (triton) to 2¹⁶ (here) is a per-toolchain feasibility choice; the paper
+must state it as such, not as the same carrier.
+
 ## Full-size validation
 
 Full-size extents are ~1000× larger (`relu` is `32×512×8×8` ≈ 1.05M elements), so
@@ -251,8 +291,8 @@ v2.1 spec additions and was not rerun:
 | check | small | full |
 |---|---|---|
 | e2 | 8/8 green | 8/8 green |
-| minimal | 128 rec / 64 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK (pre-v2.1) |
-| s12 | 64 sanitized, reconciled, 36 flagged | 48 sanitized, reconciled, 36 flagged (pre-v2.1) |
+| minimal | 144 rec / 72 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK (pre-v2.1) |
+| s12 | 72 sanitized, reconciled, 37 flagged | 48 sanitized, reconciled, 36 flagged (pre-v2.1) |
 | S9 | 108 | 132 |
 
 The full-size `minimal` was run with `M1_REPEAT=1` rather than the committed `16`,

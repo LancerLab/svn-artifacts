@@ -182,18 +182,25 @@ SURFACES = {
         "lane": "mlir-low",
         "emitter": L.emit_kernel_low,
         "categories": list(L.LOW_CATS),
-        # On this surface the M1 battery and the composed set coincide:
-        # mutation-specs.md §5's M1 minimal set is exactly these four.
-        "battery_cats": list(L.LOW_CATS),
+        # `categories` is the composed set E2/S8/S9 gate; `battery_cats` is what
+        # the M1 battery and S12 walk. They coincide for the four operator
+        # categories, and `battery_cats` additionally carries the mutation-only
+        # carrier hosts of family M1-f (spec M1.19), which have no clean-composed
+        # contract beyond the narrow-carrier mutant they exist to host. See
+        # `m1_cell` for the pairing rule.
+        "battery_cats": list(L.LOW_CATS) + list(C.M1_CARRIER_CATS),
         # Pinned, NOT derived from the specs being iterated. v1 §5.1 was 6 specs
         # x 4 cats x 2 shapes = 48; the v2.1 additions the memref surface can
         # realise (M1.11 family M1-h, M1.12 family M1-d, M1.14 family M1-e) add
-        # 3 specs x 4 x 2 = 24, for 9 specs = 72. Family M1-a is then trimmed
-        # from its 3 realising specs (M1.1/2/3, 24) to one (M1.1, 8) so it
-        # matches the single-spec budget every other family holds, and M1.20
-        # (family M1-g, the one remaining empty family) is added as one spec --
-        # 8 specs x 4 x 2 = 64 (compose.M1_LOW_SPECS). Every M1 record is level-1.
-        "expected_injected": {"1": 64},
+        # 3 specs x 4 x 2 = 24. Family M1-a is then trimmed from its 3 realising
+        # specs (M1.1/2/3, 24) to one (M1.1, 8) so it matches the single-spec
+        # budget every other family holds, and M1.20 (family M1-g) and M1.19
+        # (family M1-f) are added as one spec each. `m1_cell` pairs M1.19 only
+        # with the four carrier hosts and every other spec only with the four
+        # operator categories, so the battery is 8 specs x 4 cats x 2 shapes
+        # (operator categories, 64) + 1 spec x 4 carrier hosts x 2 shapes (8)
+        # = 72. Every M1 record is level-1.
+        "expected_injected": {"1": 72},
         "klass": "M1",
         "specs": C.M1_LOW_SPECS,
         "spec_ids": [m.spec_id for m in C.M1_LOW_SPECS],
@@ -201,7 +208,7 @@ SURFACES = {
         # this lane composes, so every M1 record is level-1. The §5 level-2 M1
         # additions (max_pool2d, conv2d, embedding, batch_norm) have no
         # low-level emitter yet — see the breadth note in stats.json.
-        "level_of": {c: "1" for c in L.LOW_CATS},
+        "level_of": {c: "1" for c in list(L.LOW_CATS) + list(C.M1_CARRIER_CATS)},
         # n/a reasons come from the axis here too; see the note on the linalg
         # surface above.
     },
@@ -250,6 +257,20 @@ ALL_CATEGORIES = ["batch_norm", "concat", "conv2d", "elemwise_add", "embedding",
 REPEAT = {"low": int(os.environ.get("M1_REPEAT", "16")),
           "linalg": int(os.environ.get("M2_REPEAT", "1"))}
 RUN_TIMEOUT = int(os.environ.get("MLIR_RUN_TIMEOUT", "15"))
+
+
+def m1_cell(cat: str, spec_id: str) -> bool:
+    """Whether `spec_id` may be injected into `cat` on the M1 low battery.
+
+    Family M1-f (spec M1.19) is the only spec hosted by the mutation-only
+    carrier categories (`compose.M1_CARRIER_CATS`), and it is hosted by no
+    operator category; every other M1 spec is hosted by the operator categories
+    and not by the carriers. Pairing them the other way is either inert (a narrow
+    index over an axis the carrier width already spans) or would misattribute the
+    defect to an operator with no clean carrier form. `battery_cats` therefore
+    spans more than `categories`, and this predicate is the pairing rule.
+    """
+    return (spec_id == "M1.19") == (cat in C.M1_CARRIER_CATS)
 
 
 def select_m2(cats: list[str], specs, size: str = "small") -> set[tuple]:
@@ -387,7 +408,15 @@ class Lane:
         self.results = ROOT / "results" / self.toolchain
         self.schema = B.load_schema(ROOT)
         self.version = B.TOOLCHAIN_VERSION
-        self.settings = {c: B.settings_hash(c, ROOT) for c in self.cfg["categories"]}
+        # The composed categories own a settings file; a mutation-only carrier
+        # host borrows its base operator's settings hash (`x_carrier` -> `x`), so
+        # the carrier records carry a real provenance hash rather than MISSING.
+        # Union of both sets: `battery_cats` is a superset of `categories` on the
+        # low surface and a subset on some tensor surfaces.
+        self.settings = {
+            c: B.settings_hash(C.base_category(c), ROOT)
+            for c in set(self.cfg["categories"]) | set(self.cfg["battery_cats"])
+        }
 
     # -- record helpers ----------------------------------------------------
 
@@ -572,12 +601,13 @@ class Lane:
 
         §5.1's enumeration arithmetic is owner-approved and must NOT be trimmed
         to hit N=40 exactly: linalg M2 = 5 specs x 5 cats x 2 shapes = 50
-        injections -> 54 mutants -> 120 records; low M1 = 8 specs x 4 cats x 2
-        shapes = 64 injections -> 64 mutants -> 128 records. The +10 / +24
-        overshoot is recorded explicitly in stats.json. (v1 shipped 6 M1 specs;
-        the v2.1 additions M1.11/M1.12/M1.14 raise it to 9, and M1.2/M1.3 are
-        then dropped so family M1-a holds one spec like every other family;
-        M1.20 realises the last empty family, M1-g.)
+        injections -> 54 mutants -> 120 records; low M1 = 8 operator specs x 4
+        cats x 2 shapes (64) + spec M1.19 x 4 carrier hosts x 2 shapes (8) = 72
+        injections -> 72 mutants -> 144 records (the M1.19 pairing is `m1_cell`).
+        The +10 / +24 overshoot is recorded explicitly in stats.json. (v1 shipped
+        6 M1 specs; the v2.1 additions M1.11/M1.12/M1.14 raise it to 9, and
+        M1.2/M1.3 are then dropped so family M1-a holds one spec like every other
+        family; M1.20 realises M1-g and M1.19 realises M1-f.)
         """
         w = self._writer("mutants", "mutant")
         klass = self.cfg["klass"]
@@ -609,6 +639,8 @@ class Lane:
                     shape = "dynamic" if dynamic else "static"
                     clean = C.make_case(cat, size=size, dynamic=dynamic)
                     for mut in self.cfg["specs"]:
+                        if klass == "M1" and not m1_cell(cat, mut.spec_id):
+                            continue
                         if sel is not None and (cat, shape, mut.spec_id) not in sel:
                             continue
                         if mut is not variant.get((cat, shape, mut.spec_id), mut):
@@ -838,6 +870,8 @@ class Lane:
                     shape = "dynamic" if dynamic else "static"
                     clean = C.make_case(cat, size=size, dynamic=dynamic)
                     for mut in self.cfg["specs"]:
+                        if klass == "M1" and not m1_cell(cat, mut.spec_id):
+                            continue
                         if sel is not None and (cat, shape, mut.spec_id) not in sel:
                             continue
                         if mut is not variant.get((cat, shape, mut.spec_id), mut):

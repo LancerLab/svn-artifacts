@@ -258,6 +258,29 @@ def _perturb(e: Emitter, idx: list[str], st: Structural | None, axis: int) -> li
         # Advance by one whole tile (M1.14). `st.tile` is the axis extent, so the
         # tile size comes from the same rule the clean nest uses.
         idx[k] = _apply(e, f"d0 + {_tile_for(st.tile)}", idx[k])
+    elif st.kind == "narrow-carrier":
+        # Carry the element index in an integer narrower than the axis (M1.19).
+        # `st.tile` is the carrier bit width. The clean kernel carries the index
+        # in `index`; the mutant round-trips it through `i16`, so a coordinate the
+        # allocation admits (>= 2**(tile-1)) wraps to a negative offset. The read
+        # must then go through `memref.load`, whose index operand may be an
+        # arbitrary SSA value -- `affine.load` rejects a non-dimension-id operand
+        # at `--lower-affine` (probe: "operand cannot be used as a dimension id").
+        #
+        # The round-trip is spelled `index -> i64 -> i16 -> index`, not the direct
+        # `index_cast index -> i16 -> index`: the RTV-on pipeline runs
+        # `canonicalize`, which folds the direct form straight back to the source
+        # value (source and result types are both `index`), silently turning the
+        # mutant into the clean kernel. The `trunci` through `i64` has no such
+        # fold, so the carrier survives both pipelines. See mlir-shared/README.md.
+        bits = st.tile
+        w = e.new("nrw")
+        e.emit(f"{w} = arith.index_cast {idx[k]} : index to i64")
+        t = e.new("nrc")
+        e.emit(f"{t} = arith.trunci {w} : i64 to i{bits}")
+        r = e.new("ix")
+        e.emit(f"{r} = arith.index_cast {t} : i{bits} to index")
+        idx[k] = r
     else:
         raise KeyError(f"unhandled M1 structural kind {st.kind!r}")
     return idx
@@ -281,6 +304,23 @@ def _write_perturb(
         return widx
     widx[axis] = _apply(e, f"d0 mod {st.tile}", widx[axis])
     return widx
+
+
+def _read(
+    e: Emitter, buf: str, buf_t: str, idx: Sequence[str], st: Structural | None
+) -> str:
+    """Load `buf[idx]` with the op the index's provenance requires.
+
+    A clean index (an `affine.for` induction variable, or an `affine.apply` of
+    one) is an affine dimension id, so `affine.load` composes with the affine
+    analyses. A narrow-carrier index has been cast through `i16` and is no longer
+    a dimension id, so it must go through `memref.load`, which accepts an
+    arbitrary SSA index. Both lower to the same `llvm.getelementptr`.
+    """
+    v = e.new("v")
+    op = "memref.load" if (st is not None and st.kind == "narrow-carrier") else "affine.load"
+    e.emit(f"{v} = {op} {buf}[{', '.join(idx)}] : {buf_t}")
+    return v
 
 
 # --------------------------------------------------------------------------
@@ -616,8 +656,7 @@ def _low_relu(e: Emitter, case: C.Case, st: Structural | None):
     with _tiled(e, ivs, bounds, ext, st, axis, inp, inp_t, inp_dims) as (
         ridx, rd, rd_t
     ):
-        v = e.new("v")
-        e.emit(f"{v} = affine.load {rd}[{', '.join(ridx)}] : {rd_t}")
+        v = _read(e, rd, rd_t, ridx, st)
         # `arith.maxf` was renamed in LLVM 21; `maximumf` propagates NaN like
         # numpy.maximum, which is what the reference oracle uses.
         r = e.new("r")
@@ -647,8 +686,7 @@ def _low_transpose(e: Emitter, case: C.Case, st: Structural | None):
     with _tiled(e, ivs, bounds, ext, st, axis, inp, inp_t, inp_dims) as (
         ridx, rd, rd_t
     ):
-        v = e.new("v")
-        e.emit(f"{v} = affine.load {rd}[{', '.join(ridx)}] : {rd_t}")
+        v = _read(e, rd, rd_t, ridx, st)
         # The store reverses the loop indices, so the tiled axis (ivs[nd-1]) is
         # coordinate 0 here; overlap-write wraps that coordinate.
         widx = _write_perturb(e, list(reversed(ivs)), st, 0)
@@ -689,8 +727,7 @@ def _low_softmax(e: Emitter, case: C.Case, st: Structural | None):
             rd, rd_t = _subview(e, inp, inp_t, inp_dims, outer[0])
         # --- pass 1: row max -------------------------------------------------
         def _maxbody(e: Emitter, ridx: list[str], acc: str, iv: str) -> str:
-            v = e.new("v")
-            e.emit(f"{v} = affine.load {rd}[{', '.join(ridx)}] : {rd_t}")
+            v = _read(e, rd, rd_t, ridx, st)
             m = e.new("t")
             e.emit(f"{m} = arith.maximumf {acc}, {v} : f32")
             return m
@@ -701,8 +738,7 @@ def _low_softmax(e: Emitter, case: C.Case, st: Structural | None):
 
         # --- pass 2: exp and row sum -----------------------------------------
         def _expbody(e: Emitter, ridx: list[str], acc: str, iv: str) -> str:
-            v = e.new("v")
-            e.emit(f"{v} = affine.load {rd}[{', '.join(ridx)}] : {rd_t}")
+            v = _read(e, rd, rd_t, ridx, st)
             d = e.new("t")
             e.emit(f"{d} = arith.subf {v}, {mx} : f32")
             ex = e.new("t")
@@ -772,8 +808,7 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
             rd, rd_t = _subview(e, lhs, lhs_t, lhs_dims, outer[0])
         # --- mean ------------------------------------------------------------
         def _sumbody(e: Emitter, ridx: list[str], acc: str, iv: str) -> str:
-            v = e.new("v")
-            e.emit(f"{v} = affine.load {rd}[{', '.join(ridx)}] : {rd_t}")
+            v = _read(e, rd, rd_t, ridx, st)
             a = e.new("t")
             e.emit(f"{a} = arith.addf {acc}, {v} : f32")
             return a
@@ -791,8 +826,7 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
 
         # --- variance --------------------------------------------------------
         def _sqbody(e: Emitter, ridx: list[str], acc: str, iv: str) -> str:
-            v = e.new("v")
-            e.emit(f"{v} = affine.load {rd}[{', '.join(ridx)}] : {rd_t}")
+            v = _read(e, rd, rd_t, ridx, st)
             d = e.new("t")
             e.emit(f"{d} = arith.subf {v}, {mean} : f32")
             m = e.new("t")
@@ -819,8 +853,7 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
         e.emit(f"affine.for {k} = 0 to {ext} {{")
         e.indent += 1
         ridx_k = _perturb(e, list(outer) + [k], st, axis)
-        xv = e.new("v")
-        e.emit(f"{xv} = affine.load {rd}[{', '.join(ridx_k)}] : {rd_t}")
+        xv = _read(e, rd, rd_t, ridx_k, st)
         d2 = e.new("t")
         e.emit(f"{d2} = arith.subf {xv}, {mean} : f32")
         n2 = e.new("t")
@@ -846,6 +879,12 @@ LOW_EMITTERS = {
     "transpose": _low_transpose,
     "softmax": _low_softmax,
     "layer_normalization": _low_layer_norm,
+    # M1-f carrier hosts: the same operator bodies, distinguishable only by the
+    # narrow-carrier structural directive the battery attaches to them.
+    "relu_carrier": _low_relu,
+    "transpose_carrier": _low_transpose,
+    "softmax_carrier": _low_softmax,
+    "layer_normalization_carrier": _low_layer_norm,
 }
 
 

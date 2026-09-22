@@ -1,13 +1,13 @@
 {
   "class": "M1",
   "size": "small",
-  "n_sanitized": 64,
+  "n_sanitized": 72,
   "n_not_expressible": 0,
-  "n_mutants_rtv_off": 64,
+  "n_mutants_rtv_off": 72,
   "reconciled": true,
   "tally": {
-    "flagged=false/fault=none/exercised=true": 28,
-    "flagged=true/fault=oob/exercised=true": 36
+    "flagged=false/fault=none/exercised=true": 35,
+    "flagged=true/fault=oob/exercised=true": 37
   },
   "unflagged_by_spec": {
     "M1.11/dynamic": {
@@ -27,6 +27,16 @@
     },
     "M1.12/static": {
       "n": 4,
+      "instrumented_min": 7,
+      "instrumented_max": 13
+    },
+    "M1.19/dynamic": {
+      "n": 4,
+      "instrumented_min": 7,
+      "instrumented_max": 13
+    },
+    "M1.19/static": {
+      "n": 3,
       "instrumented_min": 7,
       "instrumented_max": 13
     },

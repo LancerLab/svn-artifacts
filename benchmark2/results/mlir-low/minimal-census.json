@@ -1,27 +1,31 @@
 {
   "class": "M1",
-  "n_records": 128,
-  "n_injected": 64,
-  "expected_injected": 64,
+  "n_records": 144,
+  "n_injected": 72,
+  "expected_injected": 72,
   "n_target_per_class": 40,
-  "delta_vs_target": 24,
+  "delta_vs_target": 32,
   "categories": [
     "relu",
     "transpose",
     "softmax",
-    "layer_normalization"
+    "layer_normalization",
+    "relu_carrier",
+    "transpose_carrier",
+    "softmax_carrier",
+    "layer_normalization_carrier"
   ],
   "level2": false,
   "size": "small",
   "n_repeat": 16,
   "by_rtv": {
     "off": {
-      "never": 61,
-      "runtime": 3
+      "never": 66,
+      "runtime": 6
     },
     "on": {
       "never": 26,
-      "runtime": 38
+      "runtime": 46
     }
   },
   "problems": []

@@ -16,35 +16,35 @@
   },
   "summary": {
     "n_specs": 77,
-    "choreo_realized": 55,
-    "choreo_unrealized": 22,
-    "recorded_by_a_sota_lane": 29,
-    "recorded_over_choreo": 0.5273,
-    "recorded_over_all_specs": 0.3766,
-    "achievable_by_a_sota_lane": 63,
-    "achievable_over_all_specs": 0.8182,
-    "achievable_among_choreo_realized": 55,
+    "choreo_realized": 56,
+    "choreo_unrealized": 21,
+    "recorded_by_a_sota_lane": 30,
+    "recorded_over_choreo": 0.5357,
+    "recorded_over_all_specs": 0.3896,
+    "achievable_by_a_sota_lane": 64,
+    "achievable_over_all_specs": 0.8312,
+    "achievable_among_choreo_realized": 56,
     "achievable_over_choreo": 1.0,
     "choreo_only_and_achievable": 26,
-    "choreo_only_and_recorded": 29,
+    "choreo_only_and_recorded": 30,
     "constitutional_n_a_anywhere": 47,
     "lane_recorded_counts": {
       "triton": 8,
-      "mlir-low": 8,
+      "mlir-low": 9,
       "mlir-linalg": 6,
       "iree": 15
     },
     "lane_achievable_counts": {
-      "triton": 44,
-      "mlir-linalg": 34,
-      "mlir-low": 16,
-      "iree": 34
+      "triton": 45,
+      "mlir-linalg": 35,
+      "mlir-low": 17,
+      "iree": 35
     },
     "lane_recorded_over_achievable": {
-      "triton": 0.1818,
-      "mlir-linalg": 0.1765,
-      "mlir-low": 0.5,
-      "iree": 0.4412
+      "triton": 0.1778,
+      "mlir-linalg": 0.1714,
+      "mlir-low": 0.5294,
+      "iree": 0.4286
     },
     "union_metric_caveat": "`achievable_by_a_sota_lane` is the union over lanes and reaches 100% because each obligation class is declared expressible by at least one lane.  It answers 'could ANY lane express this?' and must not be quoted as a per-lane rate.  Quote `lane_recorded_over_achievable` instead.",
     "n_duplicate_findings": 30,
@@ -71,12 +71,11 @@
       "M3.6",
       "M4.1"
     ],
-    "n_under_powered_cells": 4,
+    "n_under_powered_cells": 3,
     "n_absent_cells": 12,
     "suite_surface_gaps": [
       "M1.15",
       "M1.16",
-      "M1.17",
       "M1.18",
       "M2.18",
       "M3.2",
@@ -90,7 +89,7 @@
       "M3.25",
       "M3.26"
     ],
-    "n_suite_surface_gaps": 15,
+    "n_suite_surface_gaps": 14,
     "undecided_lanes": []
   },
   "denominators": [
@@ -129,7 +128,7 @@
     {
       "lane": "triton",
       "class": "M1",
-      "n_mutants": 57,
+      "n_mutants": 65,
       "power_floor": 35,
       "status": "ok",
       "annotation": "meets the power floor"
@@ -145,10 +144,10 @@
     {
       "lane": "triton",
       "class": "M3",
-      "n_mutants": 3,
+      "n_mutants": 56,
       "power_floor": 35,
-      "status": "under-powered",
-      "annotation": "3 < 35: a rate must not be reported from this cell"
+      "status": "ok",
+      "annotation": "meets the power floor"
     },
     {
       "lane": "triton",
@@ -193,7 +192,7 @@
     {
       "lane": "mlir-low",
       "class": "M1",
-      "n_mutants": 64,
+      "n_mutants": 72,
       "power_floor": 35,
       "status": "ok",
       "annotation": "meets the power floor"
@@ -1642,47 +1641,47 @@
     {
       "unit": "M1.17",
       "class": "M1",
-      "path_class": "unchecked",
+      "path_class": "rt-check",
       "mechanism": "5th-index access on a rank-5 view",
       "choreo": {
-        "realized": false,
-        "n_mutants": 0,
-        "cases": [],
-        "admissible": false,
-        "registry_status": "pending",
-        "prohibition": "absent",
-        "note": "MISSING SURFACE: the suite's maximum rank is 4, so a rank-5 view cannot be constructed",
-        "n_operators": 0,
-        "n_distinct_realisations": 0
+        "realized": true,
+        "n_mutants": 1,
+        "cases": [
+          "r5at"
+        ],
+        "admissible": true,
+        "registry_status": "implemented",
+        "prohibition": null,
+        "note": "REALIZED on the new rank-5 `dma_rank5/r5at` kernel. The original `unchecked` prediction was wrong: semacheck's `.at` obligation is per-dimension with no rank ceiling, so the 5th index IS assessed and the mutant is caught at run time (`The 5th index ... should be less than 32`). Kept in family M1-g (its declared home); only the path is corrected.",
+        "n_operators": 1,
+        "n_distinct_realisations": 1
       },
       "lanes": {
         "triton": {
-          "status": "blocked-by-suite",
-          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
-          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
-          "needs": "a new base case -- see the suite-gap register"
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "triton/results/stats.json S8_expressibility[elem] = yes",
+          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "mlir-linalg": {
-          "status": "blocked-by-suite",
-          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
-          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
-          "needs": "a new base case -- see the suite-gap register"
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "results/mlir-linalg/stats.json S8_expressibility[elem] = yes",
+          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "mlir-low": {
-          "status": "blocked-by-suite",
-          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
-          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
-          "needs": "a new base case -- see the suite-gap register"
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "results/mlir-low/stats.json S8_expressibility[elem] = yes",
+          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "iree": {
-          "status": "blocked-by-suite",
-          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
-          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
-          "needs": "a new base case -- see the suite-gap register"
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
+          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         }
-      },
-      "na_kind": "suite-surface",
-      "na_kind_correction": "registry says prohibition='absent'; the note says MISSING SURFACE.  This is our gap, not the model's."
+      }
     },
     {
       "unit": "M1.18",
@@ -1761,10 +1760,8 @@
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "mlir-low": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "yes",
-          "evidence": "results/mlir-low/stats.json S8_expressibility[elem] = yes",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py Structural(narrow-carrier)"
         },
         "iree": {
           "status": "expressible-not-recorded",

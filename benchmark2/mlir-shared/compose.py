@@ -429,6 +429,19 @@ M1_SPECS: list[Mutation] = [
              detail="view (subview) offset taken from a runtime value, so a "
                     "static check cannot resolve the descriptor and the view "
                     "reads past the tensor"),
+    # family M1-f "carrier width": the element index is carried in an integer
+    # narrower than the extent of the axis it walks, so a coordinate the buffer
+    # admits wraps to a negative offset. Paper category `oob`, copied from the
+    # spec's published row (`M1.19.ln1.carrier.scale`). The memref/affine surface
+    # has no compiler-owned narrow carrier -- every descriptor and access index
+    # lowers to i64 -- so the lane relays the carrier into the kernel source: a
+    # mutation-only kernel whose innermost axis is wider than an i16 can span,
+    # legal in its clean form (index width `index`) and OOB in its mutant form
+    # (the index round-trips through `i16`). See mlir-shared/README.md and the
+    # lane channel for the program-authored-carrier faithfulness caveat.
+    Mutation("M1", 19, "narrow-index-carrier", "oob",
+             detail="the element index is carried in an integer narrower than "
+                    "the axis it walks, so a legal coordinate wraps negative"),
 ]
 
 # The low surface's realised M1 set. Family M1-a is the only M1 family the
@@ -442,6 +455,33 @@ M1_SPECS: list[Mutation] = [
 M1_LOW_SPECS: list[Mutation] = [
     m for m in M1_SPECS if m.spec_id not in ("M1.2", "M1.3")
 ]
+
+# Family M1-f "carrier width" (spec M1.19) is hosted by mutation-only kernels:
+# the surface has no compiler-owned narrow carrier, so the kernel itself carries
+# the element index in an `i16` while the axis it walks is wider than an `i16`
+# can span. `CARRIER_W` is above 2**15 and not a divisor of the tile rule, so the
+# wrap lands inside the guarded iteration; f32 gives ~320 KB per buffer, which
+# keeps the battery allocation-free-of-special-casing (no multi-GiB alloc).
+# The clean form of each category is legal (index width `index`); only the
+# mutant narrows the carrier. Four base operators x two shapes = 8.
+CARRIER_W = 40000
+M1_CARRIER_CATS: tuple[str, ...] = (
+    "relu_carrier",
+    "transpose_carrier",
+    "softmax_carrier",
+    "layer_normalization_carrier",
+)
+
+
+def base_category(category: str) -> str:
+    """The operator a carrier category hosts (`transpose_carrier` -> `transpose`).
+
+    Reference semantics and output-shape derivation dispatch on the base name;
+    the carrier suffix only marks the narrow-carrier host.
+    """
+    suffix = "_carrier"
+    return category[: -len(suffix)] if category.endswith(suffix) else category
+
 
 
 # --------------------------------------------------------------------------
@@ -507,6 +547,17 @@ SMALL_DIMS: dict[str, dict[str, tuple[int | None, ...]]] = {
     "relu": {"inp": (2, 3), "out": (2, 3)},
     "softmax": {"inp": (2, 4), "out": (2, 4)},
     "transpose": {"inp": (2, 3), "out": (3, 2)},
+    # M1-f (family "carrier width"). Mutation-only hosts (see M1_CARRIER_CATS):
+    # the innermost axis is wide enough that an i16 carrier wraps. The dynamic
+    # slot is axis 0, so the carrier axis stays a static wide extent in both
+    # shape modes.
+    "relu_carrier": {"inp": (2, CARRIER_W), "out": (2, CARRIER_W)},
+    "transpose_carrier": {"inp": (2, CARRIER_W), "out": (CARRIER_W, 2)},
+    "softmax_carrier": {"inp": (2, CARRIER_W), "out": (2, CARRIER_W)},
+    "layer_normalization_carrier": {
+        "lhs": (2, CARRIER_W), "scale": (CARRIER_W,), "bias": (CARRIER_W,),
+        "out": (2, CARRIER_W),
+    },
     # M2-e (family "layout (extents intact)"). A SQUARE transpose is a distinct
     # kernel from mlir-low's `transpose` above: with extents equal, a wrong
     # permutation keeps every shape legal and only the memory order changes --
@@ -566,6 +617,15 @@ FULL_DIMS: dict[str, dict[str, tuple[int | None, ...]]] = {
     "relu": {"inp": (32, 512, 8, 8), "out": (32, 512, 8, 8)},
     "softmax": {"inp": (16, 512, 8, 8), "out": (16, 512, 8, 8)},
     "transpose": {"inp": (32, 64), "out": (64, 32)},
+    # M1-f carrier hosts: the carrier axis is the type's property, not the
+    # problem size, so the full-size shape keeps the same wide innermost extent.
+    "relu_carrier": {"inp": (2, CARRIER_W), "out": (2, CARRIER_W)},
+    "transpose_carrier": {"inp": (2, CARRIER_W), "out": (CARRIER_W, 2)},
+    "softmax_carrier": {"inp": (2, CARRIER_W), "out": (2, CARRIER_W)},
+    "layer_normalization_carrier": {
+        "lhs": (2, CARRIER_W), "scale": (CARRIER_W,), "bias": (CARRIER_W,),
+        "out": (2, CARRIER_W),
+    },
     "transpose_square": {"inp": (64, 64), "out": (64, 64)},
     "pad": {"inp": (32, 64), "out": (32 + PAD_LOW + PAD_HIGH, 64)},
     "reshape": {"inp": (32, 64), "out": (32 * (64 // RESHAPE_STRIDE),)},
@@ -600,6 +660,12 @@ DYNAMIC_SLOT: dict[str, tuple[tuple[str, int], ...]] = {
     "relu": (("inp", 0),),
     "softmax": (("inp", 0),),
     "transpose": (("inp", 0),),
+    # M1-f carrier hosts: the symbolic slot is axis 0; the carrier axis (last)
+    # must stay a static wide extent, so it is never made dynamic.
+    "relu_carrier": (("inp", 0),),
+    "transpose_carrier": (("inp", 0),),
+    "softmax_carrier": (("inp", 0),),
+    "layer_normalization_carrier": (("lhs", 0),),
     # Both axes are the same symbolic extent, so the dynamic build stays square.
     "transpose_square": (("inp", 0), ("inp", 1)),
     "pad": (("inp", 0),),
@@ -651,6 +717,9 @@ def _derive_output(category: str, dims: dict[str, tuple[int | None, ...]],
     `transpose` swaps. Getting this wrong silently produces a shape mismatch
     that looks like a detection.
     """
+    # Carrier categories share their base operator's shape rule.
+    category = base_category(category)
+
     def concrete(name: str, axis: int) -> int:
         d = dims[name][axis]
         return dyn[f"{name}.{axis}"] if d is None else d
@@ -768,7 +837,8 @@ def make_case(category: str, size: str = "small", dynamic: bool = False) -> Case
 
 def reference(case: Case) -> np.ndarray:
     """Compute the reference output for a case, per its settings semantics."""
-    cat = case.category
+    # Carrier categories share their base operator's semantics.
+    cat = base_category(case.category)
     if cat == "matmul":
         a = input_values(case.numel("lhs")).reshape(case.shape("lhs"))
         b = input_values(case.numel("rhs"), offset=1000).reshape(case.shape("rhs"))

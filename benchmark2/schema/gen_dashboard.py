@@ -317,7 +317,7 @@ def main():
     w("")
     w("`instances` is deduplicated; `rows` is what `measured_today` counts. "
       "They diverge because the mlir lanes run each mutant **twice** (rtv "
-      "`off`/`on`): 128 rows = 64 instances, 120 rows = 50. **Do not read "
+      "`off`/`on`): 144 rows = 72 instances, 120 rows = 50. **Do not read "
       "`rows` as coverage.**")
     _missing = [l for l in LANES if fam_missing.get(l)]
     if _missing:

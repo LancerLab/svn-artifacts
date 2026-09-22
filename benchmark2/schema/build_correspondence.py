@@ -30,6 +30,7 @@ Run:  python3 schema/build_correspondence.py [--check]
 from __future__ import annotations
 
 import argparse
+import ast
 import collections
 import hashlib
 import json
@@ -100,6 +101,7 @@ MLIR_LOW_SPEC = {
     "M1.11": "overlap-write",
     "M1.12": "broadcast-index",
     "M1.14": "tile-coord",
+    "M1.19": "narrow-carrier",
     "M1.20": "subview-symbolic",
 }
 MLIR_LINALG_SPEC = {
@@ -500,7 +502,48 @@ def unit_of(spec):
     return f"{spec['spec_id']} :: {spec['desc']}"
 
 
+def _compose_m1_spec_ids() -> set[str]:
+    """Spec ids realised by the low lane, read out of `mlir-shared/compose.py`.
+
+    Parsed with `ast` rather than imported: `compose` pulls in numpy, which the
+    schema tooling does not depend on.  Mirrors the `M1_LOW_SPECS` comprehension
+    (every `M1_SPECS` entry minus the lane-scope carve-out M1.2/M1.3).
+    """
+    src = (ROOT / "mlir-shared" / "compose.py").read_text()
+    for node in ast.parse(src).body:
+        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+            continue
+        tgt = node.targets[0] if isinstance(node, ast.Assign) else node.target
+        if not (isinstance(tgt, ast.Name) and tgt.id == "M1_SPECS"):
+            continue
+        ids = {
+            f"M1.{elt.args[1].value}"
+            for elt in node.value.elts
+            if isinstance(elt, ast.Call)
+            and isinstance(elt.func, ast.Name)
+            and elt.func.id == "Mutation"
+        }
+        return ids - {"M1.2", "M1.3"}
+    raise SystemExit("build_correspondence: M1_SPECS not found in compose.py")
+
+
+def _check_mlir_low_ledger() -> None:
+    """Tie `MLIR_LOW_SPEC` to the lane's realised set.  A spec added to
+    `compose.M1_SPECS` (or dropped) cannot land without the ledger moving with
+    it, and vice versa -- the pair that drifted when M1.19 was realised."""
+    realised = _compose_m1_spec_ids()
+    ledger = set(MLIR_LOW_SPEC)
+    if realised != ledger:
+        missing = sorted(realised - ledger)
+        extra = sorted(ledger - realised)
+        raise SystemExit(
+            "build_correspondence: MLIR_LOW_SPEC is out of step with "
+            f"compose.M1_LOW_SPECS (missing from ledger: {missing}; "
+            f"not realised by the lane: {extra})")
+
+
 def build():
+    _check_mlir_low_ledger()
     reg, man = load_choreo()
     ops = choreo_operators()
     ops_by_spec = collections.defaultdict(list)

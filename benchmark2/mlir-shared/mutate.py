@@ -55,8 +55,8 @@ class Structural:
                              is made 2 and the second slice is read (M2.21).
       * M1 kinds (`drop-mask`, `off-by-one`, `negative-index`,
         `transposed-stride`, `offset-overrun`, `zero-stride`,
-        `overlap-write`, `broadcast-index`, `tile-coord`) -- index/stride
-        perturbations on the low-level surface.
+        `overlap-write`, `broadcast-index`, `tile-coord`, `narrow-carrier`) --
+        index/stride perturbations on the low-level surface.
     """
 
     kind: str
@@ -462,6 +462,20 @@ def _m1_structural(case: C.Case, mut: C.Mutation) -> Structural:
         # extent; the emitter applies `_tile_for` to pick the tile size and
         # advances the read index by that whole tile.
         return Structural(kind="tile-coord", axis=last, tile=extents[last])
+    if mut.spec == 19:
+        # Narrow index carrier (family M1-f). The kernel carries the innermost
+        # element index in an integer narrower than the axis it walks, so a
+        # coordinate the buffer admits wraps to a negative offset. `tile` carries
+        # the carrier bit width; the emitter casts the read index through `i16`
+        # and back. The axis extent must exceed what that width can span, or the
+        # mutant would be inert -- the lane binds this spec only to the wide
+        # carrier kernels (`compose.M1_CARRIER_CATS`).
+        if extents[last] <= 2 ** 15:
+            raise NotApplicable(
+                f"M1.19: {case.category!r} innermost extent {extents[last]} "
+                f"does not exceed the i16 carrier span"
+            )
+        return Structural(kind="narrow-carrier", axis=last, tile=16)
     if mut.spec == 20:
         # Symbolic view offset (family M1-g). The emitter builds a
         # `memref.subview` whose axis-0 offset is the outermost induction

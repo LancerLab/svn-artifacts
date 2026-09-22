@@ -71,11 +71,18 @@ import emit_low as L
 import mlirbench as B
 import mutate as M
 
-# mutation-specs.md §5's M1 minimal set is exactly the four categories this lane
-# composes, so every M1 record here is level-1. The §5 level-2 M1 additions
-# (max_pool2d, conv2d, embedding, batch_norm) have no low-level emitter yet.
-LEVEL1_M1_CATS = L.LOW_CATS
-LEVEL_OF_M1 = {c: "1" for c in L.LOW_CATS}
+# mutation-specs.md §5's M1 minimal set is exactly the four operator categories
+# this lane composes, so every M1 record here is level-1. The §5 level-2 M1
+# additions (max_pool2d, conv2d, embedding, batch_norm) have no low-level emitter
+# yet. Family M1-f (spec M1.19) is hosted by the mutation-only carrier categories
+# instead, so the validated set spans both and the pairing rule mirrors
+# `lane.m1_cell`.
+LEVEL1_M1_CATS = L.LOW_CATS + list(C.M1_CARRIER_CATS)
+LEVEL_OF_M1 = {c: "1" for c in LEVEL1_M1_CATS}
+
+
+def _m1_cell(cat: str, spec_id: str) -> bool:
+    return (spec_id == "M1.19") == (cat in C.M1_CARRIER_CATS)
 
 N_TARGET = C.N_TARGET_PER_CLASS
 
@@ -143,12 +150,14 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp = Path(tmp)
-        for cat in L.LOW_CATS:
+        for cat in LEVEL1_M1_CATS:
             lv = LEVEL_OF_M1[cat]
             for dynamic in (False, True):
                 shape = "dyn" if dynamic else "static"
                 clean = C.make_case(cat, size="small", dynamic=dynamic)
                 for mut in C.M1_LOW_SPECS:
+                    if not _m1_cell(cat, mut.spec_id):
+                        continue
                     mid = mut.mutant_id
                     ikey = (cat, shape, mut.spec_id)
 
