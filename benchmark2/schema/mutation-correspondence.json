@@ -3038,7 +3038,7 @@
       "mechanism": "leading dim not aligned to descriptor granularity ON A VECTORIZED ACCESS",
       "choreo": {
         "realized": true,
-        "n_mutants": 4,
+        "n_mutants": 3,
         "cases": [
           "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
           "1_bert_32x512x768_768x768_32x512x768"

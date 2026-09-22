@@ -1,6 +1,6 @@
 {
   "taxonomy_version": "v1",
-  "updated": "2026-09-17",
+  "updated": "2026-09-22",
   "purpose": "The ONE definition of the mutation method-family taxonomy. Level 2 of class -> family -> realisation -> instance. Every consumer (the per-lane budget in choreo/gen_mutants.py, the paper table tables/method-taxonomy.tex, the coverage ledger, check_class_axis.py) derives from this file instead of restating the family list.",
   "relation_to_class_axis": "schema/class-axis.json owns level 1 (the four classes and their lanes). This file owns level 2 (the families inside each class) and does not restate anything class-axis.json already says. Where the two could disagree, class-axis.json wins.",
   "unit_of_requirement_b": "(class, method family). NOT spec_id. Requirement (b) -- equal per-lane method count -- is a claim about these 31 cells, and a family is the smallest unit that can be independently not-applicable in a lane.",
@@ -327,8 +327,7 @@
       "spec_ids": [
         "M3.3",
         "M3.5",
-        "M3.13",
-        "M3.16"
+        "M3.13"
       ]
     },
     "M3-d": {
@@ -348,7 +347,8 @@
       "spec_ids": [
         "M3.6",
         "M3.7",
-        "M3.11"
+        "M3.11",
+        "M3.16"
       ]
     },
     "M3-f": {
@@ -548,13 +548,13 @@
   "known_debt": {
     "note": "Coverage debt that is REAL and TRACKED. `method_taxonomy --check` reports these as DEBT (exit 0) instead of FAIL (exit 1), so the checker is usable as a gate before the debt is paid. The discipline is the same as the `mutants.no-duplicate-injection` ledger: a finding that is NOT listed here is a FAIL (new debt, never seen before); a finding that IS listed but no longer holds is also a FAIL (stale entry). Nothing can be silently added to or removed from this list. Keys are the exact machine keys the checker emits: `<family>:<finding>`.",
     "items": {
-      "M3-e:no admissible declaration": {
+      "M3-c:no admissible declaration": {
         "finding": "no admissible declaration",
-        "observed": "R_f=1 on M3.6, which ships 8 operators, all `admissible: false`; M3.7 and M3.11 are likewise `absent`",
-        "why_real": "every one of M3-e's spec_ids carries the prohibition `absent`: the operators exist but no obligation assesses them, so none can witness anything. This is the family that proved R_f and R_a must both be printed -- at R_f=1 it reads as half done.",
-        "must_not_print_as": "a family already at R_f 1 and therefore half done",
-        "fix": "W1: give the model a prohibition for descriptor-granularity alignment, rather than adding more operators of the kind that already exist and already cannot be assessed.",
-        "clears_when": "M3-e gains an admissible spec_id"
+        "observed": "R_f=0 after M3.16 was re-homed to M3-e; the remaining spec_ids M3.3/M3.5/M3.13 all carry prohibition `absent`",
+        "why_real": "every remaining spec_id in M3-c carries the prohibition `absent`: the box/swizzle surface is not source-expressible, so no obligation assesses it and no operator could witness anything. M3.16 was the family's only admissible member and it is a box-ALIGNMENT defect (F3, `gpu_adapt.hpp:640`), so it belongs with M3-e's inner-box alignment, not here. The debt moved with it; it was not paid.",
+        "must_not_print_as": "a family with no operators and therefore merely unwritten",
+        "fix": "W1: give the model a prohibition for the swizzle/byte-box relation, rather than adding more operators of the kind that already exist and already cannot be assessed.",
+        "clears_when": "M3-c gains an admissible spec_id"
       }
     }
   },
@@ -563,7 +563,8 @@
     "R_f_definition": "spec_ids in the family with status `implemented`",
     "R_a_definition": "spec_ids in the family with status `implemented` AND admissible is true AND path is not `avoided`",
     "findings": {
-      "M3-e": "R_f 1, R_a 0. M3.6 `leading dim not aligned to descriptor granularity` ships 8 operators but is declared `admissible: false` with prohibition `absent`, so alignment currently has operators and no test. This is a coverage hole that the R_f-only view reports as a healthy 1.",
+      "M3-e": "R_f 2, R_a 1 after M3.16 was re-homed from M3-c. M3.16 `TMA box inner alignment with a SYMBOLIC leading dim` is `unchecked` and admissible, so it is the family's one test; M3.6/M3.7/M3.11 remain `absent`. M3.16 is a box-alignment defect (F3, `gpu_adapt.hpp:640`), which is why it belongs here rather than in M3-c.",
+      "M3-c": "R_f 0, R_a 0. M3.16, the family's only admissible member, was re-homed to M3-e; the remaining M3.3/M3.5/M3.13 are all `absent`, so the family now has a declaration but no admissible member and no operator. The `no admissible declaration` debt followed it here.",
       "M4-d": "R_f 1, R_a 0 by design -- it is the declared noop control, so its instances must be inadmissible for the admissible floor to mean anything.",
       "M3-h": "R_f 2, R_a 2 after the rt-check re-realisations M3.27/M3.28. The declared M3.12 is still `avoided` (compile-time capacity is refused), but a runtime-shaped extent escapes the static check, which is exactly the channel M3-h is about. Before this the family read as unrealisable as declared rather than merely unwritten."
     }

@@ -198,9 +198,9 @@ def r_a(family: str, registry: dict) -> int:
     """R_a -- ADMISSIBLE depth: how many realisations can be a TEST.
 
     R_f and R_a differ, and the difference is a finding, not noise. A family
-    with R_f >= 1 and R_a == 0 ships operators that cannot witness anything --
-    M3-e today (M3.6 has 8 operators, all declared `admissible: false`).
-    Reporting only R_f calls that a healthy 1.
+    with R_f >= 1 and R_a == 0 ships operators that cannot witness anything.
+    M4-d is the only such family today, and it is the noop control, so the gap
+    is by design (`is_noop_control`). Reporting only R_f calls it a healthy 1.
     """
     return sum(1 for s in specs_of(family) if _admissible(s, registry))
 
