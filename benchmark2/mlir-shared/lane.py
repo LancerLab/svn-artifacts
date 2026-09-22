@@ -104,6 +104,7 @@ import mutate as M
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from schema import class_axis as AX                             # noqa: E402
+from schema import method_taxonomy as T                         # noqa: E402
 
 # Helpers that resolve this file's SHARED surface table against the axis, so
 # the two surfaces (`linalg` -> lane `mlir-linalg`, `low` -> lane `mlir-low`)
@@ -235,6 +236,76 @@ ALL_CATEGORIES = ["batch_norm", "concat", "conv2d", "elemwise_add", "embedding",
 REPEAT = {"low": int(os.environ.get("M1_REPEAT", "16")),
           "linalg": int(os.environ.get("M2_REPEAT", "1"))}
 RUN_TIMEOUT = int(os.environ.get("MLIR_RUN_TIMEOUT", "15"))
+
+
+def select_m2(cats: list[str], specs, size: str = "small") -> set[tuple]:
+    """Choreo-style per-family selection for the M2 battery.
+
+    Mirrors `choreo/gen_mutants.py:select`: `N = N_PER_FAMILY` (8) decomposes as
+    `N_KERNELS x N_REALISATIONS`, so a family realises each declared spec_id at
+    least once and then fills round-robin to `N`, capping every
+    `(family, category)` at `N_REALISATIONS`. A candidate the surface cannot
+    express (`NotApplicable`) or that changes nothing (`AssertionError`) is not a
+    candidate at all, so an n/a cell never consumes a slot. Returns the selected
+    `(category, shape, spec_id)` injection keys.
+    """
+    n_fam = T.N_PER_FAMILY
+    n_real = T.N_REALISATIONS
+    by_spec: dict[str, list] = defaultdict(list)
+    for mut in specs:
+        by_spec[mut.spec_id].append(mut)
+
+    # Candidate injections, with expressibility probed on the clean case.
+    cands: list[tuple[str, str, str, str]] = []  # family, spec_id, cat, shape
+    for cat in cats:
+        for dynamic in (False, True):
+            shape = "dynamic" if dynamic else "static"
+            clean = C.make_case(cat, size=size, dynamic=dynamic)
+            for sid, muts in by_spec.items():
+                for mut in muts:
+                    try:
+                        M.apply(clean, mut)
+                        cands.append((T.family_of(sid), sid, cat, shape))
+                        break
+                    except (M.NotApplicable, AssertionError):
+                        continue
+
+    by_fam: dict[str, list] = defaultdict(list)
+    for c in cands:
+        by_fam[c[0]].append(c)
+
+    selected: set[tuple] = set()
+    for fam, cc in by_fam.items():
+        cap: Counter = Counter()
+        chosen: list[tuple] = []
+
+        def pick(pred) -> None:
+            for c in sorted(cc, key=lambda z: (cap[z[2]], z[2], z[3], z[1])):
+                if c in chosen or cap[c[2]] >= n_real or not pred(c):
+                    continue
+                chosen.append(c)
+                cap[c[2]] += 1
+                return
+
+        # Stage 1 -- every declared spec_id in the family realised at least once.
+        for sid in by_spec:
+            if T.family_of(sid) != fam:
+                continue
+            pick(lambda c, sid=sid: c[1] == sid)
+        # Stage 2 -- fill round-robin to N, capped per category.
+        while len(chosen) < n_fam:
+            before = len(chosen)
+            for c in sorted(cc, key=lambda z: (cap[z[2]], z[2], z[3], z[1])):
+                if len(chosen) >= n_fam:
+                    break
+                if c in chosen or cap[c[2]] >= n_real:
+                    continue
+                chosen.append(c)
+                cap[c[2]] += 1
+            if len(chosen) == before:
+                break
+        selected.update((c[2], c[3], c[1]) for c in chosen)
+    return selected
 
 # The MLIR diagnostic is the interesting part of a compile error; the leading
 # `path:line:col:` prefix is noise in a summary table.
@@ -467,6 +538,14 @@ class Lane:
         if klass == "M2" and not level2:
             cats = list(C.LEVEL1_M2_CATS)
 
+        # Per-family selection (choreo/gen_mutants.py:select), so a family holds
+        # N_PER_FAMILY instances rather than the whole spec x category x shape
+        # Cartesian. Without it M2-a alone holds 40 -- not comparable to choreo's
+        # 8-per-family cells. Only M2 is selected; the M1 low battery is already
+        # at its §5.1 contract.
+        sel = (select_m2(cats, self.cfg["specs"], size=size)
+               if klass == "M2" else None)
+
         n_repeat = REPEAT[self.key]
         # injection key -> {rtv: [outcomes of that injection's variants]}
         inj: dict[tuple[str, str, str], dict[bool, list[str]]] = defaultdict(
@@ -482,6 +561,8 @@ class Lane:
                     shape = "dynamic" if dynamic else "static"
                     clean = C.make_case(cat, size=size, dynamic=dynamic)
                     for mut in self.cfg["specs"]:
+                        if sel is not None and (cat, shape, mut.spec_id) not in sel:
+                            continue
                         ikey = (cat, shape, mut.spec_id)
                         try:
                             mcase, structural = M.apply(clean, mut)
@@ -563,19 +644,37 @@ class Lane:
             census_rows[rtv] = tally
 
         n_inj = len(inj)
-        # Compared against the PINNED §5.1 contract number, never against a count
-        # derived from `cats` — that would be self-referential and would pass no
-        # matter which categories were iterated.
         lvl = "2" if level2 else "1"
-        expected = self.cfg["expected_injected"][lvl]
-        log(f"[{self.toolchain}] minimal: {n_records} records over {n_inj} "
-            f"injections ({klass}); §5.1 expects {expected} "
-            f"{'OK' if n_inj == expected else '<-- MISMATCH'}")
-        if n_inj != expected:
-            problems.append(
-                f"injection census {n_inj} != §5.1 contract {expected} "
-                f"(level {lvl}, {len(cats)} categories x "
-                f"{len(self.cfg['spec_ids'])} specs x 2 shapes)")
+        if sel is None:
+            # M1 (low): still the PINNED §5.1 contract number, never a count
+            # derived from `cats` — that would be self-referential and would pass
+            # no matter which categories were iterated.
+            expected = self.cfg["expected_injected"][lvl]
+            log(f"[{self.toolchain}] minimal: {n_records} records over {n_inj} "
+                f"injections ({klass}); §5.1 expects {expected} "
+                f"{'OK' if n_inj == expected else '<-- MISMATCH'}")
+            if n_inj != expected:
+                problems.append(
+                    f"injection census {n_inj} != §5.1 contract {expected} "
+                    f"(level {lvl}, {len(cats)} categories x "
+                    f"{len(self.cfg['spec_ids'])} specs x 2 shapes)")
+        else:
+            # M2: the contract is per FAMILY, not per battery -- each family
+            # holds at most N_PER_FAMILY injections, and reaches it whenever its
+            # expressible supply allows. `expected` is the measured total, so it
+            # is recorded for the arithmetic but is not the pass condition.
+            fam_count = Counter(T.family_of(k[2]) for k in inj)
+            expected = n_inj
+            over = {f: n for f, n in fam_count.items() if n > T.N_PER_FAMILY}
+            log(f"[{self.toolchain}] minimal: {n_records} records over {n_inj} "
+                f"injections ({klass}); N={T.N_PER_FAMILY} per family over "
+                f"{len(fam_count)} families "
+                f"{'OK' if not over else '<-- OVER BUDGET'}")
+            log("    per family: " + ", ".join(
+                f"{f}={n}" for f, n in sorted(fam_count.items())))
+            if over:
+                problems.append(
+                    f"family budget exceeded: {over} (N={T.N_PER_FAMILY})")
         for rtv in (False, True):
             log(f"    rtv={'on ' if rtv else 'off'}: "
                 f"{dict(sorted(census_rows[rtv].items()))}")
@@ -672,6 +771,12 @@ class Lane:
         uinstr: dict[tuple[str, str], list[int]] = defaultdict(list)
         n_na = 0
 
+        # Same per-family selection the E1 battery used, or S12's `total` cannot
+        # reconcile with the mutant census.
+        sel = (select_m2(list(self.cfg["battery_cats"]), self.cfg["specs"],
+                         size=size)
+               if klass == "M2" else None)
+
         with tempfile.TemporaryDirectory() as td:
             tmp = Path(td)
             # battery_cats, NOT categories: S12 must cover exactly the mutants
@@ -682,6 +787,8 @@ class Lane:
                     shape = "dynamic" if dynamic else "static"
                     clean = C.make_case(cat, size=size, dynamic=dynamic)
                     for mut in self.cfg["specs"]:
+                        if sel is not None and (cat, shape, mut.spec_id) not in sel:
+                            continue
                         try:
                             mcase, structural = M.apply(clean, mut)
                             src = self._emit_mutant(mcase, clean, structural)

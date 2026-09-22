@@ -1,13 +1,13 @@
 {
   "class": "M2",
   "size": "small",
-  "n_sanitized": 86,
-  "n_not_expressible": 14,
-  "n_mutants_rtv_off": 86,
+  "n_sanitized": 40,
+  "n_not_expressible": 0,
+  "n_mutants_rtv_off": 40,
   "reconciled": true,
   "tally": {
-    "flagged=false/fault=none/exercised=false": 66,
-    "flagged=false/fault=none/exercised=true": 20
+    "flagged=false/fault=none/exercised=false": 24,
+    "flagged=false/fault=none/exercised=true": 16
   },
   "unflagged_by_spec": {
     "M2.5/dynamic": {
@@ -16,7 +16,7 @@
       "instrumented_max": 44
     },
     "M2.5/static": {
-      "n": 10,
+      "n": 6,
       "instrumented_min": 23,
       "instrumented_max": 44
     }

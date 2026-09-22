@@ -13,28 +13,28 @@
       "note": "no expressible M1 mutant on this surface; all spec N=40 mutants => n/a. no element-access defect is expressible on the tensor/linalg entry surface: there are no addressable memory locations before lowering (mutation-specs-v2.md 5)"
     },
     "M2": {
-      "n_injected": 90,
-      "n_compile": 66,
+      "n_injected": 32,
+      "n_compile": 24,
       "n_runtime": 0,
-      "n_never": 10,
-      "n_na": 14,
+      "n_never": 8,
+      "n_na": 0,
       "by_rtv": {
         "off": {
-          "n_injected": 90,
-          "n_compile": 66,
+          "n_injected": 32,
+          "n_compile": 24,
           "n_runtime": 0,
-          "n_never": 10,
-          "n_na": 14
+          "n_never": 8,
+          "n_na": 0
         },
         "on": {
-          "n_injected": 90,
-          "n_compile": 66,
+          "n_injected": 32,
+          "n_compile": 24,
           "n_runtime": 0,
-          "n_never": 10,
-          "n_na": 14
+          "n_never": 8,
+          "n_na": 0
         }
       },
-      "note": "measured on the linalg surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 200 mutant records reduce to 90 injections."
+      "note": "measured on the linalg surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 80 mutant records reduce to 32 injections."
     },
     "M3": {
       "n_injected": 0,
@@ -108,11 +108,11 @@
   "S12_sanitizer_supplement": {
     "M2": {
       "flagged_and_exercised": 0,
-      "total": 86,
+      "total": 40,
       "flagged": 0,
-      "exercised": 20,
+      "exercised": 16,
       "not_instrumented": 0,
-      "rejected_before_run": 66,
+      "rejected_before_run": 24,
       "misses": {
         "M2.5/dynamic": {
           "n": 10,
@@ -120,7 +120,7 @@
           "instrumented_max": 44
         },
         "M2.5/static": {
-          "n": 10,
+          "n": 6,
           "instrumented_min": 23,
           "instrumented_max": 44
         }
@@ -274,28 +274,26 @@
     "compiled": 28,
     "ran_ok": 28,
     "ref_pass": 28,
-    "mutant_records": 200,
-    "sanitizer_records": 86,
+    "mutant_records": 80,
+    "sanitizer_records": 40,
     "expressibility_records": 28,
     "gate_failures": 0
   },
   "census": {
     "class": "M2",
-    "n_injected": 90,
-    "expected_injected": 90,
-    "n_records": 200,
+    "n_injected": 32,
+    "expected_injected": 32,
+    "n_records": 80,
     "n_target_per_class": 40,
-    "delta_vs_target": 50,
+    "delta_vs_target": -8,
     "by_rtv": {
       "off": {
-        "compile": 66,
-        "n/a": 14,
-        "never": 10
+        "compile": 24,
+        "never": 8
       },
       "on": {
-        "compile": 66,
-        "n/a": 14,
-        "never": 10
+        "compile": 24,
+        "never": 8
       }
     },
     "battery_size": "small",
