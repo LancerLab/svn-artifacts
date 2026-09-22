@@ -169,7 +169,7 @@
     {
       "lane": "mlir-linalg",
       "class": "M2",
-      "n_mutants": 50,
+      "n_mutants": 70,
       "power_floor": 35,
       "status": "ok",
       "annotation": "meets the power floor"
@@ -1920,7 +1920,7 @@
         "realized": true,
         "n_mutants": 1,
         "cases": [
-          "1_bert_32x512x768_768x768_32x512x768"
+          "11_dynamic_32xSx768_768x768_32xSx768"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -2295,7 +2295,7 @@
         "realized": true,
         "n_mutants": 1,
         "cases": [
-          "1_bert_32x512x768_768x768_32x512x768"
+          "11_dynamic_32xSx768_768x768_32xSx768"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -2436,7 +2436,7 @@
         "realized": true,
         "n_mutants": 1,
         "cases": [
-          "1_bert_32x512x768_768x768_32x512x768"
+          "11_dynamic_32xSx768_768x768_32xSx768"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -2810,8 +2810,8 @@
         "realized": true,
         "n_mutants": 4,
         "cases": [
-          "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
-          "1_bert_32x512x768_768x768_32x512x768"
+          "11_dynamic_32xSx768_768x768_32xSx768",
+          "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1"
         ],
         "admissible": true,
         "registry_status": "implemented",
@@ -3040,6 +3040,7 @@
         "realized": true,
         "n_mutants": 3,
         "cases": [
+          "11_dynamic_32xSx768_768x768_32xSx768",
           "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
           "1_bert_32x512x768_768x768_32x512x768"
         ],

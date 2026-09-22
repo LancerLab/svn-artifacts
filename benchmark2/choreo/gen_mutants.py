@@ -74,6 +74,7 @@ SUITE = os.path.join(REPO, "benchmark", "choreo")
 OUT = os.path.join(HERE, "mutants")
 MANIFEST = os.path.join(HERE, "raw", "mutant_manifest.json")
 SPEC_REGISTRY_OUT = os.path.join(HERE, "raw", "spec_registry.json")
+ORACLE_POLICY = os.path.join(HERE, "raw", "oracle_policy.json")
 
 # The per-family budget lives in ONE place: schema/method-taxonomy.json. It is
 # imported the same way choreo/mutations.py imports schema.class_axis, so both
@@ -117,6 +118,38 @@ def settings_hash(category):
 
 def base_path(category, case):
     return os.path.join(SUITE, category, case + ".co")
+
+
+def oracle_usable_cases():
+    """The `category/case` keys the calibrated oracle can decide (specs §7).
+
+    E1 gives a mutant on a case whose UNMUTATED base already fails its own
+    reference check the verdict `noop` no matter what the edit does: the base
+    cannot pass, so the manifest field carries no information. Spending a
+    family's budget on such a case therefore buys a corpus entry that can never
+    count as a validated test, while a usable case with the same kernel could
+    have been validated. Selection prefers usable cases for that reason; when
+    no policy has been calibrated yet the preference is empty and the order is
+    declaration order, exactly as before.
+    """
+    if not os.path.exists(ORACLE_POLICY):
+        return frozenset()
+    try:
+        with open(ORACLE_POLICY) as f:
+            policy = json.load(f).get("policy", {})
+    except (OSError, ValueError):
+        return frozenset()
+    return frozenset(k for k, v in policy.items() if v.get("oracle_usable"))
+
+
+def prefer_usable(cands):
+    """Stable partition: oracle-usable cases first, declaration order within
+    each group. A stable sort is what keeps a re-run a no-op."""
+    usable = oracle_usable_cases()
+    if not usable:
+        return list(cands)
+    return sorted(cands,
+                  key=lambda c: f"{c.category}/{c.case}" not in usable)
 
 
 def apply_transform(src, mut):
@@ -281,6 +314,8 @@ def select(cands, n_per_family=N_PER_FAMILY, n_realisations=N_REALISATIONS,
             if c.is_na:                  # avoided -- repaired, never generated
                 continue
             cells.setdefault((c.spec_id, c.category), []).append(c)
+        for group in cells.values():     # a decidable case first within a cell
+            group[:] = prefer_usable(group)
 
         take = collections.OrderedDict()          # insertion-ordered id set
         cat_used = collections.Counter()
@@ -366,6 +401,8 @@ def select(cands, n_per_family=N_PER_FAMILY, n_realisations=N_REALISATIONS,
             if c.is_na or c.id in take:
                 continue
             queues.setdefault(c.category, []).append(c)
+        for q in queues.values():        # a decidable case first within a kernel
+            q[:] = prefer_usable(q)
 
         # A pass that takes nothing means every queue is drained or every
         # category is capped, so terminate on "did this pass make progress",
