@@ -1152,13 +1152,14 @@ def class_cell(cls: str) -> list[str]:
     `kernel_component` = 4 categories.
 
     Measured 2026-09-17: M1 has exactly 4 (layer_normalization/relu/softmax/
-    transpose -- the model anchors), M2 has 6, M4 has 5. **M3 has 2**
-    (matmul, conv2d). Its cell is therefore capped at `8 x 2 x 2 = 32` against a
-    declared `64`, and the shortfall is arithmetic rather than effort: no amount
-    of operator writing closes it, because the 3rd and 4th kernel do not exist.
-    `MINIMAL_SET["M3"]` names only 2 categories for the same reason -- M3's
-    specs are simply not realised anywhere else yet. This is W4's blocker, and
-    W4's exit criterion, with a number on it.
+    transpose -- the model anchors), M2 has 6, M4 has 5. **M3 had 2**
+    (matmul, conv2d), which is why this guard was written: its cell was capped
+    at `8 x 2 x 2 = 32` against a declared `64`, and the shortfall was
+    arithmetic rather than effort. The coverage set now names six M3 categories
+    (`matmul`, `conv2d`, `batch_norm`, `layer_normalization`, `max_pool2d`,
+    `dma_rank5`), all six realised, so `m3.cell` is green and the class cell of
+    `64` is arithmetically reachable. `MINIMAL_SET["M3"]` names the same six.
+    This was W4's blocker and W4's exit criterion, with a number on it.
 
     Both halves are checked, because they fail for different reasons and the fix
     differs: the DECLARATION (the coverage set reserves fewer than

@@ -1693,20 +1693,23 @@ M2 += [
 # gpu_adapt.hpp:320 `// linear copy` ... `// omitted`. The other six cells of
 # the DMA matrix call CheckDimSize; this one does not (defect F1). unchecked.
 #
-# M3-b is the ONLY M3 family whose budget is not already exhausted, and unchecked
-# gives ONE instance per (spec x category) cell (`ceiling()` returns N_CELLS,
-# not N_REALISATIONS, when `needs_rtc_curve` is false). So the family's whole
-# remaining headroom is "the F1 cell on M3's second allowed category":
+# M3-b's ceiling is 3. `unchecked` gives ONE instance per (spec x category)
+# cell (`ceiling()` returns N_CELLS, not N_REALISATIONS, when
+# `needs_rtc_curve` is false), so the family's whole budget is:
 #
 #   M3.14 x {matmul, conv2d} + M3.15 x {conv2d} = 3, and cat_used["conv2d"]
 #   is then 2 == N_REALISATIONS, which closes the family.
 #
 # The ceiling is 3, not 8, and that is a fact about the suite rather than
-# about this file: `dma.pad` (M3.15) appears in conv2d and nowhere else, and
-# MINIMAL_SET["M3"] is {matmul, conv2d}, so `kernel_component = 4` cannot be
-# reached in M3 by any amount of operator writing. The two realisations below
-# are the same missing CheckDimSize reached through the im2col path and the
-# plain-tile path respectively -- one defect, two lowering entry points.
+# about this file: M3.14's plain-tile anchor appears in matmul and nowhere
+# else, its im2col anchor in conv2d and nowhere else, and `dma.pad` (M3.15)
+# appears in conv2d and nowhere else, so `kernel_component = 4` cannot be
+# reached in M3-b by any amount of operator writing. Widening
+# MINIMAL_SET["M3"] to its current six kernels does not change this -- the
+# binding constraint here is anchor supply, not the coverage set. The two
+# realisations below are the same missing CheckDimSize reached through the
+# im2col path and the plain-tile path respectively -- one defect, two lowering
+# entry points.
 M3 += [
     _m("M3.14.mm1.linearcopy", "M3", 14, "dim-mismatch", "matmul",
        "1_bert_32x512x768_768x768_32x512x768",
