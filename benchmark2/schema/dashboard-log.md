@@ -7,6 +7,40 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ---
 
+## 2026-09-22 — `triton` gets `spec_id`; its 27 M1 + 2 M3 instances become assignable
+
+The triton raw rows carried `class` and `category` and no `spec_id`, so all 8 M1
+and 6 in-scope M3 families read `unattributed(no spec_id)` and no instance could
+be placed. Fix, no GPU: `spec_id` is now emitted by
+`triton/driver.py::mutant_record()` from a decided mapping table
+(`SPEC_ID`/`spec_id_for`), and the committed `raw/mutants.jsonl` was backfilled
+from the same table (`triton/backfill_spec_id.py`, 29/29 rows). The mapping is
+`M{cls}.{family}` except `embedding` f1→`M1.13`, `embedding` f2→`M1.3`,
+`batch_norm` f1→`M1.2`, `matmul` f2→`M3.12`; `relu` f6 keeps `M1.6`, which the
+registry classes M4, so it lands in `M4-d` and does not count toward M1.
+
+- `triton` M1: 26 instances over three families → `M1-a` 18/8 (over `N`),
+  `M1-b` 4/8, `M1-c` 4/8; five families empty. **48 short** by the per-family
+  rule (`sum(max(0, N-have))`); the cell reading `64-26=38` is not the rule the
+  guards use.
+- `triton` M3: 2 instances → `M3-a` 1/8, `M3-h` 1/8 (from `matmul` f1/f2); four
+  more families empty. **46 short**. Both classes move `unattributed` →
+  `in-scope`; `worklist.csv` triton shortfall **94**.
+- `make guards`: **39 findings** (unchanged). The backfill first added one —
+  `corpus.declared-files` on `triton/raw/mutants.jsonl` — cleared by moving that
+  file's `v21_fields_present` from `[]` to `["spec_id"]` in `class-axis.json`;
+  the declaration is a measurement of the file.
+- `make test-guards`: 27 controls pass. GREEN.
+
+M4 is left alone: the working tree's `in_scope_lanes[M4]` now reads `["choreo"]`
+(the `channels/question.md#U-1` decision, uncommitted), so the seven M4 families
+read `out-of-scope` rather than `UNCOMPARED-conflict`. This lane is M1+M3
+(target 112). Pre-existing dirty files (`{mlir-low,mlir-linalg}/raw/setup.json`,
+`triton/raw/setup.txt`, untracked `tilelang/raw/setup.txt`, U-7) were not
+touched.
+
+---
+
 ## 2026-09-19 (rev. 4) — M3's cell is not a design call; the floor settles it
 
 Was recorded as a decision for the owner: *"widen `MINIMAL_SET["M3"]`, or restate

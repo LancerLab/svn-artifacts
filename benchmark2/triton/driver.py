@@ -143,12 +143,17 @@ def stage_of(outcome: str) -> str:
 
 def mutant_record(category, cls, paper_cat, mid, level, outcome, manifest,
                   detail=""):
+    # family number is carried in the mutant_id (`{mod}-f{family}`), so every
+    # call site attributes without threading a new argument through.
+    m = re.search(r"-f(\d+)$", mid)
+    family = int(m.group(1)) if m else None
     return {
         "toolchain": "triton",
         "category": category,
         "class": cls,
         "paper_category": paper_cat,
         "mutant_id": mid,
+        "spec_id": spec_id_for(category, cls, family),
         "level": str(level),
         "arch": current_arch(),
         "outcome": outcome,
@@ -198,6 +203,29 @@ MUTANTS_L2 = {
     "batch_norm": ("batch_norm", "M1", "oob", [1]),
 }
 PAPER_CAT = {"M1": "oob", "M3": "hw"}
+
+# `spec_id` is the field the worklist generator reads to attribute an instance
+# to a family (schema/gen_worklist.py). The family NUMBER is local to this lane,
+# so four variants do NOT line up with their number -- read the variant
+# (mutants/*.py), not the number:
+#   embedding f1  idx = V+3         -> M1.13 (runtime index past the row bound)
+#   embedding f2  idx = -1          -> M1.3
+#   batch_norm f1 c = pid%C + 1     -> M1.2
+#   matmul    f2  BM=BN=256, BK=64  -> M3.12 (on-chip capacity, not M3.11)
+# Every other (category, family) is M{class}.{family}. relu f6 is the
+# noop-by-construction control: its spec_id is M1.6, which the registry classes
+# M4, so it lands in family M4-d and does NOT count toward this lane's M1=64.
+SPEC_ID = {
+    ("embedding", 1): "M1.13",
+    ("embedding", 2): "M1.3",
+    ("batch_norm", 1): "M1.2",
+    ("matmul", 2): "M3.12",
+}
+
+
+def spec_id_for(category: str, cls: str, family) -> str:
+    return SPEC_ID.get((category, family), f"{cls}.{family}")
+
 
 COMPILE_ERR_MARKERS = ("OutOfResources", "CompilationError",
                        "Input shapes should have", "MLIR", "frontend error")

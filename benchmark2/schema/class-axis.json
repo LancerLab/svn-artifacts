@@ -221,10 +221,12 @@
             "path": "triton/raw/mutants.jsonl",
             "kind": "records",
             "release": "v1",
-            "v21_fields_present": []
+            "v21_fields_present": [
+              "spec_id"
+            ]
           }
         ],
-        "note": "Collected 2026-09-10, one day before the v2.1 path-class vocabulary landed. The records validate at v1 and cannot be read for the path axis. The release label says which fields a record CAN BE READ FOR; it is not a date. A corpus holding spec_id but none of the other four v2.1 fields is therefore the normal shape of this lane, not a half-finished migration."
+        "note": "Collected 2026-09-10, one day before the v2.1 path-class vocabulary landed. The records validate at v1 and cannot be read for the path axis. The release label says which fields a record CAN BE READ FOR; it is not a date. A corpus holding spec_id but none of the other four v2.1 fields is therefore the normal shape of this lane, not a half-finished migration. The corpus now DOES carry `spec_id` on all 29 records, so that the 27 M1 + 2 M3 instances can be attributed to a family (the register ids are the lane's own decided mapping in triton/driver.py). Only the three path fields are missing, which is why the release stays `v1`."
       },
       "owns": [
         "S1",

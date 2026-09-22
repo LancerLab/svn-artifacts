@@ -382,6 +382,46 @@ LEVEL2_SPECS = {
                      ("rhs-d1-1", 1, 1, -1)],
 }
 
+# spec_id per edit tag -- which M2 spec the entry-contract edit realises. The
+# tag alone is not enough (the same `len` tag is a leading-extent edit on
+# gamma/beta but an interior-extent edit on elemwise's rhs), so the mapping is
+# keyed by (category, tag). Two signals pin each choice:
+#   * the spec's own `path` (registry): a static extent is rejected at the
+#     entry (rt-check), a symbolic one escapes (unchecked) -- and the measured
+#     outcomes split exactly that way (static -> runtime, symbolic -> never);
+#   * the operand's role: gamma/beta are secondary operands (M2.1), elemwise's
+#     rhs makes a binary op disagree (M2.3), matmul's rhs dim 0 is the
+#     contraction dim (M2.14).
+# Every one of these lands in family M2-a (`extent value`); see
+# `lanes/iree.md` §2.1. `schema/gen_worklist.py::bucket()` reads `spec_id`, so
+# a row without one is invisible to the denominator.
+M2_SPEC_ID = {
+    ("layer_normalization", "gamma-len-1"): "M2.1",
+    ("layer_normalization", "gamma-len+1"): "M2.1",
+    ("layer_normalization", "beta-len-1"): "M2.1",
+    ("layer_normalization", "gamma-dyn-1"): "M2.19",
+    ("layer_normalization", "beta-dyn-1"): "M2.19",
+    ("matmul", "rhs-K-1"): "M2.14",
+    ("matmul", "rhs-K+1"): "M2.14",
+    ("elemwise_add", "rhs-len-1"): "M2.3",
+    ("elemwise_add", "rhs-len+1"): "M2.3",
+    ("elemwise_add", "rhs-d1-1"): "M2.3",
+}
+
+
+def m2_spec_id(cat: str, tag: str) -> str:
+    """The M2 spec_id an entry-contract edit realises, or '' if unmapped."""
+    return M2_SPEC_ID.get((cat, tag), "")
+
+
+def m2_family(sid: str) -> str:
+    """The method family that owns `sid`, or '' if unmapped (convenience only;
+    `gen_worklist.py` derives the family from `spec_id` via the taxonomy)."""
+    if not sid:
+        return ""
+    from schema import method_taxonomy as MT
+    return MT.family_of(sid) or ""
+
 
 def cmd_minimal(level2: bool = False):
     """E1: measured M2 entry-shape battery (level-1 minimal set; --level2 adds
@@ -494,6 +534,8 @@ def cmd_minimal(level2: bool = False):
                 if outcome == "never" and manifest == "noop":
                     continue  # false-success mutant discarded (plan §11.1)
                 # materialise the mutated version (definition file)
+                sid = m2_spec_id(cat, tag)
+                fam = m2_family(sid)
                 mdir = MUT / "M2" / cat
                 mdir.mkdir(parents=True, exist_ok=True)
                 (mdir / f"{mid}.json").write_text(json.dumps({
@@ -502,6 +544,7 @@ def cmd_minimal(level2: bool = False):
                     "kernel": base["kernel"],
                     "settings_hash": meta.get("settings_hash", ""),
                     "kernel_hash": meta.get("kernel_hash", ""),
+                    "spec_id": sid, "family": fam,
                     "mutation": {"operand_index": aidx, "dim_index": didx,
                                  "delta": delta,
                                  "reference_dims": [d for (_n, d, _t) in args],
@@ -517,6 +560,7 @@ def cmd_minimal(level2: bool = False):
                     "outcome": outcome, "stage": RS.stage_for(outcome),
                     "manifest": manifest,
                     "kernel_hash": meta.get("kernel_hash", ""),
+                    "spec_id": sid, "family": fam,
                 }
                 recs.append(rec)
     with (RAW / "mutants.jsonl").open("w") as f:
@@ -528,6 +572,56 @@ def cmd_minimal(level2: bool = False):
         f"{n_runtime} runtime-caught, {len(recs)-n_runtime} never "
         f"(M1/M3 => n/a, see mutants/README.md)")
 
+
+
+def _tag_for(cat: str, aidx: int, didx: int, delta: int) -> str:
+    """Reverse of the `M2_SPECS` / `LEVEL2_SPECS` edit descriptors."""
+    specs = dict(M2_SPECS)
+    specs.update(LEVEL2_SPECS)
+    for tag, a, d, de in specs.get(cat, []):
+        if (a, d, de) == (aidx, didx, delta):
+            return tag
+    return ""
+
+
+def cmd_attribution():
+    """Offline `raw/mutants.jsonl` rebuild -- the attribution extract, no GPU.
+
+    The committed `mutants/M2/<cat>/<id>.json` definitions already record what
+    each mutant does (`mutation`), so the spec_id and family can be re-derived
+    without re-running IREE. This exists so a clean checkout has the lane's rows
+    on the attribution path (`gen_worklist.py::bucket()` reads `spec_id`), which
+    the full 561 MB `raw/` tree cannot be committed to provide.
+    """
+    defs = sorted((LANE / "mutants" / "M2").glob("*/*.json"))
+    recs = []
+    for p in defs:
+        d = json.loads(p.read_text())
+        m = d.get("mutation", {})
+        tag = _tag_for(d["category"], m.get("operand_index", -1),
+                       m.get("dim_index", -1), m.get("delta", 0))
+        sid = m2_spec_id(d["category"], tag)
+        recs.append({
+            "toolchain": "iree", "category": d["category"],
+            "settings_hash": d.get("settings_hash", ""),
+            "kernel": d.get("kernel", ""),
+            "class": d.get("class", "M2"),
+            "paper_category": d.get("paper_category", "dim-mismatch"),
+            "mutant_id": d["mutant_id"],
+            "level": ("2" if d["category"] in LEVEL2_SPECS else "1"),
+            "outcome": d.get("outcome", ""),
+            "stage": RS.stage_for(d.get("outcome", "")),
+            "manifest": d.get("manifest", ""),
+            "kernel_hash": d.get("kernel_hash", ""),
+            "spec_id": sid, "family": m2_family(sid),
+        })
+    RAW.mkdir(parents=True, exist_ok=True)
+    with (RAW / "mutants.jsonl").open("w") as f:
+        for r in recs:
+            f.write(json.dumps(r) + "\n")
+    un = [r["mutant_id"] for r in recs if not r["spec_id"]]
+    log(f"attribution: {len(recs)} rows -> {RAW / 'mutants.jsonl'}"
+        + (f" ({len(un)} unmapped: {un})" if un else ""))
 
 
 def cmd_s12():
@@ -578,10 +672,12 @@ def cmd_s12():
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["e2", "expressibility", "e3", "minimal", "s12"])
+    ap.add_argument("cmd", choices=["e2", "expressibility", "e3", "minimal",
+                                    "s12", "attribution"])
     ap.add_argument("--level2", action="store_true")
     ap.add_argument("--full", action="store_true")
     a = ap.parse_args()
     {"expressibility": cmd_expressibility, "e3": cmd_e3, "s12": cmd_s12,
+     "attribution": cmd_attribution,
      "minimal": (lambda: cmd_minimal(level2=a.level2)),
      "e2": (lambda: cmd_e2(size="full" if a.full else "small"))}[a.cmd]()

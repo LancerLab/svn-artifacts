@@ -1,2 +1,9 @@
 # regenerable run artifacts — never commit (recreated by run.sh)
-raw/
+raw/*
+# EXCEPTION: the attribution extract. `raw/mutants.jsonl` is a few KB, is
+# regenerable offline (`python3 iree/lane.py attribution`, no GPU), and is the
+# only thing that lets `schema/gen_worklist.py::bucket()` attribute this lane's
+# rows to a family from a clean checkout (the other 561 MB of raw/ stay
+# ignored). `raw/*` rather than `raw/` so this negation can take effect: git
+# cannot re-include a file under an excluded directory.
+!raw/mutants.jsonl
