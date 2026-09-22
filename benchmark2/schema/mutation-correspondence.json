@@ -18,19 +18,19 @@
     "n_specs": 77,
     "choreo_realized": 55,
     "choreo_unrealized": 22,
-    "recorded_by_a_sota_lane": 25,
-    "recorded_over_choreo": 0.4545,
-    "recorded_over_all_specs": 0.3247,
+    "recorded_by_a_sota_lane": 29,
+    "recorded_over_choreo": 0.5273,
+    "recorded_over_all_specs": 0.3766,
     "achievable_by_a_sota_lane": 63,
     "achievable_over_all_specs": 0.8182,
     "achievable_among_choreo_realized": 55,
     "achievable_over_choreo": 1.0,
-    "choreo_only_and_achievable": 30,
-    "choreo_only_and_recorded": 25,
+    "choreo_only_and_achievable": 26,
+    "choreo_only_and_recorded": 29,
     "constitutional_n_a_anywhere": 47,
     "lane_recorded_counts": {
       "triton": 8,
-      "mlir-low": 6,
+      "mlir-low": 8,
       "mlir-linalg": 6,
       "iree": 15
     },
@@ -43,7 +43,7 @@
     "lane_recorded_over_achievable": {
       "triton": 0.1818,
       "mlir-linalg": 0.1765,
-      "mlir-low": 0.375,
+      "mlir-low": 0.5,
       "iree": 0.4412
     },
     "union_metric_caveat": "`achievable_by_a_sota_lane` is the union over lanes and reaches 100% because each obligation class is declared expressible by at least one lane.  It answers 'could ANY lane express this?' and must not be quoted as a per-lane rate.  Quote `lane_recorded_over_achievable` instead.",
@@ -129,7 +129,7 @@
     {
       "lane": "triton",
       "class": "M1",
-      "n_mutants": 67,
+      "n_mutants": 57,
       "power_floor": 35,
       "status": "ok",
       "annotation": "meets the power floor"
@@ -169,7 +169,7 @@
     {
       "lane": "mlir-linalg",
       "class": "M2",
-      "n_mutants": 45,
+      "n_mutants": 64,
       "power_floor": 35,
       "status": "ok",
       "annotation": "meets the power floor"
@@ -193,7 +193,7 @@
     {
       "lane": "mlir-low",
       "class": "M1",
-      "n_mutants": 56,
+      "n_mutants": 64,
       "power_floor": 35,
       "status": "ok",
       "annotation": "meets the power floor"
@@ -942,24 +942,24 @@
     },
     "mlir-linalg": {
       "elem": {
-        "yes": 11,
+        "yes": 21,
         "partial": 0,
         "no": 0
       },
       "shape": {
-        "yes": 8,
+        "yes": 14,
         "partial": 0,
-        "no": 3
+        "no": 7
       },
       "loop": {
         "yes": 0,
         "partial": 0,
-        "no": 11
+        "no": 21
       },
       "hw": {
         "yes": 0,
         "partial": 0,
-        "no": 11
+        "no": 21
       }
     },
     "mlir-low": {
@@ -1086,8 +1086,10 @@
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "mlir-low": {
-          "status": "recorded",
-          "evidence": "mlir-shared/mutate.py Structural(off-by-one)"
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "results/mlir-low/stats.json S8_expressibility[elem] = yes",
+          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "iree": {
           "status": "expressible-not-recorded",
@@ -1128,8 +1130,10 @@
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "mlir-low": {
-          "status": "recorded",
-          "evidence": "mlir-shared/mutate.py Structural(negative-index)"
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "results/mlir-low/stats.json S8_expressibility[elem] = yes",
+          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "iree": {
           "status": "expressible-not-recorded",
@@ -1398,10 +1402,8 @@
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "mlir-low": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "yes",
-          "evidence": "results/mlir-low/stats.json S8_expressibility[elem] = yes",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py Structural(overlap-write)"
         },
         "iree": {
           "status": "expressible-not-recorded",
@@ -1446,10 +1448,8 @@
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "mlir-low": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "yes",
-          "evidence": "results/mlir-low/stats.json S8_expressibility[elem] = yes",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py Structural(broadcast-index)"
         },
         "iree": {
           "status": "expressible-not-recorded",
@@ -1538,10 +1538,8 @@
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "mlir-low": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "yes",
-          "evidence": "results/mlir-low/stats.json S8_expressibility[elem] = yes",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py Structural(tile-coord)"
         },
         "iree": {
           "status": "expressible-not-recorded",
@@ -1808,10 +1806,8 @@
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
         },
         "mlir-low": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "yes",
-          "evidence": "results/mlir-low/stats.json S8_expressibility[elem] = yes",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py Structural(subview-symbolic)"
         },
         "iree": {
           "status": "expressible-not-recorded",

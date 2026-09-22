@@ -411,6 +411,22 @@ M1_SPECS: list[Mutation] = [
     Mutation("M1", 14, "tile-coordinate-overflow", "oob",
              detail="tile coordinate one past the tiled extent while the "
                     "element index stays in bounds"),
+    # family M1-g "rank/arity": the *view descriptor* is wrong -- its offset,
+    # stride or rank -- and is only refused when statically resolvable. Realised
+    # as a `memref.subview` whose offset is an in-kernel runtime value (an
+    # `affine.for` induction variable), so no static check can resolve it. The
+    # spec calls this the symbolic-offset population it names as unchecked, but
+    # measurement shows the MLIR surface is stronger: RTV dynamically verifies
+    # the subview and catches the mutant under RTV-on (see mlir-shared/README.md).
+    # The paper category matches the spec's published row (choreo's M1.20 is
+    # `wrong-shape`), because the defect lives in the view descriptor rather than
+    # in an element index. The rank-arity sub-defect choreo realised would be
+    # verifier-rejected IR on this surface (a use-before-def), so the offset
+    # sub-defect is the one that carries the view descriptor here.
+    Mutation("M1", 20, "symbolic-view-offset", "wrong-shape",
+             detail="view (subview) offset taken from a runtime value, so a "
+                    "static check cannot resolve the descriptor and the view "
+                    "reads past the tensor"),
 ]
 
 # The low surface's realised M1 set. Family M1-a is the only M1 family the

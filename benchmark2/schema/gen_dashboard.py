@@ -317,7 +317,7 @@ def main():
     w("")
     w("`instances` is deduplicated; `rows` is what `measured_today` counts. "
       "They diverge because the mlir lanes run each mutant **twice** (rtv "
-      "`off`/`on`): 112 rows = 56 instances, 120 rows = 50. **Do not read "
+      "`off`/`on`): 128 rows = 64 instances, 120 rows = 50. **Do not read "
       "`rows` as coverage.**")
     _missing = [l for l in LANES if fam_missing.get(l)]
     if _missing:
@@ -372,7 +372,7 @@ def main():
         w("| **%s** | %d | %s |" % (cls, cell, " | ".join(cells)))
     w("")
     w("**Bottom line: M4 is empty in every lane except choreo and one cell of "
-      "`mlir-low`.** `mlir-low`'s M4 is 8/56 \u2014 and it is `M4-d` only, "
+      "`mlir-low`.** `mlir-low`'s M4 is 8/64 \u2014 and it is `M4-d` only, "
       "arriving via `M1.6`, which the registry re-homed into M4. `mlir-low` "
       "has no other M4 family and no other class; `mlir-linalg` has no M4 at "
       "all. `triton` has 2 of 48 M3 and 0 of 56 M4; " +
@@ -380,7 +380,7 @@ def main():
        "`iree`'s M4 is unverified here -- see the `n/a` note above."))
     w("")
     w("**A lane is not its census label.** `mlir-low`'s census says "
-      "`class: M1`, but 8 of its 56 instances are class M4 (`M1.6` "
+      "`class: M1`, but 8 of its 64 instances are class M4 (`M1.6` "
       "\u2192 `M4-d`). The split above is by `spec_id` \u2192 family "
       "\u2192 class, not by the census label. Watch for the same re-homing "
       "in any lane carrying `M1.6` or `M1.7`.")

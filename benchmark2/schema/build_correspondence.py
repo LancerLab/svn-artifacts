@@ -94,11 +94,13 @@ TRITON_FAMILY = {
 }
 MLIR_LOW_SPEC = {
     "M1.1": "drop-mask",
-    "M1.2": "off-by-one",
-    "M1.3": "negative-index",
     "M1.4": "transposed-stride",
     "M1.5": "offset-overrun",
     "M1.6": "zero-stride",
+    "M1.11": "overlap-write",
+    "M1.12": "broadcast-index",
+    "M1.14": "tile-coord",
+    "M1.20": "subview-symbolic",
 }
 MLIR_LINALG_SPEC = {
     "M2.1": "bump leading extent of rhs/b/scale",

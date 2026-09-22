@@ -462,4 +462,14 @@ def _m1_structural(case: C.Case, mut: C.Mutation) -> Structural:
         # extent; the emitter applies `_tile_for` to pick the tile size and
         # advances the read index by that whole tile.
         return Structural(kind="tile-coord", axis=last, tile=extents[last])
+    if mut.spec == 20:
+        # Symbolic view offset (family M1-g). The emitter builds a
+        # `memref.subview` whose axis-0 offset is the outermost induction
+        # variable, i.e. a runtime value no static check can resolve, and reads
+        # through it at the loop's own indices. The doubled coordinate overruns
+        # the parent for all but the first row. The verifier cannot resolve it,
+        # and RTV *does* dynamically verify the subview, so the defect is silent
+        # under RTV-off and caught under RTV-on. The read index itself is
+        # untouched.
+        return Structural(kind="subview-symbolic", axis=last)
     raise KeyError(f"unknown M1 spec {mut.spec}")

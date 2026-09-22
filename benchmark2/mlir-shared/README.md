@@ -154,32 +154,63 @@ on the `sum` and position-weighted checks, whose summands cancel and stay tight
 (measured drift 0.0 on every full-size category). The three checks are OR-ed for
 exactly this reason.
 
-## M1 injection census — 56, and the mode-dependent defect
+## M1 injection census — 64, and the mode-dependent defect
 
-M1's realised specs on this surface (seven: M1.1, M1.4–M1.6, M1.11, M1.12, M1.14)
-have **no sub-variants**, so on this lane one injection is exactly one record per
-`(category, shape, spec)` — unlike M2, where spec 5 emits two variants counting
-as one injection. M1.2/M1.3 are declared but not realised here; see below.
+M1's realised specs on this surface (eight: M1.1, M1.4–M1.6, M1.11, M1.12, M1.14,
+M1.20) have **no sub-variants**, so on this lane one injection is exactly one
+record per `(category, shape, spec)` — unlike M2, where spec 5 emits two variants
+counting as one injection. M1.2/M1.3 are declared but not realised here; see
+below.
 
 | | |
 |---|---|
 | level-1 categories (§5's M1 minimal set) | `relu`, `transpose`, `softmax`, `layer_normalization` |
-| injections | 7 specs × 4 categories × 2 shapes = **56** |
+| injections | 8 specs × 4 categories × 2 shapes = **64** |
 | §0 target N per class | 40 |
-| delta | **+16** (v1's +8, plus the v2.1 specs, held to the family budget) |
+| delta | **+24** (v1's +8, plus the v2.1 specs and M1-g, held to the family budget) |
 | `n/a` cells (§6) | **0** — no M1 spec raised `NotExpressible` on any of the four at small size |
-| records emitted | 112 (× 2 RTV modes) |
+| records emitted | 128 (× 2 RTV modes) |
 
-The realised set is 7, not §1's 9, because `M1-a` is the only M1 family reachable
-through more than one spec (M1.1/2/3) and realising all three would give it
-24 instances against the 8 every other family holds. It is realised through the
-lowest-id spec, `M1.1`, only (`compose.py::M1_LOW_SPECS`), matching the
+The realised set is 8, not the 10 the surface can reach, because `M1-a` is the only
+M1 family reachable through more than one spec (M1.1/2/3) and realising all three
+would give it 24 instances against the 8 every other family holds. It is realised
+through the lowest-id spec, `M1.1`, only (`compose.py::M1_LOW_SPECS`), matching the
 single-spec budget of `M1-b`..`M1-h`; the other lanes carry M1.2/M1.3 (triton 6
-and 5). The +16 is a deliberate overshoot under specs §5.1: N = 40 is a target,
+and 5). The +24 is a deliberate overshoot under specs §5.1: N = 40 is a target,
 not a cap, and the over-count is guarded by cross-surface uniformity. The v2.1
-additions fill the previously empty families M1-d (M1.12), M1-e (M1.14) and M1-h
-(M1.11); with `M1-a` at one spec the M1 cell holds **48** of its 64 instances
-(six families × 8), the two empty families being M1-f and M1-g.
+additions fill M1-d (M1.12), M1-e (M1.14) and M1-h (M1.11); `M1.20` (added
+2026-09-23) fills M1-g, realising it through a symbolic `memref.subview` offset
+(below). With `M1-a` at one spec the M1 cell holds **56** of its 64 instances
+(seven families × 8), the one empty family being M1-f (`M1.19`, carrier width —
+the ≥2³¹-element buffer is infeasible and no narrower carrier exists on this
+surface).
+
+### M1.20 — the symbolic view offset, and how RTV sees it
+
+`M1.20`'s published record is a rank/arity view defect (`wrong-shape`). A wrong
+*arity* is statically rejected by the MLIR verifier on this surface, so the
+surface-realised form keeps the defect's essence instead: the loop reads through
+a `memref.subview` whose axis-0 **offset is a live runtime value** (the `affine.for`
+induction variable), so the view's coordinate base moves with the iteration and
+the read overruns the parent on every step past the first. The result type is
+necessarily all-dynamic, `memref<?x?xf32, strided<[?, ?], offset: ?>>` (a
+partially-static `strided<[?, 1], ...>` is verifier-rejected against the parent).
+
+The measured behaviour is the lane's fourth mode-dependent defect and the first in
+family M1-g:
+
+| mode | verdict | why |
+|---|---|---|
+| RTV-**off** | `never/corrupts` (8/8 at `N=16`) | no dynamic view check; the overrun is silent |
+| RTV-**on** | `runtime/corrupts` (8/8 at `N=16`) | RTV's `memref.subview` runtime verification fires: `Runtime op verification failed %… = "memref.subview"(…)` |
+
+This is worth stating because the spec's `M1.20` note calls the path "unchecked…
+symbols neither refused nor checked" — that describes the choreo toolchain, whose
+view checks are `_StaticFail_`-only. On the MLIR surface, RTV *does* insert a
+dynamic bounds check on a `memref.subview`, so the symbolic offset is caught in the
+instrumented mode. The mutant is still a real, non-noop defect (RTV-off is silent
+and ASan flags 6 of the 8 cells), but the local model is stronger here than the
+spec assumed.
 
 ### The manifestation check is per *mutant*, not per record
 
@@ -343,22 +374,22 @@ that did run: 7–13 sites on `low`, 23–44 on `linalg`.
 
 | lane | class | flagged ∧ exercised | total | split |
 |---|---|---|---|---|
-| `mlir-low` | M1 | **30** | 56 | 30 flagged, 26 genuine misses |
+| `mlir-low` | M1 | **36** | 64 | 36 flagged, 28 genuine misses |
 | `mlir-linalg` | M2 | **0** | 54 | 34 rejected before run, 20 ran clean |
 
 The two rows are the whole point of S12 and they must not be averaged. On `low` the
 injected defects are **memory** faults — an out-of-bounds index really does leave
-the allocation — so an external checker sees 30 of 56. On `linalg` they are
+the allocation — so an external checker sees 36 of 64. On `linalg` they are
 **shape** faults: 34 of 54 never reach a binary at all because the verifier rejects
 the type contract at lowering, and the 20 that do run are all M2.5
 (partial-write / duplicate-write), which produce a wrong *result* while every
 access stays inside its allocation. A memory checker is structurally blind to those.
 That is the ledger-minus-sanitizer gap, and it matches what `iree` shows.
 
-### The 26 `low` misses, audited individually
+### The 28 `low` misses, audited individually
 
-All 26 carry `instrumented` 7 or 13, so all are genuine sanitizer negatives rather
-than instrumentation failures.
+All 28 carry `instrumented` 7, 10 or 13, so all are genuine sanitizer negatives
+rather than instrumentation failures.
 
 * **8× M1.6** (zero-stride / empty-range), 2 each on `layer_normalization`, `relu`,
   `softmax`, `transpose`. The mutant performs **no out-of-bounds access at all** —
@@ -374,6 +405,12 @@ than instrumentation failures.
 * **2× M1.4** (transposed-stride), `relu` **dynamic** and `transpose` **dynamic**
   only. Static M1.4 on both *is* flagged (`heap-buffer-overflow, 0B after end of
   region`).
+* **2× M1.20** (symbolic-view-offset), `softmax` **dynamic** and
+  `layer_normalization` **dynamic** only. On those cells the symbolic base moves
+  by one but the doubled read index still lands inside the parent's flat span
+  (the dynamic axis is bound large enough that `2·i+1` stays under the extent for
+  the sampled `i`), so ASan sees nothing; the other six M1.20 cells are flagged
+  (`heap-buffer-overflow, 0B–12B after end`). `outcome=never, corrupts`.
 
 ### M1.4 is size-dependent — and the rule is exact
 
@@ -403,7 +440,7 @@ allocation is invisible to any memory checker.** It is reported as a finding, no
 patched away by choosing dims that force the defect to be observable, because
 forcing output-observability would distort the kernel — the same reasoning as owner
 decision 3 below. The consequence for the paper is that S12's M1 flagged count is
-**30/56 at small size** (committed); the pre-v2.1 six-spec full-size run reported
+**36/64 at small size** (committed); the pre-v2.1 six-spec full-size run reported
 36/48 and has not been rerun for the v2.1 specs. The committed artifact reports the
 small-size figure and the size-dependence is documented here rather than hidden.
 
@@ -418,9 +455,9 @@ The kernel gate is committed at **both** sizes, matching the `iree` lane (311 sm
 | `linalg` e2 | 14/14 green | 14/14 green |
 | `low` e2 | 8/8 green | 8/8 green |
 | `linalg` minimal | 120 rec / 50 inj, §5.1 OK | 120 rec / 50 inj, §5.1 OK |
-| `low` minimal | 112 rec / 56 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK (pre-v2.1) |
+| `low` minimal | 128 rec / 64 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK (pre-v2.1) |
 | `linalg` s12 | 54 sanitized, reconciled | 54 sanitized, reconciled |
-| `low` s12 | 56 sanitized, reconciled, 30 flagged | 48 sanitized, reconciled, 36 flagged (pre-v2.1) |
+| `low` s12 | 64 sanitized, reconciled, 36 flagged | 48 sanitized, reconciled, 36 flagged (pre-v2.1) |
 
 The full-size `low` column predates the v2.1 spec additions (M1.11/M1.12/M1.14) and
 was not rerun; it used `M1_REPEAT=1` rather than the committed `16`, because 16
@@ -482,11 +519,11 @@ injection counts:
 
 | lane | RTV off | RTV on | effect |
 |---|---|---|---|
-| `low` M1 | `never:53, runtime:3` | `never:26, runtime:30` | **flips dramatically** |
+| `low` M1 | `never:61, runtime:3` | `never:26, runtime:38` | **flips dramatically** |
 | `linalg` M2 | `compile:34, never:20, n/a:6` | identical | **no change at all** |
 
 Bare MLIR on an out-of-bounds `memref.load` silently returns garbage with exit 0, so
-on `low` RTV is doing essentially all of the detection work — 27 records move from
+on `low` RTV is doing essentially all of the detection work — 35 records move from
 undetected to caught. On `linalg` RTV adds nothing, because the verifier has already
 rejected the shape contract before RTV ever runs. Reporting only the RTV-on column
 would therefore flatter `low` and say nothing about `linalg`; reporting only RTV-off
@@ -596,9 +633,10 @@ kept here as the audit trail for why the lane's numbers look the way they do.
    cross-surface uniformity, accepted as long as every surface shows the same M1
    enumeration and the over-count is itself documented. **No redesign to force it
    back to exactly 40.** Recorded in specs §5.1 alongside M2's +10.
-   **Superseded 2026-09-23:** `M1-a` is now realised through a single spec (M1.1),
-   so the battery is 7 specs × 8 = **56** (delta +16) and the M1 cell holds 48 of
-   64. The over-count is gone; see `schema/dashboard-log.md`.
+   **Superseded 2026-09-23:** `M1-a` is now realised through a single spec (M1.1)
+   and `M1.20` fills M1-g, so the battery is 8 specs × 8 = **64** (delta +24) and
+   the M1 cell holds 56 of its 64 instances (only M1-f empty). The over-count is
+   governed by the family budget; see `schema/dashboard-log.md`.
 3. **`relu` M1.1 mode-dependent defect — record as a finding, do NOT redesign.**
    An elementwise map cannot force the defect to be output-observable without
    distorting the kernel; the mode-dependence is itself the honest result.

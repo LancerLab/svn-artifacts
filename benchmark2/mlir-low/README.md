@@ -65,14 +65,14 @@ mask whose out-of-bounds write is genuinely UB.
 
 | | |
 |---|---|
-| injection specs | M1.1, M1.4–M1.6, M1.11, M1.12, M1.14 (7 specs) |
+| injection specs | M1.1, M1.4–M1.6, M1.11, M1.12, M1.14, M1.20 (8 specs) |
 | categories (§5's M1 minimal set) | `relu`, `transpose`, `softmax`, `layer_normalization` |
 | shapes | static + dynamic |
-| **injections** | 7 × 4 × 2 = **56** |
+| **injections** | 8 × 4 × 2 = **64** |
 | §0 target N per class | 40 |
-| delta | **+16** (v1's +8 plus the v2.1 specs, held to the family budget) |
-| mutants | **56** — M1 specs have no sub-variants, so one injection is exactly one mutant |
-| records | **112** — 56 × 2 RTV modes |
+| delta | **+24** (v1's +8 plus the v2.1 specs and M1-g, held to the family budget) |
+| mutants | **64** — M1 specs have no sub-variants, so one injection is exactly one mutant |
+| records | **128** — 64 × 2 RTV modes |
 | `n/a` cells | **0** — no M1 spec raised `NotExpressible` on any of the four |
 
 `M1.2`/`M1.3` are still declared in `M1_SPECS` but are **not realised on this
@@ -80,7 +80,9 @@ surface**: family `M1-a` is the only M1 family reachable through more than one
 spec, and realising all three would give it 24 instances against the 8 every
 other family holds (`mutation-specs-v2.md` §6). It is realised through the
 lowest-id spec (`M1.1`) only, so `M1-a` matches the single-spec budget of
-`M1-b`..`M1-h`. The other lanes carry `M1.2`/`M1.3` (triton: 6 and 5).
+`M1-b`..`M1-h`. The other lanes carry `M1.2`/`M1.3` (triton: 6 and 5). `M1.20`
+realises `M1-g` through a symbolic `memref.subview` offset (see the M1.20 note
+below); `M1.19`/`M1-f` stays infeasible on this surface.
 
 M2 and M3 are `n/a` on this surface (`n_na: 40` each): M2's specs are tensor-level
 shape-contract defects, which do not exist once everything is a `memref`, and M3 is
@@ -97,14 +99,14 @@ check cannot silently degrade if the composed set grows.
 | statistic | value |
 |---|---|
 | kernel gate | **16/16 green** (8 small + 8 full), 0 gate failures |
-| S1 M1 | `n_injected: 56, n_compile: 0, n_runtime: 30, n_never: 26, n_na: 0` |
+| S1 M1 | `n_injected: 64, n_compile: 0, n_runtime: 38, n_never: 26, n_na: 0` |
 | S8 | `elem {yes:4}`, `shape {no:4}`, `loop {no:4}`, `hw {no:4}` |
 | S9 | **108** kernel guards (layer_normalization 42, softmax 26, relu 20, transpose 20) |
-| S12 M1 | `flagged_and_exercised: 30` of 56 — 30 flagged, 26 genuine misses |
+| S12 M1 | `flagged_and_exercised: 36` of 64 — 36 flagged, 28 genuine misses |
 
 `n_compile: 0` is the headline difference from `mlir-linalg`. At memref level there
 is **no shape contract left to check** — every operand is a bare pointer with a
-layout, so nothing rejects a wrong extent at lowering. All 56 injections reach a
+layout, so nothing rejects a wrong extent at lowering. All 64 injections reach a
 binary and run. Detection is therefore entirely a *runtime* phenomenon here, which is
 why RTV matters so much on this surface and not at all on the other.
 
@@ -112,7 +114,7 @@ why RTV matters so much on this surface and not at all on the other.
 
 | | RTV off | RTV on | effect |
 |---|---|---|---|
-| `low` M1 | `never:53, runtime:3` | `never:26, runtime:30` | **27 records flip** |
+| `low` M1 | `never:61, runtime:3` | `never:26, runtime:38` | **35 records flip** |
 | `linalg` M2 | `compile:34, never:20, n/a:6` | identical | **no change at all** |
 
 Bare MLIR on an out-of-bounds `memref.load` **silently returns garbage with exit 0**.
@@ -155,14 +157,14 @@ with RTV **off** (RTV's own `cf.assert` would abort before the faulty access and
 the sanitizer silent). The chain, its four LLVM-21 defects, and the false-negative
 gate are documented in `../mlir-shared/README.md`.
 
-Result: **30 of 56 flagged** (`heap-buffer-overflow`), with all 56 exercised and
+Result: **36 of 64 flagged** (`heap-buffer-overflow`), with all 64 exercised and
 `instrumented` 7–13 sites each. This lane is the positive control for S12: the M1
 defects really are memory faults, so an external checker sees most of them — against
 `mlir-linalg`'s 0 of 54, where the defects are shape faults.
 
-### The 26 misses, audited individually
+### The 28 misses, audited individually
 
-All 26 carry `instrumented` > 0, so all are genuine sanitizer negatives rather than
+All 28 carry `instrumented` > 0, so all are genuine sanitizer negatives rather than
 instrumentation failures.
 
 * **8× M1.6** (zero-stride / empty-range) — 2 each on `layer_normalization`, `relu`,
@@ -179,6 +181,11 @@ instrumentation failures.
   the wrong element. Records `never, corrupts`.
 * **2× M1.4** (transposed-stride) — `relu` **dynamic** and `transpose` **dynamic**
   only. Static M1.4 on both *is* flagged.
+* **2× M1.20** (symbolic-view-offset) — `softmax` **dynamic** and
+  `layer_normalization` **dynamic** only. The symbolic base moves by one step but
+  the doubled read index still lands inside the parent's flat span on those cells,
+  so no access leaves the allocation; the other six M1.20 cells *are* flagged
+  (`0B`–`12B` after the region). Records `never, corrupts`.
 
 ### M1.4 is size-dependent, and the rule is exact
 
@@ -200,14 +207,40 @@ step: `DYNAMIC_SLOT` binds axis 0 of `relu`/`softmax`/`transpose` to
 `3x3` and `transpose`'s becomes `3x3` too — equal trailing extents, hence clean,
 while their static forms keep `(2,3)` and are flagged.
 
-Consequence for the paper: **S12's M1 flagged count is 30/56 at small size**
+Consequence for the paper: **S12's M1 flagged count is 36/64 at small size**
 (committed); the pre-v2.1 full-size run reported 36/48 and has not been rerun for
-the v2.1 specs (M1.11/M1.12/M1.14). The committed artifact reports the small-size
+the v2.1 specs (M1.11/M1.12/M1.14/M1.20). The committed artifact reports the small-size
 figure and the size-dependence is documented here rather than hidden. This is the
 same category of finding as M1.6 — *a corruption that never leaves the allocation
 is invisible to any memory checker* — and it is reported as a finding, not patched
 away by choosing dims that force observability, because that would distort the
 kernel (the same reasoning as owner decision 3 in `../mlir-shared/README.md`).
+
+### M1.20 — the symbolic view offset
+
+`M1.20`'s published record is a rank/arity view defect (`paper_category:
+wrong-shape`). A wrong *arity* is rejected by the MLIR verifier on this surface, so
+the realisation keeps the defect's essence instead: the loop reads through a
+`memref.subview` whose axis-0 **offset is a live runtime value** (the `affine.for`
+induction variable), so the view's base moves with the iteration and the read
+overruns the parent on every step past the first. The result type is all-dynamic,
+`memref<?x?xf32, strided<[?, ?], offset: ?>>` (the partially-static
+`strided<[?, 1], …>` form is verifier-rejected against the parent).
+
+The behaviour is mode-dependent, the fourth such cell set on this lane and the
+first in family `M1-g`:
+
+| mode | verdict | why |
+|---|---|---|
+| RTV-**off** | `never/corrupts` | no dynamic view check; the overrun is silent |
+| RTV-**on** | `runtime/corrupts` | RTV's `memref.subview` verification fires (`Runtime op verification failed … "memref.subview"`) |
+
+The spec's `M1.20` note calls this path `unchecked` — *"symbols neither refused nor
+checked"* — which describes choreo's `_StaticFail_`-only view checks. On the MLIR
+surface RTV **does** insert a dynamic bounds check on the view, so the symbolic
+offset is caught in the instrumented mode. The mutant is still real (all 8 cells
+silent under RTV-off, 6/8 ASan-flagged), but the local model is stronger here than
+the spec assumed.
 
 ## Full-size validation
 
@@ -218,8 +251,8 @@ v2.1 spec additions and was not rerun:
 | check | small | full |
 |---|---|---|
 | e2 | 8/8 green | 8/8 green |
-| minimal | 112 rec / 56 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK (pre-v2.1) |
-| s12 | 56 sanitized, reconciled, 30 flagged | 48 sanitized, reconciled, 36 flagged (pre-v2.1) |
+| minimal | 128 rec / 64 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK (pre-v2.1) |
+| s12 | 64 sanitized, reconciled, 36 flagged | 48 sanitized, reconciled, 36 flagged (pre-v2.1) |
 | S9 | 108 | 132 |
 
 The full-size `minimal` was run with `M1_REPEAT=1` rather than the committed `16`,

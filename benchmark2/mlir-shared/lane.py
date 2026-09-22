@@ -190,9 +190,10 @@ SURFACES = {
         # realise (M1.11 family M1-h, M1.12 family M1-d, M1.14 family M1-e) add
         # 3 specs x 4 x 2 = 24, for 9 specs = 72. Family M1-a is then trimmed
         # from its 3 realising specs (M1.1/2/3, 24) to one (M1.1, 8) so it
-        # matches the single-spec budget every other family holds -- 7 specs x
-        # 4 x 2 = 56 (compose.M1_LOW_SPECS). Every M1 record is level-1.
-        "expected_injected": {"1": 56},
+        # matches the single-spec budget every other family holds, and M1.20
+        # (family M1-g, the one remaining empty family) is added as one spec --
+        # 8 specs x 4 x 2 = 64 (compose.M1_LOW_SPECS). Every M1 record is level-1.
+        "expected_injected": {"1": 64},
         "klass": "M1",
         "specs": C.M1_LOW_SPECS,
         "spec_ids": [m.spec_id for m in C.M1_LOW_SPECS],
@@ -541,11 +542,12 @@ class Lane:
 
         §5.1's enumeration arithmetic is owner-approved and must NOT be trimmed
         to hit N=40 exactly: linalg M2 = 5 specs x 5 cats x 2 shapes = 50
-        injections -> 54 mutants -> 120 records; low M1 = 7 specs x 4 cats x 2
-        shapes = 56 injections -> 56 mutants -> 112 records. The +10 / +16
+        injections -> 54 mutants -> 120 records; low M1 = 8 specs x 4 cats x 2
+        shapes = 64 injections -> 64 mutants -> 128 records. The +10 / +24
         overshoot is recorded explicitly in stats.json. (v1 shipped 6 M1 specs;
         the v2.1 additions M1.11/M1.12/M1.14 raise it to 9, and M1.2/M1.3 are
-        then dropped so family M1-a holds one spec like every other family.)
+        then dropped so family M1-a holds one spec like every other family;
+        M1.20 realises the last empty family, M1-g.)
         """
         w = self._writer("mutants", "mutant")
         klass = self.cfg["klass"]

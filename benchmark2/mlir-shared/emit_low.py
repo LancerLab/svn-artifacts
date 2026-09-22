@@ -128,6 +128,44 @@ def _dim(e: Emitter, buf: str, mtype: str, k: int) -> str:
     return d
 
 
+def _view_type(nd: int) -> str:
+    """Result type of `memref.subview` with all-dynamic size and stride.
+
+    Every size and stride operand is an SSA value, so the result layout must be
+    dynamic on every axis; a partially static layout (`strided<[?, 1], ...>`)
+    fails the subview verifier with "mismatch of result layout".
+    """
+    dims = "x".join("?" for _ in range(nd))
+    strides = ", ".join("?" for _ in range(nd))
+    return f"memref<{dims}xf32, strided<[{strides}], offset: ?>>"
+
+
+def _subview(e: Emitter, buf: str, buf_t: str, dims: Sequence[int | None],
+             off0: str) -> tuple[str, str]:
+    """A rank-preserving `memref.subview` of `buf` offset by `off0` on axis 0.
+
+    `off0` is a live SSA value (the outermost induction variable), which is what
+    keeps the descriptor symbolic: a statically resolvable offset is refused, but
+    this one is neither refused nor checked. The size operands are the parent's
+    true extents and every stride is 1, so the subview's own shape is satisfied
+    and the overrun only appears in the parent address the reads actually reach.
+    """
+    nd = len(dims)
+    c0 = e.new("c")
+    e.emit(f"{c0} = arith.constant 0 : index")
+    c1 = e.new("c")
+    e.emit(f"{c1} = arith.constant 1 : index")
+    offsets = [off0] + [c0] * (nd - 1)
+    sizes = [_dim(e, buf, buf_t, k) for k in range(nd)]
+    vt = _view_type(nd)
+    sv = e.new("sv")
+    e.emit(
+        f"{sv} = memref.subview {buf}[{', '.join(offsets)}] "
+        f"[{', '.join(sizes)}] [{', '.join([c1] * nd)}] : {buf_t} to {vt}"
+    )
+    return sv, vt
+
+
 def _tile_for(extent: int) -> int:
     """Pick a tile size that does NOT divide `extent`.
 
@@ -185,12 +223,16 @@ def _perturb(e: Emitter, idx: list[str], st: Structural | None, axis: int) -> li
       * `overlap-write`     -- not a read perturbation; `_write_perturb` wraps the
                                store index instead (spec 11, family M1-h). Ignored
                                here so the read stays clean.
+      * `subview-symbolic`  -- not an index perturbation either; the caller
+                               replaces the read buffer with a `memref.subview`
+                               whose offset is a runtime value (spec 20, family
+                               M1-g). Ignored here so the read index stays clean.
 
     Calling this before the loop is opened emits `affine.apply` referencing an
     induction variable that does not exist yet -- a use-before-def the verifier
     rejects.
     """
-    if st is None or st.kind in ("drop-mask", "overlap-write"):
+    if st is None or st.kind in ("drop-mask", "overlap-write", "subview-symbolic"):
         return idx
     k = st.axis
     if st.kind == "off-by-one":
@@ -268,24 +310,36 @@ def _tiled(
     ext: str,
     st: Structural | None,
     axis: int,
-) -> Iterator[list[str]]:
-    """Open the tiled nest and yield the (possibly perturbed) read indices.
+    buf: str | None = None,
+    buf_t: str | None = None,
+    dims: Sequence[int | None] | None = None,
+) -> Iterator[tuple[list[str], str, str]]:
+    """Open the tiled nest and yield `(read_indices, read_buf, read_buf_type)`.
 
     The guard is emitted unless the defect *is* the guard's removal (M1.1). The
     index perturbation is applied here, inside the nest, so the `affine.apply`
     sees a bound induction variable.
+
+    For `subview-symbolic` (M1.20) the read buffer is replaced by a subview whose
+    axis-0 offset is `ivs[0]`, created inside the nest so the offset is a live
+    runtime value. The read index is left alone, so the doubled axis-0 coordinate
+    overruns the parent for every tile but the first -- and neither the verifier
+    nor RTV can resolve the symbolic offset to refuse or check it.
     """
     guarded = guarded_needed(st)
     for iv, b in zip(ivs, bounds):
         e.emit(f"affine.for {iv} = 0 to {b} {{")
         e.indent += 1
+    read_buf, read_t = buf, buf_t
+    if st is not None and st.kind == "subview-symbolic":
+        read_buf, read_t = _subview(e, buf, buf_t, dims, ivs[0])
     if guarded:
         inb = e.new("inb")
         e.emit(f"{inb} = arith.cmpi slt, {ivs[axis]}, {ext} : index")
         e.emit(f"scf.if {inb} {{")
         e.indent += 1
     try:
-        yield _perturb(e, list(ivs), st, axis)
+        yield _perturb(e, list(ivs), st, axis), read_buf, read_t
     finally:
         if guarded:
             e.indent -= 1
@@ -559,9 +613,11 @@ def _low_relu(e: Emitter, case: C.Case, st: Structural | None):
 
     z = e.new("c")
     e.emit(f"{z} = arith.constant 0.0 : f32")
-    with _tiled(e, ivs, bounds, ext, st, axis) as ridx:
+    with _tiled(e, ivs, bounds, ext, st, axis, inp, inp_t, inp_dims) as (
+        ridx, rd, rd_t
+    ):
         v = e.new("v")
-        e.emit(f"{v} = affine.load {inp}[{', '.join(ridx)}] : {inp_t}")
+        e.emit(f"{v} = affine.load {rd}[{', '.join(ridx)}] : {rd_t}")
         # `arith.maxf` was renamed in LLVM 21; `maximumf` propagates NaN like
         # numpy.maximum, which is what the reference oracle uses.
         r = e.new("r")
@@ -588,9 +644,11 @@ def _low_transpose(e: Emitter, case: C.Case, st: Structural | None):
     ivs = [e.new("i") for _ in range(nd)]
     bounds = [_dim(e, inp, inp_t, k) for k in range(axis)] + [bound]
 
-    with _tiled(e, ivs, bounds, ext, st, axis) as ridx:
+    with _tiled(e, ivs, bounds, ext, st, axis, inp, inp_t, inp_dims) as (
+        ridx, rd, rd_t
+    ):
         v = e.new("v")
-        e.emit(f"{v} = affine.load {inp}[{', '.join(ridx)}] : {inp_t}")
+        e.emit(f"{v} = affine.load {rd}[{', '.join(ridx)}] : {rd_t}")
         # The store reverses the loop indices, so the tiled axis (ivs[nd-1]) is
         # coordinate 0 here; overlap-write wraps that coordinate.
         widx = _write_perturb(e, list(reversed(ivs)), st, 0)
@@ -626,10 +684,13 @@ def _low_softmax(e: Emitter, case: C.Case, st: Structural | None):
     e.emit(f"{zero} = arith.constant 0.0 : f32")
 
     with _loops(e, outer, obounds):
+        rd, rd_t = inp, inp_t
+        if st is not None and st.kind == "subview-symbolic":
+            rd, rd_t = _subview(e, inp, inp_t, inp_dims, outer[0])
         # --- pass 1: row max -------------------------------------------------
         def _maxbody(e: Emitter, ridx: list[str], acc: str, iv: str) -> str:
             v = e.new("v")
-            e.emit(f"{v} = affine.load {inp}[{', '.join(ridx)}] : {inp_t}")
+            e.emit(f"{v} = affine.load {rd}[{', '.join(ridx)}] : {rd_t}")
             m = e.new("t")
             e.emit(f"{m} = arith.maximumf {acc}, {v} : f32")
             return m
@@ -641,7 +702,7 @@ def _low_softmax(e: Emitter, case: C.Case, st: Structural | None):
         # --- pass 2: exp and row sum -----------------------------------------
         def _expbody(e: Emitter, ridx: list[str], acc: str, iv: str) -> str:
             v = e.new("v")
-            e.emit(f"{v} = affine.load {inp}[{', '.join(ridx)}] : {inp_t}")
+            e.emit(f"{v} = affine.load {rd}[{', '.join(ridx)}] : {rd_t}")
             d = e.new("t")
             e.emit(f"{d} = arith.subf {v}, {mx} : f32")
             ex = e.new("t")
@@ -706,10 +767,13 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
     e.emit(f"{zero} = arith.constant 0.0 : f32")
 
     with _loops(e, outer, obounds):
+        rd, rd_t = lhs, lhs_t
+        if st is not None and st.kind == "subview-symbolic":
+            rd, rd_t = _subview(e, lhs, lhs_t, lhs_dims, outer[0])
         # --- mean ------------------------------------------------------------
         def _sumbody(e: Emitter, ridx: list[str], acc: str, iv: str) -> str:
             v = e.new("v")
-            e.emit(f"{v} = affine.load {lhs}[{', '.join(ridx)}] : {lhs_t}")
+            e.emit(f"{v} = affine.load {rd}[{', '.join(ridx)}] : {rd_t}")
             a = e.new("t")
             e.emit(f"{a} = arith.addf {acc}, {v} : f32")
             return a
@@ -728,7 +792,7 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
         # --- variance --------------------------------------------------------
         def _sqbody(e: Emitter, ridx: list[str], acc: str, iv: str) -> str:
             v = e.new("v")
-            e.emit(f"{v} = affine.load {lhs}[{', '.join(ridx)}] : {lhs_t}")
+            e.emit(f"{v} = affine.load {rd}[{', '.join(ridx)}] : {rd_t}")
             d = e.new("t")
             e.emit(f"{d} = arith.subf {v}, {mean} : f32")
             m = e.new("t")
@@ -756,7 +820,7 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
         e.indent += 1
         ridx_k = _perturb(e, list(outer) + [k], st, axis)
         xv = e.new("v")
-        e.emit(f"{xv} = affine.load {lhs}[{', '.join(ridx_k)}] : {lhs_t}")
+        e.emit(f"{xv} = affine.load {rd}[{', '.join(ridx_k)}] : {rd_t}")
         d2 = e.new("t")
         e.emit(f"{d2} = arith.subf {xv}, {mean} : f32")
         n2 = e.new("t")

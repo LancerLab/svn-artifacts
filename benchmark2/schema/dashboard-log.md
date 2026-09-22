@@ -7,6 +7,28 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ---
 
+## 2026-09-24 — `triton` M3-g realised; the M3 `u` ceilings corrected
+
+Read `channels/README.md` §"A new mutation-only kernel is always allowed" and
+re-triaged all eight `triton` M3 families against Triton 3.8's real surface. The
+rule that moves the numbers: a spec with no anchor in the *current* corpus is a
+**new kernel to author (`d`)**, not `(u)`.
+
+- **M3-g pad encoding, 0 → 8/8.** New mutation-only surface
+  `triton/mutants/desc_pad.py`: `padding_option` is the pad field the family
+  names; four ranks (2–5) × two overrun geometries (tail `M3.9` / mid `M3.10`),
+  faithful `zero` vs mutated `nan`. All 8 `never corrupts oracle=diff`, sm_86.
+  `triton` corpus rows 60 → 68, `short` 69 → 61.
+- **M3-a/b/f/h reclassified `u` → owed.** `tl.dot` (a), descriptors (b), rank-6
+  (f) and oversized constexpr tiles (h) are all stateable; the old bases read
+  "the current corpus has no such kernel". 29 triton slots move from
+  surface-bound to assignable operator work: triton surface-bound **69 → 32**
+  (only `M1-g` + `M3-c/d/e` remain capped).
+- **M3-c → `avoided`** (swizzle is *derived* by the lowering; no source knob).
+  **M3-d/M3-e keep a cap but with corrected bases**: Triton has no footprint
+  container (d) and an unaligned base is a noop on sm_86 (e, per spec M3.11).
+- `make test-guards` 27/27; `make guards` 29 findings, none triton.
+
 ## 2026-09-23 — `mlir-linalg` fills its M2 family budget; M2 43/64 → 64/64
 
 Every M2 family now holds its `4 hosts × 2 shapes = 8` budget, so M2 instances
@@ -35,6 +57,46 @@ defects: each carries its family's existing spec and paper category.
   compile / run / ref / rtv.
 
 ---
+
+## 2026-09-23 — `mlir-low` realises `M1.20`; family M1-g filled, M1-battery 56 → 64
+
+`M1.20` (rank/arity view defect) was the last empty family the surface could reach
+(`M1.19`/`M1-f` stays infeasible — the ≥2³¹-element buffer has no carrier here). A
+wrong *arity* is verifier-rejected on the memref surface, so the realisation keeps
+the defect's essence: the kernel reads through a `memref.subview` whose axis-0
+offset is a live runtime value (the `affine.for` induction variable), so the view
+base moves with the loop and the read overruns the parent past the first step.
+Tagged `wrong-shape` (its published `paper_category`). `compose.py` adds `M1.20` to
+`M1_SPECS`; `mutate.py` emits `Structural(kind="subview-symbolic")`; `emit_low.py`
+gains `_view_type`/`_subview`; the low lowered pipelines gain
+`func.func(lower-affine)` after `expand-strided-metadata` (a strided view leaves an
+`affine.apply` the runner cannot parse — verified a no-op for the 7 pre-existing
+specs).
+
+- M1 *battery*: **56 injections / 112 rows → 64 injections / 128 rows** (8 specs x
+  8), census 64/64, zero `n/a`. `expected_injected` 56 → **64**. M1 *families*:
+  realised 48 → **56 of 64** (7 families x 8); only `M1-f` empty. `worklist.csv`
+  mlir-low shortfall **16 → 8**.
+- S1 (`M1`): `n_runtime` 30 → 38, `n_never` 26 (same miss set plus M1.20's two
+  dynamic cells). RTV contrast off `never:61, runtime:3`; on `never:26, runtime:38`
+  — **35 rows change verdict** with the harness. `_validate_m1.py`: **64/64
+  injections validate, zero `noop`**.
+- **M1.20 is mode-dependent, and RTV checks the view.** RTV-off it is
+  `never/corrupts` (silent); RTV-on it is `runtime/corrupts` — RTV's dynamic
+  `memref.subview` verification fires (`Runtime op verification failed … "memref
+  .subview"`). The spec calls this path `unchecked` ("symbols neither refused nor
+  checked"), which is accurate for choreo's `_StaticFail_`-only view checks but not
+  for MLIR: RTV instruments the view. The mutant is real — 6/8 cells ASan-flagged,
+  all 8 silent under RTV-off — but the local model is stronger than the spec
+  assumed. Documented in `mlir-shared/README.md`.
+- S12: **30/56 → 36/64 flagged**. The 28 misses are 8x `M1.6`, 8x `M1.11`,
+  8x `M1.12`, 2x `M1.4` and 2x `M1.20` (the dynamic `softmax`/`layer_norm` cells,
+  where the moved base plus the doubled index still land inside the parent's flat
+  span) — in-bounds corruptions a memory checker is structurally blind to.
+- S9 (`Σ` kernel guards, clean kernels): **108**, unchanged — the guards are a
+  property of the base kernels, which the mutation set does not alter. `measured_
+  today.mlir-low` 112 → **128** (total 454 → 470). Dashboard/worklist/fill
+  regenerated.
 
 ## 2026-09-23 — `mlir-low` trims `M1-a` to the single-spec family budget; M1-battery 72 → 56
 

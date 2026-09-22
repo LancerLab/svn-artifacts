@@ -124,6 +124,17 @@ _TAIL = (
     "reconcile-unrealized-casts"
 )
 
+# Low-surface variant: expand-strided-metadata materializes an `affine.apply` for
+# the linear address of a strided view (`memref.subview`, M1.20), and the runner
+# refuses IR that still carries the affine dialect. A second `lower-affine`
+# immediately after the expansion lowers it. The pass adds no checks, so S1/S9
+# are untouched, and it is a no-op for every kernel without a strided view -- the
+# linalg surface keeps the shared `_TAIL` because changing it would move that
+# lane's already-recorded measurements.
+_TAIL_LOW = _TAIL.replace(
+    "expand-strided-metadata,", "expand-strided-metadata,func.func(lower-affine),"
+)
+
 # --- mlir-linalg: tensor-level linalg, needs bufferization -----------------
 _LINALG_BODY_OFF = (
     "func.func(lower-affine),"
@@ -164,10 +175,10 @@ PIPELINES = {
     ("linalg", False): f"builtin.module({_LINALG_BODY_OFF},{_TAIL})",
     ("linalg", True): f"builtin.module({_LINALG_BODY_ON},{_TAIL})",
     # --- mlir-low: already on memref, no bufferization --------------------
-    ("low", False): f"builtin.module(func.func(lower-affine),{_TAIL})",
+    ("low", False): f"builtin.module(func.func(lower-affine),{_TAIL_LOW})",
     ("low", True): (
         "builtin.module(func.func(lower-affine,generate-runtime-verification,"
-        f"canonicalize,cse),{_TAIL})"
+        f"canonicalize,cse),{_TAIL_LOW})"
     ),
 }
 
