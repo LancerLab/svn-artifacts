@@ -88,7 +88,15 @@ MINIMAL_SET = {
     "M1": ["layer_normalization", "softmax", "relu", "transpose"],
     "M2": ["layer_normalization", "matmul", "concat", "conv2d", "relu",
            "softmax"],
-    "M3": ["matmul", "conv2d"],
+    # M3 needs four categories at level 1 (method-taxonomy budget
+    # `kernel_component = 4`). matmul/conv2d are the MMA/TMA carriers; the
+    # resource-only families (M3-h and friends) additionally need categories
+    # whose dynamic base cases expose a runtime extent on an on-chip tile, so
+    # batch_norm, layer_normalization and max_pool2d ride here too. All three
+    # carry a `shared` and/or `local` tile whose extent stays symbolic in the
+    # dynamic build (verified with `choreo -t cc -i` + `-sa=muchk`).
+    "M3": ["matmul", "conv2d", "batch_norm", "layer_normalization",
+           "max_pool2d"],
     # layer_normalization and softmax are here because M1.6 (empty range /
     # zero stride) is registered as class M4, and its instances live on those
     # categories. Stage 1 of selection is a floor per (spec_id, category): a
@@ -1791,6 +1799,54 @@ M3 += [
        "per-thread budget is exceeded in a size the static check cannot fold",
        ("local f32 [M/#q, Cout] l1_Y{0.0f};",
         "local f32 [M/#q, Cout * H] l1_Y{0.0f};"), spec_id="M3.28"),
+]
+
+# M3.27/M3.28 on the other three dynamic categories. Each base case exposes a
+# different runtime symbol, so the multiplier is per case:
+#   batch_norm          H/W  (h_value/w_value, kernel parameters)
+#   layer_normalization N1/N2
+#   matmul              N
+#   max_pool2d          channels/height/width
+# Every edit was verified to stay symbolic under `choreo -t cc -i` and to leave
+# CheckCtMemUsage (target `muchk`) silent -- the P1 capacity miss M3-h names.
+_BN10 = "10_dynamic_16x512xHxW_512_512_16x512xHxW"
+_LN10 = "10_dynamic_16x512xHxW_HxW_HxW"
+_MM10 = "10_dynamic_128x1280_1280xN_128xN"
+_MP10 = "10_dynamic_32xCxHxW_32xCxHd5xWd5"
+M3 += [
+    _m("M3.27.bn10.symshared", "M3", 27, "dim-mismatch", "batch_norm", _BN10,
+       "shared reduction tile extent made runtime-shaped (H = h_value): the "
+       "byte size is not a compile-time constant, so the capacity check is "
+       "silent while the tile is launched past the device budget",
+       ("shared f32 [1] s_mean;",
+        "shared f32 [H] s_mean;"), spec_id="M3.27"),
+    _m("M3.28.bn10.symlocal", "M3", 28, "dim-mismatch", "batch_norm", _BN10,
+       "per-thread tile extent made runtime-shaped (H): the per-thread budget "
+       "is exceeded in a size the static check cannot fold",
+       ("local f32 [1] df;",
+        "local f32 [H] df;"), spec_id="M3.28"),
+    _m("M3.27.ln10.symshared", "M3", 27, "dim-mismatch",
+       "layer_normalization", _LN10,
+       "shared reduction tile extent made runtime-shaped (N1): the byte size is "
+       "not a compile-time constant, so the capacity check is silent",
+       ("shared f32 [1] s_mean;",
+        "shared f32 [N1] s_mean;"), spec_id="M3.27"),
+    _m("M3.28.ln10.symlocal", "M3", 28, "dim-mismatch",
+       "layer_normalization", _LN10,
+       "per-thread tile extent made runtime-shaped (N1): the per-thread budget "
+       "is exceeded in a size the static check cannot fold",
+       ("local f32 [1] df;",
+        "local f32 [N1] df;"), spec_id="M3.28"),
+    _m("M3.28.mm10.symlocal", "M3", 28, "dim-mismatch", "matmul", _MM10,
+       "per-thread accumulator extent made runtime-shaped (N): the per-thread "
+       "budget is exceeded in a size the static check cannot fold",
+       ("rhs.span(1)/#n_tile/#q] l1_out",
+        "rhs.span(1)/#n_tile/#q * rhs.span(1)] l1_out"), spec_id="M3.28"),
+    _m("M3.28.mp10.symlocal", "M3", 28, "dim-mismatch", "max_pool2d", _MP10,
+       "per-thread output tile extent made runtime-shaped (height): the "
+       "per-thread budget is exceeded in a size the static check cannot fold",
+       ("l1_input.span(3)/5] l1_out;",
+        "l1_input.span(3)/5 * l1_input.span(2)] l1_out;"), spec_id="M3.28"),
 ]
 
 # ===========================================================================
