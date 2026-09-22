@@ -115,10 +115,12 @@ LEVEL2_SET = {
     "M1": ["max_pool2d", "conv2d", "embedding", "batch_norm"],
     # `transpose_square` is mlir-linalg's M2-e surface (family "layout (extents
     # intact)"): a square transpose keeps every extent legal under a wrong
-    # permutation, so only the memory order changes. Declared here (not in
-    # MINIMAL_SET) so it widens the coverage set without reclassifying any
+    # permutation, so only the memory order changes. `pad` is the M2-g surface
+    # (family "padding placement"): it is the only composed kernel that carries a
+    # pad amount, so it is the only home for M2.15. Declared here (not in
+    # MINIMAL_SET) so they widen the coverage set without reclassifying any
     # existing choreo level-1 category.
-    "M2": ["elemwise_add", "transpose_square"],
+    "M2": ["elemwise_add", "transpose_square", "pad"],
     "M3": ["batch_norm"],
     "M4": [],
 }

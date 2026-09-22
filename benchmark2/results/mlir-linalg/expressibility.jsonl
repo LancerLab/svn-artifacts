@@ -14,6 +14,10 @@
 {"category": "matmul", "class": "shape", "expressible": "yes", "settings_hash": "ba2aa2b58125", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
 {"category": "matmul", "class": "loop", "expressible": "no", "settings_hash": "ba2aa2b58125", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
 {"category": "matmul", "class": "hw", "expressible": "no", "settings_hash": "ba2aa2b58125", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
+{"category": "pad", "class": "elem", "expressible": "yes", "settings_hash": "MISSING", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
+{"category": "pad", "class": "shape", "expressible": "yes", "settings_hash": "MISSING", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
+{"category": "pad", "class": "loop", "expressible": "no", "settings_hash": "MISSING", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
+{"category": "pad", "class": "hw", "expressible": "no", "settings_hash": "MISSING", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
 {"category": "relu", "class": "elem", "expressible": "yes", "settings_hash": "7abb8bd6e718", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
 {"category": "relu", "class": "shape", "expressible": "no", "settings_hash": "7abb8bd6e718", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
 {"category": "relu", "class": "loop", "expressible": "no", "settings_hash": "7abb8bd6e718", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}

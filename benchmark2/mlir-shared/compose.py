@@ -265,6 +265,13 @@ M2_SPECS: list[Mutation] = [
              target="primary",
              detail="shape-equal / layout-unequal: every extent agrees, the "
                     "indexing map does not"),
+    # family M2-g "padding placement". The padded total is preserved and only the
+    # placement changes, so the sum-only check cannot see it -- the M2 dual of
+    # M2.10 (extents intact, contents moved).
+    Mutation("M2", 15, "pad-placement-swapped", "wrong-shape",
+             target="inp",
+             detail="pad_low <-> pad_high swapped: total length preserved, "
+                    "placement differs (the check is a sum)"),
 ]
 
 # The numbered M2 specs, in order, with variants collapsed. This is the list to
@@ -274,7 +281,7 @@ M2_SPECS: list[Mutation] = [
 # lane-local count.
 M2_SPEC_IDS: list[str] = [
     "M2.1", "M2.2", "M2.3", "M2.4", "M2.5", "M2.6", "M2.7", "M2.9", "M2.10",
-    "M2.13", "M2.16",
+    "M2.13", "M2.15", "M2.16",
 ]
 
 # mutation-specs.md §5 splits M2 coverage into a level-1 minimal set and level-2
@@ -283,8 +290,11 @@ M2_SPEC_IDS: list[str] = [
 # writer and the census cannot drift apart.
 LEVEL1_M2_CATS: list[str] = ["layer_normalization", "matmul", "concat"]
 # `transpose_square` is the M2-e surface (family "layout (extents intact)"):
-# square extents let a wrong permutation keep every shape legal.
-LEVEL2_M2_CATS: list[str] = ["elemwise_add", "softmax", "transpose_square"]
+# square extents let a wrong permutation keep every shape legal. `pad` is the
+# M2-g surface (family "padding placement"): it is the only composed kernel that
+# carries a pad amount at all, so it is the only home for M2.15.
+LEVEL2_M2_CATS: list[str] = ["elemwise_add", "softmax", "transpose_square",
+                             "pad"]
 M2_CATS: list[str] = LEVEL1_M2_CATS + LEVEL2_M2_CATS
 LEVEL_OF: dict[str, str] = {c: "1" for c in LEVEL1_M2_CATS}
 LEVEL_OF.update({c: "2" for c in LEVEL2_M2_CATS})
@@ -366,6 +376,15 @@ def memref_type(dims: tuple[int | None, ...], dtype: str = "f32") -> str:
 # smallest values that keep the op semantics legal. Contraction dims stay equal
 # on both operands.
 
+# Padding placement (family M2-g, spec M2.15). The clean pad puts `PAD_LOW`
+# elements *before* the data and `PAD_HIGH` *after*; M2.15 swaps the two. The
+# padded total is unchanged, so the compiler-side check -- a sum
+# (`f + low + mid + high == t`, semacheck.cpp:1217) -- is blind to it, and only
+# the placement of the sentinel in the output reveals the defect. This is the M2
+# dual of M2.10: extents intact, contents moved.
+PAD_LOW, PAD_HIGH = 1, 2
+PAD_SENTINEL = 7.0
+
 SMALL_DIMS: dict[str, dict[str, tuple[int | None, ...]]] = {
     # --- mlir-linalg (M2) ---
     "matmul": {"lhs": (2, 3), "rhs": (3, 4), "out": (2, 4)},
@@ -385,6 +404,11 @@ SMALL_DIMS: dict[str, dict[str, tuple[int | None, ...]]] = {
     # permutation keeps every shape legal and only the memory order changes --
     # the M2.10 defect. mlir-low's non-square `transpose` is left untouched.
     "transpose_square": {"inp": (2, 2), "out": (2, 2)},
+    # M2-g (family "padding placement"). `out` is the padded tensor: axis 0 grows
+    # by PAD_LOW + PAD_HIGH, every other axis is copied. The pad is intrinsic to
+    # this kernel, so the clean case genuinely pads and the mutant genuinely
+    # swaps the placement -- there is no unpadded baseline to fall back on.
+    "pad": {"inp": (2, 3), "out": (2 + PAD_LOW + PAD_HIGH, 3)},
 }
 
 # Full-size extents, taken from the first concrete case in each settings file.
@@ -401,6 +425,7 @@ FULL_DIMS: dict[str, dict[str, tuple[int | None, ...]]] = {
     "softmax": {"inp": (16, 512, 8, 8), "out": (16, 512, 8, 8)},
     "transpose": {"inp": (32, 64), "out": (64, 32)},
     "transpose_square": {"inp": (64, 64), "out": (64, 64)},
+    "pad": {"inp": (32, 64), "out": (32 + PAD_LOW + PAD_HIGH, 64)},
 }
 
 # Which operand(s) carry a dynamic extent, per category (mirrors the settings'
@@ -419,6 +444,7 @@ DYNAMIC_SLOT: dict[str, tuple[tuple[str, int], ...]] = {
     "transpose": (("inp", 0),),
     # Both axes are the same symbolic extent, so the dynamic build stays square.
     "transpose_square": (("inp", 0), ("inp", 1)),
+    "pad": (("inp", 0),),
 }
 
 _DYN_VALUE = 3
@@ -457,6 +483,16 @@ def _derive_output(category: str, dims: dict[str, tuple[int | None, ...]],
         for axis, d in enumerate(dims["inp"]):
             if d is None:
                 dyn[f"out.{len(dims['inp']) - 1 - axis}"] = dyn[f"inp.{axis}"]
+    elif category == "pad":
+        # Axis 0 grows by the pad total; the other axes are copied through. The
+        # total (PAD_LOW + PAD_HIGH) is what the sum-only check validates, and it
+        # is exactly the quantity M2.15 holds fixed while moving the split.
+        pad_total = PAD_LOW + PAD_HIGH
+        out = list(dims["inp"])
+        out[0] = None if dims["inp"][0] is None else dims["inp"][0] + pad_total
+        dims["out"] = tuple(out)
+        if dims["inp"][0] is None:
+            dyn["out.0"] = dyn["inp.0"] + pad_total
     elif category in ("relu", "softmax", "layer_normalization", "elemwise_add"):
         src = "inp" if "inp" in dims else "lhs"
         dims["out"] = dims[src]
@@ -521,6 +557,10 @@ def reference(case: Case) -> np.ndarray:
     if cat in ("transpose", "transpose_square"):
         x = input_values(case.numel("inp")).reshape(case.shape("inp"))
         return np.transpose(x).astype(np.float32)
+    if cat == "pad":
+        x = input_values(case.numel("inp")).reshape(case.shape("inp"))
+        pads = [(PAD_LOW, PAD_HIGH)] + [(0, 0)] * (x.ndim - 1)
+        return np.pad(x, pads, constant_values=PAD_SENTINEL).astype(np.float32)
     if cat == "concat":
         a = input_values(case.numel("a")).reshape(case.shape("a"))
         b = input_values(case.numel("b"), offset=1000).reshape(case.shape("b"))

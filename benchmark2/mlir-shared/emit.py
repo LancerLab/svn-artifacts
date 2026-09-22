@@ -977,6 +977,44 @@ def _emit_elemwise_add(e: Emitter, case: C.Case,
     return res, out_t
 
 
+def _emit_pad(e: Emitter, case: C.Case, st: Structural | None) -> tuple[str, str]:
+    """Pad `inp` along axis 0 with a sentinel, leaving the other axes untouched.
+
+    This is the family M2-g surface (spec M2.15). The clean kernel pads `PAD_LOW`
+    before and `PAD_HIGH` after; the mutant swaps the two. `tensor.pad` takes the
+    low/high amounts as static attributes, so the swap is a pure placement change
+    that keeps the result type -- and therefore every shape check -- identical.
+    The sentinel lands at a different offset, which the order-sensitive checksum
+    sees even though the padded *length* does not change.
+    """
+    inp_dims, out_dims = case.dims["inp"], case.dims["out"]
+    inp_r = concrete(inp_dims, case.dyn, "inp")
+    out_r = concrete(out_dims, case.dyn, "out")
+    inp_t, out_t = C.tensor_type(inp_dims), C.tensor_type(out_dims)
+    nd = len(inp_dims)
+
+    x = emit_formula_tensor(e, inp_dims, inp_r, offset=0, name="inp")
+
+    low, high = C.PAD_LOW, C.PAD_HIGH
+    if st is not None and st.kind == "pad-swap":
+        low, high = high, low
+    lows = [low] + [0] * (nd - 1)
+    highs = [high] + [0] * (nd - 1)
+
+    sentinel = e.new("c")
+    e.emit(f"{sentinel} = arith.constant {f32_lit(C.PAD_SENTINEL)} : f32")
+
+    res = e.new("pd")
+    e.emit(f"{res} = tensor.pad {x} low[{', '.join(map(str, lows))}] "
+           f"high[{', '.join(map(str, highs))}] {{")
+    e.indent += 1
+    e.emit("^bb0(" + ", ".join(f"%i{k}: index" for k in range(nd)) + "):")
+    e.emit(f"tensor.yield {sentinel} : f32")
+    e.indent -= 1
+    e.emit(f"}} : {inp_t} to {out_t}")
+    return res, out_t
+
+
 EMITTERS = {
     "matmul": _emit_matmul,
     "relu": _emit_relu,
@@ -986,6 +1024,7 @@ EMITTERS = {
     "softmax": _emit_softmax,
     "layer_normalization": _emit_layer_norm,
     "elemwise_add": _emit_elemwise_add,
+    "pad": _emit_pad,
 }
 
 

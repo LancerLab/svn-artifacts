@@ -42,6 +42,8 @@ class Structural:
                              keeps its uninitialized value.
       * `duplicate-write` -- a tile is written twice, the second time at an
                              overlapping offset.
+      * `pad-swap`        -- the pad_low/pad_high amounts are swapped, keeping
+                             the padded total but moving the data (M2.15).
       * M1 kinds (`drop-mask`, `off-by-one`, `negative-index`,
         `transposed-stride`, `offset-overrun`, `zero-stride`,
         `overlap-write`, `broadcast-index`, `tile-coord`) -- index/stride
@@ -271,6 +273,17 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
                     f"M2.13: {cat!r} {op!r} has no two equal extents; swapping "
                     f"unequal ones would change the shape (that is M2.6)")
             structural = Structural(kind="layout-unequal", perm=pair)
+
+        elif mut.spec == 15:
+            # "pad_low <-> pad_high swapped" (v2.1 family M2-g): the pad total is
+            # preserved, so every extent agrees and the sum-only check is blind;
+            # only the placement of the data moves. Only the `pad` kernel carries
+            # a pad amount to swap, so the other categories are honestly n/a.
+            if cat != "pad":
+                raise NotApplicable(
+                    f"M2.15: {cat!r} composes no padded span whose low/high "
+                    f"placement can be swapped")
+            structural = Structural(kind="pad-swap")
 
         else:
             raise KeyError(f"unknown M2 spec {mut.spec}")

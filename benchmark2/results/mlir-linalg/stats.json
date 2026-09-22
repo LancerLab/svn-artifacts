@@ -13,28 +13,28 @@
       "note": "no expressible M1 mutant on this surface; all spec N=40 mutants => n/a. no element-access defect is expressible on the tensor/linalg entry surface: there are no addressable memory locations before lowering (mutation-specs-v2.md 5)"
     },
     "M2": {
-      "n_injected": 39,
-      "n_compile": 22,
+      "n_injected": 41,
+      "n_compile": 23,
       "n_runtime": 0,
-      "n_never": 17,
+      "n_never": 18,
       "n_na": 0,
       "by_rtv": {
         "off": {
-          "n_injected": 39,
-          "n_compile": 22,
+          "n_injected": 41,
+          "n_compile": 23,
           "n_runtime": 0,
-          "n_never": 17,
+          "n_never": 18,
           "n_na": 0
         },
         "on": {
-          "n_injected": 39,
-          "n_compile": 22,
+          "n_injected": 41,
+          "n_compile": 23,
           "n_runtime": 0,
-          "n_never": 17,
+          "n_never": 18,
           "n_na": 0
         }
       },
-      "note": "measured on the linalg surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 94 mutant records reduce to 39 injections."
+      "note": "measured on the linalg surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 98 mutant records reduce to 41 injections."
     },
     "M3": {
       "n_injected": 0,
@@ -71,24 +71,24 @@
   },
   "S8_expressibility": {
     "elem": {
-      "yes": 8,
+      "yes": 9,
       "partial": 0,
       "no": 0
     },
     "shape": {
-      "yes": 5,
+      "yes": 6,
       "partial": 0,
       "no": 3
     },
     "loop": {
       "yes": 0,
       "partial": 0,
-      "no": 8
+      "no": 9
     },
     "hw": {
       "yes": 0,
       "partial": 0,
-      "no": 8
+      "no": 9
     }
   },
   "S9_remainder": {
@@ -97,23 +97,24 @@
       "elemwise_add": 10,
       "layer_normalization": 48,
       "matmul": 14,
+      "pad": 12,
       "relu": 6,
       "softmax": 30,
       "transpose": 6,
       "transpose_square": 6
     },
-    "total": 156,
+    "total": 168,
     "criterion_ref": "RTV-generated cf.assert at loc(kernel); loc(oracle) guards excluded (folding them in inflated S9 by ~17% overall, ~67% on relu)",
     "note": "never summed with the other MLIR lane's remainder (mutation-specs.md \u00a77): the low lane's kernels are hand-tiled with an explicit boundary guard, so their guard structure is not comparable"
   },
   "S12_sanitizer_supplement": {
     "M2": {
       "flagged_and_exercised": 0,
-      "total": 47,
+      "total": 49,
       "flagged": 0,
-      "exercised": 25,
+      "exercised": 26,
       "not_instrumented": 0,
-      "rejected_before_run": 22,
+      "rejected_before_run": 23,
       "misses": {
         "M2.10/dynamic": {
           "n": 1,
@@ -130,19 +131,24 @@
           "instrumented_min": 22,
           "instrumented_max": 41
         },
-        "M2.2/dynamic": {
+        "M2.15/dynamic": {
           "n": 1,
-          "instrumented_min": 18,
-          "instrumented_max": 18
+          "instrumented_min": 17,
+          "instrumented_max": 17
+        },
+        "M2.15/static": {
+          "n": 1,
+          "instrumented_min": 17,
+          "instrumented_max": 17
         },
         "M2.4/dynamic": {
           "n": 1,
-          "instrumented_min": 18,
-          "instrumented_max": 18
+          "instrumented_min": 17,
+          "instrumented_max": 17
         },
         "M2.5/dynamic": {
           "n": 10,
-          "instrumented_min": 23,
+          "instrumented_min": 20,
           "instrumented_max": 44
         },
         "M2.5/static": {
@@ -245,6 +251,15 @@
         "rtv_on_ref_pass": 2
       }
     },
+    "pad": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
     "relu": {
       "small": {
         "composed": 2,
@@ -305,30 +320,30 @@
   },
   "gate_failures": [],
   "totals": {
-    "kernels": 30,
-    "compiled": 30,
-    "ran_ok": 30,
-    "ref_pass": 30,
-    "mutant_records": 94,
-    "sanitizer_records": 47,
-    "expressibility_records": 32,
+    "kernels": 32,
+    "compiled": 32,
+    "ran_ok": 32,
+    "ref_pass": 32,
+    "mutant_records": 98,
+    "sanitizer_records": 49,
+    "expressibility_records": 36,
     "gate_failures": 0
   },
   "census": {
     "class": "M2",
-    "n_injected": 39,
-    "expected_injected": 39,
-    "n_records": 94,
+    "n_injected": 41,
+    "expected_injected": 41,
+    "n_records": 98,
     "n_target_per_class": 40,
-    "delta_vs_target": -1,
+    "delta_vs_target": 1,
     "by_rtv": {
       "off": {
-        "compile": 22,
-        "never": 17
+        "compile": 23,
+        "never": 18
       },
       "on": {
-        "compile": 22,
-        "never": 17
+        "compile": 23,
+        "never": 18
       }
     },
     "battery_size": "small",
@@ -341,12 +356,13 @@
       "elemwise_add",
       "layer_normalization",
       "matmul",
+      "pad",
       "relu",
       "softmax",
       "transpose",
       "transpose_square"
     ],
-    "n_composed": 8,
+    "n_composed": 9,
     "categories_missing": [
       "batch_norm",
       "conv2d",
@@ -359,6 +375,6 @@
     ],
     "n_missing": 8,
     "manifest_total": 15,
-    "note": "manifest.md \u00a71 counts 15 categories; this lane composes 8. S8 and the kernel gate are emitted over the composed subset ONLY \u2014 the 8 missing categories (batch_norm, conv2d, embedding, gelu, max_pool2d, reduce_mean, reshape, sigmoid) have no emitter on this surface yet, so their expressibility is UNMEASURED, not 'no'. Fabricating a 'no' row for them would understate the SOTA baseline. FLAGGED FOLLOW-UP for the coordinator: S8's denominator here is 8, not 15, so it is not directly comparable to the triton/iree rows whose denominator is 15."
+    "note": "manifest.md \u00a71 counts 15 categories; this lane composes 9. S8 and the kernel gate are emitted over the composed subset ONLY \u2014 the 8 missing categories (batch_norm, conv2d, embedding, gelu, max_pool2d, reduce_mean, reshape, sigmoid) have no emitter on this surface yet, so their expressibility is UNMEASURED, not 'no'. Fabricating a 'no' row for them would understate the SOTA baseline. FLAGGED FOLLOW-UP for the coordinator: S8's denominator here is 9, not 15, so it is not directly comparable to the triton/iree rows whose denominator is 15."
   }
 }
