@@ -48,21 +48,159 @@
       "M4": "uncompared"
     }
   },
-  "S8_expressibility": {},
+  "S8_expressibility": {
+    "elem": {
+      "yes": 0,
+      "partial": 15,
+      "no": 0
+    },
+    "hw": {
+      "yes": 0,
+      "partial": 0,
+      "no": 15
+    },
+    "loop": {
+      "yes": 0,
+      "partial": 0,
+      "no": 15
+    },
+    "shape": {
+      "yes": 14,
+      "partial": 0,
+      "no": 1
+    }
+  },
   "S9_remainder": {
-    "per_category": {},
-    "total": 0,
+    "per_category": {
+      "batch_norm": 11,
+      "concat": 11,
+      "conv2d": 7,
+      "elemwise_add": 10,
+      "embedding": 10,
+      "gelu": 11,
+      "layer_normalization": 11,
+      "matmul": 10,
+      "max_pool2d": 10,
+      "reduce_mean": 10,
+      "relu": 12,
+      "reshape": 11,
+      "sigmoid": 11,
+      "softmax": 11,
+      "transpose": 11
+    },
+    "total": 157,
     "criterion_ref": "entry dynamic dims (not statically foldable)"
   },
-  "S12_sanitizer_supplement": {},
-  "kernel_gate": {},
-  "full_size_failures": [],
+  "S12_sanitizer_supplement": {
+    "M2": {
+      "flagged_and_exercised": 0,
+      "total": 23,
+      "flagged": 0
+    }
+  },
+  "kernel_gate": {
+    "batch_norm": {
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
+    },
+    "concat": {
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
+    },
+    "conv2d": {
+      "compiled": 82,
+      "run_ok": 82,
+      "ref_pass": 40
+    },
+    "elemwise_add": {
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
+    },
+    "embedding": {
+      "compiled": 80,
+      "run_ok": 80,
+      "ref_pass": 40
+    },
+    "gelu": {
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
+    },
+    "layer_normalization": {
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
+    },
+    "matmul": {
+      "compiled": 79,
+      "run_ok": 79,
+      "ref_pass": 39
+    },
+    "max_pool2d": {
+      "compiled": 80,
+      "run_ok": 80,
+      "ref_pass": 40
+    },
+    "reduce_mean": {
+      "compiled": 80,
+      "run_ok": 80,
+      "ref_pass": 40
+    },
+    "relu": {
+      "compiled": 88,
+      "run_ok": 88,
+      "ref_pass": 44
+    },
+    "reshape": {
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
+    },
+    "sigmoid": {
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
+    },
+    "softmax": {
+      "compiled": 80,
+      "run_ok": 80,
+      "ref_pass": 40
+    },
+    "transpose": {
+      "compiled": 84,
+      "run_ok": 84,
+      "ref_pass": 42
+    }
+  },
+  "full_size_failures": [
+    {
+      "category": "conv2d",
+      "kernel": "3_dynamic_16x256xHxW_256x256x3x3_16x256xHxW_S_P_D",
+      "size": "full",
+      "disposition": "full-size dynamic-dim concretization exceeds 16 GB VRAM (OOM/timeout); --small gate passes"
+    },
+    {
+      "category": "conv2d",
+      "kernel": "4_dynamic_32x128xHxW_256x128x3x3_32x256xHxW_S_P_D",
+      "size": "full",
+      "disposition": "full-size dynamic-dim concretization exceeds 16 GB VRAM (OOM/timeout); --small gate passes"
+    },
+    {
+      "category": "matmul",
+      "kernel": "6_dynamic_32x197xE_Ex3072_32x197x3072",
+      "size": "full",
+      "disposition": "full-size dynamic-dim concretization exceeds 16 GB VRAM (OOM/timeout); --small gate passes"
+    }
+  ],
   "totals": {
-    "kernels": 0,
-    "compiled": 0,
-    "ran_ok": 0,
-    "ref_pass": 0,
-    "full_size_failures": 0
+    "kernels": 622,
+    "compiled": 622,
+    "ran_ok": 619,
+    "ref_pass": 619,
+    "full_size_failures": 3
   },
   "note": "Correctness only, sm_86. Kernel gate = structural ref-check. E1 S1: measured M2 entry-shape mutants; M1/M3 n/a per the class axis; M4 uncompared (never run, so no cell). S12: M2 shape-contract mutants are not memory faults, so compute-sanitizer --tool memcheck is silent by design (plan \u00a73.5)."
 }
