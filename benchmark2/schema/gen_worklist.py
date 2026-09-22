@@ -73,6 +73,23 @@ MINIMAL = MUT.MINIMAL_SET if MUT else {}
 SPEC_FAM = {s: f for f, r in FAM.items() for s in r.get("spec_ids", [])}
 REGISTRY = MUT.SPEC_REGISTRY if MUT else {}
 
+# Specs the registry DECLARES but the taxonomy deliberately keeps out of every
+# family. Three reasons, none of them a defect:
+#   attribution_only  -- a record kept for the accounting, not a class cell
+#                        (the whole M3-L launch-gating set);
+#   P2 never generated -- the compiler refuses or repairs the state, so no
+#                        instance can exist (M2.12, M3.19, M3.21, M3.22);
+#   dead declarations  -- the declared DSL surface never existed.
+# A raw row carrying one of these is fine and is counted separately. Anything
+# ELSE that names a spec_id absent from `families` is an ORPHAN: a spec the
+# corpus still emits but the classification has retired or moved -- exactly
+# the drift this column exists to make visible.
+ATTR_ONLY = {s for r in TAX.get("attribution_only", {}).values()
+             for s in r.get("spec_ids", [])}
+P2 = set(TAX.get("p2_never_generated", {}).get("spec_ids", []))
+DEAD = set(TAX.get("dead_declarations", {}).get("spec_ids", []))
+DECLARED_NONFAMILY = ATTR_ONLY | P2 | DEAD
+
 # The class axis is the SECOND instrument. It states, per lane, whether a class
 # is `measured`, `n/a`, `uncompared` or `not_ready`. A class that the method
 # taxonomy puts in scope but the class axis holds at `uncompared` is a conflict
@@ -137,38 +154,64 @@ for m in choreo_manifest.get("mutants", []):
     f = SPEC_FAM.get(m.get("spec_id"))
     if f:
         depth[f][m.get("category")] += 1
-choreo_fam = Counter({f: sum(c.values()) for f, c in depth.items()})
 
-# every other lane -- instance counts by (class, family) where the rows carry
-# spec_id, else by class only. Rows are deduplicated the way the dashboard
-# does, because the mlir lanes run each mutant twice (rtv off/on).
-lane_cls = {L: Counter() for L in LANES}
+# Attribution is tracked per (lane, CLASS), not per lane. A lane that names a
+# family on most rows can still leave one class unattributed, and a lane-wide
+# `not lane_fam[lane]` test misses exactly that: the residual rows are folded
+# into the class total and never surface. The non-family outcomes, exclusive:
+#   lane_nospec instance carries no spec_id at all (fix the collector);
+#   lane_nofam  instance names a DECLARED non-family spec (no defect);
+#   lane_orphan instance names a spec_id no family and no exclusion declares.
+# A resolved instance is not tracked separately -- it lands in lane_fam.
+# Rows are deduplicated the way the dashboard does, because the mlir lanes run
+# each mutant twice (rtv off/on).
 lane_fam = {L: Counter() for L in LANES}
+lane_nospec = {L: Counter() for L in LANES}         # class -> no spec_id
+lane_nofam = {L: Counter() for L in LANES}          # class -> declared, no family
+lane_orphan = {L: defaultdict(set) for L in LANES}  # class -> {spec_id}
 lane_rows = {L: 0 for L in LANES}
+
+
+def bucket(lane, cls, sid):
+    """Place one instance by how its spec_id resolves; return its family or None.
+
+    Side-effecting on purpose: this is the single place that decides which
+    bucket an instance lands in, so the four counters cannot disagree with
+    each other.
+    """
+    if not sid:
+        lane_nospec[lane][cls] += 1
+        return None
+    f = SPEC_FAM.get(sid)
+    if f:
+        return f
+    if sid in DECLARED_NONFAMILY:
+        lane_nofam[lane][cls] += 1
+    else:
+        lane_orphan[lane][cls].add(sid)
+    return None
+
+
 for L in LANES:
     if L == "choreo":
-        lane_cls[L] = Counter()
-        for f, n in choreo_fam.items():
-            lane_cls[L][T._FAM[f]["class"]] += n
-        lane_fam[L] = choreo_fam
         lane_rows[L] = len(choreo_manifest.get("mutants", []))
+        for m in choreo_manifest.get("mutants", []):
+            f = bucket(L, m.get("class") or "?", m.get("spec_id"))
+            if f:
+                lane_fam[L][f] += 1
         continue
     rows = load(BASE / L / "raw" / "mutants.jsonl", [])
     lane_rows[L] = len(rows)
     seen = set()
     for r in rows:
-        key = (r.get("spec_id"), r.get("category"), r.get("shape"), r.get("kernel"))
+        key = (r.get("spec_id"), r.get("category"), r.get("shape"),
+               r.get("kernel"))
         if key in seen:
             continue
         seen.add(key)
-        f = SPEC_FAM.get(r.get("spec_id"))
+        f = bucket(L, r.get("class") or "?", r.get("spec_id"))
         if f:
             lane_fam[L][f] += 1
-            lane_cls[L][T._FAM[f]["class"]] += 1
-        else:
-            # No spec_id: the row can be attributed to a class but not a
-            # family. Record it so the shortfall is not silently overstated.
-            lane_cls[L][r.get("class") or "?"] += 1
 
 
 # ------------------------------------------------------------------ fill plan
@@ -308,16 +351,40 @@ def blocker(cls, family, rf, ra):
     return " ".join(parts)
 
 
+def attribution_defect(lane, cls):
+    """The `(state, blocker)` for a class whose instances cannot all be placed.
+
+    None when every instance of `cls` in `lane` resolves to a family. Read per
+    (lane, class): the residual after a partial attribution belongs to the
+    class it sits in, not averaged away across the lane.
+    """
+    orphans = lane_orphan[lane][cls]
+    if orphans:
+        ids = ", ".join(sorted(orphans))
+        return ("orphan(%s)" % ids,
+                "ORPHAN spec_id(s) %s: this class's raw rows name spec_ids the "
+                "taxonomy declares in no family and in no exclusion, so they "
+                "cannot be placed. Re-derive them against method-taxonomy.json "
+                "-- a reassigned or retired spec_id -- before reporting this "
+                "class." % ids)
+    if lane_nospec[lane][cls]:
+        return ("unattributed(no spec_id)",
+                "lane has %d %s instance(s) but its raw rows carry no spec_id, "
+                "so no family can be assigned. First task: emit spec_id (and "
+                "family) on every row, then re-derive this column."
+                % (lane_nospec[lane][cls], cls))
+    return None
+
+
 rows = []
 for cls in CLASSES:
     fams = sorted(f for f in FAM if FAM[f]["class"] == cls)
     for lane in LANES:
         ax = (AX_STATUS.get(lane, {}) or {}).get(cls)
-        # The lane has instances of this class but no family can be assigned,
-        # because its rows carry no spec_id. Reporting 0 for every family would
-        # understate the lane's real position, so say so instead.
-        unattributed = (lane not in ("choreo",) and not lane_fam[lane]
-                        and lane_cls[lane].get(cls, 0) > 0)
+        # Per (lane, class), not per lane: a lane can attribute most of its
+        # classes and still leave a residual in one, and that residual must
+        # surface on the class it belongs to.
+        defect = attribution_defect(lane, cls)
         missing = lane_missing[lane]
         src_rel = SOURCES[lane].relative_to(BASE)
         for f in fams:
@@ -331,10 +398,12 @@ for cls in CLASSES:
                 # are unknown here, not zero; do not fall through to the scope
                 # model and report a shortfall the data cannot support.
                 state = "no-data(%s)" % src_rel
-            elif unattributed:
-                state = "unattributed(no spec_id)"
             elif LANE_SCOPE.get(lane, {}).get(f):
+                # A stated scope exclusion is a property of the CELL, so it
+                # outranks a class-wide attribution defect.
                 state = "carved-out(%s)" % LANE_SCOPE[lane][f]
+            elif defect:
+                state = defect[0]
             else:
                 state = "in-scope"
 
@@ -351,11 +420,8 @@ for cls in CLASSES:
                        "holds it at `uncompared` (declared scope decision, "
                        "not a gap). Resolve the two instruments before "
                        "assigning work." % cls)
-            elif state.startswith("unattributed"):
-                blk = ("lane has %d %s instance(s) but its raw rows carry no "
-                       "spec_id, so no family can be assigned. First task: "
-                       "emit spec_id (and family) on every row, then re-derive "
-                       "this column." % (lane_cls[lane].get(cls, 0), cls))
+            elif defect and state == defect[0]:
+                blk = defect[1]
             elif state.startswith("no-data"):
                 blk = ("NO DATA: %s is absent from this checkout, so this "
                        "family's numbers are UNKNOWN here, not zero -- do not "
@@ -416,17 +482,20 @@ def main():
 
     tot = defaultdict(int)
     conflict = defaultdict(int)
-    unattr = defaultdict(int)
     nodata = defaultdict(int)
     for r in rows:
         if r["state"] == "in-scope":
             tot[r["lane"]] += r["short"]
         elif r["state"] == "UNCOMPARED-conflict":
             conflict[r["lane"]] += 1
-        elif r["state"].startswith("unattributed"):
-            unattr[r["lane"]] += 1
         elif r["state"].startswith("no-data"):
             nodata[r["lane"]] += 1
+    unattr = [(L, c, lane_nospec[L][c]) for L in LANES for c in CLASSES
+              if lane_nospec[L][c]]
+    orphans = [(L, c, sorted(lane_orphan[L][c])) for L in LANES
+               for c in CLASSES if lane_orphan[L][c]]
+    nofam = [(L, c, lane_nofam[L][c]) for L in LANES for c in CLASSES
+             if lane_nofam[L][c]]
     print("wrote %s (%d rows)" % (out, len(rows)))
     print("in-scope shortfall: " + ", ".join(
         "%s=%d" % (l, tot[l]) for l in LANES if tot[l]) +
@@ -438,8 +507,14 @@ def main():
                         for l, n in conflict.items()))
     if unattr:
         print("BLOCKED, cannot be assigned: no spec_id on the lane's rows: " +
-              ", ".join("%s=%d families" % (l, n)
-                        for l, n in unattr.items()))
+              ", ".join("%s %s=%d" % t for t in unattr))
+    if orphans:
+        print("ORPHAN spec_id (emitted by the corpus, declared by no family): "
+              + ", ".join("%s %s %s" % (L, c, ",".join(ids))
+                          for L, c, ids in orphans))
+    if nofam:
+        print("attribution-only (declared, in no family; NOT a defect): " +
+              ", ".join("%s %s=%d" % t for t in nofam))
     if nodata:
         print("NO DATA (raw file absent here; NOT measured zero): " +
               ", ".join("%s=%d families" % (l, n)
