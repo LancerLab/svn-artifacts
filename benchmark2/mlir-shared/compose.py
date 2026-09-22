@@ -284,6 +284,20 @@ M2_SPECS: list[Mutation] = [
              target="inp",
              detail="a strided sub-span is reread as if contiguous before the "
                     "flatten (non-contiguous span; the check is warning-only)"),
+    # family M2-d "broadcast". The clean op is a rank-unequal binary add whose
+    # compatibility walk compares only the trailing dims, so a mis-declared
+    # leading (MSB) extent passes. M2.8 mis-declares the rank-1 secondary
+    # operand's extent (N -> 1); M2.21 mis-declares the higher-rank operand's
+    # MSB broadcast extent (1 -> neither 1 nor equal). Both are `dim-mismatch`
+    # paper categories, matching choreo's published rows for the same spec ids.
+    Mutation("M2", 8, "broadcast-extent-one", "dim-mismatch",
+             target="bias",
+             detail="a broadcast extent that must be N is declared 1, so the "
+                    "single element is spread over every position"),
+    Mutation("M2", 21, "broadcast-msb-mismatch", "dim-mismatch",
+             target="lhs",
+             detail="MSB broadcast extent neither 1 nor equal: the rank-unequal "
+                    "path checks the trailing dims only"),
 ]
 
 # The numbered M2 specs, in order, with variants collapsed. This is the list to
@@ -293,7 +307,7 @@ M2_SPECS: list[Mutation] = [
 # lane-local count.
 M2_SPEC_IDS: list[str] = [
     "M2.1", "M2.2", "M2.3", "M2.4", "M2.5", "M2.6", "M2.7", "M2.9", "M2.10",
-    "M2.13", "M2.15", "M2.16", "M2.17", "M2.18",
+    "M2.13", "M2.15", "M2.16", "M2.17", "M2.18", "M2.8", "M2.21",
 ]
 
 # mutation-specs.md §5 splits M2 coverage into a level-1 minimal set and level-2
@@ -307,8 +321,10 @@ LEVEL1_M2_CATS: list[str] = ["layer_normalization", "matmul", "concat"]
 # carries a pad amount at all, so it is the only home for M2.15. `reshape` is the
 # M2-h surface (family "metadata path"): a strided sub-span flattened through an
 # explicit runtime shape is the only place the runtime extent can go unchecked.
+# `broadcast` is the M2-d surface (family "broadcast"): a rank-unequal binary add
+# whose trailing-dims-only compatibility walk leaves the leading extent open.
 LEVEL2_M2_CATS: list[str] = ["elemwise_add", "softmax", "transpose_square",
-                             "pad", "reshape"]
+                             "pad", "reshape", "broadcast"]
 M2_CATS: list[str] = LEVEL1_M2_CATS + LEVEL2_M2_CATS
 LEVEL_OF: dict[str, str] = {c: "1" for c in LEVEL1_M2_CATS}
 LEVEL_OF.update({c: "2" for c in LEVEL2_M2_CATS})
@@ -449,6 +465,13 @@ SMALL_DIMS: dict[str, dict[str, tuple[int | None, ...]]] = {
     # M2-h (family "metadata path"). The strided view drops the last axis by
     # RESHAPE_STRIDE, so the flattened output is inp[0] * (inp[-1]/STRIDE).
     "reshape": {"inp": (2, 4), "out": (2 * (4 // RESHAPE_STRIDE),)},
+    # M2-d (family "broadcast"). `lhs` (1, M, N) carries a legitimate leading
+    # broadcast extent; `bias` (N,) broadcasts over the trailing axis. The clean
+    # op is the rank-unequal binary add whose compatibility walk compares only
+    # the trailing dims (semacheck.cpp:543-595) -- so the leading extent of
+    # `lhs` is the unchecked position both defects live in. `out` is `lhs` with
+    # that leading extent dropped.
+    "broadcast": {"lhs": (1, 2, 3), "bias": (3,), "out": (2, 3)},
 }
 
 # Full-size extents, taken from the first concrete case in each settings file.
@@ -467,6 +490,7 @@ FULL_DIMS: dict[str, dict[str, tuple[int | None, ...]]] = {
     "transpose_square": {"inp": (64, 64), "out": (64, 64)},
     "pad": {"inp": (32, 64), "out": (32 + PAD_LOW + PAD_HIGH, 64)},
     "reshape": {"inp": (32, 64), "out": (32 * (64 // RESHAPE_STRIDE),)},
+    "broadcast": {"lhs": (1, 32, 64), "bias": (64,), "out": (32, 64)},
 }
 
 # Which operand(s) carry a dynamic extent, per category (mirrors the settings'
@@ -489,6 +513,10 @@ DYNAMIC_SLOT: dict[str, tuple[tuple[str, int], ...]] = {
     # Only the leading axis is dynamic, so the strided view stays concretely
     # shaped on its last axis and the flatten extent is the one runtime value.
     "reshape": (("inp", 0),),
+    # The middle axis is the symbolic one: the leading broadcast extent stays a
+    # concrete 1 (a dynamic `?` there would not be distinguishable from the
+    # legitimate-broadcast clean case), and the trailing bias extent is N.
+    "broadcast": (("lhs", 1),),
 }
 
 _DYN_VALUE = 3
@@ -553,6 +581,13 @@ def _derive_output(category: str, dims: dict[str, tuple[int | None, ...]],
             # DYNAMIC_SLOT declares only axis 0 dynamic, so `prod` is the static
             # remainder and the runtime flatten extent is the bound axis times it.
             dyn["out.0"] = dyn["inp.0"] * prod
+    elif category == "broadcast":
+        # The leading `lhs` extent is the broadcast dim (1 in the clean case);
+        # the output is that operand with the leading extent dropped.
+        dims["out"] = dims["lhs"][1:]
+        for axis in range(1, len(dims["lhs"])):
+            if dims["lhs"][axis] is None:
+                dyn[f"out.{axis - 1}"] = dyn[f"lhs.{axis}"]
     elif category in ("relu", "softmax", "layer_normalization", "elemwise_add"):
         src = "inp" if "inp" in dims else "lhs"
         dims["out"] = dims[src]
@@ -624,6 +659,13 @@ def reference(case: Case) -> np.ndarray:
     if cat == "reshape":
         x = input_values(case.numel("inp")).reshape(case.shape("inp"))
         return x[..., ::RESHAPE_STRIDE].reshape(-1).astype(np.float32)
+    if cat == "broadcast":
+        # settings: `y = lhs + bias` with `bias` broadcast over the trailing axis
+        # of `lhs`; the leading extent of `lhs` is itself a broadcast (1). `bias`
+        # takes offset 1000 so the two operands' value streams stay distinct.
+        x = input_values(case.numel("lhs")).reshape(case.shape("lhs"))
+        b = input_values(case.numel("bias"), offset=1000).reshape(case.shape("bias"))
+        return (x[0] + b).astype(np.float32)
     if cat == "concat":
         a = input_values(case.numel("a")).reshape(case.shape("a"))
         b = input_values(case.numel("b"), offset=1000).reshape(case.shape("b"))

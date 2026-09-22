@@ -139,7 +139,7 @@ SURFACES = {
         "emitter": E.emit_kernel,
         "categories": ["matmul", "relu", "softmax", "transpose", "concat",
                        "layer_normalization", "elemwise_add",
-                       "transpose_square", "pad", "reshape"],
+                       "transpose_square", "pad", "reshape", "broadcast"],
         # The mutation battery is NOT the composed set. `categories` above is
         # what E2 gates and what S8/S9 report over (7 composed kernels);
         # `battery_cats` is what M2 actually injects into — mutation-specs.md §5

@@ -119,9 +119,11 @@ LEVEL2_SET = {
     # (family "padding placement"): it is the only composed kernel that carries a
     # pad amount, so it is the only home for M2.15. `reshape` is the M2-h surface
     # (family "metadata path"): a strided sub-span flattened through an explicit
-    # runtime shape. Declared here (not in MINIMAL_SET) so they widen the coverage
-    # set without reclassifying any existing choreo level-1 category.
-    "M2": ["elemwise_add", "transpose_square", "pad", "reshape"],
+    # runtime shape. `broadcast` is the M2-d surface (family "broadcast"): a
+    # rank-unequal binary add whose trailing-dims-only compatibility walk leaves
+    # the leading extent open. Declared here (not in MINIMAL_SET) so they widen
+    # the coverage set without reclassifying any existing choreo level-1 category.
+    "M2": ["elemwise_add", "transpose_square", "pad", "reshape", "broadcast"],
     "M3": ["batch_norm"],
     "M4": [],
 }

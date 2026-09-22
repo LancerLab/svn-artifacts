@@ -1099,6 +1099,77 @@ def _emit_reshape(e: Emitter, case: C.Case,
     return r, out_t
 
 
+def _emit_broadcast(e: Emitter, case: C.Case,
+                    st: Structural | None) -> tuple[str, str]:
+    """`y = lhs + bias` with a rank-unequal broadcast (family M2-d).
+
+    The clean op adds a rank-1 `bias` (N,) over the trailing axis of a rank-3
+    `lhs` (1, M, N) whose leading extent is itself a legitimate broadcast. The
+    binary-arith compatibility walk compares only the trailing dims
+    (`semacheck.cpp:543-595`), so the leading extent of `lhs` -- and the whole
+    declared extent of the rank-1 operand -- are the positions the check leaves
+    open. Both defects live there and keep the output type identical, so nothing
+    but the oracle sees them:
+
+    * `broadcast-one` (M2.8) declares `bias` as (1,) and indexes it with a
+      constant 0, so `bias[0]` is spread over every column (extent set to 1
+      instead of N);
+    * `broadcast-msb` (M2.21) declares `lhs`'s leading extent as 2 and reads
+      slice 1, so the wrong row-block feeds the add (MSB neither 1 nor equal).
+
+    The rank-reduced indexing maps (`(d0,d1)->(d1)` for `bias`, and the constant
+    leading result for `lhs`) are the broadcast mechanism on this surface.
+    """
+    lhs_dims, bias_dims, out_dims = (case.dims["lhs"], case.dims["bias"],
+                                     case.dims["out"])
+    lhs_r = concrete(lhs_dims, case.dyn, "lhs")
+    bias_r = concrete(bias_dims, case.dyn, "bias")
+    out_r = concrete(out_dims, case.dyn, "out")
+    nd = len(out_dims)
+
+    # Every map's domain is the output iteration space; the output map is the
+    # identity over it.
+    dom = ",".join(f"d{i}" for i in range(nd))
+    out_map = f"affine_map<({dom}) -> ({dom})>"
+
+    # Clean: lhs[0, d0, d1] (a legitimate leading broadcast of 1), bias[d1].
+    lhs_index = "0," + dom
+    bias_index = f"d{nd - 1}"
+    if st is not None and st.kind == "broadcast-msb":
+        lhs_dims = (2,) + tuple(lhs_dims[1:])
+        lhs_r = (2,) + tuple(lhs_r[1:])
+        lhs_index = "1," + dom
+    elif st is not None and st.kind == "broadcast-one":
+        bias_dims = (1,)
+        bias_r = (1,)
+        bias_index = "0"
+
+    lhs_t, bias_t = C.tensor_type(lhs_dims), C.tensor_type(bias_dims)
+    out_t = C.tensor_type(out_dims)
+
+    a = emit_formula_tensor(e, lhs_dims, lhs_r, offset=0, name="lhs")
+    b = emit_formula_tensor(e, bias_dims, bias_r, offset=1000, name="bias")
+    init = emit_empty(e, out_dims, out_r)
+
+    lhs_map = f"affine_map<({dom}) -> ({lhs_index})>"
+    bias_map = f"affine_map<({dom}) -> ({bias_index})>"
+    res = e.new("y")
+    e.emit(f"{res} = linalg.generic {{")
+    e.indent += 1
+    e.emit(f"indexing_maps = [{lhs_map}, {bias_map}, {out_map}],")
+    e.emit(f"iterator_types = [{iters_all_parallel(nd)}]")
+    e.indent -= 1
+    e.emit(f"}} ins({a}, {b} : {lhs_t}, {bias_t}) outs({init} : {out_t}) {{")
+    e.indent += 1
+    e.emit("^bb0(%x: f32, %b: f32, %o: f32):")
+    s = e.new("t")
+    e.emit(f"{s} = arith.addf %x, %b : f32")
+    e.emit(f"linalg.yield {s} : f32")
+    e.indent -= 1
+    e.emit(f"}} -> {out_t}")
+    return res, out_t
+
+
 EMITTERS = {
     "matmul": _emit_matmul,
     "relu": _emit_relu,
@@ -1110,6 +1181,7 @@ EMITTERS = {
     "elemwise_add": _emit_elemwise_add,
     "pad": _emit_pad,
     "reshape": _emit_reshape,
+    "broadcast": _emit_broadcast,
 }
 
 

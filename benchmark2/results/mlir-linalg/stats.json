@@ -13,28 +13,28 @@
       "note": "no expressible M1 mutant on this surface; all spec N=40 mutants => n/a. no element-access defect is expressible on the tensor/linalg entry surface: there are no addressable memory locations before lowering (mutation-specs-v2.md 5)"
     },
     "M2": {
-      "n_injected": 43,
-      "n_compile": 21,
+      "n_injected": 45,
+      "n_compile": 23,
       "n_runtime": 0,
       "n_never": 22,
       "n_na": 0,
       "by_rtv": {
         "off": {
-          "n_injected": 43,
-          "n_compile": 21,
+          "n_injected": 45,
+          "n_compile": 23,
           "n_runtime": 0,
           "n_never": 22,
           "n_na": 0
         },
         "on": {
-          "n_injected": 43,
-          "n_compile": 21,
+          "n_injected": 45,
+          "n_compile": 23,
           "n_runtime": 0,
           "n_never": 22,
           "n_na": 0
         }
       },
-      "note": "measured on the linalg surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 102 mutant records reduce to 43 injections."
+      "note": "measured on the linalg surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 106 mutant records reduce to 45 injections."
     },
     "M3": {
       "n_injected": 0,
@@ -71,28 +71,29 @@
   },
   "S8_expressibility": {
     "elem": {
-      "yes": 10,
+      "yes": 11,
       "partial": 0,
       "no": 0
     },
     "shape": {
-      "yes": 7,
+      "yes": 8,
       "partial": 0,
       "no": 3
     },
     "loop": {
       "yes": 0,
       "partial": 0,
-      "no": 10
+      "no": 11
     },
     "hw": {
       "yes": 0,
       "partial": 0,
-      "no": 10
+      "no": 11
     }
   },
   "S9_remainder": {
     "per_category": {
+      "broadcast": 10,
       "concat": 36,
       "elemwise_add": 10,
       "layer_normalization": 48,
@@ -104,18 +105,18 @@
       "transpose": 6,
       "transpose_square": 6
     },
-    "total": 183,
+    "total": 193,
     "criterion_ref": "RTV-generated cf.assert at loc(kernel); loc(oracle) guards excluded (folding them in inflated S9 by ~17% overall, ~67% on relu)",
     "note": "never summed with the other MLIR lane's remainder (mutation-specs.md \u00a77): the low lane's kernels are hand-tiled with an explicit boundary guard, so their guard structure is not comparable"
   },
   "S12_sanitizer_supplement": {
     "M2": {
       "flagged_and_exercised": 0,
-      "total": 51,
+      "total": 53,
       "flagged": 0,
       "exercised": 30,
       "not_instrumented": 0,
-      "rejected_before_run": 21,
+      "rejected_before_run": 23,
       "misses": {
         "M2.10/dynamic": {
           "n": 1,
@@ -152,25 +153,30 @@
           "instrumented_min": 18,
           "instrumented_max": 18
         },
-        "M2.2/dynamic": {
+        "M2.21/dynamic": {
           "n": 1,
-          "instrumented_min": 18,
-          "instrumented_max": 18
+          "instrumented_min": 20,
+          "instrumented_max": 20
         },
         "M2.4/dynamic": {
-          "n": 2,
+          "n": 1,
           "instrumented_min": 17,
-          "instrumented_max": 18
+          "instrumented_max": 17
         },
         "M2.5/dynamic": {
           "n": 10,
-          "instrumented_min": 20,
+          "instrumented_min": 23,
           "instrumented_max": 44
         },
         "M2.5/static": {
           "n": 6,
           "instrumented_min": 23,
           "instrumented_max": 44
+        },
+        "M2.8/dynamic": {
+          "n": 1,
+          "instrumented_min": 20,
+          "instrumented_max": 20
         }
       },
       "miss_note": "each of these ran with real ASan coverage (instrumented > 0) and still produced no report: the injected defect corrupts the result WITHOUT any access leaving its allocation, so no memory checker can see it. This residue \u2014 not the flagged count \u2014 is what S12 measures."
@@ -203,6 +209,15 @@
     "why_not_compute_sanitizer": "compute-sanitizer needs a CUDA device; these lanes are CPU-only, so ASan on a natively linked binary is the equivalent external checker"
   },
   "kernel_gate": {
+    "broadcast": {
+      "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      }
+    },
     "concat": {
       "small": {
         "composed": 2,
@@ -345,29 +360,29 @@
   },
   "gate_failures": [],
   "totals": {
-    "kernels": 34,
-    "compiled": 34,
-    "ran_ok": 34,
-    "ref_pass": 34,
-    "mutant_records": 102,
-    "sanitizer_records": 51,
-    "expressibility_records": 40,
+    "kernels": 36,
+    "compiled": 36,
+    "ran_ok": 36,
+    "ref_pass": 36,
+    "mutant_records": 106,
+    "sanitizer_records": 53,
+    "expressibility_records": 44,
     "gate_failures": 0
   },
   "census": {
     "class": "M2",
-    "n_injected": 43,
-    "expected_injected": 43,
-    "n_records": 102,
+    "n_injected": 45,
+    "expected_injected": 45,
+    "n_records": 106,
     "n_target_per_class": 40,
-    "delta_vs_target": 3,
+    "delta_vs_target": 5,
     "by_rtv": {
       "off": {
-        "compile": 21,
+        "compile": 23,
         "never": 22
       },
       "on": {
-        "compile": 21,
+        "compile": 23,
         "never": 22
       }
     },
@@ -377,6 +392,7 @@
   },
   "scope": {
     "categories_composed": [
+      "broadcast",
       "concat",
       "elemwise_add",
       "layer_normalization",
@@ -388,7 +404,7 @@
       "transpose",
       "transpose_square"
     ],
-    "n_composed": 10,
+    "n_composed": 11,
     "categories_missing": [
       "batch_norm",
       "conv2d",
@@ -400,6 +416,6 @@
     ],
     "n_missing": 7,
     "manifest_total": 15,
-    "note": "manifest.md \u00a71 counts 15 categories; this lane composes 10. S8 and the kernel gate are emitted over the composed subset ONLY \u2014 the 7 missing categories (batch_norm, conv2d, embedding, gelu, max_pool2d, reduce_mean, sigmoid) have no emitter on this surface yet, so their expressibility is UNMEASURED, not 'no'. Fabricating a 'no' row for them would understate the SOTA baseline. FLAGGED FOLLOW-UP for the coordinator: S8's denominator here is 10, not 15, so it is not directly comparable to the triton/iree rows whose denominator is 15."
+    "note": "manifest.md \u00a71 counts 15 categories; this lane composes 11. S8 and the kernel gate are emitted over the composed subset ONLY \u2014 the 7 missing categories (batch_norm, conv2d, embedding, gelu, max_pool2d, reduce_mean, sigmoid) have no emitter on this surface yet, so their expressibility is UNMEASURED, not 'no'. Fabricating a 'no' row for them would understate the SOTA baseline. FLAGGED FOLLOW-UP for the coordinator: S8's denominator here is 11, not 15, so it is not directly comparable to the triton/iree rows whose denominator is 15."
   }
 }

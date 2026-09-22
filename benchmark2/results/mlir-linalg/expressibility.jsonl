@@ -1,3 +1,7 @@
+{"category": "broadcast", "class": "elem", "expressible": "yes", "settings_hash": "MISSING", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
+{"category": "broadcast", "class": "shape", "expressible": "yes", "settings_hash": "MISSING", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
+{"category": "broadcast", "class": "loop", "expressible": "no", "settings_hash": "MISSING", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
+{"category": "broadcast", "class": "hw", "expressible": "no", "settings_hash": "MISSING", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
 {"category": "concat", "class": "elem", "expressible": "yes", "settings_hash": "55b2395980bd", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
 {"category": "concat", "class": "shape", "expressible": "yes", "settings_hash": "55b2395980bd", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}
 {"category": "concat", "class": "loop", "expressible": "no", "settings_hash": "55b2395980bd", "toolchain": "mlir-linalg", "toolchain_version": "LLVM 21.1.0"}

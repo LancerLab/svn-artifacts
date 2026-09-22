@@ -48,6 +48,11 @@ class Structural:
                              (M2.18).
       * `reshape-short`   -- the runtime flatten extent is stale, so the result
                              is silently shortened (M2.17).
+      * `broadcast-one`   -- a rank-1 broadcast extent is declared 1 and indexed
+                             with a constant, so one element fills every position
+                             (M2.8).
+      * `broadcast-msb`   -- the higher-rank operand's leading broadcast extent
+                             is made 2 and the second slice is read (M2.21).
       * M1 kinds (`drop-mask`, `off-by-one`, `negative-index`,
         `transposed-stride`, `offset-overrun`, `zero-stride`,
         `overlap-write`, `broadcast-index`, `tile-coord`) -- index/stride
@@ -312,6 +317,29 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
                 raise NotApplicable(
                     f"M2.18: {cat!r} composes no non-contiguous sub-span")
             structural = Structural(kind="reshape-contiguous")
+
+        elif mut.spec == 21:
+            # "MSB broadcast extent neither 1 nor equal" (v2.1 family M2-d): the
+            # higher-rank operand's LEADING extent is made 2 and slice 1 is read.
+            # The rank-unequal compatibility walk compares only the trailing dims
+            # (semacheck.cpp:543-595), so this passes. Only the broadcast kernel
+            # composes a rank-unequal pair whose leading extent is a broadcast.
+            if cat != "broadcast":
+                raise NotApplicable(
+                    f"M2.21: {cat!r} composes no rank-unequal broadcast whose "
+                    f"leading extent can be mis-declared")
+            structural = Structural(kind="broadcast-msb")
+
+        elif mut.spec == 8:
+            # "a broadcast extent that must be N is 1" (v2.1 family M2-d): the
+            # rank-1 secondary operand is declared (1,) and indexed with a
+            # constant, so its single element is spread over every position. Only
+            # the broadcast kernel carries a rank-1 operand that broadcasts.
+            if cat != "broadcast":
+                raise NotApplicable(
+                    f"M2.8: {cat!r} composes no broadcast extent that can be set "
+                    f"to 1")
+            structural = Structural(kind="broadcast-one")
 
         else:
             raise KeyError(f"unknown M2 spec {mut.spec}")
