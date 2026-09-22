@@ -384,6 +384,24 @@ LEVEL2_SPECS = {
                      ("rhs-d1-1", 1, 1, -1)],
 }
 
+# M2-a family budget: 4 kernels x 2 realisations = 8, matching every other M2
+# family (the lane card's "battery-vs-composition" gap). The keep-set is
+# explicit so each chosen kernel contributes exactly one realisation per spec and
+# all four M2-a specs stay credited: M2.19 on the dynamic layer_norm (symbolic
+# extent, escapes the entry check), M2.1 on a static layer_norm, M2.3 on
+# elemwise_add and M2.14 on matmul. Materialising the whole per-kernel battery
+# (23) is what this replaces.
+M2_A_KEEP = {
+    "iree-layer_normalization-10-gamma-dyn-1",   # M2.19, symbolic -> never
+    "iree-layer_normalization-10-beta-dyn-1",    # M2.19, symbolic -> never
+    "iree-layer_normalization-11-gamma-len-1",   # M2.1, static -> runtime
+    "iree-layer_normalization-11-beta-len-1",    # M2.1, static -> runtime
+    "iree-elemwise_add-10-rhs-len-1",            # M2.3
+    "iree-elemwise_add-10-rhs-d1-1",             # M2.3
+    "iree-matmul-10-rhs-K-1",                    # M2.14
+    "iree-matmul-10-rhs-K+1",                    # M2.14
+}
+
 # spec_id per edit tag -- which M2 spec the entry-contract edit realises. The
 # tag alone is not enough (the same `len` tag is a leading-extent edit on
 # gamma/beta but an interior-extent edit on elemwise's rhs), so the mapping is
@@ -493,6 +511,9 @@ def cmd_minimal(level2: bool = False):
             for tag, aidx, didx, delta in specs:
                 if aidx >= len(args) or didx >= len(args[aidx][1]):
                     continue  # spec dim not present in this case (e.g. 1-D gamma)
+                mid = f"iree-{cat}-{base['kernel'].split('_')[0]}-{tag}"
+                if mid not in M2_A_KEEP:
+                    continue  # family budget: 4 kernels x 2 realisations
                 ref_specs = [_ramp_input(d, t) for (_n, d, t) in args]
                 ref_rc, ref_log, _ = _run_out(vmfb, fname, ref_specs)
                 if ref_rc != 0:
@@ -502,7 +523,6 @@ def cmd_minimal(level2: bool = False):
                     mut_dims[aidx][didx] = SMALL + delta
                 else:
                     mut_dims[aidx][didx] = max(1, mut_dims[aidx][didx] + delta)
-                mid = f"iree-{cat}-{base['kernel'].split('_')[0]}-{tag}"
                 mut_specs = [_ramp_input(mut_dims[i], args[i][2])
                              for i in range(len(args))]
                 rc, mlog, mshape = _run_out(vmfb, fname, mut_specs)

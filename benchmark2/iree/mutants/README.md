@@ -13,6 +13,16 @@ A mutant is represented as `mutants/M2/<category>/<mutant_id>.json` (reference k
 - **Static extent** mutants (operand dim is a fixed int): IREE rejects at the host entry via `hal.buffer_view.assert` (`INVALID_ARGUMENT: shape dimension mismatch`) -> **runtime**.
 - **Dynamic extent** mutants (operand dim is `?`): IREE silently computes a wrong result -> **never/corrupts** (verified by numeric diff against the reference output; see `mutant_oracle.py`).
 
+## Family M2-a (`run.sh minimal --level2`)
+
+Entry-extent edits on a secondary operand (`layer_norm` `gamma`/`beta`, matmul
+`rhs`, `elemwise_add` `rhs`). Budgeted like every other family at **4 kernels x
+2 realisations = 8** (`M2_A_KEEP` in `lane.py`): one dynamic `layer_norm` kernel
+realises M2.19 (symbolic extent, escapes the entry check -> **never**), one
+static `layer_norm` kernel realises M2.1 (-> **runtime**), `elemwise_add`
+realises M2.3 and `matmul` realises M2.14. The fuller per-kernel battery (23
+instances) is not committed.
+
 ## Families M2-b .. M2-h (`run.sh m2`)
 
 Beyond the M2-a extent edits (`run.sh minimal`), `lane.py m2` materialises the
