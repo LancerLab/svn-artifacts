@@ -23,11 +23,11 @@
     "concat": true
   },
   "shape_compile_rejections": {
-    "layer_normalization": 20,
-    "matmul": 16,
-    "concat": 24,
-    "elemwise_add": 20,
-    "softmax": 12
+    "layer_normalization": 28,
+    "matmul": 24,
+    "concat": 32,
+    "elemwise_add": 28,
+    "softmax": 20
   },
   "shape_evidence_basis": {
     "concat": "mutation+diagnostic",

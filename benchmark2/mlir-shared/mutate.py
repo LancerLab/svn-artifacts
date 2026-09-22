@@ -88,6 +88,39 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
         if d[j] is None and ci is not None:
             dyn[f"{op}.{j}"] = ci
 
+    def drop_axis(op: str, axis: int) -> None:
+        """Remove `op`'s extent at `axis` (family M2-c, M2.7).
+
+        A reduced-rank view: the operand loses a dimension, so its rank no
+        longer matches the op's contract. Dynamic bindings beyond the dropped
+        axis shift down with their axis.
+        """
+        d = list(dims[op])
+        dims[op] = tuple(x for k, x in enumerate(d) if k != axis)
+        for k in range(len(d)):
+            if k == axis:
+                continue
+            key = f"{op}.{k}"
+            if key in dyn:
+                nk = k - 1 if k > axis else k
+                dyn[f"{op}.{nk}"] = dyn.pop(key)
+
+    def merge_last_two(op: str) -> None:
+        """Fold `op`'s final two extents into one (family M2-c, M2.16).
+
+        The element count is preserved while the rank and split change, so the
+        operand holds the same number of elements but no longer matches the
+        expected rank. A dynamic trailing pair is folded into a concrete
+        product and its stale bindings dropped.
+        """
+        d = list(dims[op])
+        i = len(d) - 2
+        ci = d[i] if d[i] is not None else dyn[f"{op}.{i}"]
+        cj = d[i + 1] if d[i + 1] is not None else dyn[f"{op}.{i + 1}"]
+        dims[op] = tuple(d[:i] + [ci * cj])
+        for k in range(i, len(d)):
+            dyn.pop(f"{op}.{k}", None)
+
     if mut.klass == "M2":
         if mut.spec == 1:
             # "caller passes scale (or a secondary operand) of the wrong leading
@@ -184,6 +217,29 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
                     f"M2.9: {cat!r} has no batch/group axis distinct from M2.6"
                 )
             swap("b", 0, 1)
+
+        elif mut.spec == 7:
+            # "reduced-rank view" (v2.1 family M2-c): a dimension is dropped
+            # from a declared operand, so its rank no longer matches the op.
+            op = {"matmul": "lhs", "concat": "b",
+                  "layer_normalization": "lhs", "elemwise_add": "lhs",
+                  "softmax": "inp"}.get(cat)
+            if op is None:
+                raise NotApplicable(f"M2.7: {cat!r} is not an M2 category")
+            drop_axis(op, len(dims[op]) - 1)
+
+        elif mut.spec == 16:
+            # "same element count, different rank/split" (v2.1 family M2-c):
+            # the final two extents are folded together. Distinct from M2.7,
+            # which drops an axis outright, because the count is preserved.
+            op = {"matmul": "lhs", "concat": "b",
+                  "layer_normalization": "lhs", "elemwise_add": "lhs",
+                  "softmax": "inp"}.get(cat)
+            if op is None:
+                raise NotApplicable(f"M2.16: {cat!r} is not an M2 category")
+            if len(dims[op]) < 2:
+                raise NotApplicable(f"M2.16: {cat!r} operand has rank < 2")
+            merge_last_two(op)
 
         else:
             raise KeyError(f"unknown M2 spec {mut.spec}")

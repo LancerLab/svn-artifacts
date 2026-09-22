@@ -146,11 +146,12 @@ SURFACES = {
         # silently produced 70 injections instead of the spec-count arithmetic.
         "battery_cats": list(C.M2_CATS),
         # Pinned, NOT derived from the list being iterated. Deriving it from
-        # `cats` made the census check a tautology. Now 7 spec ids (the v1
-        # M2.1-M2.5 plus the v2.1 M2.6/M2.9 additions for family M2-b) x
-        # 3 level-1 cats x 2 shapes = 42, and x 5 level-2 cats x 2 = 70.
-        # These are contract numbers the measured count is compared against.
-        "expected_injected": {"1": 42, "2": 70},
+        # `cats` made the census check a tautology. Now 9 spec ids (the v1
+        # M2.1-M2.5 plus the v2.1 M2.6/M2.9 for family M2-b and M2.7/M2.16 for
+        # family M2-c) x 3 level-1 cats x 2 shapes = 54, and x 5 level-2 cats
+        # x 2 = 90. These are contract numbers the measured count is compared
+        # against.
+        "expected_injected": {"1": 54, "2": 90},
         "klass": "M2",
         "specs": C.M2_SPECS,
         "spec_ids": C.M2_SPEC_IDS,

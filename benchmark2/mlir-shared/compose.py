@@ -245,14 +245,22 @@ M2_SPECS: list[Mutation] = [
     Mutation("M2", 9, "batch-group-swapped", "wrong-shape",
              target="b",
              detail="batch/group dimension swapped"),
+    # family M2-c "rank": a dimension is added or dropped.
+    Mutation("M2", 7, "reduced-rank-view", "wrong-shape",
+             target="primary",
+             detail="a dimension is dropped from a declared operand"),
+    Mutation("M2", 16, "reshaped-element-count", "wrong-shape",
+             target="primary",
+             detail="same element count, different rank/split"),
 ]
 
 # The numbered M2 specs, in order, with variants collapsed. This is the list to
 # iterate when counting injections (N); iterate M2_SPECS when emitting records.
-# M2.6/M2.9 are the v2.1 additions for family M2-b; the numbering is NOT
-# contiguous here because it tracks the v2.1 register, not a lane-local count.
+# M2.6/M2.9 (family M2-b) and M2.7/M2.16 (family M2-c) are the v2.1 additions;
+# the numbering is NOT contiguous here because it tracks the v2.1 register, not a
+# lane-local count.
 M2_SPEC_IDS: list[str] = [
-    "M2.1", "M2.2", "M2.3", "M2.4", "M2.5", "M2.6", "M2.9",
+    "M2.1", "M2.2", "M2.3", "M2.4", "M2.5", "M2.6", "M2.7", "M2.9", "M2.16",
 ]
 
 # mutation-specs.md §5 splits M2 coverage into a level-1 minimal set and level-2
