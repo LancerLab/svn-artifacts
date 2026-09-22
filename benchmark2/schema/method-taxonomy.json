@@ -507,7 +507,6 @@
     "spec_ids": [
       "M1.15",
       "M1.16",
-      "M1.17",
       "M1.18",
       "M2.18",
       "M3.2",
@@ -526,7 +525,7 @@
       "M4.4"
     ],
     "definition": "Declared in the registry with status `pending` and zero operators, and NOT in p2_never_generated. Writing one of these WOULD create a test.",
-    "why": "They make `unwritten` look like work-in-progress when it is an empty set. Note M1.15-M1.18, M2.18, M3.2/M3.3/M3.5/M3.7/M3.11/M3.13 and M4.4 are nonetheless FAMILY-MEMBERS (M1-g, M1-d, M2-h, M3-b/c/e and M4-d): the family is real and keeps its slot, the spec_id is what is abandoned. Do NOT delete them from `families` -- that would make M1-d and M1-g look like families with no declaration at all. M3.4 and M3.8 have LEFT this list: the rank-5/6 `dma_rank5` re-realisation gave M3-d and M3-f operators that the compiler actually assesses, so their family members are no longer abandoned.",
+    "why": "They make `unwritten` look like work-in-progress when it is an empty set. Note M1.15/M1.16/M1.18, M2.18, M3.2/M3.3/M3.5/M3.7/M3.11/M3.13 and M4.4 are nonetheless FAMILY-MEMBERS (M1-g, M1-d, M2-h, M3-b/c/e and M4-d): the family is real and keeps its slot, the spec_id is what is abandoned. Do NOT delete them from `families` -- that would make M1-d and M1-g look like families with no declaration at all. M3.4, M3.8 and now M1.17 have LEFT this list: the rank-5/6 `dma_rank5` re-realisation gave M3-d, M3-f and M1-g operators that the compiler actually assesses, so their family members are no longer abandoned.",
     "does_not_exist": [
       "M2.20",
       "M2.22"

@@ -190,6 +190,23 @@
    "oracle_usable": false,
    "reason": "UNMUTATED base fails its own reference check \u2014 manifest verdicts for this case are untrustworthy"
   },
+  "dma_rank5/r5at": {
+   "category": "dma_rank5",
+   "case": "r5at",
+   "gated": false,
+   "base_compile": true,
+   "base_compile_rc": 0,
+   "base_run_rc": 0,
+   "base_passed": true,
+   "base_detector": "none",
+   "base_infra": null,
+   "check_run_rc": 0,
+   "check_passed": true,
+   "check_detector": "none",
+   "use_check": false,
+   "oracle_usable": true,
+   "reason": "built-in reference passes on unmutated code"
+  },
   "dma_rank5/r5base": {
    "category": "dma_rank5",
    "case": "r5base",

@@ -10,13 +10,13 @@
  "level2": false,
  "rtc": null,
  "accounting": {
-  "candidates": 259,
-  "selected": 131,
+  "candidates": 260,
+  "selected": 132,
   "attribution": 4,
   "dropped": 124,
   "na": 0,
   "skipped": 0,
-  "emitted": 135
+  "emitted": 136
  },
  "family_depth": {
   "M1-a": 8,
@@ -25,7 +25,7 @@
   "M1-d": 4,
   "M1-e": 8,
   "M1-f": 1,
-  "M1-g": 1,
+  "M1-g": 2,
   "M1-h": 4,
   "M2-a": 8,
   "M2-b": 6,
@@ -55,7 +55,7 @@
   "M1-b": 2,
   "M1-d": 4,
   "M1-f": 7,
-  "M1-g": 7,
+  "M1-g": 6,
   "M1-h": 4,
   "M2-b": 2,
   "M2-c": 2,
@@ -82,7 +82,6 @@
   "M1": [
    "M1.15",
    "M1.16",
-   "M1.17",
    "M1.18"
   ],
   "M2": [
@@ -109,21 +108,21 @@
  "registry": {
   "n_specs": 77,
   "status_counts": {
-   "implemented": 56,
-   "pending": 21
+   "implemented": 57,
+   "pending": 20
   },
   "admissible_counts": {
-   "true": 51,
-   "false": 26
+   "true": 52,
+   "false": 25
   },
   "prohibition_counts": {
-   "absent": 18,
+   "absent": 17,
    "repaired": 5,
    "observation": 3
   },
   "path_counts": {
-   "rt-check": 53,
-   "unchecked": 10,
+   "rt-check": 54,
+   "unchecked": 9,
    "avoided": 5,
    "ct-check": 2,
    "L": 7
@@ -135,6 +134,7 @@
    "M1.12",
    "M1.13",
    "M1.14",
+   "M1.17",
    "M1.19",
    "M1.2",
    "M1.20",
@@ -193,6 +193,7 @@
    "M1.12",
    "M1.13",
    "M1.14",
+   "M1.17",
    "M1.19",
    "M1.2",
    "M1.20",
@@ -243,7 +244,6 @@
   "unwritten": [
    "M1.15",
    "M1.16",
-   "M1.17",
    "M1.18",
    "M2.12",
    "M2.18",
@@ -266,7 +266,6 @@
   "na": [
    "M1.15",
    "M1.16",
-   "M1.17",
    "M1.18",
    "M1.6",
    "M2.12",
@@ -295,7 +294,6 @@
    "absent": [
     "M1.15",
     "M1.16",
-    "M1.17",
     "M1.18",
     "M1.6",
     "M2.18",
@@ -326,7 +324,7 @@
    ]
   },
   "n_operators": {
-   "M1": 66,
+   "M1": 67,
    "M2": 70,
    "M3": 63,
    "M4": 60
@@ -2559,6 +2557,34 @@
   {
    "toolchain": "choreo",
    "class": "M1",
+   "spec": 17,
+   "paper_category": "oob",
+   "mutant_id": "M1.17.r5.at5",
+   "category": "dma_rank5",
+   "case": "r5at",
+   "level": 1,
+   "base_path": "benchmark/choreo/dma_rank5/r5at.co",
+   "mutant_path": "benchmark2/choreo/mutants/M1/dma_rank5/M1.17.r5.at5__r5at.co",
+   "kernel_hash": "2b02209e7de8",
+   "mutant_hash": "8800e9c9a44e",
+   "settings_hash": "6ba7925e0a5a",
+   "local_headers": [
+    "common.hpp"
+   ],
+   "desc": "off-by-one on the 5th (last) index of a rank-5 element access: input.at(a,b,c,d,e + 1) is OOB at e == 31",
+   "diff": "--- a/dma_rank5/r5at.co\n+++ b/dma_rank5/r5at.co\n@@ -8,5 +8,5 @@\n     parallel q by 32 : thread {\n       foreach {a,b,c,d,e} in [2,4,8,16,32]\n-        output.at(a,b,c,d,e) = input.at(a,b,c,d,e) * 2.0f;\n+        output.at(a,b,c,d,e) = input.at(a,b,c,d,e + 1) * 2.0f;\n     }\n   return output;\n",
+   "spec_version": "v2.1",
+   "spec_id": "M1.17",
+   "path_class": "rt-check",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": true,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M1",
    "spec": 20,
    "paper_category": "wrong-shape",
    "mutant_id": "M1.20.tp1.arity",
@@ -3757,7 +3783,7 @@
    "mutant_path": "benchmark2/choreo/mutants/M3/dma_rank5/M3.4.dma5dyn.footprint__r5dyn.co",
    "kernel_hash": "5b65ecb6c656",
    "mutant_hash": "5a8152c45f00",
-   "settings_hash": "331391c57242",
+   "settings_hash": "6ba7925e0a5a",
    "local_headers": [
     "common.hpp"
    ],
@@ -3897,7 +3923,7 @@
    "mutant_path": "benchmark2/choreo/mutants/M3/dma_rank5/M3.8.dma5.rank6__r5base.co",
    "kernel_hash": "71275da4ffb1",
    "mutant_hash": "fdc7cc7bd9f6",
-   "settings_hash": "331391c57242",
+   "settings_hash": "6ba7925e0a5a",
    "local_headers": [
     "common.hpp"
    ],

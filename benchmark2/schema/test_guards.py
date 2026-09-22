@@ -235,8 +235,8 @@ def _all_declared(doc) -> list[str]:
 # --- `mutations.py` from source and `gen_mutants` is the one exception, whose
 # --- edit changes the file's size and so invalidates its `.pyc`).
 WITNESS = 'NA_WITNESS = {"M1": "iree", "M2": "triton", "M3": "iree"}'
-M1_MINIMAL = ('"M1": ["layer_normalization", "softmax", "relu", '
-              '"transpose"],')
+M1_MINIMAL = ('"M1": ["layer_normalization", "softmax", "relu", "transpose",\n'
+              '           "dma_rank5"],')
 M1_LEVEL2 = '"M1": ["max_pool2d", "conv2d", "embedding", "batch_norm"],'
 SUITE_LINE = 'SUITE = os.path.join(REPO, "benchmark", "choreo")'
 

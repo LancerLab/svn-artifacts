@@ -87,7 +87,12 @@ BASE_CASES = {
 # ride on conv2d because that is where the block and shared extents are
 # explicit -- and conv2d is already in M3's minimal set, so they land at level 1.
 MINIMAL_SET = {
-    "M1": ["layer_normalization", "softmax", "relu", "transpose"],
+    # dma_rank5 is M1's rank-5 surface: M1.17 needs a view of rank > 4, and the
+    # category already carries rank-5 kernels (declared for M3), so it is the
+    # one place a 5th-index access can be constructed. It is the only addition;
+    # no other M1 spec is declared on it.
+    "M1": ["layer_normalization", "softmax", "relu", "transpose",
+           "dma_rank5"],
     "M2": ["layer_normalization", "matmul", "concat", "conv2d", "relu",
            "softmax"],
     # M3 needs four categories at level 1 (method-taxonomy budget
@@ -232,10 +237,15 @@ SPEC_REGISTRY = {
                        "unassessed (defect F10) -- but no case in the suite "
                        "uses `select`, so the rule is never reached. "
                        "MISSING SURFACE: a case with a runtime select factor"),
-    "M1.17": _spec("M1", "unchecked", "5th-index access on a rank-5 view",
-                  admissible=False, prohibition="absent",
-                  note="MISSING SURFACE: the suite's maximum rank is 4, so a "
-                       "rank-5 view cannot be constructed"),
+    "M1.17": _spec("M1", "rt-check", "5th-index access on a rank-5 view",
+                   status="implemented",
+                   note="REALIZED on the new rank-5 `dma_rank5/r5at` kernel. "
+                        "The original `unchecked` prediction was wrong: "
+                        "semacheck's `.at` obligation is per-dimension with no "
+                        "rank ceiling, so the 5th index IS assessed and the "
+                        "mutant is caught at run time (`The 5th index ... should "
+                        "be less than 32`). Kept in family M1-g (its declared "
+                        "home); only the path is corrected."),
     "M1.18": _spec("M1", "rt-check", "index in range by `interval` but out of range "
                                "by `canonical` (or vice versa)",
                   admissible=False, prohibition="absent",
@@ -937,6 +947,16 @@ M1 = [
        '11_dynamic_32xSx768_32x768xS',
        'read-after-write aliasing on the transpose source tile',
        ('shared f32 [1, 1, 64] is;', 'shared f32 [1, 1, 32] is;', None)),
+    # ---- dma_rank5 / r5at (rank-5, elementwise) -------------------------
+    # A rank-5 view exists (r5at), so the "5th-index access" spec is no longer
+    # a missing surface. The edit is an off-by-one on the OUTERMOST index only:
+    # semacheck assesses every `.at` dimension, so the mutant is caught at run
+    # time by the 5th-index obligation -- which REFUTES the registry's original
+    # `unchecked` prediction (see the M1.17 entry note).
+    _m("M1.17.r5.at5", "M1", 17, "oob", "dma_rank5", "r5at",
+       "off-by-one on the 5th (last) index of a rank-5 element access: "
+       "input.at(a,b,c,d,e + 1) is OOB at e == 31",
+       ("input.at(a,b,c,d,e)", "input.at(a,b,c,d,e + 1)")),
 ]
 
 # ===========================================================================
@@ -1481,16 +1501,18 @@ M1 += [
        ("i.chunkat(p, y, z)", "i.chunkat(p + 1, y, z)")),
 ]
 
-# ---- M1.15 / M1.16 / M1.17 / M1.18: screened, no operator yet -------------
+# ---- M1.15 / M1.16 / M1.18: screened, no operator yet ---------------------
 # M1.15 (dimof rank)   -- the dimof mechanism emits 0 runtime obligations; the
 #                         spec's whole point is that a miss is the finding.
 # M1.16 (select factor)-- needs a `select` category; the no-static-factor path
-#                         is unassessed (defect F10).
-# M1.17 (5th index)    -- needs a rank-5 category.
+#                         is unassessed (defect F10), but codegen implements
+#                         `select` only for future/spanned operands, so a
+#                         view-select kernel cannot compile (blocked).
 # M1.18 (interval vs canonical) -- a mechanism-level claim, not an edit shape;
 #                         expressed by re-running an existing mutant under the
 #                         other mechanism once the ledger carries both.
-# These are registry `pending`, so `gen_mutants.py --report` lists them.
+# M1.17 is now written (dma_rank5/r5at); see the M1 list above.
+# The rest are registry `pending`, so `gen_mutants.py --report` lists them.
 
 # ---- M1.19 index-carrier overflow (narrow-carrier, realization b) ---------
 # A single dimension in (2^31, 2^32): LEGAL under `__inf__ = 2^32 - 1`, but a

@@ -4,21 +4,21 @@
  "summary": {
   "n_specs": 77,
   "status_counts": {
-   "implemented": 56,
-   "pending": 21
+   "implemented": 57,
+   "pending": 20
   },
   "admissible_counts": {
-   "true": 51,
-   "false": 26
+   "true": 52,
+   "false": 25
   },
   "prohibition_counts": {
-   "absent": 18,
+   "absent": 17,
    "repaired": 5,
    "observation": 3
   },
   "path_counts": {
-   "rt-check": 53,
-   "unchecked": 10,
+   "rt-check": 54,
+   "unchecked": 9,
    "avoided": 5,
    "ct-check": 2,
    "L": 7
@@ -30,6 +30,7 @@
    "M1.12",
    "M1.13",
    "M1.14",
+   "M1.17",
    "M1.19",
    "M1.2",
    "M1.20",
@@ -88,6 +89,7 @@
    "M1.12",
    "M1.13",
    "M1.14",
+   "M1.17",
    "M1.19",
    "M1.2",
    "M1.20",
@@ -138,7 +140,6 @@
   "unwritten": [
    "M1.15",
    "M1.16",
-   "M1.17",
    "M1.18",
    "M2.12",
    "M2.18",
@@ -161,7 +162,6 @@
   "na": [
    "M1.15",
    "M1.16",
-   "M1.17",
    "M1.18",
    "M1.6",
    "M2.12",
@@ -190,7 +190,6 @@
    "absent": [
     "M1.15",
     "M1.16",
-    "M1.17",
     "M1.18",
     "M1.6",
     "M2.18",
@@ -221,7 +220,7 @@
    ]
   },
   "n_operators": {
-   "M1": 66,
+   "M1": 67,
    "M2": 70,
    "M3": 63,
    "M4": 60
@@ -311,12 +310,12 @@
   {
    "spec_id": "M1.17",
    "cls": "M1",
-   "path": "unchecked",
-   "admissible": false,
-   "prohibition": "absent",
-   "status": "pending",
+   "path": "rt-check",
+   "admissible": true,
+   "prohibition": "",
+   "status": "implemented",
    "desc": "5th-index access on a rank-5 view",
-   "note": "MISSING SURFACE: the suite's maximum rank is 4, so a rank-5 view cannot be constructed"
+   "note": "REALIZED on the new rank-5 `dma_rank5/r5at` kernel. The original `unchecked` prediction was wrong: semacheck's `.at` obligation is per-dimension with no rank ceiling, so the 5th index IS assessed and the mutant is caught at run time (`The 5th index ... should be less than 32`). Kept in family M1-g (its declared home); only the path is corrected."
   },
   {
    "spec_id": "M1.18",
