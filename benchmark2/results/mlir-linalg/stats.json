@@ -34,7 +34,7 @@
           "n_na": 0
         }
       },
-      "note": "measured on the linalg surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 144 mutant records reduce to 64 injections."
+      "note": "measured on the linalg surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 128 mutant records reduce to 64 injections."
     },
     "M3": {
       "n_injected": 0,
@@ -122,9 +122,9 @@
   "S12_sanitizer_supplement": {
     "M2": {
       "flagged_and_exercised": 0,
-      "total": 72,
+      "total": 64,
       "flagged": 0,
-      "exercised": 49,
+      "exercised": 41,
       "not_instrumented": 0,
       "rejected_before_run": 23,
       "misses": {
@@ -174,14 +174,14 @@
           "instrumented_max": 17
         },
         "M2.5/dynamic": {
-          "n": 10,
+          "n": 5,
           "instrumented_min": 23,
           "instrumented_max": 44
         },
         "M2.5/static": {
-          "n": 6,
+          "n": 3,
           "instrumented_min": 23,
-          "instrumented_max": 44
+          "instrumented_max": 42
         },
         "M2.8/dynamic": {
           "n": 4,
@@ -464,8 +464,8 @@
     "compiled": 56,
     "ran_ok": 56,
     "ref_pass": 56,
-    "mutant_records": 144,
-    "sanitizer_records": 72,
+    "mutant_records": 128,
+    "sanitizer_records": 64,
     "expressibility_records": 84,
     "gate_failures": 0
   },
@@ -473,7 +473,7 @@
     "class": "M2",
     "n_injected": 64,
     "expected_injected": 64,
-    "n_records": 144,
+    "n_records": 128,
     "n_target_per_class": 40,
     "delta_vs_target": 24,
     "by_rtv": {

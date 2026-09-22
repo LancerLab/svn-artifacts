@@ -1,6 +1,6 @@
 {
   "class": "M2",
-  "n_records": 144,
+  "n_records": 128,
   "n_injected": 64,
   "expected_injected": 64,
   "n_target_per_class": 40,

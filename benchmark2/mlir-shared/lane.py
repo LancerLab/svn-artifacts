@@ -321,15 +321,44 @@ def select_m2(cats: list[str], specs, size: str = "small") -> set[tuple]:
         selected.update((c[2], c[3], c[1]) for c in chosen)
     return selected
 
+
+def _one_variant_per_injection(specs, sel: set | None) -> dict[tuple, object]:
+    """Pick a single mutant per selected injection when a spec_id has variants.
+
+    M2.5 is declared twice ("partial-write", "duplicate-write") and both mutants
+    share the injection identity `M2.5`, so `select_m2` sees one candidate per
+    host and fills a whole family's worth of hosts. Emitting every variant on
+    every host (the earlier behaviour) then produced TWO programs per injection,
+    giving family M2-f 16 instances and 32 records -- twice the N=8 budget its
+    seven sibling families meet. The budget is `N_KERNELS x N_REALISATIONS` over
+    hosts, not variants, so exactly one program is emitted per injection and the
+    variants are dealt round-robin across the family's sorted injection keys;
+    both variants still appear, just not twice on the same host.
+    """
+    if sel is None:
+        return {}
+    by_sid: dict[str, list] = defaultdict(list)
+    for mut in specs:
+        by_sid[mut.spec_id].append(mut)
+    chosen: dict[tuple, object] = {}
+    for sid, muts in by_sid.items():
+        if len(muts) < 2:
+            continue
+        for i, k in enumerate(sorted(k for k in sel if k[2] == sid)):
+            chosen[k] = muts[i % len(muts)]
+    return chosen
+
+
 # The MLIR diagnostic is the interesting part of a compile error; the leading
 # `path:line:col:` prefix is noise in a summary table.
 _LOC = re.compile(r"^.*?\.mlir:\d+:\d+:\s*", re.MULTILINE)
 
-# S1's outcome strength order. An injection whose spec names two manifestations
-# (M2.5: partial write / duplicate write) is counted at its MOST-detected
-# variant: if either manifestation is caught, the spec is caught. Detection
-# strength runs compile (the verifier rejected it outright) > runtime (a
-# generated check fired) > never (it ran and silently produced wrong output).
+# S1's outcome strength order. An injection is counted at its MOST-detected
+# variant (a spec with variants deals them across hosts, so an ordinary
+# injection carries one outcome; the reduction still applies if a future spec
+# emits several). Strength runs compile (the verifier rejected it outright)
+# > runtime (a generated check fired) > never (it ran and silently produced
+# wrong output).
 _STRENGTH = {"compile": 3, "runtime": 2, "never": 1, "n/a": 0}
 
 
@@ -537,7 +566,8 @@ class Lane:
 
         * an **injection** is one (category, shape, spec) triple — this is what
           S1's `n_injected` reports, and M2's spec 5 counts once even though it
-          names two manifestations;
+          declares two manifestations (dealt one per host, so the two variants
+          never stack);
         * a **record** is one (category, shape, mutant, rtv-mode) tuple.
 
         §5.1's enumeration arithmetic is owner-approved and must NOT be trimmed
@@ -562,6 +592,7 @@ class Lane:
         # at its §5.1 contract.
         sel = (select_m2(cats, self.cfg["specs"], size=size)
                if klass == "M2" else None)
+        variant = _one_variant_per_injection(self.cfg["specs"], sel)
 
         n_repeat = REPEAT[self.key]
         # injection key -> {rtv: [outcomes of that injection's variants]}
@@ -579,6 +610,8 @@ class Lane:
                     clean = C.make_case(cat, size=size, dynamic=dynamic)
                     for mut in self.cfg["specs"]:
                         if sel is not None and (cat, shape, mut.spec_id) not in sel:
+                            continue
+                        if mut is not variant.get((cat, shape, mut.spec_id), mut):
                             continue
                         ikey = (cat, shape, mut.spec_id)
                         try:
@@ -793,6 +826,7 @@ class Lane:
         sel = (select_m2(list(self.cfg["battery_cats"]), self.cfg["specs"],
                          size=size)
                if klass == "M2" else None)
+        variant = _one_variant_per_injection(self.cfg["specs"], sel)
 
         with tempfile.TemporaryDirectory() as td:
             tmp = Path(td)
@@ -805,6 +839,8 @@ class Lane:
                     clean = C.make_case(cat, size=size, dynamic=dynamic)
                     for mut in self.cfg["specs"]:
                         if sel is not None and (cat, shape, mut.spec_id) not in sel:
+                            continue
+                        if mut is not variant.get((cat, shape, mut.spec_id), mut):
                             continue
                         try:
                             mcase, structural = M.apply(clean, mut)
@@ -1158,8 +1194,8 @@ class Lane:
         klass = self.cfg["klass"]
 
         # ---- S1: detection matrix, per class, RTV modes broken out --------
-        # Aggregate at INJECTION level (spec_id), not record level: M2's spec 5
-        # emits two variants that are two measurements of ONE injection.
+        # Aggregate at INJECTION level (spec_id), not record level: any variants
+        # a spec declares are collapsed onto their shared injection identity.
         inj: dict[tuple[str, str, str, str, str], list[str]] = defaultdict(list)
         for r in mutants:
             inj[(r["class"], r["rtv"], r["category"], r["shape"],
@@ -1516,11 +1552,11 @@ def _reduce_injection(outcomes: list[str]) -> str:
     """Collapse one injection's per-variant outcomes into a single S1 outcome.
 
     An injection is `n/a` only when EVERY variant is inexpressible (§6). Otherwise
-    it counts at its MOST-detected variant: M2's spec 5 names two manifestations
-    (partial write / duplicate write), and if either is caught then the spec is
-    caught. Detection strength runs compile > runtime > never, so a spec that the
-    verifier rejects in one variant is not washed out by a silently-corrupting
-    sibling.
+    it counts at its MOST-detected variant. An ordinary injection carries a single
+    outcome (variants are dealt across hosts), but the reduction still applies if
+    a set of variants ever shares one injection. Detection strength runs compile
+    > runtime > never, so a spec the verifier rejects in one variant is not washed
+    out by a silently-corrupting sibling.
     """
     if not outcomes:
         return "n/a"

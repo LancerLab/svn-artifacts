@@ -66,9 +66,11 @@ specs that `mutate.apply` accepts on that category — so the realised `n/a` cou
 is **0**. §6's "count `n/a`, never re-balance" rule is satisfied vacuously: no
 injection was dropped or merged to make the total reach N.
 
-Records emitted: 64 injections → 72 mutants (spec 5 doubles its eight) → **144
-records** (× 2 RTV modes, which §5.1 requires be reported separately, never
-merged).
+Records emitted: 64 injections → 64 mutants → **128 records** (× 2 RTV modes,
+which §5.1 requires be reported separately, never merged). Each injection emits
+exactly one mutant: spec 5's two variants (`partial`/`duplicate`) are dealt one
+per host, four hosts each, so the family stays inside its `4 × 2` budget while
+both variants still appear.
 
 ### Where the categories come from
 

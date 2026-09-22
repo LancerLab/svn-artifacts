@@ -178,17 +178,19 @@ class Mutation:
 
     `spec` is the 1-based spec number within the class. `variant` distinguishes
     sub-defects inside one spec (spec M2.5 names two: an omitted tail tile *and*
-    an overlapping duplicate write), so each gets its own mutant id and its own
-    record rather than being counted twice for the same thing.
+    an overlapping duplicate write), so each gets its own mutant id. The two are
+    dealt across a family's hosts one per injection, not stacked on every host:
+    emitting both on every host doubled family M2-f's instance count past its
+    N = N_KERNELS x N_REALISATIONS budget.
 
     Two identities matter and they are NOT the same number:
 
     * `spec_id` -- the **injection** identity. This is what S1's `n_injected`
       counts, because mutation-specs.md §2 numbers M2 as 5 specs and §0 fixes
       N = 40 per class at *spec* level. Spec 5 counts once no matter how many
-      variants are emitted.
-    * `mutant_id` -- the **record** identity. One per emitted kernel, so spec 5's
-      two variants produce two records and two measurements.
+      variants it declares.
+    * `mutant_id` -- the **record** identity. One per emitted kernel; spec 5's
+      variants share the injection but land on different hosts.
     """
 
     klass: str  # an id from schema/class-axis.json `classes[]` (M1..M4)
@@ -218,10 +220,10 @@ class Mutation:
 # dashboard's `spec_id -> family` mapping attributes them to family M2-b
 # ("extent order"). Spec 5 names two distinct defects ("partial write (omitted
 # tail tile) / duplicate write (overlapping tile)"), so it is expanded into two
-# variants: two records, but ONE injected spec for the purposes of N = 40 (§0).
-# Both variants are real defects -- each lands in the `never`/`corrupts` row, the
-# silent-bug residue -- so neither is dropped; they are two measurements of one
-# injection.
+# variants that share ONE injection identity (M2.5) for the purposes of N = 40
+# (§0). Both variants are real defects -- each lands in the `never`/`corrupts`
+# row, the silent-bug residue -- so neither is dropped: `lane.py` deals the two
+# round-robin across the family's hosts, one program per injection.
 M2_SPECS: list[Mutation] = [
     Mutation("M2", 1, "secondary-operand-wrong-extent", "dim-mismatch",
              detail="secondary operand (rhs / b / scale) has the wrong leading extent"),

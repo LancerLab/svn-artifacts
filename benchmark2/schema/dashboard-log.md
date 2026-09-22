@@ -32,7 +32,7 @@ rule that moves the numbers: a spec with no anchor in the *current* corpus is a
 ## 2026-09-23 — `mlir-linalg` fills its M2 family budget; M2 43/64 → 64/64
 
 Every M2 family now holds its `4 hosts × 2 shapes = 8` budget, so M2 instances
-43 → **64** (rows 102 → 144) and the class cell reads **64/64**. `M2-d`/`M2-g`/
+43 → **64** (rows 102 → 128) and the class cell reads **64/64**. `M2-d`/`M2-g`/
 `M2-h` sat at 2/8 and `M2-e` at 7/8 because each family had too few host
 structures: `select_m2` caps each `(family, category)` at two realisations, so a
 mutation-only family needs four categories that can host its single spec. Ten
@@ -46,13 +46,20 @@ defects: each carries its family's existing spec and paper category.
   `expected_injected` 45 → 64. `select_m2` draws on 19 M2 categories (9 composed
   + 10 variants). Specs M2.2/M2.4/M2.5 are output-only and would otherwise spread
   to the variants, so they are held to the nine pre-variant cores — the already
-  saturated M2-a/M2-f selections stay byte-identical.
+  saturated M2-a selection stays byte-identical.
 - M2 *families*: 45 → **64 of 64** across M2-a..M2-h; worklist shortfall
   **19 → 0**.
-- `run.sh all --small`: 56 kernels, 84 expressibility rows, 144 mutant records,
+- `run.sh all --small`: 56 kernels, 84 expressibility rows, 128 mutant records,
   **0 gate failures**; S1 `n_never` 41 (same composition — the new cells are
-  in-bounds corruptions caught by the oracle, not by RTV). S12: 72 sanitized,
+  in-bounds corruptions caught by the oracle, not by RTV). S12: 64 sanitized,
   reconciled, 0 flagged.
+- **`M2-f` holds eight instances, not sixteen.** Its spec (`M2.5`) declares two
+  variants (`partial`/`duplicate`) that previously stacked on every host, so the
+  family emitted 16 instances / 32 records and overran `4 × 2` by 2×. The battery
+  now deals exactly one variant per injection, round-robin over sorted ids, so
+  both variants still appear (4 hosts each) but the family reads 8 instances / 16
+  records like its siblings. Net on the battery: records **144 → 128**, S12
+  **72 → 64**; injections stay at **64**.
 - The ten added hosts compose and gate clean on their own: 42 E2 cells pass
   compile / run / ref / rtv.
 
