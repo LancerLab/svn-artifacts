@@ -1767,21 +1767,30 @@ M3 += [
 # M3.12's scope note is exact: CheckCtMemUsage only refuses a tile whose byte
 # size it can fold, so "a runtime channel exists only when an extent is
 # symbolic". These two operators supply that extent by multiplying a shared and
-# a local tile by the runtime span N. The tile is then oversized at run time
-# while the compile-time total the checker folds stays small, so the capacity
-# check cannot fire -- the gap M3-h names.
+# a local tile by a genuinely runtime span. The tile is then oversized at run
+# time while the compile-time total the checker folds stays small, so the
+# capacity check cannot fire -- the gap M3-h names.
+#
+# The multiplier MUST be a runtime parameter, not any `.span()`. In this case
+# `N = i.span(0)` is the literal batch 32, so `8 * N` constant-folds to 256 and
+# the tile becomes a 1 MB compile-time constant that CheckCtMemUsage rejects
+# (verified: `choreo -t cute -sa=muchk` errors "shared memory OUT OF BOUND!",
+# so an `N`-based operator is compile-DETECTED, not the P1 miss it claims).
+# `H = i.span(2)` is `attn_h`, a kernel parameter in the dynamic build, so
+# `8 * H` stays symbolic (`[1024, (::CONV2D::attn_h * 8)]`) and the check is
+# silent.
 M3 += [
     _m("M3.27.cv1.symshared", "M3", 27, "dim-mismatch", "conv2d", _C1,
-       "shared tile extent made runtime-shaped (Cout x 8*N): the byte size is "
-       "not a compile-time constant, so the capacity check stays silent and "
-       "the tile is launched far past the device budget",
+       "shared tile extent made runtime-shaped (Cout x 8*H, H = attn_h): the "
+       "byte size is not a compile-time constant, so the capacity check stays "
+       "silent and the tile is launched far past the device budget",
        ("shared f32 [Cout, 8] B_tile;",
-        "shared f32 [Cout, 8 * N] B_tile;"), spec_id="M3.27"),
+        "shared f32 [Cout, 8 * H] B_tile;"), spec_id="M3.27"),
     _m("M3.28.cv1.symlocal", "M3", 28, "dim-mismatch", "conv2d", _C1,
-       "per-thread local tile extent made runtime-shaped (M/#q x Cout*N): the "
+       "per-thread local tile extent made runtime-shaped (M/#q x Cout*H): the "
        "per-thread budget is exceeded in a size the static check cannot fold",
        ("local f32 [M/#q, Cout] l1_Y{0.0f};",
-        "local f32 [M/#q, Cout * N] l1_Y{0.0f};"), spec_id="M3.28"),
+        "local f32 [M/#q, Cout * H] l1_Y{0.0f};"), spec_id="M3.28"),
 ]
 
 # ===========================================================================
