@@ -114,6 +114,7 @@ MLIR_LINALG_SPEC = {
 IREE_SPEC = {
     "M2.1": "layer_norm beta/gamma len pm1",
     "M2.3": "elemwise_add rhs trailing-extent pm1",
+    "M2.5": "authored tile_write: omitted tail tile (partial) / overlapping tile (duplicate)",
     "M2.6": "seq/hid extents transposed (matmul lhs, transpose, concat, conv2d)",
     "M2.7": "input rank dropped (matmul lhs, transpose, reduce_mean, softmax)",
     "M2.8": "norm gamma broadcast extent set to 1",
@@ -121,6 +122,7 @@ IREE_SPEC = {
     "M2.10": "square input transposed (transpose, batch_norm, concat, matmul rhs)",
     "M2.13": "shape-equal / layout-unequal view (transpose, batch_norm, concat, matmul lhs)",
     "M2.14": "matmul rhs contraction dim K pm1",
+    "M2.15": "authored pad_shift: pad_low<->pad_high swapped, total length preserved",
     "M2.16": "size-1 rank insert, ElementCount preserved (matmul lhs, transpose, reduce_mean, softmax)",
     "M2.17": "dynamic split on a non-divisible extent (silent drop; unchecked)",
     "M2.19": "norm dynamic (symbolic) beta/gamma extent pm1",

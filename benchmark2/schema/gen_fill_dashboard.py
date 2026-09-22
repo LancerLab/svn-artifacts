@@ -303,54 +303,52 @@ def main(argv):
     if not sat:
         out.append("None.")
     else:
-        out.append(f"{len(sat)} families. Each needs a **new kernel surface**, "
-                   "not another operator: the literal anchor its specs rewrite "
-                   "does not occur on enough base kernels for "
-                   "`kernel_component x realisation_component` to be reachable.")
+        out.append(f"{len(sat)} families. Each is at a **published ceiling** "
+                   "(`have >= ceiling`), so no operator lifts it. For `choreo` "
+                   "the ceiling is its candidate table -- only a new kernel "
+                   "surface moves it. For other lanes it is a lane-owned "
+                   "expressibility declaration (`schema/lane-ceilings.json`), "
+                   "and the `blocker` names the missing surface. Either way the "
+                   "fix is a new instrument, not another operator. The `kind` "
+                   "column names *why* the capped slots are not writable: `u` "
+                   "= unexpressible (no legal program states the defect), `a` "
+                   "= avoided (the lane's model repairs or refuses it), or "
+                   "`unchecked` = a legal program exists that the lane accepts "
+                   "silently -- a **created** mutant, not a `u`.")
         out.append("")
-        out.append("| lane | class | family | have | ceiling | planned | short | blocker |")
-        out.append("|---|---|---|---|---|---|---|---|")
+        out.append("| lane | class | family | kind | have | ceiling | planned | short | blocker |")
+        out.append("|---|---|---|---|---|---|---|---|---|")
+        KIND_ABBR = {"unexpressible": "u", "avoided": "a", "unchecked": "unchecked"}
         for r in sat:
             pl = plan[(r["lane"], r["family"])]
+            kind = (r.get("ceiling_kind") or "").strip() or "--"
+            kind = KIND_ABBR.get(kind, kind)
             out.append(f"| `{r['lane']}` | {r['class']} | `{r['family']}` | "
-                       f"{r['have']} | {r['ceiling']} | {pl} | "
+                       f"`{kind}` | {r['have']} | {r['ceiling']} | {pl} | "
                        f"{pl - num(r, 'have')} | {r['blocker']} |")
     out.append("")
 
     # ------------------------------------------------- no family axis lanes
     out.append("## 5. Lanes whose instances cannot be attributed")
     out.append("")
-    out.append("A lane lands here for one of two reasons. `triton` emits "
-               "records with a `class` but no `spec_id`, so its instances can "
-               "be counted per class and never per family. `iree` gitignores "
-               "its raw results, so a fresh clone has no instance list at all. "
-               "In both cases `implemented` above is not a measurement -- it is "
-               "0 because nothing could be attributed -- and the instances that "
-               "do exist are named here so the shortfall is not overstated.")
+    out.append("A lane lands here when its records carry a `class` but no "
+               "`spec_id`, so its instances can be counted per class and never "
+               "per family, or when it gitignores its raw results so a fresh "
+               "clone has no instance list at all. In both cases `implemented` "
+               "above is not a measurement -- it is 0 because nothing could be "
+               "attributed -- and the instances that do exist are named here so "
+               "the shortfall is not overstated.")
     out.append("")
     out.append("| lane | why | planned | implemented | discarded instances | "
                "the fix |")
     out.append("|---|---|---|---|---|---|")
-    why = {
-        "triton": "its raw rows carry `class` and `mutant_id` "
-                  "(`layer_norm-f1`) but no `spec_id`. Its own "
-                  "`mutants/README.md` already documents what each local "
-                  "family is -- `M1 family 1 dropped boundary mask`, "
-                  "`M3 family 1 tl.dot contraction dim not divisible by the "
-                  "atom` -- so the mapping to taxonomy specs is knowable. It "
-                  "has not been written down, which is not the same as being "
-                  "unknowable.",
-    }
-    fix = {
-        "triton": "map its local family integers onto taxonomy spec_ids in "
-                  "`triton/mutants/README.md`'s terms, emit `spec_id` per row, "
-                  "then re-derive. Note its surface is 6 M1 and 2 M3 local "
-                  "families against the taxonomy's 8 and 8: emitting `spec_id` "
-                  "attributes what exists, it does not reach 168.",
-    }
+    why = {}
+    fix = {}
+    unattributed_lanes = []
     for lane in LANES:
         if resolves[lane]:
             continue
+        unattributed_lanes.append(lane)
         if no_data[lane]:
             out.append(
                 f"| `{lane}` | its raw results file is absent from this "
@@ -380,13 +378,20 @@ def main(argv):
                    f"**{sum(num(r, 'have') for r in rs)}** | **{disc}** | "
                    f"{fix.get(lane, '')} |")
     out.append("")
-    out.append("`implemented 0` in these rows is not a dead lane. For `triton` "
-               "the discarded column counts instances that ran and were "
-               "recorded without a `spec_id`; for `iree` there is no instance "
-               "list in this checkout. Fix the instrument first -- but do not "
-               "read the result as a smaller job. Once attributed, whatever "
-               "families the surface actually covers will show up as short, and "
-               "the rest as genuinely unwritten.")
+    if not unattributed_lanes:
+        out.append("No lane's instances are unattributable in this checkout: "
+                   "every lane that runs a class in scope resolves its rows to "
+                   "a family, so section 3's short columns are real operator "
+                   "work and not an instrument artifact.")
+    else:
+        names_s = ", ".join(f"`{l}`" for l in unattributed_lanes)
+        out.append(f"`implemented 0` in these rows is not a dead lane. The "
+                   f"lane(s) {names_s} do not resolve instances to a family "
+                   f"(no `spec_id`, or no instance list in this checkout). Fix "
+                   f"the instrument first -- but do not read the result as a "
+                   f"smaller job. Once attributed, whatever families the surface "
+                   f"actually covers will show up as short, and the rest as "
+                   f"genuinely unwritten.")
     out.append("")
 
     dst.write_text("\n".join(out) + "\n")

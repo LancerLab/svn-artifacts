@@ -1,0 +1,33 @@
+{
+  "mutant_id": "iree-tile_write-1-duplicate",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "tile_write",
+  "kernel": "1_tile",
+  "settings_hash": "",
+  "kernel_hash": "a7f92e201f39",
+  "spec_id": "M2.5",
+  "family": "M2-f",
+  "mutation": {
+    "kind": "authored",
+    "operand_index": 0,
+    "dim_index": 0,
+    "params": [
+      "duplicate"
+    ],
+    "reference_dims": [
+      [
+        2,
+        4
+      ]
+    ],
+    "mutant_dims": [
+      [
+        3,
+        4
+      ]
+    ]
+  },
+  "outcome": "never",
+  "manifest": "corrupts"
+}

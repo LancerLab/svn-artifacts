@@ -47,16 +47,31 @@ unchanged and edits only what the caller passes to the compiled module:
   divisibility. A caller extent that is not a multiple is accepted (rc=0) and
   the tail elements are silently dropped -> **never/corrupts**.
 
+## Families M2-f (`M2.5`) and M2-g (`M2.15`) -- authored mutation-only kernels
+
+These two specs are defects in *which elements are written* while every declared
+extent stays individually legal: M2.5 omits (partial) or duplicates (overlapping)
+a tile, M2.15 moves padding between the two sides of a mirrored pad while
+preserving the total length. No settings kernel encodes a coverage or
+padding-placement contract, so a new mutation-only kernel is authored for each,
+whose coverage / placement is carried by a dynamic control operand. The compiled
+kernel is unchanged; only the caller's control extent moves. Authored under
+`kernels/tile_write/` and `kernels/pad_shift/`, materialised by `lane.py m2`:
+
+| family | spec | kernels | edit | outcome |
+| --- | --- | --- | --- | --- |
+| M2-f | M2.5 | `tile_write/{1..4}_tile` | control extent `n` covers the output; mutant `n-1` omits the tail tile, `n+1` wraps an overlapping tile onto row 0 | **never/corrupts** |
+| M2-g | M2.15 | `pad_shift/{1..4}_pad` | `pad_low`/`pad_high` both `P`; mutant `(P+1, P-1)` or `(P-1, P+1)` shifts one row across the core, total preserved | **never/corrupts** |
+
+4 kernels x 2 realisations = 8 each. Both keep the operand rank and static
+output shape, so IREE accepts the call and returns a wrong result (numeric oracle
+over raw-binary `@file.bin` inputs). The generic "small" feed is a valid
+reference for both (`tile_write` wraps by modulo; `pad_shift`'s output rows are
+`2*SMALL + C`), so compute-sanitizer stays silent -- these are shape-contract
+defects, not memory faults.
+
 ## Not expressible at the entry surface
 
-- **M2-f (M2.5) partial / duplicate write.** The write coverage is a property
-  of the kernel body (e.g. `concat/11` writes its two inputs with explicit
-  `tensor.insert_slice` extents that cover the whole output). No caller operand
-  encodes tile coverage, so an omitted/overlapping tile cannot be re-expressed
-  as an entry contract.
-- **M2-g (M2.15) pad_low <-> pad_high swapped.** Padding is a compile-time
-  literal in the kernel body (`conv2d/2`: `tensor.pad low[0,0,1,1] high[0,0,1,1]`).
-  No caller operand encodes pad placement.
 - **M2.18 reshape on a non-contiguous span.** Blocked by the suite: choreo
   records `realized: false`, `registry_status: pending`, `prohibition: absent`
   -- the base cases have no strided view for this defect.

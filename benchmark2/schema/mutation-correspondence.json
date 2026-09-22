@@ -18,21 +18,21 @@
     "n_specs": 77,
     "choreo_realized": 55,
     "choreo_unrealized": 22,
-    "recorded_by_a_sota_lane": 24,
-    "recorded_over_choreo": 0.4364,
-    "recorded_over_all_specs": 0.3117,
+    "recorded_by_a_sota_lane": 25,
+    "recorded_over_choreo": 0.4545,
+    "recorded_over_all_specs": 0.3247,
     "achievable_by_a_sota_lane": 63,
     "achievable_over_all_specs": 0.8182,
     "achievable_among_choreo_realized": 55,
     "achievable_over_choreo": 1.0,
-    "choreo_only_and_achievable": 31,
-    "choreo_only_and_recorded": 24,
+    "choreo_only_and_achievable": 30,
+    "choreo_only_and_recorded": 25,
     "constitutional_n_a_anywhere": 47,
     "lane_recorded_counts": {
       "triton": 8,
       "mlir-low": 6,
       "mlir-linalg": 6,
-      "iree": 13
+      "iree": 15
     },
     "lane_achievable_counts": {
       "triton": 44,
@@ -44,7 +44,7 @@
       "triton": 0.1818,
       "mlir-linalg": 0.1765,
       "mlir-low": 0.375,
-      "iree": 0.3824
+      "iree": 0.4412
     },
     "union_metric_caveat": "`achievable_by_a_sota_lane` is the union over lanes and reaches 100% because each obligation class is declared expressible by at least one lane.  It answers 'could ANY lane express this?' and must not be quoted as a per-lane rate.  Quote `lane_recorded_over_achievable` instead.",
     "n_duplicate_findings": 30,
@@ -71,7 +71,7 @@
       "M3.6",
       "M4.1"
     ],
-    "n_under_powered_cells": 5,
+    "n_under_powered_cells": 4,
     "n_absent_cells": 12,
     "suite_surface_gaps": [
       "M1.15",
@@ -129,10 +129,10 @@
     {
       "lane": "triton",
       "class": "M1",
-      "n_mutants": 27,
+      "n_mutants": 67,
       "power_floor": 35,
-      "status": "under-powered",
-      "annotation": "27 < 35: a rate must not be reported from this cell"
+      "status": "ok",
+      "annotation": "meets the power floor"
     },
     {
       "lane": "triton",
@@ -145,10 +145,10 @@
     {
       "lane": "triton",
       "class": "M3",
-      "n_mutants": 2,
+      "n_mutants": 3,
       "power_floor": 35,
       "status": "under-powered",
-      "annotation": "2 < 35: a rate must not be reported from this cell"
+      "annotation": "3 < 35: a rate must not be reported from this cell"
     },
     {
       "lane": "triton",
@@ -169,7 +169,7 @@
     {
       "lane": "mlir-linalg",
       "class": "M2",
-      "n_mutants": 43,
+      "n_mutants": 45,
       "power_floor": 35,
       "status": "ok",
       "annotation": "meets the power floor"
@@ -233,7 +233,7 @@
     {
       "lane": "iree",
       "class": "M2",
-      "n_mutants": 48,
+      "n_mutants": 64,
       "power_floor": 35,
       "status": "ok",
       "annotation": "meets the power floor"
@@ -942,24 +942,24 @@
     },
     "mlir-linalg": {
       "elem": {
-        "yes": 10,
+        "yes": 11,
         "partial": 0,
         "no": 0
       },
       "shape": {
-        "yes": 7,
+        "yes": 8,
         "partial": 0,
         "no": 3
       },
       "loop": {
         "yes": 0,
         "partial": 0,
-        "no": 10
+        "no": 11
       },
       "hw": {
         "yes": 0,
         "partial": 0,
-        "no": 10
+        "no": 11
       }
     },
     "mlir-low": {
@@ -2082,10 +2082,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "iree/mutants/M2/* (authored tile_write: omitted tail tile (partial) / overlapping tile (duplicate))"
         }
       }
     },
@@ -2543,10 +2541,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "iree": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "iree/mutants/M2/* (authored pad_shift: pad_low<->pad_high swapped, total length preserved)"
         }
       }
     },

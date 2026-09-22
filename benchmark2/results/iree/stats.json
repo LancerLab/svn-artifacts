@@ -2,10 +2,10 @@
   "toolchain": "iree",
   "S1_detection": {
     "M2": {
-      "n_injected": 48,
+      "n_injected": 64,
       "n_compile": 0,
       "n_runtime": 24,
-      "n_never": 24,
+      "n_never": 40,
       "n_na": 0
     },
     "M1": {
@@ -94,7 +94,7 @@
   "S12_sanitizer_supplement": {
     "M2": {
       "flagged_and_exercised": 0,
-      "total": 48,
+      "total": 64,
       "flagged": 0
     }
   },

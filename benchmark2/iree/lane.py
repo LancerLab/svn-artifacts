@@ -928,6 +928,219 @@ M2_H_BATTERY = [
 ]
 
 
+# M2-f = M2.5 (partial / duplicate tile write) and M2-g = M2.15 (pad_low <->
+# pad_high swapped, total length preserved). Both are "which elements got
+# written" defects that leave every declared extent individually legal, so they
+# cannot be composed from the settings suite: no `.co` base case exposes a
+# coverage or padding-placement contract to edit. They are AUTHORED HERE as
+# mutation-only kernels whose coverage / placement is carried by a dynamic
+# control operand -- the same entry surface a settings kernel would expose, but
+# with the *relation* between extents (not one extent's value) as the contract.
+# The reference passes the covering / symmetric extent, the mutant a
+# non-covering / shifted one, and the one compiled kernel accepts both, so the
+# defect is a same-shape silent divergence. 4 kernels x 2 realisations = the
+# 8-mutant family budget (mutation-specs-v2 M2.5/M2.15).
+#
+# They carry no `settings/<cat>.md` row and are deliberately NOT wired into the
+# settings-driven `cmd_e2` gate: the generic small-feed sizing has no notion of
+# the relation between extents. Their gate is `_m2_only_measure` below, which
+# runs the reference at valid extents and requires the mutant to be a same-shape
+# silent divergence. `_ps_mlir`'s output rows are `2*SMALL + C` so the generic
+# small feed (`?` -> SMALL) is itself a valid reference and S12 never reads out
+# of bounds.
+M2_ONLY_TW = [
+    # stem, tile_cols (TC), output rows (NR == number of covering tiles). The
+    # leading integer keeps `_m2_emit`'s mutant ids unique within the category
+    # (it derives them from `stem.split("_")[0]`, as for the settings batteries).
+    ("1_tile", 4, 2),
+    ("2_tile", 2, 2),
+    ("3_tile", 8, 4),
+    ("4_tile", 1, 4),
+]
+M2_ONLY_PS = [
+    # stem, width (W), core rows (C), pad rows per side (P); output rows =
+    # 2*SMALL + C (see the comment above).
+    ("1_pad", 4, 4, 2),
+    ("2_pad", 2, 2, 2),
+    ("3_pad", 8, 5, 2),
+    ("4_pad", 1, 8, 2),
+]
+
+
+def _tw_mlir(TC: int, NR: int) -> str:
+    t = f"tensor<?x{TC}xf32>"
+    o = f"tensor<{NR}x{TC}xf32>"
+    return (
+        "module {\n"
+        f"  func.func @f_tw(%tiles: {t}) -> {o} {{\n"
+        "    %c0 = arith.constant 0 : index\n"
+        "    %c1 = arith.constant 1 : index\n"
+        f"    %cNR = arith.constant {NR} : index\n"
+        "    %c0f = arith.constant 0.0 : f32\n"
+        f"    %nt = tensor.dim %tiles, %c0 : {t}\n"
+        f"    %init = tensor.empty() : {o}\n"
+        f"    %z = linalg.fill ins(%c0f : f32) outs(%init : {o}) -> {o}\n"
+        f"    %out = scf.for %j = %c0 to %nt step %c1 iter_args(%acc = %z) -> ({o}) {{\n"
+        f"      %tile = tensor.extract_slice %tiles[%j, 0][1, {TC}][1, 1] : {t} to tensor<1x{TC}xf32>\n"
+        "      %rowm = arith.remui %j, %cNR : index\n"
+        f"      %acc2 = tensor.insert_slice %tile into %acc[%rowm, 0][1, {TC}][1, 1] : tensor<1x{TC}xf32> into {o}\n"
+        f"      scf.yield %acc2 : {o}\n"
+        "    }\n"
+        f"    return %out : {o}\n"
+        "  }\n"
+        "}\n"
+    )
+
+
+def _ps_mlir(W: int, C: int, TOT: int) -> str:
+    p = f"tensor<?x{W}xf32>"
+    c = f"tensor<{C}x{W}xf32>"
+    o = f"tensor<{TOT}x{W}xf32>"
+    return (
+        "module {\n"
+        f"  func.func @f_ps(%plo: {p}, %phi: {p}, %core: {c}) -> {o} {{\n"
+        "    %c0 = arith.constant 0 : index\n"
+        f"    %cC = arith.constant {C} : index\n"
+        "    %c0f = arith.constant 0.0 : f32\n"
+        f"    %low = tensor.dim %plo, %c0 : {p}\n"
+        f"    %high = tensor.dim %phi, %c0 : {p}\n"
+        f"    %init = tensor.empty() : {o}\n"
+        f"    %z = linalg.fill ins(%c0f : f32) outs(%init : {o}) -> {o}\n"
+        f"    %i1 = tensor.insert_slice %plo into %z[0, 0][%low, {W}][1, 1] : {p} into {o}\n"
+        "    %coff = arith.addi %c0, %low : index\n"
+        f"    %i2 = tensor.insert_slice %core into %i1[%coff, 0][{C}, {W}][1, 1] : {c} into {o}\n"
+        "    %hoff = arith.addi %coff, %cC : index\n"
+        f"    %i3 = tensor.insert_slice %phi into %i2[%hoff, 0][%high, {W}][1, 1] : {p} into {o}\n"
+        f"    return %i3 : {o}\n"
+        "  }\n"
+        "}\n"
+    )
+
+
+def _write_m2_only_kernels():
+    """Materialise the authored mutation-only kernels under `kernels/`."""
+    wrote = 0
+    for stem, TC, NR in M2_ONLY_TW:
+        p = KERNELS / "tile_write" / f"{stem}.mlir"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        if not p.exists() or p.read_text() != _tw_mlir(TC, NR):
+            p.write_text(_tw_mlir(TC, NR))
+            wrote += 1
+    for stem, W, C, _P in M2_ONLY_PS:
+        p = KERNELS / "pad_shift" / f"{stem}.mlir"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        if not p.exists() or p.read_text() != _ps_mlir(W, C, 2 * SMALL + C):
+            p.write_text(_ps_mlir(W, C, 2 * SMALL + C))
+            wrote += 1
+    if wrote:
+        log(f"m2-only: materialised {wrote} authored kernel(s)")
+
+
+def _salted_bin(dims: list, dtype: str, salt: int) -> str:
+    """Distinct integer raw fill, offset per operand so the reference and mutant
+    regions (and pad vs core) cannot coincide by construction."""
+    import array
+    n = 1
+    for d in dims:
+        n *= d
+    vals = array.array("f", [float(((i + 37 * salt) % 9) + 1) for i in range(n)])
+    h = hashlib.md5((str(dims) + str(salt)).encode()).hexdigest()[:12]
+    p = RAW / "_m2only" / f"{h}.bin"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    if not p.exists():
+        with p.open("wb") as f:
+            f.write(vals.tobytes())
+    return f"{'x'.join(str(d) for d in dims)}x{dtype}=@{p}"
+
+
+def _m2_only_measure(cat: str, stem: str, ref_dims: list, mut_dims: list) -> dict | None:
+    """Measure an authored kernel: valid reference extents vs mutant extents.
+
+    Both runs use the same compiled artifact; the mutant is a silent corruptor
+    iff it returns rc=0 with the same output shape but different values."""
+    mlir = KERNELS / cat / f"{stem}.mlir"
+    parsed = parse_func(mlir)
+    if parsed is None:
+        return None
+    fname, args, _ret = parsed
+    if len(args) != len(ref_dims):
+        return None
+    vmfb = RAW / cat / f"{stem}.small.vmfb"
+    if not vmfb.exists():
+        (RAW / cat).mkdir(parents=True, exist_ok=True)
+        if compile_kernel(mlir, vmfb, RAW / cat / f"{stem}.small.compile.log") != "ok":
+            return {"compile": "fail"}
+    extra = ["--output_max_element_count=100000"]
+
+    def run(dims_list):
+        specs = [_salted_bin(dims_list[i], args[i][2], i + 1)
+                 for i in range(len(args))]
+        return _run_out(vmfb, fname, specs, extra=extra)
+
+    rrc, rlog, rshape = run(ref_dims)
+    if rrc != 0:
+        return None
+    mrc, mlog, mshape = run(mut_dims)
+    ref_rec = [list(x) for x in ref_dims]
+    mut_rec = [list(x) for x in mut_dims]
+    if mrc != 0:
+        return {"compile": "ok", "outcome": "runtime", "manifest": "corrupts",
+                "reference_dims": ref_rec, "mutant_dims": mut_rec}
+    ro = _parse_result(rlog)
+    mo = _parse_result(mlog)
+    if mshape != rshape or ro is None or mo is None:
+        manifest = "corrupts"
+    elif len(ro) != len(mo) or any(abs(a - b) > 1e-3 for a, b in zip(ro, mo)):
+        manifest = "corrupts"
+    else:
+        manifest = "noop"
+    return {"compile": "ok",
+            "outcome": "never" if manifest == "corrupts" else "noop",
+            "manifest": manifest,
+            "reference_dims": ref_rec, "mutant_dims": mut_rec}
+
+
+def _cmd_m2_only(recs, meta_by, MUT):
+    """Materialise M2-f (M2.5) and M2-g (M2.15) from the authored kernels."""
+    _write_m2_only_kernels()
+    # These kernels have no manifest row, so fingerprint them here (same
+    # sha1[:12] as gen_kernels.py) and hand the hash to `_m2_emit`.
+    for cat, specs in (("tile_write", M2_ONLY_TW), ("pad_shift", M2_ONLY_PS)):
+        for row in specs:
+            p = KERNELS / cat / f"{row[0]}.mlir"
+            meta_by[(cat, row[0])] = {
+                "kernel_hash": hashlib.sha1(p.read_text().encode()).hexdigest()[:12],
+                "settings_hash": ""}
+    cases = []
+    for stem, TC, NR in M2_ONLY_TW:
+        ref = [[NR, TC]]
+        cases.append((stem, "M2-f", "M2.5", "partial", ref, [[NR - 1, TC]], 0))
+        cases.append((stem, "M2-f", "M2.5", "duplicate", ref, [[NR + 1, TC]], 0))
+    for stem, W, C, P in M2_ONLY_PS:
+        ref = [[P, W], [P, W], [C, W]]
+        cases.append((stem, "M2-g", "M2.15", "shift-low", ref,
+                      [[P + 1, W], [P - 1, W], [C, W]], 0))
+        cases.append((stem, "M2-g", "M2.15", "shift-high", ref,
+                      [[P - 1, W], [P + 1, W], [C, W]], 1))
+    for stem, family, sid, tag, ref, mut, aidx in cases:
+        cat = "tile_write" if family == "M2-f" else "pad_shift"
+        r = _m2_only_measure(cat, stem, ref, mut)
+        if r is None:
+            log(f"m2-only: SKIP {cat}/{stem} {tag}: reference did not run")
+            continue
+        if r.get("compile") != "ok":
+            log(f"m2-only: SKIP {cat}/{stem} {tag}: compile fail")
+            continue
+        if r.get("outcome") == "noop":
+            log(f"m2-only: DROP {cat}/{stem} {tag}: noop (inert, not a test)")
+            continue
+        _m2_emit(recs, meta_by, MUT, family, sid, cat, stem, tag, {
+            "kind": "authored", "operand_index": aidx, "dim_index": 0,
+            "params": [tag], "reference_dims": r["reference_dims"],
+            "mutant_dims": r["mutant_dims"],
+        }, r)
+
+
 def _m2_emit(recs, meta_by, MUT, family, sid, cat, stem, tag, mutation, r):
     fam_of = m2_family(sid) or family
     num = stem.split("_")[0]
@@ -959,11 +1172,14 @@ def _m2_emit(recs, meta_by, MUT, family, sid, cat, stem, tag, mutation, r):
 
 
 def cmd_m2():
-    """M2-b..M2-e and M2-h (M2.17) entry-contract batteries.
+    """M2 entry-contract batteries.
 
-    Materialises `mutants/M2/<category>/<id>.json` and `raw/m2_families.jsonl`.
-    `cmd_attribution` folds these into `raw/mutants.jsonl` (the committed
-    attribution extract) along with the M2-a definitions.
+    Settings-derived: M2-a..M2-e and M2-h (M2.17). Authored: M2-f (M2.5) and
+    M2-g (M2.15), whose coverage/placement contracts have no settings base case
+    (`_cmd_m2_only`). Materialises `mutants/M2/<category>/<id>.json` and
+    `raw/m2_families.jsonl`; `cmd_attribution` folds these into
+    `raw/mutants.jsonl` (the committed attribution extract) along with the M2-a
+    definitions.
     """
     MUT = LANE / "mutants"
     meta_by = {}
@@ -1008,6 +1224,7 @@ def cmd_m2():
             "reference_dims": r["reference_dims"],
             "mutant_dims": r["mutant_dims"],
         }, r)
+    _cmd_m2_only(recs, meta_by, MUT)
     RAW.mkdir(parents=True, exist_ok=True)
     with (RAW / "m2_families.jsonl").open("w") as f:
         for r in recs:

@@ -1,0 +1,33 @@
+{
+  "mutant_id": "iree-tile_write-4-partial",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "tile_write",
+  "kernel": "4_tile",
+  "settings_hash": "",
+  "kernel_hash": "6a37c2bf1c12",
+  "spec_id": "M2.5",
+  "family": "M2-f",
+  "mutation": {
+    "kind": "authored",
+    "operand_index": 0,
+    "dim_index": 0,
+    "params": [
+      "partial"
+    ],
+    "reference_dims": [
+      [
+        4,
+        1
+      ]
+    ],
+    "mutant_dims": [
+      [
+        3,
+        1
+      ]
+    ]
+  },
+  "outcome": "never",
+  "manifest": "corrupts"
+}

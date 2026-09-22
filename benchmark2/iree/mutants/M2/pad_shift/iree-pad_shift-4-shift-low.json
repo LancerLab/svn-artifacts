@@ -1,0 +1,49 @@
+{
+  "mutant_id": "iree-pad_shift-4-shift-low",
+  "class": "M2",
+  "paper_category": "dim-mismatch",
+  "category": "pad_shift",
+  "kernel": "4_pad",
+  "settings_hash": "",
+  "kernel_hash": "75428a760cc3",
+  "spec_id": "M2.15",
+  "family": "M2-g",
+  "mutation": {
+    "kind": "authored",
+    "operand_index": 0,
+    "dim_index": 0,
+    "params": [
+      "shift-low"
+    ],
+    "reference_dims": [
+      [
+        2,
+        1
+      ],
+      [
+        2,
+        1
+      ],
+      [
+        8,
+        1
+      ]
+    ],
+    "mutant_dims": [
+      [
+        3,
+        1
+      ],
+      [
+        1,
+        1
+      ],
+      [
+        8,
+        1
+      ]
+    ]
+  },
+  "outcome": "never",
+  "manifest": "corrupts"
+}
