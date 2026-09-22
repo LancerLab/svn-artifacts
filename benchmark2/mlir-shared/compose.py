@@ -212,12 +212,16 @@ class Mutation:
 
 
 # M2 -- shape-compatibility (mlir-linalg's only assigned class).
-# Specs are from mutation-specs.md §2, which numbers M2 as FIVE specs. Spec 5
-# names two distinct defects ("partial write (omitted tail tile) / duplicate write
-# (overlapping tile)"), so it is expanded into two variants: two records, but ONE
-# injected spec for the purposes of N = 40 (§0). Both variants are real defects --
-# each lands in the `never`/`corrupts` row, the silent-bug residue -- so neither is
-# dropped; they are two measurements of one injection.
+# The v1 register (mutation-specs.md §2) numbers M2 as FIVE specs (M2.1-M2.5);
+# the v2.1 register (mutation-specs-v2.md §2 / method-taxonomy.json) numbers it
+# as twenty-one. M2.6/M2.9 are appended under their v2.1 numbers, so the
+# dashboard's `spec_id -> family` mapping attributes them to family M2-b
+# ("extent order"). Spec 5 names two distinct defects ("partial write (omitted
+# tail tile) / duplicate write (overlapping tile)"), so it is expanded into two
+# variants: two records, but ONE injected spec for the purposes of N = 40 (§0).
+# Both variants are real defects -- each lands in the `never`/`corrupts` row, the
+# silent-bug residue -- so neither is dropped; they are two measurements of one
+# injection.
 M2_SPECS: list[Mutation] = [
     Mutation("M2", 1, "secondary-operand-wrong-extent", "dim-mismatch",
              detail="secondary operand (rhs / b / scale) has the wrong leading extent"),
@@ -232,11 +236,24 @@ M2_SPECS: list[Mutation] = [
              detail="omitted tail tile: only a prefix of the output is written"),
     Mutation("M2", 5, "duplicate-write", "wrong-shape", variant="duplicate",
              detail="overlapping tile written twice at a shifted offset"),
+    # v2.1 register, family M2-b "extent order" (method-taxonomy.json). The v1
+    # §2 register below numbered only five specs; these carry the v2.1 numbers
+    # so the worklist/dashboard family attribution (spec_id -> family) resolves.
+    Mutation("M2", 6, "extent-order-transposed", "wrong-shape",
+             target="primary",
+             detail="two extents transposed: right multiset, wrong permutation"),
+    Mutation("M2", 9, "batch-group-swapped", "wrong-shape",
+             target="b",
+             detail="batch/group dimension swapped"),
 ]
 
-# The five numbered M2 specs, in order, with variants collapsed. This is the list
-# to iterate when counting injections (N); iterate M2_SPECS when emitting records.
-M2_SPEC_IDS: list[str] = ["M2.1", "M2.2", "M2.3", "M2.4", "M2.5"]
+# The numbered M2 specs, in order, with variants collapsed. This is the list to
+# iterate when counting injections (N); iterate M2_SPECS when emitting records.
+# M2.6/M2.9 are the v2.1 additions for family M2-b; the numbering is NOT
+# contiguous here because it tracks the v2.1 register, not a lane-local count.
+M2_SPEC_IDS: list[str] = [
+    "M2.1", "M2.2", "M2.3", "M2.4", "M2.5", "M2.6", "M2.9",
+]
 
 # mutation-specs.md §5 splits M2 coverage into a level-1 minimal set and level-2
 # additions. The split is carried into each mutant record's `level` field, whose

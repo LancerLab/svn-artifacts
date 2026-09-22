@@ -70,6 +70,24 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
             d[axis] = d[axis] + by
             dims[op] = tuple(d)
 
+    def swap(op: str, i: int, j: int) -> None:
+        """Exchange `op`'s extents at axes `i` and `j`.
+
+        A permutation, unlike `bump`, moves a declared extent rather than
+        changing it, so it must carry the *concrete* value across when one of
+        the two axes is dynamic. The declared `?` travels with its axis; the
+        binding under `dyn` follows the concrete value to its new axis.
+        """
+        d = list(dims[op])
+        ci = d[i] if d[i] is not None else dyn.get(f"{op}.{i}")
+        cj = d[j] if d[j] is not None else dyn.get(f"{op}.{j}")
+        d[i], d[j] = d[j], d[i]
+        dims[op] = tuple(d)
+        if d[i] is None and cj is not None:
+            dyn[f"{op}.{i}"] = cj
+        if d[j] is None and ci is not None:
+            dyn[f"{op}.{j}"] = ci
+
     if mut.klass == "M2":
         if mut.spec == 1:
             # "caller passes scale (or a secondary operand) of the wrong leading
@@ -138,6 +156,34 @@ def apply(case: C.Case, mut: C.Mutation) -> tuple[C.Case, Structural | None]:
                 structural = Structural(
                     kind="partial-write", axis=axis, tile=extent - 1
                 )
+
+        elif mut.spec == 6:
+            # "two extents transposed" (v2.1 family M2-b): a permutation of one
+            # operand's extents. The pair is per category so it neither collides
+            # with M2.9's leading pair on `concat` nor repeats an axis M2.1-M2.4
+            # already perturbs.
+            op, pair = {
+                "matmul": ("lhs", (0, 1)),
+                "concat": ("b", (1, 2)),
+                "layer_normalization": ("lhs", (0, 2)),
+                "elemwise_add": ("lhs", (0, 2)),
+                "softmax": ("inp", (0, 1)),
+            }.get(cat, (None, None))
+            if op is None:
+                raise NotApplicable(f"M2.6: {cat!r} is not an M2 category")
+            swap(op, *pair)
+
+        elif mut.spec == 9:
+            # "batch/group dimension swapped" (v2.1 family M2-b): the leading
+            # pair. A rank-2 operand has only one pair, so a batch/group swap
+            # there is indistinguishable from M2.6 and would duplicate it; only
+            # `concat`'s 4D `b` carries a batch/group axis distinct from the
+            # concatenation axis, so the other categories are honestly n/a.
+            if cat != "concat":
+                raise NotApplicable(
+                    f"M2.9: {cat!r} has no batch/group axis distinct from M2.6"
+                )
+            swap("b", 0, 1)
 
         else:
             raise KeyError(f"unknown M2 spec {mut.spec}")

@@ -1,10 +1,10 @@
 {
   "class": "M2",
-  "n_records": 120,
-  "n_injected": 50,
-  "expected_injected": 50,
+  "n_records": 160,
+  "n_injected": 70,
+  "expected_injected": 70,
   "n_target_per_class": 40,
-  "delta_vs_target": 10,
+  "delta_vs_target": 30,
   "categories": [
     "layer_normalization",
     "matmul",
@@ -17,13 +17,13 @@
   "n_repeat": 1,
   "by_rtv": {
     "off": {
-      "compile": 34,
-      "n/a": 6,
+      "compile": 46,
+      "n/a": 14,
       "never": 10
     },
     "on": {
-      "compile": 34,
-      "n/a": 6,
+      "compile": 46,
+      "n/a": 14,
       "never": 10
     }
   },
