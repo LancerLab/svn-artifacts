@@ -1,0 +1,1169 @@
+{
+ "toolchain": "mlir-linalg",
+ "spec_version": "v2.1",
+ "lane": "mlir-linalg",
+ "n_per_family": 8,
+ "n_realisations": 2,
+ "n_kernels": 4,
+ "n_cells": 1,
+ "target_instances": 64,
+ "level2": true,
+ "accounting": {
+  "candidates": 149,
+  "selected": 64,
+  "attribution": 0,
+  "dropped": 85,
+  "na": 0,
+  "skipped": 0,
+  "emitted": 64
+ },
+ "family_depth": {
+  "M2-a": 8,
+  "M2-b": 8,
+  "M2-c": 8,
+  "M2-d": 8,
+  "M2-e": 8,
+  "M2-f": 8,
+  "M2-g": 8,
+  "M2-h": 8
+ },
+ "family_short": {},
+ "unrealised_specs": {
+  "M2": []
+ },
+ "registry": {},
+ "dropped": [
+  {
+   "mutant_id": "mlir-linalg-broadcast-dynamic-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "broadcast",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast-static-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "broadcast",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast-static-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "broadcast",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-dynamic-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "concat",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-dynamic-M2.3",
+   "spec_id": "M2.3",
+   "family": "M2-a",
+   "category": "concat",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-dynamic-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "concat",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-static-M2.1",
+   "spec_id": "M2.1",
+   "family": "M2-a",
+   "category": "concat",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-static-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "concat",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-static-M2.3",
+   "spec_id": "M2.3",
+   "family": "M2-a",
+   "category": "concat",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-static-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "concat",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-dynamic-M2.1",
+   "spec_id": "M2.1",
+   "family": "M2-a",
+   "category": "elemwise_add",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-dynamic-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "elemwise_add",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-dynamic-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "elemwise_add",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-static-M2.1",
+   "spec_id": "M2.1",
+   "family": "M2-a",
+   "category": "elemwise_add",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-static-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "elemwise_add",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-static-M2.3",
+   "spec_id": "M2.3",
+   "family": "M2-a",
+   "category": "elemwise_add",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-static-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "elemwise_add",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-dynamic-M2.1",
+   "spec_id": "M2.1",
+   "family": "M2-a",
+   "category": "layer_normalization",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-dynamic-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "layer_normalization",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-dynamic-M2.3",
+   "spec_id": "M2.3",
+   "family": "M2-a",
+   "category": "layer_normalization",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-static-M2.1",
+   "spec_id": "M2.1",
+   "family": "M2-a",
+   "category": "layer_normalization",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-static-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "layer_normalization",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-static-M2.3",
+   "spec_id": "M2.3",
+   "family": "M2-a",
+   "category": "layer_normalization",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-static-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "layer_normalization",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-matmul-dynamic-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "matmul",
+   "shape": "dynamic",
+   "reason": "category cap: M2-a/matmul already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-matmul-static-M2.1",
+   "spec_id": "M2.1",
+   "family": "M2-a",
+   "category": "matmul",
+   "shape": "static",
+   "reason": "category cap: M2-a/matmul already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-matmul-static-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "matmul",
+   "shape": "static",
+   "reason": "category cap: M2-a/matmul already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-matmul-static-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "matmul",
+   "shape": "static",
+   "reason": "category cap: M2-a/matmul already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-pad-static-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "pad",
+   "shape": "static",
+   "reason": "category cap: M2-a/pad already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-pad-static-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "pad",
+   "shape": "static",
+   "reason": "category cap: M2-a/pad already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape-dynamic-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "reshape",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape-dynamic-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "reshape",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape-static-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "reshape",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape-static-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "reshape",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-softmax-dynamic-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "softmax",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-softmax-dynamic-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "softmax",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-softmax-static-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "softmax",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-softmax-static-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "softmax",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-transpose_square-dynamic-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "transpose_square",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-transpose_square-dynamic-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "transpose_square",
+   "shape": "dynamic",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-transpose_square-static-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "transpose_square",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-transpose_square-static-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "transpose_square",
+   "shape": "static",
+   "reason": "family budget: M2-a already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-static-M2.6",
+   "spec_id": "M2.6",
+   "family": "M2-b",
+   "category": "concat",
+   "shape": "static",
+   "reason": "category cap: M2-b/concat already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-static-M2.9",
+   "spec_id": "M2.9",
+   "family": "M2-b",
+   "category": "concat",
+   "shape": "static",
+   "reason": "category cap: M2-b/concat already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-softmax-dynamic-M2.6",
+   "spec_id": "M2.6",
+   "family": "M2-b",
+   "category": "softmax",
+   "shape": "dynamic",
+   "reason": "family budget: M2-b already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-softmax-static-M2.6",
+   "spec_id": "M2.6",
+   "family": "M2-b",
+   "category": "softmax",
+   "shape": "static",
+   "reason": "family budget: M2-b already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-dynamic-M2.16",
+   "spec_id": "M2.16",
+   "family": "M2-c",
+   "category": "concat",
+   "shape": "dynamic",
+   "reason": "family budget: M2-c already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-static-M2.16",
+   "spec_id": "M2.16",
+   "family": "M2-c",
+   "category": "concat",
+   "shape": "static",
+   "reason": "family budget: M2-c already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-static-M2.7",
+   "spec_id": "M2.7",
+   "family": "M2-c",
+   "category": "concat",
+   "shape": "static",
+   "reason": "family budget: M2-c already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-dynamic-M2.7",
+   "spec_id": "M2.7",
+   "family": "M2-c",
+   "category": "elemwise_add",
+   "shape": "dynamic",
+   "reason": "family budget: M2-c already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-static-M2.16",
+   "spec_id": "M2.16",
+   "family": "M2-c",
+   "category": "elemwise_add",
+   "shape": "static",
+   "reason": "family budget: M2-c already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-static-M2.7",
+   "spec_id": "M2.7",
+   "family": "M2-c",
+   "category": "elemwise_add",
+   "shape": "static",
+   "reason": "family budget: M2-c already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-static-M2.16",
+   "spec_id": "M2.16",
+   "family": "M2-c",
+   "category": "layer_normalization",
+   "shape": "static",
+   "reason": "category cap: M2-c/layer_normalization already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-static-M2.7",
+   "spec_id": "M2.7",
+   "family": "M2-c",
+   "category": "layer_normalization",
+   "shape": "static",
+   "reason": "category cap: M2-c/layer_normalization already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-matmul-static-M2.16",
+   "spec_id": "M2.16",
+   "family": "M2-c",
+   "category": "matmul",
+   "shape": "static",
+   "reason": "category cap: M2-c/matmul already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-matmul-static-M2.7",
+   "spec_id": "M2.7",
+   "family": "M2-c",
+   "category": "matmul",
+   "shape": "static",
+   "reason": "category cap: M2-c/matmul already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-softmax-static-M2.16",
+   "spec_id": "M2.16",
+   "family": "M2-c",
+   "category": "softmax",
+   "shape": "static",
+   "reason": "category cap: M2-c/softmax already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-softmax-static-M2.7",
+   "spec_id": "M2.7",
+   "family": "M2-c",
+   "category": "softmax",
+   "shape": "static",
+   "reason": "category cap: M2-c/softmax already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast-static-M2.21",
+   "spec_id": "M2.21",
+   "family": "M2-d",
+   "category": "broadcast",
+   "shape": "static",
+   "reason": "category cap: M2-d/broadcast already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast-static-M2.8",
+   "spec_id": "M2.8",
+   "family": "M2-d",
+   "category": "broadcast",
+   "shape": "static",
+   "reason": "category cap: M2-d/broadcast already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast_r2-static-M2.21",
+   "spec_id": "M2.21",
+   "family": "M2-d",
+   "category": "broadcast_r2",
+   "shape": "static",
+   "reason": "category cap: M2-d/broadcast_r2 already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast_r2-static-M2.8",
+   "spec_id": "M2.8",
+   "family": "M2-d",
+   "category": "broadcast_r2",
+   "shape": "static",
+   "reason": "category cap: M2-d/broadcast_r2 already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast_r4-static-M2.21",
+   "spec_id": "M2.21",
+   "family": "M2-d",
+   "category": "broadcast_r4",
+   "shape": "static",
+   "reason": "category cap: M2-d/broadcast_r4 already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast_r4-static-M2.8",
+   "spec_id": "M2.8",
+   "family": "M2-d",
+   "category": "broadcast_r4",
+   "shape": "static",
+   "reason": "category cap: M2-d/broadcast_r4 already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast_r5-static-M2.21",
+   "spec_id": "M2.21",
+   "family": "M2-d",
+   "category": "broadcast_r5",
+   "shape": "static",
+   "reason": "category cap: M2-d/broadcast_r5 already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast_r5-static-M2.8",
+   "spec_id": "M2.8",
+   "family": "M2-d",
+   "category": "broadcast_r5",
+   "shape": "static",
+   "reason": "category cap: M2-d/broadcast_r5 already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-transpose_cube-dynamic-M2.13",
+   "spec_id": "M2.13",
+   "family": "M2-e",
+   "category": "transpose_cube",
+   "shape": "dynamic",
+   "reason": "family budget: M2-e already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-transpose_cube-static-M2.10",
+   "spec_id": "M2.10",
+   "family": "M2-e",
+   "category": "transpose_cube",
+   "shape": "static",
+   "reason": "family budget: M2-e already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-transpose_cube-static-M2.13",
+   "spec_id": "M2.13",
+   "family": "M2-e",
+   "category": "transpose_cube",
+   "shape": "static",
+   "reason": "family budget: M2-e already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-transpose_square-static-M2.10",
+   "spec_id": "M2.10",
+   "family": "M2-e",
+   "category": "transpose_square",
+   "shape": "static",
+   "reason": "category cap: M2-e/transpose_square already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-transpose_square-static-M2.13",
+   "spec_id": "M2.13",
+   "family": "M2-e",
+   "category": "transpose_square",
+   "shape": "static",
+   "reason": "category cap: M2-e/transpose_square already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast-static-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "broadcast",
+   "shape": "static",
+   "reason": "family budget: M2-f already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-matmul-static-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "matmul",
+   "shape": "static",
+   "reason": "family budget: M2-f already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-pad-dynamic-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "pad",
+   "shape": "dynamic",
+   "reason": "family budget: M2-f already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-pad-static-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "pad",
+   "shape": "static",
+   "reason": "family budget: M2-f already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape-dynamic-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "reshape",
+   "shape": "dynamic",
+   "reason": "family budget: M2-f already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape-static-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "reshape",
+   "shape": "static",
+   "reason": "family budget: M2-f already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-softmax-dynamic-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "softmax",
+   "shape": "dynamic",
+   "reason": "family budget: M2-f already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-softmax-static-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "softmax",
+   "shape": "static",
+   "reason": "family budget: M2-f already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-transpose_square-dynamic-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "transpose_square",
+   "shape": "dynamic",
+   "reason": "family budget: M2-f already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-transpose_square-static-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "transpose_square",
+   "shape": "static",
+   "reason": "family budget: M2-f already holds 8 instances"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape-static-M2.18",
+   "spec_id": "M2.18",
+   "family": "M2-h",
+   "category": "reshape",
+   "shape": "static",
+   "reason": "category cap: M2-h/reshape already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape_r3-static-M2.18",
+   "spec_id": "M2.18",
+   "family": "M2-h",
+   "category": "reshape_r3",
+   "shape": "static",
+   "reason": "category cap: M2-h/reshape_r3 already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape_r4-static-M2.18",
+   "spec_id": "M2.18",
+   "family": "M2-h",
+   "category": "reshape_r4",
+   "shape": "static",
+   "reason": "category cap: M2-h/reshape_r4 already holds 2 realisations"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape_r5-static-M2.18",
+   "spec_id": "M2.18",
+   "family": "M2-h",
+   "category": "reshape_r5",
+   "shape": "static",
+   "reason": "category cap: M2-h/reshape_r5 already holds 2 realisations"
+  }
+ ],
+ "na": [],
+ "attribution": [],
+ "mutants": [
+  {
+   "mutant_id": "mlir-linalg-broadcast-dynamic-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "broadcast",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-dynamic-M2.1",
+   "spec_id": "M2.1",
+   "family": "M2-a",
+   "category": "concat",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-dynamic-M2.3",
+   "spec_id": "M2.3",
+   "family": "M2-a",
+   "category": "elemwise_add",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-dynamic-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "layer_normalization",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-matmul-dynamic-M2.1",
+   "spec_id": "M2.1",
+   "family": "M2-a",
+   "category": "matmul",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-matmul-dynamic-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "matmul",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-pad-dynamic-M2.2",
+   "spec_id": "M2.2",
+   "family": "M2-a",
+   "category": "pad",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-pad-dynamic-M2.4",
+   "spec_id": "M2.4",
+   "family": "M2-a",
+   "category": "pad",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-dynamic-M2.6",
+   "spec_id": "M2.6",
+   "family": "M2-b",
+   "category": "concat",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-dynamic-M2.9",
+   "spec_id": "M2.9",
+   "family": "M2-b",
+   "category": "concat",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-dynamic-M2.6",
+   "spec_id": "M2.6",
+   "family": "M2-b",
+   "category": "elemwise_add",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-static-M2.6",
+   "spec_id": "M2.6",
+   "family": "M2-b",
+   "category": "elemwise_add",
+   "shape": "static"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-dynamic-M2.6",
+   "spec_id": "M2.6",
+   "family": "M2-b",
+   "category": "layer_normalization",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-static-M2.6",
+   "spec_id": "M2.6",
+   "family": "M2-b",
+   "category": "layer_normalization",
+   "shape": "static"
+  },
+  {
+   "mutant_id": "mlir-linalg-matmul-dynamic-M2.6",
+   "spec_id": "M2.6",
+   "family": "M2-b",
+   "category": "matmul",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-matmul-static-M2.6",
+   "spec_id": "M2.6",
+   "family": "M2-b",
+   "category": "matmul",
+   "shape": "static"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-dynamic-M2.7",
+   "spec_id": "M2.7",
+   "family": "M2-c",
+   "category": "concat",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-dynamic-M2.16",
+   "spec_id": "M2.16",
+   "family": "M2-c",
+   "category": "elemwise_add",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-dynamic-M2.16",
+   "spec_id": "M2.16",
+   "family": "M2-c",
+   "category": "layer_normalization",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-dynamic-M2.7",
+   "spec_id": "M2.7",
+   "family": "M2-c",
+   "category": "layer_normalization",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-matmul-dynamic-M2.16",
+   "spec_id": "M2.16",
+   "family": "M2-c",
+   "category": "matmul",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-matmul-dynamic-M2.7",
+   "spec_id": "M2.7",
+   "family": "M2-c",
+   "category": "matmul",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-softmax-dynamic-M2.16",
+   "spec_id": "M2.16",
+   "family": "M2-c",
+   "category": "softmax",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-softmax-dynamic-M2.7",
+   "spec_id": "M2.7",
+   "family": "M2-c",
+   "category": "softmax",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast-dynamic-M2.21",
+   "spec_id": "M2.21",
+   "family": "M2-d",
+   "category": "broadcast",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast-dynamic-M2.8",
+   "spec_id": "M2.8",
+   "family": "M2-d",
+   "category": "broadcast",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast_r2-dynamic-M2.21",
+   "spec_id": "M2.21",
+   "family": "M2-d",
+   "category": "broadcast_r2",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast_r2-dynamic-M2.8",
+   "spec_id": "M2.8",
+   "family": "M2-d",
+   "category": "broadcast_r2",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast_r4-dynamic-M2.21",
+   "spec_id": "M2.21",
+   "family": "M2-d",
+   "category": "broadcast_r4",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast_r4-dynamic-M2.8",
+   "spec_id": "M2.8",
+   "family": "M2-d",
+   "category": "broadcast_r4",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast_r5-dynamic-M2.21",
+   "spec_id": "M2.21",
+   "family": "M2-d",
+   "category": "broadcast_r5",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast_r5-dynamic-M2.8",
+   "spec_id": "M2.8",
+   "family": "M2-d",
+   "category": "broadcast_r5",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-dynamic-M2.13",
+   "spec_id": "M2.13",
+   "family": "M2-e",
+   "category": "concat",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-static-M2.13",
+   "spec_id": "M2.13",
+   "family": "M2-e",
+   "category": "concat",
+   "shape": "static"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-dynamic-M2.13",
+   "spec_id": "M2.13",
+   "family": "M2-e",
+   "category": "elemwise_add",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-static-M2.13",
+   "spec_id": "M2.13",
+   "family": "M2-e",
+   "category": "elemwise_add",
+   "shape": "static"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-static-M2.13",
+   "spec_id": "M2.13",
+   "family": "M2-e",
+   "category": "layer_normalization",
+   "shape": "static"
+  },
+  {
+   "mutant_id": "mlir-linalg-transpose_cube-dynamic-M2.10",
+   "spec_id": "M2.10",
+   "family": "M2-e",
+   "category": "transpose_cube",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-transpose_square-dynamic-M2.10",
+   "spec_id": "M2.10",
+   "family": "M2-e",
+   "category": "transpose_square",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-transpose_square-dynamic-M2.13",
+   "spec_id": "M2.13",
+   "family": "M2-e",
+   "category": "transpose_square",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-broadcast-dynamic-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "broadcast",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-dynamic-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "concat",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-concat-static-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "concat",
+   "shape": "static"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-dynamic-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "elemwise_add",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-elemwise_add-static-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "elemwise_add",
+   "shape": "static"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-dynamic-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "layer_normalization",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-layer_normalization-static-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "layer_normalization",
+   "shape": "static"
+  },
+  {
+   "mutant_id": "mlir-linalg-matmul-dynamic-M2.5",
+   "spec_id": "M2.5",
+   "family": "M2-f",
+   "category": "matmul",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-pad-dynamic-M2.15",
+   "spec_id": "M2.15",
+   "family": "M2-g",
+   "category": "pad",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-pad-static-M2.15",
+   "spec_id": "M2.15",
+   "family": "M2-g",
+   "category": "pad",
+   "shape": "static"
+  },
+  {
+   "mutant_id": "mlir-linalg-pad_last-dynamic-M2.15",
+   "spec_id": "M2.15",
+   "family": "M2-g",
+   "category": "pad_last",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-pad_last-static-M2.15",
+   "spec_id": "M2.15",
+   "family": "M2-g",
+   "category": "pad_last",
+   "shape": "static"
+  },
+  {
+   "mutant_id": "mlir-linalg-pad_mid-dynamic-M2.15",
+   "spec_id": "M2.15",
+   "family": "M2-g",
+   "category": "pad_mid",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-pad_mid-static-M2.15",
+   "spec_id": "M2.15",
+   "family": "M2-g",
+   "category": "pad_mid",
+   "shape": "static"
+  },
+  {
+   "mutant_id": "mlir-linalg-pad_r3-dynamic-M2.15",
+   "spec_id": "M2.15",
+   "family": "M2-g",
+   "category": "pad_r3",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-pad_r3-static-M2.15",
+   "spec_id": "M2.15",
+   "family": "M2-g",
+   "category": "pad_r3",
+   "shape": "static"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape-dynamic-M2.17",
+   "spec_id": "M2.17",
+   "family": "M2-h",
+   "category": "reshape",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape-dynamic-M2.18",
+   "spec_id": "M2.18",
+   "family": "M2-h",
+   "category": "reshape",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape_r3-dynamic-M2.17",
+   "spec_id": "M2.17",
+   "family": "M2-h",
+   "category": "reshape_r3",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape_r3-dynamic-M2.18",
+   "spec_id": "M2.18",
+   "family": "M2-h",
+   "category": "reshape_r3",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape_r4-dynamic-M2.17",
+   "spec_id": "M2.17",
+   "family": "M2-h",
+   "category": "reshape_r4",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape_r4-dynamic-M2.18",
+   "spec_id": "M2.18",
+   "family": "M2-h",
+   "category": "reshape_r4",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape_r5-dynamic-M2.17",
+   "spec_id": "M2.17",
+   "family": "M2-h",
+   "category": "reshape_r5",
+   "shape": "dynamic"
+  },
+  {
+   "mutant_id": "mlir-linalg-reshape_r5-dynamic-M2.18",
+   "spec_id": "M2.18",
+   "family": "M2-h",
+   "category": "reshape_r5",
+   "shape": "dynamic"
+  }
+ ]
+}

@@ -69,6 +69,14 @@ cmd_minimal() {
   lane minimal "${extra[@]}" "$SIZEFLAG"
 }
 
+cmd_manifest() {
+  # raw/mutant_manifest.json — the M2 lottery's provenance (U-4 /
+  # Q-mlir-linalg-3). Always --level2 so the plan describes the same battery as
+  # the committed results (the level-1 subset would emit a different 30-cell
+  # plan and silently disagree with raw/mutants.jsonl).
+  lane manifest --level2 "$SIZEFLAG"
+}
+
 cmd_e2()   { lane e2 "$SIZEFLAG"; }
 cmd_e3()   { lane e3 "$SIZEFLAG"; }
 cmd_s12()  { lane s12 "$SIZEFLAG"; }
@@ -85,11 +93,11 @@ cmd_all() {
   # flag here rather than relying on the caller to pass it means the documented
   # "run all to re-derive everything" path actually re-derives everything.
   LEVEL2=1
-  cmd_setup; cmd_e2; cmd_minimal; cmd_s12; cmd_e3; cmd_collect; cmd_stats
+  cmd_setup; cmd_e2; cmd_minimal; cmd_manifest; cmd_s12; cmd_e3; cmd_collect; cmd_stats
 }
 
 usage() {
-  echo "usage: $0 {setup|minimal[--level2]|e2|e3|s12|e4|e5|collect|stats|all} [--small|--full] [--device i]"
+  echo "usage: $0 {setup|minimal[--level2]|manifest|e2|e3|s12|e4|e5|collect|stats|all} [--small|--full] [--device i]"
   echo "  note: --device is accepted but ignored; the backend is MLIR_LINALG_BACKEND (default cuda, GPU)"
 }
 
@@ -106,7 +114,8 @@ SIZEFLAG="--$SIZE"
 
 mkdir -p "$RAW" "$RESULTS"
 case "$SUB" in
-  setup) cmd_setup;; minimal) cmd_minimal;; e2) cmd_e2;; e3) cmd_e3;;
+  setup) cmd_setup;; minimal) cmd_minimal;; manifest) cmd_manifest;;
+  e2) cmd_e2;; e3) cmd_e3;;
   s12) cmd_s12;;
   e4) cmd_e4;; e5) cmd_e5;; collect) cmd_collect;; stats) cmd_stats;;
   all) cmd_all;; *) usage; exit 1;;

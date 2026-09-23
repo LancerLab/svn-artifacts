@@ -324,16 +324,24 @@ def m1_cell(cat: str, spec_id: str) -> bool:
     return (spec_id == "M1.19") == (cat in C.M1_CARRIER_CATS)
 
 
-def select_m2(cats: list[str], specs, size: str = "small") -> set[tuple]:
-    """Choreo-style per-family selection for the M2 battery.
+def plan_m2(cats: list[str], specs, size: str = "small") -> dict:
+    """The M2 lottery's decision, with the accounting a manifest must persist.
+
+    `select_m2` decides WHICH cells are injected; this returns that decision
+    plus every candidate it left behind, each with the binding reason. A corpus
+    records what it does not contain as well as what it does
+    (`choreo/gen_mutants.py:select`): a declaration that vanishes between
+    `select()` and the corpus is indistinguishable from one that was never
+    written unless the drop is persisted. The reason vocabulary is the same
+    closed set the choreo plan uses -- a candidate is dropped by a cell,
+    category or family budget, never silently.
 
     Mirrors `choreo/gen_mutants.py:select`: `N = N_PER_FAMILY` (8) decomposes as
     `N_KERNELS x N_REALISATIONS`, so a family realises each declared spec_id at
     least once and then fills round-robin to `N`, capping every
     `(family, category)` at `N_REALISATIONS`. A candidate the surface cannot
     express (`NotApplicable`) or that changes nothing (`AssertionError`) is not a
-    candidate at all, so an n/a cell never consumes a slot. Returns the selected
-    `(category, shape, spec_id)` injection keys.
+    candidate at all, so an n/a cell never consumes a slot.
     """
     n_fam = T.N_PER_FAMILY
     n_real = T.N_REALISATIONS
@@ -360,7 +368,8 @@ def select_m2(cats: list[str], specs, size: str = "small") -> set[tuple]:
     for c in cands:
         by_fam[c[0]].append(c)
 
-    selected: set[tuple] = set()
+    chosen_all: list[tuple] = []
+    dropped: list[dict] = []
     for fam, cc in by_fam.items():
         cap: Counter = Counter()
         chosen: list[tuple] = []
@@ -390,8 +399,35 @@ def select_m2(cats: list[str], specs, size: str = "small") -> set[tuple]:
                 cap[c[2]] += 1
             if len(chosen) == before:
                 break
-        selected.update((c[2], c[3], c[1]) for c in chosen)
-    return selected
+
+        # Every candidate the lottery did not take is a decision, and the
+        # decision names the budget that bound it.
+        chosen_set = set(chosen)
+        for c in cc:
+            if c in chosen_set:
+                continue
+            _, sid, cat, shape = c
+            if cap[cat] >= n_real:
+                reason = (f"category cap: {fam}/{cat} already holds "
+                          f"{n_real} realisations")
+            else:
+                reason = (f"family budget: {fam} already holds {n_fam} "
+                          f"instances")
+            dropped.append({"family": fam, "spec_id": sid, "category": cat,
+                            "shape": shape, "reason": reason})
+        chosen_all.extend(chosen)
+
+    return {"chosen": chosen_all, "dropped": dropped, "candidates": len(cands)}
+
+
+def select_m2(cats: list[str], specs, size: str = "small") -> set[tuple]:
+    """Choreo-style per-family selection for the M2 battery.
+
+    Thin wrapper over `plan_m2`, kept because the battery only needs the chosen
+    set; the manifest needs the plan. Returns the selected
+    `(category, shape, spec_id)` injection keys.
+    """
+    return {(c[2], c[3], c[1]) for c in plan_m2(cats, specs, size=size)["chosen"]}
 
 
 def _one_variant_per_injection(specs, sel: set | None) -> dict[tuple, object]:
@@ -853,6 +889,104 @@ class Lane:
             for p in problems:
                 log(f"  !! {p}")
             return 1
+        return 0
+
+    def cmd_manifest(self, level2: bool = True, size: str = "small") -> int:
+        """Write raw/mutant_manifest.json -- the M2 lottery's provenance.
+
+        `check_class_axis.py::_lane_manifests()` reads only this file, so a lane
+        without one is skipped in silence and none of its `m2.<family>.instances`
+        cells can ever fire (U-4 / Q-mlir-linalg-3). The manifest is a PLAN, not
+        a census: it records the candidate set, the chosen N per family, and
+        every drop with the budget that bound it, so a shortfall reads as a
+        decision rather than as a row that went missing.
+
+        Only the M2 battery has a per-family lottery; the M1/M3 classes are n/a
+        on this surface and carry no manifest.
+        """
+        if self.cfg["klass"] != "M2":
+            log(f"[{self.toolchain}] manifest: class {self.cfg['klass']} has no "
+                f"per-family lottery; nothing to persist")
+            return 0
+        cats = list(self.cfg["battery_cats"])
+        if not level2:
+            cats = list(C.LEVEL1_M2_CATS)
+        plan = plan_m2(cats, self.cfg["specs"], size=size)
+
+        mutants: list[dict] = []
+        fam_depth: Counter = Counter()
+        for fam, sid, cat, shape in sorted(
+                plan["chosen"], key=lambda c: (c[0], c[2], c[3], c[1])):
+            mutants.append({
+                "mutant_id": f"{self.toolchain}-{cat}-{shape}-{sid}",
+                "spec_id": sid,
+                "family": fam,
+                "category": cat,
+                "shape": shape,
+            })
+            fam_depth[fam] += 1
+
+        dropped = [{
+            "mutant_id": f"{self.toolchain}-{d['category']}-{d['shape']}"
+                         f"-{d['spec_id']}",
+            "spec_id": d["spec_id"],
+            "family": d["family"],
+            "category": d["category"],
+            "shape": d["shape"],
+            "reason": d["reason"],
+        } for d in sorted(plan["dropped"],
+                          key=lambda d: (d["family"], d["category"],
+                                         d["shape"], d["spec_id"]))]
+
+        selected = len(mutants)
+        accounting = {
+            "candidates": plan["candidates"],
+            "selected": selected,
+            "attribution": 0,
+            "dropped": len(dropped),
+            "na": 0,
+            "skipped": 0,
+            "emitted": selected,
+        }
+        if accounting["candidates"] != (accounting["selected"]
+                                        + accounting["dropped"]):
+            log(f"[{self.toolchain}] manifest: accounting does not close: "
+                f"{accounting}")
+            return 1
+
+        m2_fams = set(T.families_of("M2"))
+        declared = {m.spec_id for m in self.cfg["specs"]
+                    if T.family_of(m.spec_id) in m2_fams}
+        realised = {m["spec_id"] for m in mutants}
+        man = {
+            "toolchain": self.toolchain,
+            "spec_version": "v2.1",
+            "lane": self.toolchain,
+            "n_per_family": T.N_PER_FAMILY,
+            "n_realisations": T.N_REALISATIONS,
+            "n_kernels": T.N_KERNELS,
+            "n_cells": 1,
+            "target_instances": T.target(self.toolchain),
+            "level2": bool(level2),
+            "accounting": accounting,
+            "family_depth": {f: fam_depth.get(f, 0)
+                             for f in T.families_of("M2")
+                             if T.in_scope(self.toolchain, f)},
+            "family_short": {f: T.N_PER_FAMILY - fam_depth.get(f, 0)
+                             for f in T.families_of("M2")
+                             if T.in_scope(self.toolchain, f)
+                             and fam_depth.get(f, 0) < T.N_PER_FAMILY},
+            "unrealised_specs": {"M2": sorted(declared - realised)},
+            "registry": {},
+            "dropped": dropped,
+            "na": [],
+            "attribution": [],
+            "mutants": mutants,
+        }
+        out = self.raw / "mutant_manifest.json"
+        out.write_text(json.dumps(man, indent=1) + "\n")
+        log(f"[{self.toolchain}] manifest: {selected} selected over "
+            f"{len(fam_depth)} families, {len(dropped)} dropped -> {out}")
         return 0
 
     def _mutant_rec(self, cat: str, lv: str, shape: str, mut, rtv: bool,
@@ -1708,8 +1842,8 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--surface", required=True, choices=sorted(SURFACES),
                     help="linalg = tensor/linalg entry surface (M2); "
                          "low = memref/affine surface (M1)")
-    ap.add_argument("cmd", choices=["setup", "minimal", "e2", "e3", "s12",
-                                    "collect", "stats", "all"])
+    ap.add_argument("cmd", choices=["setup", "minimal", "manifest", "e2", "e3",
+                                    "s12", "collect", "stats", "all"])
     ap.add_argument("--small", dest="size", action="store_const", const="small",
                     default="small")
     ap.add_argument("--full", dest="size", action="store_const", const="full")
@@ -1729,6 +1863,7 @@ def main(argv: list[str]) -> int:
         steps = [("setup", lambda: lane.cmd_setup()),
                  ("e2", lambda: lane.cmd_e2(a.size)),
                  ("minimal", lambda: lane.cmd_minimal(a.level2, a.size)),
+                 ("manifest", lambda: lane.cmd_manifest(a.level2, a.size)),
                  ("s12", lambda: lane.cmd_s12(a.size)),
                  ("e3", lambda: lane.cmd_e3(a.size)),
                  ("collect", lambda: lane.cmd_collect()),
@@ -1748,6 +1883,7 @@ def main(argv: list[str]) -> int:
     return {"setup": lane.cmd_setup,
             "e2": lambda: lane.cmd_e2(a.size),
             "minimal": lambda: lane.cmd_minimal(a.level2, a.size),
+            "manifest": lambda: lane.cmd_manifest(a.level2, a.size),
             "s12": lambda: lane.cmd_s12(a.size),
             "e3": lambda: lane.cmd_e3(a.size),
             "collect": lane.cmd_collect,
