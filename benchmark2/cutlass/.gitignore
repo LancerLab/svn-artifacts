@@ -1,0 +1,12 @@
+# cutlass lane — generated / build artifacts
+raw/
+*.o
+*.cubin
+*.ptx
+__pycache__/
+# mutant sources are regenerated from the mutation table
+mutants/
+# intermediate record stream; folded into results/cutlass/stats.json
+records.jsonl
+# lane-local results dir; canonical output is benchmark2/results/cutlass/
+results/

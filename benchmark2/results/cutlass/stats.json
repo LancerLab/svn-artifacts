@@ -1,0 +1,52 @@
+{
+  "toolchain": "cutlass",
+  "spec_version": "v2.1",
+  "lane_phase": "vertical-slice",
+  "complete": false,
+  "host": {
+    "gpu": "RTX 3070 8GB",
+    "arch": "sm_86",
+    "cuda": "12.9",
+    "cutlass": "v4.2.1",
+    "note": "dev host; manifest.md \u00a72 pins 2xH800 sm_120"
+  },
+  "S1_detection": {
+    "M3": {
+      "n_injected": 0,
+      "n_compile": 0,
+      "n_runtime": 0,
+      "n_never": 0,
+      "n_discarded_noop": 0
+    },
+    "M4": {
+      "n_injected": 9,
+      "n_compile": 0,
+      "n_runtime": 0,
+      "n_never": 9,
+      "n_discarded_noop": 0
+    },
+    "L": {
+      "n_injected": 2,
+      "n_compile": 0,
+      "n_runtime": 1,
+      "n_never": 0,
+      "n_discarded_noop": 1
+    }
+  },
+  "S1_class_axis": {
+    "source": "schema/class-axis.json",
+    "axis_version": "v2.1",
+    "status": {
+      "M1": "n/a",
+      "M2": "uncompared",
+      "M3": "partial",
+      "M4": "partial"
+    }
+  },
+  "notes": [
+    "vertical slice: realizable M4 loop-bound + L launch-status battery only",
+    "M3 descriptor/TMA families (M3.2-M3.16) pending probes.py",
+    "n_discarded_noop counts admissible noop controls (e.g. M4.4)"
+  ],
+  "records": 11
+}
