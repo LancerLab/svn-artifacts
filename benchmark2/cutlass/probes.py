@@ -50,6 +50,8 @@ PROBES = [
      "static shared tile: 16KB vs 128KB (over the sm_86 48KB static limit)"),
     ("M3.13", 130, 131, "sm_90a",
      "swizzle vs box inner dim: SW128 with 128B vs 32B inner"),
+    ("M3.14", 140, 141, "sm_90a",
+     "linear copy dim: 4096 vs 2^24 (no check on the linear-copy path)"),
 ]
 
 

@@ -13,8 +13,8 @@
 //             30/31 M3.3 TMA box bytes      | 40/41 M3.4 footprint <4GB
 //             50/51 M3.5 swizzle            | 60/61 M3.6 vector divisibility
 //             70/71 M3.7 TMA inner align    | 80/81 M3.8 GMMA rank
-//             110/111 M3.11 smem base align | 120/121 L1 static smem
-//             130/131 M3.13 swizzle/box inner
+//             110/111 M3.11 smem base align | 120/121 M3.12 static smem
+//             130/131 M3.13 swizzle/box inner | 140/141 M3.14 linear copy dim
 #include <cute/tensor.hpp>
 #include <cute/atom/mma_traits_sm90_gmma.hpp>
 #include <cute/atom/copy_traits_sm90_tma.hpp>
@@ -174,7 +174,22 @@ __global__ void k_probe() {
 }
 #endif
 
-// ---- L1 / M3.12 static shared tile over the arch capacity ----------------
+// ---- M3.14 linear copy with a dimension >= 2^24 (no check on the path) ---
+#if PROBE == 140 || PROBE == 141
+__global__ void k_probe() {
+#if PROBE == 140
+  constexpr int E = 4096;
+#else
+  constexpr int E = 16777216;   // 2^24: past the descriptor dim bound
+#endif
+  auto src = make_tensor(make_gmem_ptr((float*)nullptr), make_layout(Int<E>{}));
+  auto dst = make_tensor(make_smem_ptr((float*)nullptr), make_layout(Int<E>{}));
+  Copy_Atom<DefaultCopy, float> atom;
+  copy(atom, src, dst);
+}
+#endif
+
+// ---- M3.12 static shared tile over the arch capacity ----------------
 #if PROBE == 120 || PROBE == 121
 #if PROBE == 120
 __global__ void k_probe() { __shared__ float s[4096]; s[threadIdx.x] = 1.f; }

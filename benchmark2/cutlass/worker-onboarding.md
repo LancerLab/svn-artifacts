@@ -94,7 +94,7 @@ deferred to a post-deadline extension.
     **`rt-check`** (`CUDA error: invalid argument`) on `elemwise_add`; `noop`
     on `matmul` (that kernel sizes smem from its tiles, so the knob is inert).
 - **Compile-only M3 probe battery** (`probes.py` + `kernels/probe_m3.cu`),
-  11 control/mutant pairs compiled with `nvcc -c` (TMA/GMMA/vector pairs target
+  12 control/mutant pairs compiled with `nvcc -c` (TMA/GMMA/vector pairs target
   `sm_90a`, the static-smem pair `sm_86`; never linked or run):
   - **`M3.5` swizzle-incompatible box shape → `ct-check`** — `Swizzle<7,4,3>`
     trips `cute/swizzle.hpp:63` "Unsupported layout swizzle"; the legal control
@@ -120,21 +120,31 @@ deferred to a post-deadline extension.
     shared compiles on `sm_86`; the limit is a launch-time (driver) check.
   - **`M3.13` swizzle vs box inner dim (SW128, 128 B vs 32 B) → `unchecked`** —
     both tile-to-shape variants compile; the mismatch is not statically detained.
+  - **`M3.14` linear copy dim ≥ 2²⁴ → `unchecked`** — a `DefaultCopy` over
+    2²⁴ elements compiles (no check on the linear-copy path).
 - **Harness:** `lane.py` (base+mutants+collect), `probes.py`, `reference.py`
   (bit-exact `fill` + refs + tolerance gate), `collect.py` (spec-§8-shaped
   `stats.json`, merges both record streams), `run.sh`
   (setup/minimal/e2/e3/collect/stats/all). `results/cutlass/stats.json`:
-  M3 = 11 injected / 3 ct-check / 8 unchecked; M4 = 9 unchecked;
+  M3 = 12 injected / 3 ct-check / 9 unchecked; M4 = 9 unchecked;
   L = 1 rt-check / 1 noop. Flagged `lane_phase: vertical-slice`,
   `complete: false`.
 
-**Not yet done (the M3 hard remainder):**
+**Not expressible on this surface (not probe cells):**
 
-- **M3.9 / M3.10 / M3.16** (TMA descriptor pad-field surface) not yet built;
-  the padding fields are not exposed through CuTe's public `make_tma_copy` API,
-  so these may end up `unexpressible` rather than a probe cell.
-- The large-dim/TMA-geometry families are compile-only `unchecked`; whether the
-  driver detains them at launch is unmeasured (needs the final host).
+- **`M3.9` / `M3.10`** (TMA pad-field overrun; rank-5 `padding_mid[rank-1]==0`)
+  and **`M3.15`** (`.pad`-path dim ≥ 2²⁴): CuTe authors the `CUtensorMap`
+  descriptor and has no pad operator, so the mutation cannot be injected by the
+  kernel author — `unexpressible`.
+- **`M3.16`** (TMA box inner alignment with a *symbolic* leading dim):
+  `make_tma_copy` requires static box shapes, so the symbolic-dim variant is not
+  representable — `unexpressible`.
+
+**Still open:**
+
+- The compile-only `unchecked` families may in fact be detained by the driver
+  at launch (`cuTensorMapEncodeTiled` / launch config); that is unmeasured on
+  the sm_86 dev host and needs the final H800 host.
 - The 9 non-required categories are deferred.
 
 **Repro:** `PY=/home/gxf/.tools/iree-dev-20260908-venv/bin/python bash run.sh all`

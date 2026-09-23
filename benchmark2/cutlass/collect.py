@@ -74,8 +74,12 @@ def main(records_path, out_dir):
             "M3 ct-check probes: M3.5 swizzle, M3.6 vector divisibility, "
             "M3.8 GMMA descriptor rank",
             "M3 unchecked (compile) probes: M3.1/M3.2/M3.3/M3.4/M3.7/M3.11/"
-            "M3.12/M3.13; TMA/GMMA pairs target sm_90a, static-smem pair sm_86",
-            "M3.9/M3.10/M3.16 not yet built (TMA pad-field surface)",
+            "M3.12/M3.13/M3.14; TMA/GMMA pairs target sm_90a, static-smem sm_86",
+            "M3.9/M3.10 (TMA pad-field) and M3.15 (pad path) are unexpressible "
+            "on CuTe: the descriptor/pad fields are authored by the library, "
+            "not the kernel author",
+            "M3.16 (symbolic leading dim) is unexpressible: make_tma_copy "
+            "requires static box shapes",
             "n_discarded_noop counts admissible noop controls (e.g. M4.4)",
         ],
         "records": len(recs),
