@@ -146,6 +146,11 @@ def planned(lane, family):
     cls = FAM_CLASS.get(family)
     if not cls or lane not in IN_SCOPE.get(cls, []):
         return 0
+    # `prohibition: "absent"` is a FAMILY declaration (M4-g): no lane can carry
+    # it, so it leaves every lane's cell. Distinct from a lane_scope carve-out,
+    # which is per (lane, family).
+    if FAMILIES.get(family, {}).get("prohibition") == "absent":
+        return 0
     if LANE_SCOPE.get(lane, {}).get(family) in ("derived", "absent"):
         return 0
     return N_PER_FAMILY
@@ -189,8 +194,24 @@ SOURCES = {
     "iree": BASE / "iree" / "raw" / "mutants.jsonl",
 }
 fam_missing = {L: not SOURCES[L].is_file() for L in LANES}
-# triton/iree rows carry `class` but no `spec_id`, so no family attribution.
-fam_lane_cls = {L: Counter(r.get("class") for r in fam_rows[L])
+# Attribute triton/iree by `spec_id` -> family -> class when the row carries
+# one, falling back to the row's `class` stamp. The stamp is stale for any spec
+# the registry has re-homed: triton's `relu-f6` is stamped `M1` but its spec_id
+# is `M1.6`, whose family `M4-d` lives in class M4. Counting the stamp instead
+# of the family would report triton's M4 as 0/48 while it holds the control.
+def _attr_cls(rec):
+    f = SPEC_FAM.get(rec.get("spec_id"))
+    if f:
+        return FAM_CLASS.get(f)
+    return rec.get("class")
+
+
+fam_lane_cls = {L: Counter(_attr_cls(r) for r in fam_rows[L])
+                for L in ("triton", "iree")}
+# Per-family counts for the same two lanes, so §4 can show a real denominator
+# match instead of a bare `?` now that the rows carry `spec_id`.
+fam_lane_fam = {L: Counter(SPEC_FAM[r["spec_id"]] for r in fam_rows[L]
+                           if SPEC_FAM.get(r.get("spec_id")))
                 for L in ("triton", "iree")}
 
 # ------------------------------------------- per-class lanes (mlir-low/linalg)
@@ -261,8 +282,9 @@ def main():
       TARGETS.get("total", 0))
     w(">")
     w("> A lane's class cell differs from the declared cell for exactly two "
-      "reasons, and only two: **(1)** the class's own family count "
-      "(M4 has 7 families, so M4's cell is 56 everywhere, not 64), and "
+      "reasons, and only two: **(1)** the class's own testable family count "
+      "(M4 has 6 -- `M4-g` is declared absent -- so M4's cell is 48 "
+      "everywhere, not 64), and "
       "**(2)** that lane's `lane_scope` carve-outs, each worth exactly 8. "
       "With no carve-outs an in-scope cell is the full declared cell.")
     w(">")
@@ -371,13 +393,25 @@ def main():
                 cells.append(mark(fam_lane_cls[lane].get(cls, 0), plan))
         w("| **%s** | %d | %s |" % (cls, cell, " | ".join(cells)))
     w("")
-    w("**Bottom line: M4 is empty in every lane except choreo and one cell of "
-      "`mlir-low`.** `mlir-low`'s M4 is 8/64 \u2014 and it is `M4-d` only, "
-      "arriving via `M1.6`, which the registry re-homed into M4. `mlir-low` "
-      "has no other M4 family and no other class; `mlir-linalg` has no M4 at "
-      "all. `triton` has 2 of 48 M3 and 0 of 56 M4; " +
-      ("`iree` 0 of 56 M4." if not fam_missing.get("iree") else
-       "`iree`'s M4 is unverified here -- see the `n/a` note above."))
+    _m4_cell = BUDGET.get("classes", {}).get("M4", {}).get("cell", 48)
+
+    def _cls_count(lane, cls):
+        if lane == "choreo":
+            return choreo_by_cls[cls]
+        if lane in PER_CLASS_LANES:
+            return mlir[lane]["by_cls"].get(cls, 0)
+        return fam_lane_cls[lane].get(cls, 0)
+
+    _m4_lanes = [l for l in LANES if l in IN_SCOPE.get("M4", [])]
+    w("**Bottom line: M4 is measured only where the program authors a loop "
+      "bound** \u2014 `%s`. `M4-g` is declared absent (nothing can forbid the "
+      "degenerate pad), so the M4 cell is 6 \u00d7 8 = %d, not 56; and "
+      "`mlir-linalg`/`iree` derive their iteration bound from the operand "
+      "domain, so M4 is `uncompared` there (`derived`) and the column shows "
+      "`n/a`. Current M4 instances: %s." % (
+          "`, `".join(_m4_lanes), _m4_cell,
+          ", ".join("`%s` %d/%d" % (l, _cls_count(l, "M4"), _m4_cell)
+                    for l in _m4_lanes)))
     w("")
     w("**A lane is not its census label.** `mlir-low`'s census says "
       "`class: M1`, but 8 of its 64 instances are class M4 (`M1.6` "
@@ -386,10 +420,10 @@ def main():
       "in any lane carrying `M1.6` or `M1.7`.")
     w("")
     w("`cell` is from `method-taxonomy.json` `budget` (8 families \u00d7 8; M4 "
-      "is 7 \u00d7 8) and is the denominator for **every** lane. Where a lane "
-      "shows less than the cell the difference is its `lane_scope` "
-      "carve-outs \u2014 `triton` M3 48 = 64 \u2212 2\u00d78, `iree` M2 "
-      "32 = 64 \u2212 4\u00d78.")
+      "is 6 \u00d7 8 = 48, since `M4-g` is declared absent) and is the "
+      "denominator for **every** lane. `lane_scope` carve-outs are cleared, so "
+      "where a lane shows less than the cell it is a real shortfall, not a "
+      "pre-excluded family.")
     w("")
 
     # ------------------------------------------------------------- 4. families
@@ -410,7 +444,8 @@ def main():
                 n = mlir[lane]["by_fam"].get(f, 0)
                 cells.append(str(n) if n else "\u2014")
             else:
-                cells.append("?" if p else "\u2014")
+                n = fam_lane_fam[lane].get(f, 0)
+                cells.append(str(n) if n else "\u2014")
         w("| `%s` | %s | %s | %d | **%d** | %d | %d | %s |" %
           (f, cls, nm, len(specs), rf, ra, planned("choreo", f), " | ".join(cells)))
     w("")

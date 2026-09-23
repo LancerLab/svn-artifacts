@@ -29,7 +29,7 @@
     "classes": [
       "M4"
     ],
-    "reason": "LoopBound control class: measured on choreo alone, because it exists to test whether the `never` residue is explained by the -rtc cost filter rather than to rank one toolchain against another. No compared toolchain has been run against M4, so this lane emits NO cell for it -- a missing cell is not an `n/a` cell (`n/a` is a measured verdict). See schema/class-axis.json `status_meaning` and render.py.",
+    "reason": "M4 (LoopBound) is DROPPED from this lane (decision 2026-09-23), not merely unmeasured: an IREE structured op's iteration bound is derived from the operand domain by the compiler, so the program authors no bound value to corrupt. The detection families (zero/negative/reversed bound, zero step) have no program-authored defect here -- the prohibition is `derived`; the only M4-adjacent form is a zero-extent operand (the M4-d empty-space control), which is a control, not a detection. M4 is measured on the program-authored-loop lanes choreo, triton and mlir-low. This lane emits NO cell for M4 -- a missing cell is not an `n/a` cell (`n/a` is a measured verdict). See schema/class-axis.json `status_meaning` and render.py.",
     "note": "No cell is emitted for these classes. A missing cell is NOT an n/a cell: `n/a` means this surface was measured and cannot express the defect, while a missing cell means the lane was never run against the class."
   },
   "S1_class_axis": {

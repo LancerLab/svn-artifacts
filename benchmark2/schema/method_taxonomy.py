@@ -37,9 +37,10 @@ body of gates `families.partition` and `families.no-shared-instance` of
   plus every family has a non-empty spec_id list, N is 8, and the family names
   are unique within a class.
 
-`spec_ids: []` is legal and is NOT a defect: M4-g is a family whose
-realisations are all still to be written, and saying so is the point. R_f == 0
-is reported, never hidden.
+`spec_ids: []` is legal only for a family declared `prohibition: "absent"`:
+it has no realisation the model can forbid, so it is withdrawn from the cell
+rather than reported as work (M4-g). R_f == 0 on a family that is NOT declared
+absent is still reported, never hidden.
 """
 from __future__ import annotations
 
@@ -125,6 +126,21 @@ def is_noop_control(family: str) -> bool:
     is excluded from the admissible floor and from every coverage claim. It is
     NOT excluded from the budget."""
     return bool(_FAM[family].get("noop_control"))
+
+
+def is_absent(family: str) -> bool:
+    """A family the model declares with no prohibition anywhere: nothing can
+    forbid the state, so NO operator it could carry may ever enter a
+    denominator. It is a declaration, not work.
+
+    M4-g (degenerate pad) is the only such family. Its trigger (M2.12) is
+    `avoided`/repaired and no re-realisation exists, so the family is withdrawn
+    by `prohibition: "absent"`. An absent family is excluded from its class cell
+    and from every lane's target -- reporting it as an 0/8 shortfall would send
+    the reader after instances that cannot be a test (method_taxonomy --check
+    owns the arithmetic; `m4.md` section 6 owns the decision).
+    """
+    return _FAM[family].get("prohibition") == "absent"
 
 
 def specs_of(family: str) -> list[str]:
@@ -287,6 +303,8 @@ def summary(registry: dict) -> dict[str, list[str]]:
                                  "model_gap": [], "noop_control": [],
                                  "thin": []}
     for f in _FAM:
+        if is_absent(f):
+            continue          # withdrawn by declaration, not a work item
         if not specs_of(f):
             out["no_declaration"].append(f)
             continue
@@ -319,6 +337,9 @@ def n_a_families(registry: dict, in_scope_only: bool = False) -> dict[str, str]:
     """
     out: dict[str, str] = {}
     for f in _FAM:
+        if is_absent(f):
+            out[f] = "absent"
+            continue
         specs = specs_of(f)
         if not specs:
             out[f] = "unwritten"
@@ -358,6 +379,8 @@ def in_scope(lane: str, family: str) -> bool:
     """
     cls = _FAM[family]["class"]
     if lane not in IN_SCOPE.get(cls, []):
+        return False
+    if is_absent(family):
         return False
     return family not in LANE_SCOPE.get(lane, {})
 
@@ -438,8 +461,8 @@ def check(registry: dict | None = None, declared: list[str] | None = None,
         if d["class"] not in (cls_axis or classes()):
             bad.append(f"{f}: class {d['class']} is not on the class axis "
                        f"{cls_axis or classes()}")
-        if not d["spec_ids"] and f != "M4-g":
-            bad.append(f"{f}: no spec_ids and is not the known-empty M4-g")
+        if not d["spec_ids"] and not is_absent(f):
+            bad.append(f"{f}: no spec_ids and is not declared absent")
 
     # ---- the budget block is one arithmetic claim in several fields -------
     # It is stated as `N = kernel_component x realisation_component` and again
@@ -452,7 +475,10 @@ def check(registry: dict | None = None, declared: list[str] | None = None,
         bad.append(f"budget: {N_KERNELS} kernels x {N_REALISATIONS} "
                    f"realisations != N_per_family {N_PER_FAMILY}")
     for c, d in _T["budget"]["classes"].items():
-        n_fam = len(families_of(c))
+        # An absent family is excluded from the cell: nothing it could carry
+        # may enter the denominator, so counting it would demand work that
+        # cannot be done and misstate the class's target.
+        n_fam = len([f for f in families_of(c) if not is_absent(f)])
         if d["families"] != n_fam:
             bad.append(f"budget: class {c} declares {d['families']} families "
                        f"but the family axis has {n_fam}")
@@ -539,7 +565,7 @@ def check(registry: dict | None = None, declared: list[str] | None = None,
         # separately from "unwritten" because the two send the reader in
         # opposite directions.
         for f in _FAM:
-            if not specs_of(f) or is_noop_control(f):
+            if not specs_of(f) or is_noop_control(f) or is_absent(f):
                 continue
             if unrealisable_as_declared(f, registry):
                 report(f, "unrealisable as declared",
@@ -685,9 +711,12 @@ def _report(registry: dict | None) -> None:
     print()
     for c in classes():
         fs = families_of(c)
-        cell = len(fs) * N_PER_FAMILY
-        print(f"  {c}  {len(fs)} families, cell {len(fs)}x{N_PER_FAMILY}"
-              f" = {cell}")
+        live = [f for f in fs if not is_absent(f)]
+        cell = len(live) * N_PER_FAMILY
+        absent = len(fs) - len(live)
+        extra = f" ({absent} absent, not counted)" if absent else ""
+        print(f"  {c}  {len(live)} families, cell {len(live)}x{N_PER_FAMILY}"
+              f" = {cell}{extra}")
         for f in fs:
             spec = specs_of(f)
             if registry:
@@ -698,9 +727,12 @@ def _report(registry: dict | None) -> None:
             flag = ""
             if is_view(f):
                 flag = " [view]"
+            if is_absent(f):
+                flag = " [absent: no prohibition, not in the cell]"
             if is_noop_control(f):
                 flag = " [noop control]"
-            if registry and needs_new_realisation(f, registry):
+            if registry and needs_new_realisation(f, registry) \
+                    and not is_absent(f):
                 if unrealisable_as_declared(f, registry):
                     flag += " **UNREALISABLE AS DECLARED**"
                 elif no_admissible_declaration(f, registry):
@@ -708,7 +740,7 @@ def _report(registry: dict | None) -> None:
                 else:
                     flag += " **SHORT OF 2**"
             if registry and no_admissible_test(f, registry) \
-                    and not is_noop_control(f) \
+                    and not is_noop_control(f) and not is_absent(f) \
                     and not no_admissible_declaration(f, registry):
                 flag += " **NO ADMISSIBLE TEST**"
             ids = ", ".join(spec) or "(none)"

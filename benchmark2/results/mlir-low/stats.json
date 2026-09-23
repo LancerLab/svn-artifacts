@@ -5,28 +5,28 @@
   "device": "cpu (JIT on host; no GPU dependency)",
   "S1_detection": {
     "M1": {
-      "n_injected": 72,
+      "n_injected": 64,
       "n_compile": 0,
       "n_runtime": 46,
-      "n_never": 26,
+      "n_never": 18,
       "n_na": 0,
       "by_rtv": {
         "off": {
-          "n_injected": 72,
+          "n_injected": 64,
           "n_compile": 0,
           "n_runtime": 6,
-          "n_never": 66,
+          "n_never": 58,
           "n_na": 0
         },
         "on": {
-          "n_injected": 72,
+          "n_injected": 64,
           "n_compile": 0,
           "n_runtime": 46,
-          "n_never": 26,
+          "n_never": 18,
           "n_na": 0
         }
       },
-      "note": "measured on the low surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 144 mutant records reduce to 72 injections."
+      "note": "measured on the low surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: the whole lane's 144 mutant records reduce to 64 M1 injections."
     },
     "M2": {
       "n_injected": 0,
@@ -43,15 +43,33 @@
       "n_never": 0,
       "n_na": 40,
       "note": "no expressible M3 mutant on this surface; all spec N=40 mutants => n/a. hardware-constraint defects need a device target; this lane is a CPU JIT with no hardware contract to violate (mutation-specs-v2.md 5, measured)"
+    },
+    "M4": {
+      "n_injected": 8,
+      "n_compile": 0,
+      "n_runtime": 0,
+      "n_never": 8,
+      "n_na": 0,
+      "by_rtv": {
+        "off": {
+          "n_injected": 8,
+          "n_compile": 0,
+          "n_runtime": 0,
+          "n_never": 8,
+          "n_na": 0
+        },
+        "on": {
+          "n_injected": 8,
+          "n_compile": 0,
+          "n_runtime": 0,
+          "n_never": 8,
+          "n_na": 0
+        }
+      },
+      "note": "measured on the low surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: the whole lane's 144 mutant records reduce to 8 M4 injections."
     }
   },
-  "S1_declared_uncompared": {
-    "classes": [
-      "M4"
-    ],
-    "reason": "LoopBound control class: measured on choreo alone, because it exists to test whether the `never` residue is explained by the -rtc cost filter rather than to rank one toolchain against another. No compared toolchain has been run against M4, so this lane emits NO cell for it -- a missing cell is not an `n/a` cell (`n/a` is a measured verdict). See schema/class-axis.json `status_meaning` and render.py.",
-    "note": "No cell is emitted for these classes. A missing cell is NOT an n/a cell: `n/a` means this surface was measured and cannot express the defect, while a missing cell means the lane was never run against the class."
-  },
+  "S1_declared_uncompared": {},
   "S1_class_axis": {
     "source": "schema/class-axis.json",
     "axis_version": "v2.1",
@@ -65,7 +83,7 @@
       "M1": "measured",
       "M2": "n/a",
       "M3": "n/a",
-      "M4": "uncompared"
+      "M4": "measured"
     },
     "note": "The per-class status this lane claims. `measured` classes have real cells in S1_detection; `n/a` classes have cells with n_na = N_TARGET_PER_CLASS; `uncompared` classes have NO cell and are listed in S1_declared_uncompared. A reader must be able to tell an unmeasured gap from a measured capability limit."
   },
@@ -105,9 +123,9 @@
   "S12_sanitizer_supplement": {
     "M1": {
       "flagged_and_exercised": 37,
-      "total": 72,
+      "total": 64,
       "flagged": 37,
-      "exercised": 72,
+      "exercised": 64,
       "not_instrumented": 0,
       "rejected_before_run": 0,
       "misses": {
@@ -163,6 +181,14 @@
         }
       },
       "miss_note": "each of these ran with real ASan coverage (instrumented > 0) and still produced no report: the injected defect corrupts the result WITHOUT any access leaving its allocation, so no memory checker can see it. This residue \u2014 not the flagged count \u2014 is what S12 measures."
+    },
+    "M4": {
+      "flagged_and_exercised": 0,
+      "total": 8,
+      "flagged": 0,
+      "exercised": 8,
+      "not_instrumented": 0,
+      "rejected_before_run": 0
     },
     "M2": {
       "flagged_and_exercised": 0,

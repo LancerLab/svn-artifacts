@@ -1506,6 +1506,11 @@ def family_instances(family: str) -> list[str]:
     if T is None:
         return []
     g = gid(family.replace("-", "."), "instances")
+    if T.is_absent(family):
+        # A family declared `prohibition: absent` has no prohibition and no
+        # realisation, so no lane carries an instance requirement for it. It
+        # is not "0 of 8": it is out of every cell (M4-g).
+        return []
     cls = T._FAM[family]["class"]
     n = T.N_PER_FAMILY
     bad: list[str] = []
@@ -1563,7 +1568,10 @@ def class_instances(cls: str) -> list[str]:
         return []
     g = gid(cls, "instances")
     fams = T.families_of(cls)
-    cell = len(fams) * T.N_PER_FAMILY
+    # An absent family is declared, not work: it carries no instance
+    # requirement and is not in the cell (M4-g).
+    live = [f for f in fams if not T.is_absent(f)]
+    cell = len(live) * T.N_PER_FAMILY
     bad: list[str] = []
     seen = False
     for lane, man in _lane_manifests():
@@ -1573,9 +1581,14 @@ def class_instances(cls: str) -> list[str]:
             continue
         seen = True
         depth = _lane_depth(man)
-        s = sum(depth.get(f, 0) for f in fams)
+        s = sum(depth.get(f, 0) for f in live)
+        # Attribute by the row's spec_id, not its stamped `class`: a re-homed
+        # spec (M1.6 -> M4-d) carries its new family even where the writer still
+        # stamps the old class. An absent family owns no row in this cell.
+        live_set = set(live)
         emitted = sum(1 for r in man.get("mutants") or []
-                      if r.get("class") == cls and not r.get("attribution_only"))
+                      if not r.get("attribution_only")
+                      and T.family_of(r.get("spec_id", "")) in live_set)
         if s != emitted:
             bad.append(
                 f"{g} {lane}: the {cls} families hold {s} instances but "
@@ -1586,7 +1599,7 @@ def class_instances(cls: str) -> list[str]:
         if declared != cell:
             bad.append(
                 f"{g} the budget declares the {cls} cell as {declared} but "
-                f"{len(fams)} families x {T.N_PER_FAMILY} = {cell}.")
+                f"{len(live)} families x {T.N_PER_FAMILY} = {cell}.")
     if not seen:
         bad.append(f"{g} no lane that runs {cls} has an emitted corpus, so "
                    f"this cell was never looked at. Expected at least one of "

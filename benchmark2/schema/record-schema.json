@@ -86,7 +86,8 @@
         ],
         "manifest": [
           "corrupts",
-          "noop"
+          "noop",
+          "undecidable"
         ],
         "path_class": [
           "rt-check",

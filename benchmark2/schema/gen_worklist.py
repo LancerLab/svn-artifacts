@@ -472,6 +472,12 @@ for cls in CLASSES:
                 # are unknown here, not zero; do not fall through to the scope
                 # model and report a shortfall the data cannot support.
                 state = "no-data(%s)" % src_rel
+            elif T.is_absent(f):
+                # A family the model declares with no prohibition anywhere
+                # (M4-g): nothing can forbid the state, so no instance can
+                # exist in ANY lane. It leaves the class cell (the M4 cell is
+                # 6 x 8, not 7 x 8) and must not be read as assignable work.
+                state = "carved-out(absent)"
             elif LANE_SCOPE.get(lane, {}).get(f):
                 # A stated scope exclusion is a property of the CELL, so it
                 # outranks a class-wide attribution defect.

@@ -93,12 +93,14 @@
       "obligation_type": "LoopBound",
       "specs_doc": "specs/mutation-specs-v2.md 9.1",
       "measured_by": [
-        "choreo"
+        "choreo",
+        "triton",
+        "mlir-low"
       ],
-      "spec_ids": "M4.1-M4.5",
+      "spec_ids": "M4.1-M4.6, M1.6 (M4-d), M1.7 (M4-e); M4.7-M4.8 withdrawn (M4-g absent)",
       "role": "control",
-      "comparison": "host-only",
-      "note": "M4 is the COST-FILTER CONTROL, not a point in the detection ranking. LoopBound is the one obligation family already emitted at ENTRY cost, so it has no alternative explanation for a miss: a missed M4 mutant is a genuine unsoundness, and a caught one calibrates the harness. M4.4 is a deliberate noop control (excluded from the denominator); counting it as admissible means the oracle regressed. Because it is a host-side control it is measured on choreo alone -- every compared SOTA lane is `uncompared`, NOT `n/a`."
+      "comparison": "program-authored loops only (choreo, triton, mlir-low)",
+      "note": "M4 is the COST-FILTER CONTROL: it routes the iteration-validity obligation (a zero, negative, runtime-zero or reversed bound; a zero step; an empty iteration space), so it stays OUT of the detection ranking (role: control). M4.4 is a deliberate noop control (excluded from the admissible denominator); counting it as admissible means the oracle regressed. Measured on the three lanes whose programs AUTHOR a loop bound (choreo `parallelby`/`with-in`, triton `range`, mlir-low `affine.for`/`scf.for`). Decision 2026-09-23: linalg and iree are DROPPED from M4 -- a `linalg.generic`'s iteration bound is derived from the operand domain by the compiler, not authored by the program, so the detection families (zero/negative/reversed bound, zero step) have no program value to corrupt; the prohibition is `derived`. They hold M4 at `uncompared` (the lane was never run against it) and emit no cell. M4-g (degenerate pad) is withdrawn -- `prohibition: absent` -- so the class cell is 6x8=48, not 56."
     }
   ],
   "not_classes": [
@@ -206,7 +208,7 @@
         "M1": "measured",
         "M2": "n/a",
         "M3": "measured",
-        "M4": "uncompared"
+        "M4": "measured"
       },
       "stats_key": "S1_detection_matrix",
       "stats_paths": [
@@ -277,7 +279,7 @@
         "M1": "measured",
         "M2": "n/a",
         "M3": "n/a",
-        "M4": "uncompared"
+        "M4": "measured"
       },
       "stats_key": "S1_detection",
       "stats_paths": [
@@ -397,6 +399,6 @@
     "shape": "{classes: [<class id>...], reason: <str>, note: <str>}",
     "note": "Every lane writes this key alongside its S1 block, listing the classes it was never run against, so a class missing from S1 is a STATED scope decision rather than a missing loop iteration. An empty object means the lane has no uncompared class. schema/check_class_axis.py asserts classes[] equals the axis's uncompared set for that lane."
   },
-  "uncompared_reason": "LoopBound control class: measured on choreo alone, because it exists to test whether the `never` residue is explained by the -rtc cost filter rather than to rank one toolchain against another. No compared toolchain has been run against M4, so this lane emits NO cell for it -- a missing cell is not an `n/a` cell (`n/a` is a measured verdict). See schema/class-axis.json `status_meaning` and render.py.",
+  "uncompared_reason": "A class this lane was never run against. It emits NO cell -- a missing cell is not an `n/a` cell (`n/a` is a measured verdict), so the two must never read alike. M4 is `uncompared` on mlir-linalg and iree since 2026-09-23 (decision: dropped, not measured -- a `linalg.generic` iteration bound is compiler-derived from the operand domain, so the program authors no bound to corrupt; the prohibition is `derived`). It is measured on the program-authored-loop lanes choreo, triton and mlir-low. See schema/class-axis.json `status_meaning` and render.py.",
   "NON_ADDITIVE_v1_1": "v1.1 frozen records with class == \"L\" must be remapped to \"M3\" (M3.17-M3.26). The committed E1 baseline (results/choreo/mutant.jsonl, 120 records) is M1/M2/M3 only and needs no remap."
 }
