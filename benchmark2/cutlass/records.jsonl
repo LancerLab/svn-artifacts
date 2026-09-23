@@ -1,0 +1,23 @@
+{"spec_id": "M4.1", "category": "elemwise_add", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=129926 vs base n=129926"}
+{"spec_id": "M4.1", "category": "softmax", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=65472 vs base n=65472"}
+{"spec_id": "M4.1", "category": "layer_normalization", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=151493 vs base n=151493"}
+{"spec_id": "M4.1", "category": "matmul", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=4096 vs base n=4096"}
+{"spec_id": "M4.1", "category": "conv2d", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=3872 vs base n=3872"}
+{"spec_id": "M4.1", "category": "max_pool2d", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=784 vs base n=784"}
+{"spec_id": "M4.1", "category": "batch_norm", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=7488 vs base n=7488"}
+{"spec_id": "M4.1", "category": "relu", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=129926 vs base n=129926"}
+{"spec_id": "M4.1", "category": "sigmoid", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=129926 vs base n=129926"}
+{"spec_id": "M4.1", "category": "gelu", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=129921 vs base n=129921"}
+{"spec_id": "M4.1", "category": "reshape", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=129926 vs base n=129926"}
+{"spec_id": "M4.1", "category": "transpose", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=8255 vs base n=8255"}
+{"spec_id": "M4.1", "category": "concat", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=1100 vs base n=1100"}
+{"spec_id": "M4.1", "category": "embedding", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=4736 vs base n=4736"}
+{"spec_id": "M4.1", "category": "reduce_mean", "mutation": {"LOOP": 0}, "outcome": "unchecked", "detail": "n=16 vs base n=16"}
+{"spec_id": "M4.3", "category": "elemwise_add", "mutation": {"CUT_LOOP_RT": "0"}, "outcome": "unchecked", "detail": "n=129926 vs base n=129926"}
+{"spec_id": "M4.3", "category": "softmax", "mutation": {"CUT_LOOP_RT": "0"}, "outcome": "unchecked", "detail": "n=65472 vs base n=65472"}
+{"spec_id": "M4.3", "category": "layer_normalization", "mutation": {"CUT_LOOP_RT": "0"}, "outcome": "unchecked", "detail": "n=151493 vs base n=151493"}
+{"spec_id": "M4.3", "category": "matmul", "mutation": {"CUT_LOOP_RT": "0"}, "outcome": "unchecked", "detail": "n=4096 vs base n=4096"}
+{"spec_id": "M4.5", "category": "matmul", "mutation": {"STEP": 0}, "outcome": "unchecked", "detail": "n=4096 vs base n=4096"}
+{"spec_id": "M4.5", "category": "conv2d", "mutation": {"STEP": 0}, "outcome": "unchecked", "detail": "n=3872 vs base n=3872"}
+{"spec_id": "L1", "category": "elemwise_add", "mutation": {"SMEM_ELT": 32768}, "outcome": "rt-check", "detail": "CUDA error: invalid argument\\n"}
+{"spec_id": "L1", "category": "matmul", "mutation": {"SMEM_ELT": 32768}, "outcome": "noop", "detail": ""}
