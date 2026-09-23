@@ -82,8 +82,11 @@ def build(cat, shape, mut, outbin):
     return p.returncode, p.stderr
 
 
-def run_bin(binpath, outpath):
-    p = subprocess.run([binpath, outpath], capture_output=True, text=True)
+def run_bin(binpath, outpath, env=None):
+    e = dict(os.environ)
+    if env:
+        e.update(env)
+    p = subprocess.run([binpath, outpath], capture_output=True, text=True, env=e)
     return p.returncode, p.stderr
 
 
@@ -127,41 +130,50 @@ def base_pass(outdir):
 
 # --- realizable mutation battery (vertical slice) -------------------------
 # Descriptor/TMA/atom specs are type-level; see probes.py.
+# Each entry: (spec_id, category, compile_macros, runtime_env)
 BATTERY = [
-    ("M4.1", "elemwise_add", {"LOOP": 0}),
-    ("M4.1", "softmax", {"LOOP": 0}),
-    ("M4.1", "layer_normalization", {"LOOP": 0}),
-    ("M4.1", "matmul", {"LOOP": 0}),
-    ("M4.1", "conv2d", {"LOOP": 0}),
-    ("M4.1", "max_pool2d", {"LOOP": 0}),
-    ("M4.1", "batch_norm", {"LOOP": 0}),
-    ("M4.5", "matmul", {"STEP": 0}),
-    ("M4.5", "conv2d", {"STEP": 0}),
-    ("L1", "elemwise_add", {"SMEM_ELT": 32768}),
-    ("L1", "matmul", {"SMEM_ELT": 32768}),
+    ("M4.1", "elemwise_add", {"LOOP": 0}, None),
+    ("M4.1", "softmax", {"LOOP": 0}, None),
+    ("M4.1", "layer_normalization", {"LOOP": 0}, None),
+    ("M4.1", "matmul", {"LOOP": 0}, None),
+    ("M4.1", "conv2d", {"LOOP": 0}, None),
+    ("M4.1", "max_pool2d", {"LOOP": 0}, None),
+    ("M4.1", "batch_norm", {"LOOP": 0}, None),
+    ("M4.3", "elemwise_add", {}, {"CUT_LOOP_RT": "0"}),
+    ("M4.3", "softmax", {}, {"CUT_LOOP_RT": "0"}),
+    ("M4.3", "layer_normalization", {}, {"CUT_LOOP_RT": "0"}),
+    ("M4.3", "matmul", {}, {"CUT_LOOP_RT": "0"}),
+    ("M4.5", "matmul", {"STEP": 0}, None),
+    ("M4.5", "conv2d", {"STEP": 0}, None),
+    ("L1", "elemwise_add", {"SMEM_ELT": 32768}, None),
+    ("L1", "matmul", {"SMEM_ELT": 32768}, None),
 ]
 
 
 def mutants_pass(base, outdir, records_path):
     recs = []
-    for spec_id, cat, mut in BATTERY:
+    for spec_id, cat, mut, env in BATTERY:
         shape = base[cat]["shape"]
         tag = f"{cat}.{spec_id.replace('.', '_')}." + \
-              "_".join(f"{k}{v}" for k, v in sorted(mut.items()))
+              "_".join(f"{k}{v}" for k, v in sorted((mut or {}).items()))
+        if env:
+            tag += "." + "_".join(f"{k}{v}" for k, v in sorted(env.items()))
         binp = os.path.join(outdir, tag)
         outp = os.path.join(outdir, tag + ".bin")
         rc, err = build(cat, shape, mut, binp)
         if rc != 0:
-            r = record(spec_id, cat, mut, "ct-check", err.strip().split("\n")[-1])
+            r = record(spec_id, cat, dict(mut or {}, **(env or {})),
+                       "ct-check", err.strip().split("\n")[-1])
         else:
-            rc2, err2 = run_bin(binp, outp)
+            rc2, err2 = run_bin(binp, outp, env)
             if rc2 != 0:
-                r = record(spec_id, cat, mut, "rt-check", err2.strip()[-200:])
+                r = record(spec_id, cat, dict(mut or {}, **(env or {})),
+                           "rt-check", err2.strip()[-200:])
             elif not os.path.exists(outp) or sha(outp) == base[cat]["sha"]:
-                r = record(spec_id, cat, mut, "noop")
+                r = record(spec_id, cat, dict(mut or {}, **(env or {})), "noop")
             else:
                 got = R.read_bin(outp)
-                r = record(spec_id, cat, mut, "unchecked",
+                r = record(spec_id, cat, dict(mut or {}, **(env or {})), "unchecked",
                            f"n={got.size} vs base n={int(os.path.getsize(base[cat]['out']) // 4)}")
         recs.append(r)
         print(f"[mut] {spec_id:6s} {cat:22s} -> {r['outcome']:9s} {r['detail']}")

@@ -16,14 +16,14 @@ using namespace cute;
 #endif
 
 __global__ void k_matmul(const float* __restrict__ A, const float* __restrict__ B,
-                         float* __restrict__ C, int M, int N, int K) {
+                         float* __restrict__ C, int M, int N, int K, int rt) {
   extern __shared__ __align__(SALIGN * 4) float smem[];
   float* sA = smem;                 // BM*BK
   float* sB = smem + BM * BK;       // BK*BN
   const int row = blockIdx.y * BM;
   const int col = blockIdx.x * BN;
   const int nk = (K + BK - 1) / BK;
-  const int nl = (LOOP < 0) ? nk : LOOP;
+  const int nl = (LOOP < 0) ? ((rt >= 0) ? rt : nk) : LOOP;
   float acc = 0.f;
   for (int it = 0; it < nl; ++it) {
     const int k0 = it * STEP * BK;
@@ -64,7 +64,8 @@ int main(int argc, char** argv) {
   dim3 threads(16, 16);
   dim3 grid((N + BN - 1) / BN, (M + BM - 1) / BM);
   const size_t smem = (size_t)(BM * BK + BK * BN) * 4;
-  k_matmul<<<grid, threads, smem>>>(A, B, C, M, N, K);
+  const int rt = cut_env_int("CUT_LOOP_RT", -1);
+  k_matmul<<<grid, threads, smem>>>(A, B, C, M, N, K, rt);
   CUT_CHECK(cudaGetLastError());
   CUT_CHECK(cudaDeviceSynchronize());
   if (cut_dump(out, C, (size_t)M * N * sizeof(float))) return 3;

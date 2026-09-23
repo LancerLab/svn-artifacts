@@ -88,11 +88,18 @@ deferred to a post-deadline extension.
 - **Realizable mutation battery** (`lane.py`):
   - `M4.1` zero-trip loop (`-DLOOP=0`) → **`unchecked`** on all 7 operators
     (silent corruption; no diagnostic) — a strong M4 data point.
+  - `M4.3` runtime-zero bound (`CUT_LOOP_RT=0`, bound well-formed at compile
+    time) → **`unchecked`** on `elemwise_add`, `softmax`,
+    `layer_normalization`, `matmul`. The runtime argument is passed to the
+    kernel, so the compiler cannot fold it away.
   - `M4.5` zero K-tile stride (`-DSTEP=0`) → **`unchecked`** on `matmul`,
     `conv2d`.
   - `L1` dynamic shared over cap (`-DSMEM_ELT=32768`, 128 KB) →
     **`rt-check`** (`CUDA error: invalid argument`) on `elemwise_add`; `noop`
     on `matmul` (that kernel sizes smem from its tiles, so the knob is inert).
+  - `M4.2` (parallelby 0/negative) overlaps the loop-extent knob; the negative
+    variant is not representable here. `M4.4` is a harness **noop control**
+    (exercised by the `noop` outcome above), excluded from the denominator.
 - **Compile-only M3 probe battery** (`probes.py` + `kernels/probe_m3.cu`),
   12 control/mutant pairs compiled with `nvcc -c` (TMA/GMMA/vector pairs target
   `sm_90a`, the static-smem pair `sm_86`; never linked or run):
@@ -126,7 +133,7 @@ deferred to a post-deadline extension.
   (bit-exact `fill` + refs + tolerance gate), `collect.py` (spec-§8-shaped
   `stats.json`, merges both record streams), `run.sh`
   (setup/minimal/e2/e3/collect/stats/all). `results/cutlass/stats.json`:
-  M3 = 12 injected / 3 ct-check / 9 unchecked; M4 = 9 unchecked;
+  M3 = 12 injected / 3 ct-check / 9 unchecked; M4 = 13 unchecked;
   L = 1 rt-check / 1 noop. Flagged `lane_phase: vertical-slice`,
   `complete: false`.
 

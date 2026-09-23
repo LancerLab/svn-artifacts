@@ -8,12 +8,15 @@
 //
 // Mutation knobs are compile-time macros with safe defaults (see lane.py):
 //   TILE      elements per block-tile              (M3/M4 shape)
-//   LOOP      tile-loop trip count                 (M4)
+//   LOOP      tile-loop trip count                 (M4; -1 => full)
 //   STEP      tile-loop stride                     (M4)
 //   VEC       copy vector width in elements        (M3.6)
 //   SALIGN    shared base alignment in elements    (M3.6/M3.11)
 //   SMEM_ELT  dynamic shared bytes (elements)      (M3/L1)
 //   ATOM_*    MMA atom geometry                    (M3.1)
+//
+// Runtime knob (M4.3): env CUT_LOOP_RT >= 0 overrides the loop bound on the
+// host; it is passed to the kernel as `rt`. Base runs leave it unset (-1).
 #pragma once
 #include <cuda_runtime.h>
 #include <cstdio>

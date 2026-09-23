@@ -14,14 +14,14 @@ __device__ void blk_sum(float* s) {
 __global__ void k_layernorm(const float* __restrict__ A,
                             const float* __restrict__ G,
                             const float* __restrict__ B,
-                            float* __restrict__ C, long rows, long cols) {
+                            float* __restrict__ C, long rows, long cols, int rt) {
   extern __shared__ __align__(SALIGN * 4) float smem[];
   float* red = smem;
   const long r = blockIdx.x;
   const float* a = A + r * cols;
   float* c = C + r * cols;
   const int nchunks = (int)((cols + TILE - 1) / TILE);
-  const int nl = (LOOP < 0) ? nchunks : LOOP;
+  const int nl = (LOOP < 0) ? ((rt >= 0) ? rt : nchunks) : LOOP;
   const float eps = 1e-5f;
 
   float s = 0.f;
@@ -63,7 +63,8 @@ int main(int argc, char** argv) {
   cut_fill(B, cols, 333u);
   for (long i = 0; i < rows * cols; ++i) C[i] = 0.f;
   const int threads = 256;
-  k_layernorm<<<(unsigned)rows, threads, (size_t)threads * 4>>>(A, G, B, C, rows, cols);
+  const int rt = cut_env_int("CUT_LOOP_RT", -1);
+  k_layernorm<<<(unsigned)rows, threads, (size_t)threads * 4>>>(A, G, B, C, rows, cols, rt);
   CUT_CHECK(cudaGetLastError());
   CUT_CHECK(cudaDeviceSynchronize());
   if (cut_dump(out, C, rows * cols * sizeof(float))) return 3;

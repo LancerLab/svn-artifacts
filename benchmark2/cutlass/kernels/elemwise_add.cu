@@ -6,12 +6,12 @@ using namespace cute;
 
 __global__ void k_ele_add(const float* __restrict__ A,
                           const float* __restrict__ B,
-                          float* __restrict__ C, long n) {
+                          float* __restrict__ C, long n, int rt) {
   extern __shared__ __align__(SALIGN * 4) float smem[];
   float* sA = smem;
   float* sB = smem + TILE;
   const long stride = (long)TILE * (long)gridDim.x;
-  const int nl = (LOOP < 0) ? 1 : LOOP;
+  const int nl = (LOOP < 0) ? ((rt >= 0) ? rt : 1) : LOOP;
   for (int it = 0; it < nl; ++it) {
     const long off = (long)blockIdx.x * TILE + (long)it * STEP * stride;
     const long cnt = (n - off < TILE) ? (n - off) : TILE;
@@ -47,7 +47,8 @@ int main(int argc, char** argv) {
   const int threads = 256;
   const long grid = (n + (long)TILE - 1) / (long)TILE;
   const size_t smem = (size_t)((2 * TILE > SMEM_ELT) ? 2 * TILE : SMEM_ELT) * 4;
-  k_ele_add<<<(unsigned)grid, threads, smem>>>(A, B, C, n);
+  const int rt = cut_env_int("CUT_LOOP_RT", -1);
+  k_ele_add<<<(unsigned)grid, threads, smem>>>(A, B, C, n, rt);
   CUT_CHECK(cudaGetLastError());   // launch-config rejection (L class)
   CUT_CHECK(cudaDeviceSynchronize());
   if (cut_dump(out, C, n * sizeof(float))) return 3;

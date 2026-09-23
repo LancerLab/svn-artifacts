@@ -21,14 +21,14 @@ __device__ void blk_reduce_sum(float* s) {
 }
 
 __global__ void k_softmax(const float* __restrict__ A, float* __restrict__ C,
-                          long rows, long cols) {
+                          long rows, long cols, int rt) {
   extern __shared__ __align__(SALIGN * 4) float smem[];
   float* red = smem;                                  // blockDim.x floats
   const long r = blockIdx.x;
   const float* a = A + r * cols;
   float* c = C + r * cols;
   const int nchunks = (int)((cols + TILE - 1) / TILE);
-  const int nl = (LOOP < 0) ? nchunks : LOOP;
+  const int nl = (LOOP < 0) ? ((rt >= 0) ? rt : nchunks) : LOOP;
 
   float m = -INFINITY;
   for (int it = 0; it < nl; ++it) {
@@ -67,7 +67,8 @@ int main(int argc, char** argv) {
   for (long i = 0; i < rows * cols; ++i) C[i] = 0.f;
   const int threads = 256;
   const size_t smem = (size_t)threads * 4;
-  k_softmax<<<(unsigned)rows, threads, smem>>>(A, C, rows, cols);
+  const int rt = cut_env_int("CUT_LOOP_RT", -1);
+  k_softmax<<<(unsigned)rows, threads, smem>>>(A, C, rows, cols, rt);
   CUT_CHECK(cudaGetLastError());
   CUT_CHECK(cudaDeviceSynchronize());
   if (cut_dump(out, C, rows * cols * sizeof(float))) return 3;
