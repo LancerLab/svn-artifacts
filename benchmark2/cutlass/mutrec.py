@@ -91,11 +91,17 @@ M1_PAPER = {
 }
 
 
+# M1.6/M1.7 were re-homed to M4 (families M4-d/M4-e, see method_taxonomy):
+# they are realisations of the iteration-validity class, so their records must
+# carry class M4, not the prefix's M1.
+REHOMED_TO_M4 = {"M1.6", "M1.7"}
+
+
 def class_of(spec_id):
     """The mutation class of a spec id. `L` is a path class of M3, not a class
     of its own: a launch-status defect is an M3 (hardware-constraint) defect
     whose path class happens to be `L`."""
-    if spec_id.startswith("M4"):
+    if spec_id.startswith("M4") or spec_id in REHOMED_TO_M4:
         return "M4"
     if spec_id.startswith("M3") or spec_id.startswith("L"):
         return "M3"
@@ -109,6 +115,8 @@ def class_of(spec_id):
 def paper_category(spec_id):
     if spec_id in PAPER_CATEGORY:
         return PAPER_CATEGORY[spec_id]
+    if spec_id in REHOMED_TO_M4:
+        return M4_PAPER
     if spec_id in M1_PAPER:
         return M1_PAPER[spec_id]
     if spec_id.startswith("M4"):

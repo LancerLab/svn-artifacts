@@ -16,17 +16,23 @@ __global__ void k_layernorm(const float* __restrict__ A,
                             const float* __restrict__ B,
                             float* __restrict__ C, long rows, long cols, int rt) {
   extern __shared__ __align__(SALIGN * 4) float smem[];
+  cut_empty_probe();
+  cut_zstride_probe();
+  __shared__ float cut_pad_scratch[512];
+  cut_pad_probe<PADEXT>(cut_pad_scratch);
   float* red = smem;
   const long r = blockIdx.x;
   const float* a = A + r * cols;
   float* c = C + r * cols;
   const int nchunks = (int)((cols + TILE - 1) / TILE);
-  const int nl = (LOOP < 0) ? ((rt >= 0) ? rt : nchunks) : LOOP;
+  int nl = (LOOP == -1) ? ((rt >= 0) ? rt : nchunks) : LOOP;
+  if (NBOUND) nl = -1 - nl;   // M4.6 negative bound
+  if (REVB) nl = nl + 1;      // M1.7 reversed bound
   const float eps = 1e-5f;
 
   float s = 0.f;
   for (int it = 0; it < nl; ++it) {
-    const long off = (long)it * TILE;
+    const long off = (long)it * STEP * TILE;
     for (long k = off + threadIdx.x; k < off + TILE && k < cols; k += blockDim.x)
       s += a[k];
   }
@@ -35,7 +41,7 @@ __global__ void k_layernorm(const float* __restrict__ A,
 
   float v = 0.f;
   for (int it = 0; it < nl; ++it) {
-    const long off = (long)it * TILE;
+    const long off = (long)it * STEP * TILE;
     for (long k = off + threadIdx.x; k < off + TILE && k < cols; k += blockDim.x) {
       const float d = a[k] - mean; v += d * d;
     }
@@ -44,7 +50,7 @@ __global__ void k_layernorm(const float* __restrict__ A,
   const float inv = rsqrtf(v / (float)cols + eps);
 
   for (int it = 0; it < nl; ++it) {
-    const long off = (long)it * TILE;
+    const long off = (long)it * STEP * TILE;
     for (long k = off + threadIdx.x; k < off + TILE && k < cols; k += blockDim.x)
       c[k] = (a[k] - mean) * inv * G[k] + B[k];
   }
@@ -64,7 +70,8 @@ int main(int argc, char** argv) {
   for (long i = 0; i < rows * cols; ++i) C[i] = 0.f;
   const int threads = 256;
   const int rt = cut_env_int("CUT_LOOP_RT", -1);
-  k_layernorm<<<(unsigned)rows, threads, (size_t)threads * 4>>>(A, G, B, C, rows, cols, rt);
+  const long nrow = (PBOUND >= 0) ? (long)PBOUND : rows;   // M4.2
+  k_layernorm<<<(unsigned)nrow, threads, (size_t)threads * 4>>>(A, G, B, C, rows, cols, rt);
   CUT_CHECK(cudaGetLastError());
   CUT_CHECK(cudaDeviceSynchronize());
   if (cut_dump(out, C, rows * cols * sizeof(float))) return 3;

@@ -163,78 +163,105 @@ def classify_record(spec_id, cat, mut, outcome, detail, kernel_hash,
     raise ValueError(f"unknown outcome {outcome!r}")
 
 
-def base_pass(outdir):
-    """Build+gate every operator; return {cat: {"bin","out","shape"}}."""
+def base_pass(outdir, grid="small"):
+    """Build+gate every operator at `grid`; return {(cat,grid): {...}}.
+
+    `N = 8` is `4 kernels x 2 realisations` (HANDOFF §2), so a base output is
+    required per realisation, not just per operator: the M4 oracle compares a
+    mutant against the *same-extent* base for the noop decision.
+    """
     os.makedirs(outdir, exist_ok=True)
     base = {}
     for cat in OPS:
-        shape = sizes.shape(cat)
-        binp = os.path.join(outdir, f"{cat}.base")
-        outp = os.path.join(outdir, f"{cat}.base.bin")
+        shape = sizes.shape(cat, grid)
+        binp = os.path.join(outdir, f"{cat}.{grid}.base")
+        outp = os.path.join(outdir, f"{cat}.{grid}.base.bin")
         rc, err = build(cat, shape, {}, binp)
         if rc != 0:
-            raise RuntimeError(f"[{cat}] base compile failed:\n{err[-2000:]}")
+            raise RuntimeError(f"[{cat}/{grid}] base compile failed:\n{err[-2000:]}")
         rc, err = run_bin(binp, outp)
         if rc != 0:
-            raise RuntimeError(f"[{cat}] base run failed rc={rc}:\n{err[-2000:]}")
+            raise RuntimeError(f"[{cat}/{grid}] base run failed rc={rc}:\n{err[-2000:]}")
         got = R.read_bin(outp)
         ref = R.reference(cat, shape, R.inputs(cat, shape))
         ok, mad, mrd = R.gate(cat, got, ref)
         if not ok:
-            raise RuntimeError(f"[{cat}] base GATE failed max_abs={mad:.3e}")
-        base[cat] = {"bin": binp, "out": outp, "shape": shape,
-                     "sha": sha(outp), "max_abs": mad}
-        print(f"[base] {cat:22s} OK  n={got.size:7d}  max_abs={mad:.2e}")
+            raise RuntimeError(f"[{cat}/{grid}] base GATE failed max_abs={mad:.3e}")
+        base[(cat, grid)] = {"bin": binp, "out": outp, "shape": shape,
+                             "sha": sha(outp), "max_abs": mad}
+        print(f"[base] {cat:22s}/{grid:5s} OK  n={got.size:7d}  max_abs={mad:.2e}")
     return base
 
 
 # --- realizable mutation battery (vertical slice) -------------------------
 # Descriptor/TMA/atom specs are type-level; see probes.py.
-# Each entry: (spec_id, category, compile_macros, runtime_env)
-BATTERY = [
-    ("M4.1", "elemwise_add", {"LOOP": 0}, None),
-    ("M4.1", "softmax", {"LOOP": 0}, None),
-    ("M4.1", "layer_normalization", {"LOOP": 0}, None),
-    ("M4.1", "matmul", {"LOOP": 0}, None),
-    ("M4.1", "conv2d", {"LOOP": 0}, None),
-    ("M4.1", "max_pool2d", {"LOOP": 0}, None),
-    ("M4.1", "batch_norm", {"LOOP": 0}, None),
-    ("M4.1", "relu", {"LOOP": 0}, None),
-    ("M4.1", "sigmoid", {"LOOP": 0}, None),
-    ("M4.1", "gelu", {"LOOP": 0}, None),
-    ("M4.1", "reshape", {"LOOP": 0}, None),
-    ("M4.1", "transpose", {"LOOP": 0}, None),
-    ("M4.1", "concat", {"LOOP": 0}, None),
-    ("M4.1", "embedding", {"LOOP": 0}, None),
-    ("M4.1", "reduce_mean", {"LOOP": 0}, None),
-    ("M4.3", "elemwise_add", {}, {"CUT_LOOP_RT": "0"}),
-    ("M4.3", "softmax", {}, {"CUT_LOOP_RT": "0"}),
-    ("M4.3", "layer_normalization", {}, {"CUT_LOOP_RT": "0"}),
-    ("M4.3", "matmul", {}, {"CUT_LOOP_RT": "0"}),
-    ("M4.5", "matmul", {"STEP": 0}, None),
-    ("M4.5", "conv2d", {"STEP": 0}, None),
-    ("L1", "elemwise_add", {"SMEM_ELT": 32768}, None),
-    ("L1", "matmul", {"SMEM_ELT": 32768}, None),
-]
+# Each entry: (spec_id, category, compile_macros, runtime_env, grid)
+#
+# Granularity is `N = 8 = 4 kernels x 2 realisations` (HANDOFF §2). The four
+# kernels are the spec-required operator set (`M4_OPS`); the two realisations
+# are the `small` and `alt` extent grids (sizes.py) -- the same program at
+# different extents, as the budget requires.
+M4_KERNELS = M4_OPS
+GRIDS = ("small", "alt")
+BATTERY = []
+
+
+def _add(spec, kernels, mut, env, grid):
+    for cat in kernels:
+        BATTERY.append((spec, cat, mut, env, grid))
+
+
+# M4-a zero bound: M4.1 (with-in dim -> 0) and M4.2 (parallelby bound -> 0),
+# one realisation each on all four kernels -> 4 + 4 = 8.
+_add("M4.1", M4_KERNELS, {"LOOP": 0}, None, "small")
+_add("M4.2", M4_KERNELS, {"PBOUND": 0}, None, "small")
+# M4-b negative bound: M4.6, both extent realisations -> 4 x 2 = 8.
+for _g in GRIDS:
+    _add("M4.6", M4_KERNELS, {"NBOUND": 1}, None, _g)
+# M4-c runtime-zero bound: M4.3, both extent realisations -> 4 x 2 = 8.
+for _g in GRIDS:
+    _add("M4.3", M4_KERNELS, {}, {"CUT_LOOP_RT": "0"}, _g)
+# M4-d empty/neutral controls: M4.4 (empty space) and M1.6 (stride-0 over an
+# empty range), one realisation each on all four kernels -> 4 + 4 = 8. Both are
+# no-ops by construction: a correct oracle records `noop` (path avoided).
+_add("M4.4", M4_KERNELS, {"EMPTY": 1}, None, "small")
+_add("M1.6", M4_KERNELS, {"ZSTRIDE": 1}, None, "small")
+# M4-e reversed bound (M1.7 re-homed to M4), both extents -> 4 x 2 = 8.
+for _g in GRIDS:
+    _add("M1.7", M4_KERNELS, {"REVB": 1}, None, _g)
+# M4-f zero step: M4.5, both extent realisations -> 4 x 2 = 8.
+for _g in GRIDS:
+    _add("M4.5", M4_KERNELS, {"STEP": 0}, None, _g)
+# M4-g degenerate pad (mutation-only category on all four kernels): M4.7
+# negative padded extent, M4.8 empty padded extent -> 4 + 4 = 8.
+_add("M4.7", M4_KERNELS, {"PADEXT": -2}, None, "small")
+_add("M4.8", M4_KERNELS, {"PADEXT": 0}, None, "small")
+# L: launch-status path class (observed, not detained).
+_add("L1", ["elemwise_add", "matmul"], {"SMEM_ELT": 32768}, None, "small")
 
 
 def mutants_pass(base, outdir, records_path):
     recs = []
     kh = {cat: src_hash(cat) for cat in SRC}
-    sh = {cat: settings_hash(cat, base[cat]["shape"]) for cat in SRC}
-    for spec_id, cat, mut, env in BATTERY:
-        shape = base[cat]["shape"]
+    sh = {cat: settings_hash(cat, base[(cat, g)]["shape"])
+          for cat in SRC for g in GRIDS}
+    for spec_id, cat, mut, env, grid in BATTERY:
+        b = base[(cat, grid)]
+        shape = b["shape"]
         allmut = dict(mut or {}, **(env or {}))
         tag = f"{cat}.{spec_id.replace('.', '_')}." + \
               "_".join(f"{k}{v}" for k, v in sorted((mut or {}).items()))
         if env:
             tag += "." + "_".join(f"{k}{v}" for k, v in sorted(env.items()))
+        tag += f".{grid}"
+        allmut["grid"] = grid
+        shc = settings_hash(cat, shape)
         binp = os.path.join(outdir, tag)
         outp = os.path.join(outdir, tag + ".bin")
         rc, err = build(cat, shape, mut, binp)
         if rc != 0:
             r = classify_record(spec_id, cat, allmut, "ct-check",
-                                err.strip().split("\n")[-1], kh[cat], sh[cat])
+                                err.strip().split("\n")[-1], kh[cat], shc)
         else:
             rc2, err2 = run_bin(binp, outp, env)
             if rc2 != 0:
@@ -242,21 +269,21 @@ def mutants_pass(base, outdir, records_path):
                 # rt-check; any other non-zero exit is a bare crash -> never.
                 if "CUT_CHECK" in err2:
                     r = classify_record(spec_id, cat, allmut, "rt-check",
-                                        err2.strip()[-200:], kh[cat], sh[cat])
+                                        err2.strip()[-200:], kh[cat], shc)
                 else:
                     r = classify_record(spec_id, cat, allmut, "unchecked",
                                         "raw crash: " + err2.strip()[-180:],
-                                        kh[cat], sh[cat])
-            elif not os.path.exists(outp) or sha(outp) == base[cat]["sha"]:
+                                        kh[cat], shc)
+            elif not os.path.exists(outp) or sha(outp) == b["sha"]:
                 r = classify_record(spec_id, cat, allmut, "noop", "",
-                                    kh[cat], sh[cat])
+                                    kh[cat], shc)
             else:
                 got = R.read_bin(outp)
                 r = classify_record(spec_id, cat, allmut, "unchecked",
-                                    f"n={got.size} vs base n={int(os.path.getsize(base[cat]['out']) // 4)}",
-                                    kh[cat], sh[cat])
+                                    f"n={got.size} vs base n={int(os.path.getsize(b['out']) // 4)}",
+                                    kh[cat], shc)
         recs.append(r)
-        print(f"[mut] {spec_id:6s} {cat:22s} -> {r['outcome']:8s} "
+        print(f"[mut] {spec_id:6s} {cat:22s}/{grid:5s} -> {r['outcome']:8s} "
               f"{r['path_class']:9s} {r['detail']}")
     if records_path:
         with open(records_path, "w") as f:
@@ -274,12 +301,15 @@ def main():
     args = ap.parse_args()
 
     if args.cmd in ("base", "all"):
-        base_pass(args.out)
+        for g in GRIDS:
+            base_pass(args.out, g)
     if args.cmd in ("mutants", "all"):
         base = {}
         for cat in OPS:
-            outp = os.path.join(args.out, f"{cat}.base.bin")
-            base[cat] = {"out": outp, "shape": sizes.shape(cat), "sha": sha(outp)}
+            for g in GRIDS:
+                outp = os.path.join(args.out, f"{cat}.{g}.base.bin")
+                base[(cat, g)] = {"out": outp, "shape": sizes.shape(cat, g),
+                                  "sha": sha(outp)}
         mutants_pass(base, args.out, args.records)
     if args.cmd == "collect":
         import collect

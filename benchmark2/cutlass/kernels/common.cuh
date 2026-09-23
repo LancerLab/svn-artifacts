@@ -35,6 +35,24 @@
 #ifndef STEP
 #define STEP 1
 #endif
+#ifndef PBOUND
+#define PBOUND -1   // -1 => derive the parallel grid; >=0 => override (M4.2)
+#endif
+#ifndef REVB
+#define REVB 0      // 1 => reversed/overrunning bound: upper loop one past (M1.7)
+#endif
+#ifndef NBOUND
+#define NBOUND 0    // 1 => negative loop bound (M4.6)
+#endif
+#ifndef EMPTY
+#define EMPTY 0     // M4.4: bound>0 over an empty inner space (neutral control)
+#endif
+#ifndef ZSTRIDE
+#define ZSTRIDE 0   // M1.6: stride-0 traversal over an empty range (neutral)
+#endif
+#ifndef PADEXT
+#define PADEXT 4    // M4.7/M4.8: padded extent (0 => empty, <0 => negative)
+#endif
 #ifndef VEC
 #define VEC 4
 #endif
@@ -84,6 +102,36 @@ static inline void cut_fill(float* p, size_t n, uint32_t seed) {
     s = s * 1664525u + 1013904223u;
     p[i] = (float)((int32_t)(s >> 8) % 1000) / 1000.0f;
   }
+}
+
+// M4.4 / M1.6 neutral controls: a bound that is exercised over an empty
+// iteration space. Both are no-ops by construction, so a correct oracle must
+// record them as `noop` (path avoided); observing anything else is a bug in
+// the oracle, not in the kernel.
+__device__ __forceinline__ void cut_empty_probe() {
+  volatile int sink = 0;
+  for (int i = 0; i < EMPTY; ++i)
+    for (int j = 0; j < 0; ++j) sink += j;
+  (void)sink;
+}
+__device__ __forceinline__ void cut_zstride_probe() {
+  volatile long sink = 0;
+  for (long i = 0; i < ZSTRIDE; ++i) sink += i * 0;
+  (void)sink;
+}
+
+// M4.7/M4.8 mutation-only pad category: a padded smem<->smem copy whose
+// trailing extent is the compile-time `PADEXT`. PADEXT=0 is an empty padded
+// extent; PADEXT<0 is a negative one. The scratch region is never read, so
+// the probe cannot change the operator's output.
+template <int P>
+__device__ __forceinline__ void cut_pad_probe(float* scratch) {
+  auto l = cute::make_layout(
+      cute::make_shape(cute::Int<8>{}, cute::Int<P>{}),
+      cute::make_stride(cute::Int<8>{}, cute::Int<1>{}));
+  auto a = cute::make_tensor(cute::make_smem_ptr(scratch), l);
+  auto b = cute::make_tensor(cute::make_smem_ptr(scratch + 128), l);
+  cute::copy(a, b);
 }
 
 static inline int cut_env_int(const char* k, int dflt) {

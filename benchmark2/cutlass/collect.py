@@ -106,17 +106,25 @@ def main(records_path, out_dir):
         },
         "notes": [
             "vertical slice: launch-time M4/L battery + compile-only M3 probe battery",
-            "M4 outcomes are launch-time: M4.1 compile-time zero bound, M4.3 "
-            "runtime-zero bound (env CUT_LOOP_RT), M4.5 zero step; all `never` "
-            "(compiled, launched, output differs silently)",
-            "M4.1 zero-trip loop is applied to all 15 shape-bearing "
-            "categories; M4.3 (runtime-zero bound) to the four operators "
-            "whose kernels take a runtime loop argument",
-            "M4 specs not in this slice: M4.2 (parallel-by 0/negative) overlaps "
-            "the loop-extent knob and its negative variant is not representable; "
-            "M4.4 (harness noop control) is not run here",
-            "coverage extension: all 15 shape-bearing categories are gated and "
-            "carry an M4.1 cell; dma_rank5 carries no shape and is not gated",
+            "M4 is a CONFORMING 7-family battery of 56 instances (families "
+            "M4-a..M4-g x 4 kernels x 2 realisations): the kernels are the "
+            "spec-required M4_OPS (layer_normalization, softmax, matmul, "
+            "elemwise_add) and the two realisations are the small/alt extent "
+            "grids in sizes.py",
+            "M4-a: M4.1 (with-in dim -> 0, LOOP=0) + M4.2 (parallel-by -> 0, "
+            "PBOUND=0); M4-b: M4.6 negative bound (NBOUND); M4-c: M4.3 "
+            "runtime-zero bound (env CUT_LOOP_RT); M4-f: M4.5 zero step "
+            "(STEP=0) -- both extent realisations -> 8 each",
+            "M4-d: M4.4 (empty iteration space) + M1.6 (stride-0 over an empty "
+            "range) are neutral controls, no-op by construction (recorded "
+            "`n/a`); M4-e: M1.7 reversed/overrunning bound (REVB); M4-g: "
+            "M4.7/M4.8 degenerate padded extent, a mutation-only pad category "
+            "(PADEXT) on all four kernels",
+            "M4 outcomes at launch time: M4.8 empty padded extent detains at "
+            "COMPILE time (CuTe static assert); M4.1/M4.6/M4.3/M4.5 and M4.7 "
+            "compile and launch with output differing silently (`never`); the "
+            "M4.2 zero parallel-by, the neutral controls and the elemwise_add "
+            "zero step are `n/a`",
             "M3 outcomes are COMPILE-ONLY: `never` means nvcc/CuTe did not "
             "detain the defect at compile time; runtime behaviour is unmeasured",
             "M3 ct-check probes: M3.5 swizzle, M3.6 vector divisibility, "

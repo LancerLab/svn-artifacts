@@ -20,10 +20,16 @@ __global__ void k_matmul(const float* __restrict__ A, const float* __restrict__ 
   extern __shared__ __align__(SALIGN * 4) float smem[];
   float* sA = smem;                 // BM*BK
   float* sB = smem + BM * BK;       // BK*BN
+  cut_empty_probe();
+  cut_zstride_probe();
+  __shared__ float cut_pad_scratch[512];
+  cut_pad_probe<PADEXT>(cut_pad_scratch);
   const int row = blockIdx.y * BM;
   const int col = blockIdx.x * BN;
   const int nk = (K + BK - 1) / BK;
-  const int nl = (LOOP < 0) ? ((rt >= 0) ? rt : nk) : LOOP;
+  int nl = (LOOP == -1) ? ((rt >= 0) ? rt : nk) : LOOP;
+  if (NBOUND) nl = -1 - nl;   // M4.6 negative bound
+  if (REVB) nl = nl + 1;      // M1.7 reversed bound
   float acc = 0.f;
   for (int it = 0; it < nl; ++it) {
     const int k0 = it * STEP * BK;
@@ -63,6 +69,7 @@ int main(int argc, char** argv) {
   for (size_t i = 0; i < (size_t)M * N; ++i) C[i] = 0.f;
   dim3 threads(16, 16);
   dim3 grid((N + BN - 1) / BN, (M + BM - 1) / BM);
+  if (PBOUND >= 0) grid.x = (unsigned)PBOUND;   // M4.2 parallelby bound
   const size_t smem = (size_t)(BM * BK + BK * BN) * 4;
   const int rt = cut_env_int("CUT_LOOP_RT", -1);
   k_matmul<<<grid, threads, smem>>>(A, B, C, M, N, K, rt);
