@@ -73,13 +73,18 @@
  "S9_remainder": "n/a (no generated checks)",
  "S12_sanitizer_supplement": {
   "M1": {
-   "flagged_and_exercised": 15,
-   "total": 17,
-   "flagged": 15
+   "flagged_and_exercised": 36,
+   "total": 64,
+   "flagged": 36
+  },
+  "M4": {
+   "flagged_and_exercised": 0,
+   "total": 56,
+   "flagged": 0
   },
   "M3": {
    "flagged_and_exercised": 0,
-   "total": 2,
+   "total": 56,
    "flagged": 0
   }
  }

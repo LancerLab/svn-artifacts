@@ -529,6 +529,7 @@ def run_mutant_sanitizer(category: str, family: int, raw: Path):
             capture_output=True, text=True, timeout=600, cwd=str(HERE))
     except (subprocess.TimeoutExpired, OSError) as e:
         return {"toolchain": "triton", "category": category, "class": cls,
+                "spec_id": spec_id_for(category, cls, family),
                 "mutant_id": mid, "flagged": "timeout", "fault": "none",
                 "exercised": "unknown", "detail": str(e)[:120]}
     out = r.stdout + r.stderr
@@ -540,10 +541,17 @@ def run_mutant_sanitizer(category: str, family: int, raw: Path):
     # exercised = the kernel body actually ran on device: either it completed
     # or the sanitizer observed the faulting access itself.
     exercised = "true" if (flagged or (m and m.group(1) == "ok")) else "false"
+    # the sanitizer's own diagnosis (its stderr report arrives before the
+    # mutant's exception line, so the last line is the wrong thing to keep).
+    diag = next((ln.strip() for ln in out.splitlines()
+                 if "Invalid __global__" in ln or "Invalid __shared__" in ln
+                 or "misaligned" in ln.lower()), None)
     return {"toolchain": "triton", "category": category, "class": cls,
+            "spec_id": spec_id_for(category, cls, family),
             "mutant_id": mid, "flagged": str(flagged).lower(),
             "fault": fault, "exercised": exercised,
-            "detail": ("sanitizer: " + out.strip().splitlines()[-1][:100])
+            "detail": ("sanitizer: "
+                       + (diag or out.strip().splitlines()[-1])[:100])
                       if flagged else "clean"}
 
 

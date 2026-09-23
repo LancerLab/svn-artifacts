@@ -25,37 +25,42 @@ descriptor all **refused** on sm_86 and sm_120, rank-1 descriptor and int32-dim
 (M3.2, a silent defect) **lowered** on both — i.e. the frontend surfaces are
 arch-invariant.
 
-## S1 — detection matrix (bare Triton) — FINAL, full-size runs
+## S1 — detection matrix (bare Triton) — current corpus (sm_86, 2026-09-24)
+
+The narrative below this section was written for the sm_90 host's 29-mutant
+corpus. The current corpus is **176 mutants** (`results/stats.json` is
+authoritative): M1 64, M3 56, M4 56, M2 n/a.
 
 | Class | Injected | Compile | Runtime | Never | n/a |
 |---|---|---|---|---|---|
-| M1 element-access | 27 | 0 | 2 | 25 | 0 |
-| M3 hw-constraint | 2 | 2 | 0 | 0 | 0 |
+| M1 element-access | 64 | 8 | 11 | 45 | 0 |
+| M3 hw-constraint | 56 | 40 | 0 | 16 | 0 |
+| M4 iteration-space | 56 | 8 | 0 | 48 | 0 |
+| M2 shape/structure | 0 | 0 | 0 | 0 | 40 |
 
-Size split (plan §2.4/rec. 4): gates pass at both small and full; mutants run
-at FULL_RAGGED (sizes.py — full magnitude, ragged boundary so mask defects
-manifest; the dynamic-dim cases take any runtime extent). Two mutants are
-size-sensitive: layer_norm-f3/softmax-f3 (negative index) run silent at small
-size but fault (illegal access) at full — recorded as runtime at full.
+- M1: bare Triton catches nothing at runtime (the 11 `runtime` rows are child
+  crashes with no emitted check → `never`); the 8 compile refusals are the
+  rank/arity surface (M1-g). Every runnable M1 mutant is proven corrupting by
+  the oracle (output diff or clobbered canary).
+- M3: 40 JIT-refused (descriptor box/rank/atom/smem rules) = `ct-check`; 16 run
+  end-to-end and miss (`never`).
+- M4: 8 refused (`tl.static_range` zero step, M4-f); 48 run and miss.
 
-- M1: Triton detects nothing. All 27 mutants run to completion; every one is
-  proven corrupting by the oracle (output diff or clobbered canary — the
-  canary catches foreign-memory corruption that output comparison misses,
-  e.g. relu dropped-mask: correct output, stomped guard region).
-- M3: both JIT-rejected at compile time — `tl.dot` K-atom rule
-  ("Input shapes should have M >= 1, N >= 1 and K >= 16") and the
-  shared-memory budget (`OutOfResources: Required: 262144, limit: 101376`).
-
-## S12 — compute-sanitizer supplement (over the same mutants)
+## S12 — compute-sanitizer supplement (over the same 176 mutants)
 
 | Class | Total | Flagged ∧ exercised |
 |---|---|---|
-| M1 | 27 | 24 |
-| M3 | 2 | 0 (never reach device) |
+| M1 | 64 | 36 |
+| M3 | 56 | 0 (never reach the device) |
+| M4 | 56 | 0 |
 
-The three M1 misses: `relu-f6` (empty range — nothing executes),
-`max_pool2d-f2` (in-bounds wrong result — not a memory error),
-`embedding-f2` (negative index lands in a valid page — no fault).
+Re-measured 2026-09-24 on sm_86 over the full E1 corpus
+(`sanitizer_corpus.py`, `compute-sanitizer --tool memcheck`). The sanitizer adds
+**36 M1 detections** bare Triton misses — all `Invalid __global__` reads, i.e.
+memory-safety coverage for over half the M1 cell. M3 flags are zero because the
+mutants are JIT-refused before launch; M4 flags are zero because the
+iteration-space defects are logic errors (no out-of-bounds access) so memcheck
+has nothing to observe.
 
 ## E2 — breadth: 15/15 categories composed from settings/ and
 reference-checked green (raw/kernels.jsonl). Expressibility per class:
