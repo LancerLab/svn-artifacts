@@ -44,9 +44,16 @@ import sizes                   # noqa: E402
 # spec-required operators for M3/M4 (mutation-specs-v2 §5/§6)
 M3_OPS = ["matmul", "conv2d", "batch_norm", "max_pool2d"]
 M4_OPS = ["layer_normalization", "softmax", "matmul", "elemwise_add"]
-OPS = sorted(set(M3_OPS) | set(M4_OPS))
+# remaining shape-bearing categories (coverage extension, not spec-required)
+EXTRA_OPS = ["relu", "sigmoid", "gelu", "reshape", "transpose", "concat",
+             "embedding", "reduce_mean"]
+OPS = sorted(set(M3_OPS) | set(M4_OPS) | set(EXTRA_OPS))
 
 SRC = {"elemwise_add": "kernels/elemwise_add.cu", "relu": "kernels/relu.cu",
+       "sigmoid": "kernels/sigmoid.cu", "gelu": "kernels/gelu.cu",
+       "reshape": "kernels/reshape.cu", "transpose": "kernels/transpose.cu",
+       "concat": "kernels/concat.cu", "embedding": "kernels/embedding.cu",
+       "reduce_mean": "kernels/reduce_mean.cu",
        "softmax": "kernels/softmax.cu",
        "layer_normalization": "kernels/layer_normalization.cu",
        "matmul": "kernels/matmul.cu", "conv2d": "kernels/conv2d.cu",
@@ -54,8 +61,16 @@ SRC = {"elemwise_add": "kernels/elemwise_add.cu", "relu": "kernels/relu.cu",
 
 
 def shape_flags(cat, shape):
-    if cat in ("elemwise_add", "relu"):
+    if cat in ("elemwise_add", "relu", "sigmoid", "gelu", "reshape"):
         return {"N_ELEM": shape[0]}
+    if cat == "transpose":
+        return {"TR_M": shape[0], "TR_N": shape[1]}
+    if cat == "concat":
+        return {"CC_NA": shape[0], "CC_NB": shape[1]}
+    if cat == "embedding":
+        return {"EM_V": shape[0], "EM_D": shape[1], "EM_N": shape[2]}
+    if cat == "reduce_mean":
+        return {"RM_ROWS": shape[0], "RM_COLS": shape[1]}
     if cat in ("softmax", "layer_normalization"):
         return {"ROWS": shape[0], "COLS": shape[1]}
     if cat == "matmul":
@@ -139,6 +154,14 @@ BATTERY = [
     ("M4.1", "conv2d", {"LOOP": 0}, None),
     ("M4.1", "max_pool2d", {"LOOP": 0}, None),
     ("M4.1", "batch_norm", {"LOOP": 0}, None),
+    ("M4.1", "relu", {"LOOP": 0}, None),
+    ("M4.1", "sigmoid", {"LOOP": 0}, None),
+    ("M4.1", "gelu", {"LOOP": 0}, None),
+    ("M4.1", "reshape", {"LOOP": 0}, None),
+    ("M4.1", "transpose", {"LOOP": 0}, None),
+    ("M4.1", "concat", {"LOOP": 0}, None),
+    ("M4.1", "embedding", {"LOOP": 0}, None),
+    ("M4.1", "reduce_mean", {"LOOP": 0}, None),
     ("M4.3", "elemwise_add", {}, {"CUT_LOOP_RT": "0"}),
     ("M4.3", "softmax", {}, {"CUT_LOOP_RT": "0"}),
     ("M4.3", "layer_normalization", {}, {"CUT_LOOP_RT": "0"}),

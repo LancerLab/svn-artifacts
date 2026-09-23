@@ -71,9 +71,14 @@ def main(records_path, out_dir):
             "vertical slice: launch-time M4/L battery + compile-only M3 probe battery",
             "M4 outcomes are launch-time: M4.1 compile-time zero bound, M4.3 "
             "runtime-zero bound (env CUT_LOOP_RT), M4.5 zero step; all unchecked",
+            "M4.1 zero-trip loop is applied to all 15 shape-bearing "
+            "categories; M4.3 (runtime-zero bound) to the four operators "
+            "whose kernels take a runtime loop argument",
             "M4.2 (parallelby 0/negative) overlaps the loop-extent knob; the "
             "negative variant is not representable. M4.4 is a harness noop "
             "control (see the `noop` outcome), not an admissible injection",
+            "coverage extension: all 15 shape-bearing categories are gated and "
+            "carry an M4.1 cell; dma_rank5 carries no shape and is not gated",
             "M3 outcomes are COMPILE-ONLY: `unchecked` means nvcc/CuTe did not "
             "detain the defect at compile time; runtime behaviour is unmeasured",
             "M3 ct-check probes: M3.5 swizzle, M3.6 vector divisibility, "

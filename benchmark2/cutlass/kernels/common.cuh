@@ -45,6 +45,38 @@
 #define SMEM_ELT 0
 #endif
 
+// per-category concrete dims (defaults match sizes.py::SMALL)
+#ifndef N_ELEM
+#define N_ELEM (127 * 1023 + 5)
+#endif
+#ifndef TR_M
+#define TR_M 65
+#endif
+#ifndef TR_N
+#define TR_N 127
+#endif
+#ifndef CC_NA
+#define CC_NA 1023
+#endif
+#ifndef CC_NB
+#define CC_NB 77
+#endif
+#ifndef EM_V
+#define EM_V 999
+#endif
+#ifndef EM_D
+#define EM_D 128
+#endif
+#ifndef EM_N
+#define EM_N 37
+#endif
+#ifndef RM_ROWS
+#define RM_ROWS 16
+#endif
+#ifndef RM_COLS
+#define RM_COLS 1023
+#endif
+
 // deterministic pseudo-random fill (matches reference.py::fill)
 static inline void cut_fill(float* p, size_t n, uint32_t seed) {
   uint32_t s = seed ? seed : 1u;

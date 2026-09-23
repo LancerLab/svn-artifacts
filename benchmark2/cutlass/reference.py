@@ -43,9 +43,21 @@ def inputs(cat, shape):
     if cat in ("elemwise_add",):
         (n,) = shape
         return {"A": fill(SEED_X, n), "B": fill(SEED_W, n)}
-    if cat in ("relu",):
+    if cat in ("relu", "sigmoid", "gelu", "reshape"):
         (n,) = shape
         return {"A": fill(SEED_X, n)}
+    if cat == "transpose":
+        M, N = shape
+        return {"A": fill(SEED_X, M * N)}
+    if cat == "concat":
+        nA, nB = shape
+        return {"A": fill(SEED_X, nA), "B": fill(SEED_W, nB)}
+    if cat == "embedding":
+        V, D, nidx = shape
+        return {"T": fill(SEED_X, V * D), "I": fill(SEED_W, nidx)}
+    if cat == "reduce_mean":
+        rows, cols = shape
+        return {"A": fill(SEED_X, rows * cols)}
     if cat in ("softmax",):
         rows, cols = shape
         return {"A": fill(SEED_X, rows * cols)}
@@ -77,6 +89,31 @@ def reference(cat, shape, a):
         return (a["A"] + a["B"]).astype(np.float32)
     if cat == "relu":
         return np.maximum(a["A"], np.float32(0)).astype(np.float32)
+    if cat == "sigmoid":
+        x = a["A"].astype(np.float64)
+        return (1.0 / (1.0 + np.exp(-x))).astype(np.float32)
+    if cat == "gelu":
+        from math import erf
+        x = a["A"].astype(np.float64)
+        e = np.array([erf(float(v) * 0.7071067811865476) for v in x])
+        return (0.5 * x * (1.0 + e)).astype(np.float32)
+    if cat == "reshape":
+        return a["A"].astype(np.float32).copy()
+    if cat == "transpose":
+        M, N = shape
+        return a["A"].reshape(M, N).T.astype(np.float32).ravel()
+    if cat == "concat":
+        return np.concatenate([a["A"], a["B"]]).astype(np.float32)
+    if cat == "embedding":
+        V, D, nidx = shape
+        idx = np.minimum((fill(SEED_W, nidx) * np.float32(V)).astype(np.int64),
+                         V - 1)
+        T = a["T"].reshape(V, D)
+        return T[idx].astype(np.float32).ravel()
+    if cat == "reduce_mean":
+        rows, cols = shape
+        x = a["A"].reshape(rows, cols).astype(np.float64)
+        return x.mean(axis=1).astype(np.float32)
     if cat == "softmax":
         rows, cols = shape
         x = a["A"].reshape(rows, cols).astype(np.float64)

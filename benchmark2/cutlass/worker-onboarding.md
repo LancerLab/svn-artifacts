@@ -81,13 +81,17 @@ deferred to a post-deadline extension.
 
 **Done and verified:**
 
-- **Operator layer (8 kernels, all CPU-gated):** `elemwise_add`, `relu`,
-  `softmax`, `layer_normalization`, `matmul`, `conv2d`, `batch_norm`,
-  `max_pool2d`. Each compiles under `nvcc -std=c++17 -arch=sm_86 -O2` and its
-  unmutated output passes `reference.py::gate` (max abs diff ≤ 9.6e-6).
+- **Operator layer (15 kernels, all CPU-gated):** the 7 spec-required
+  operators (`elemwise_add`, `softmax`, `layer_normalization`, `matmul`,
+  `conv2d`, `batch_norm`, `max_pool2d`) plus the 8 remaining shape-bearing
+  categories (`relu`, `sigmoid`, `gelu`, `reshape`, `transpose`, `concat`,
+  `embedding`, `reduce_mean`). Each compiles under
+  `nvcc -std=c++17 -arch=sm_86 -O2` and its unmutated output passes
+  `reference.py::gate` (max abs diff ≤ 9.6e-6).
 - **Realizable mutation battery** (`lane.py`):
-  - `M4.1` zero-trip loop (`-DLOOP=0`) → **`unchecked`** on all 7 operators
-    (silent corruption; no diagnostic) — a strong M4 data point.
+  - `M4.1` zero-trip loop (`-DLOOP=0`) → **`unchecked`** on all 15
+    shape-bearing categories (silent corruption; no diagnostic) — a strong M4
+    data point.
   - `M4.3` runtime-zero bound (`CUT_LOOP_RT=0`, bound well-formed at compile
     time) → **`unchecked`** on `elemwise_add`, `softmax`,
     `layer_normalization`, `matmul`. The runtime argument is passed to the
@@ -133,7 +137,7 @@ deferred to a post-deadline extension.
   (bit-exact `fill` + refs + tolerance gate), `collect.py` (spec-§8-shaped
   `stats.json`, merges both record streams), `run.sh`
   (setup/minimal/e2/e3/collect/stats/all). `results/cutlass/stats.json`:
-  M3 = 12 injected / 3 ct-check / 9 unchecked; M4 = 13 unchecked;
+  M3 = 12 injected / 3 ct-check / 9 unchecked; M4 = 21 unchecked;
   L = 1 rt-check / 1 noop. Flagged `lane_phase: vertical-slice`,
   `complete: false`.
 
