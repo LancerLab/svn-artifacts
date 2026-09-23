@@ -47,22 +47,22 @@
     "M4": {
       "n_injected": 56,
       "n_compile": 0,
-      "n_runtime": 8,
-      "n_never": 48,
+      "n_runtime": 0,
+      "n_never": 56,
       "n_na": 0,
       "by_rtv": {
         "off": {
           "n_injected": 56,
           "n_compile": 0,
-          "n_runtime": 8,
-          "n_never": 48,
+          "n_runtime": 0,
+          "n_never": 56,
           "n_na": 0
         },
         "on": {
           "n_injected": 56,
           "n_compile": 0,
-          "n_runtime": 8,
-          "n_never": 48,
+          "n_runtime": 0,
+          "n_never": 56,
           "n_na": 0
         }
       },

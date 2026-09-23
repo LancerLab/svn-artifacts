@@ -1030,10 +1030,15 @@ class Lane:
             "rtv": "on" if rtv else "off",
             "outcome": c.outcome,
             # homework-check C1: `stage` enum is ["compile","runtime","none"],
-            # where "none" is the not-detected value. A `never` outcome means the
-            # kernel ran and silently produced a wrong result — nothing fired, so
-            # there is no stage to name.
+            # where "none" is the not-detected value. A `never` outcome means no
+            # emitted check caught the defect — the kernel ran to a wrong result
+            # *or* hung/crashed without one — so there is no detection stage to
+            # name. The mechanism (`hang`, `segv`, ...) lives in `detected_by`.
             "stage": c.stage if c.outcome != "never" else "none",
+            # §9.6.1b: `outcome` alone conflates an emitted check with a raw
+            # hang/crash (both used to be `runtime`) and a bug diagnostic with a
+            # generator defect (both `compile`). `detected_by` records which.
+            "detected_by": c.detected_by,
             "manifest": c.manifest or "noop",
             "n_asserts": c.n_asserts,
         })

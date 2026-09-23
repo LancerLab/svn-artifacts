@@ -89,6 +89,16 @@
           "noop",
           "undecidable"
         ],
+        "detected_by": [
+          "compile-error",
+          "rtv-assert",
+          "gpu-assert",
+          "hang",
+          "segv",
+          "nonzero-exit",
+          "none",
+          "n/a"
+        ],
         "path_class": [
           "rt-check",
           "avoided",

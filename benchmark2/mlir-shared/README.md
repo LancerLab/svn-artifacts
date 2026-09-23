@@ -312,6 +312,17 @@ mode, and `relu/static` M1.1 RTV-**on** is deterministically 16/16
 `runtime/corrupts` — so the validator's exit code is reproducible at any `N`, and
 what `N=16` actually protects is the committed `distribution` text, not the verdict.
 
+> **Vocabulary note (`mutation-specs-v2.md` §9.6.1b).** The `runtime` label
+> above is the v1 field. Since the shared classifier split, `runtime` means
+> exactly an *emitted check firing* (`detected_by ∈ {rtv-assert, gpu-assert}`);
+> a bare RTV-off abort/hang with no emitted check is `never`
+> (`detected_by ∈ {hang, segv, nonzero-exit}`). The RTV-off
+> `runtime/corrupts` draws in this section therefore re-express as
+> `never/corrupts` (the corrupts/noop manifest is unchanged), and the
+> `never`/`runtime` split named below becomes a `never/noop` vs
+> `never/corrupts` split. The reduction (`corrupts` beats `noop`) and the `N=16`
+> sizing argument are unaffected.
+
 No aggregate moves in any of these cases. All four cells reduce to the same
 `outcome`/`manifest` pair in every sample, and `stats.json` was byte-identical
 across the re-run: the reduction is what makes the aggregate stable even though the

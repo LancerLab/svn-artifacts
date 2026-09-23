@@ -91,6 +91,14 @@ DEFAULT_SPEC_VERSION = "v1"
 # (mlir-linalg 120/120, mlir-low 96/96, triton 29/29 -- 245 of 245), and
 # re-checked on the v2.1 refresh: mlir-low 144/144 agree.
 #
+# `detected_by` (2026-09-24, `mutation-specs-v2.md` §9.6.1b) splits what the v1
+# `outcome` enum conflated: `runtime` now means exactly `rt-check` -- an emitted
+# check the toolchain generated for the bug fired -- and a raw hang, segfault, or
+# abort is `never` with `detected_by` naming the mechanism (`hang`, `segv`, ...).
+# `compile` records carry `detected_by=compile-error` pending the `ct-check` vs
+# `corrupt` adjudication (a diagnostic about the bug vs a generator artifact).
+# The field is additive: it is not required, and `stage_for` is unchanged.
+#
 # `stage` is kept as a required field rather than dropped, because the S1 tables
 # are read per stage ("caught by the typecheck" vs "caught at runtime") and a
 # render step that recomputed it from `outcome` would be a SECOND definition of

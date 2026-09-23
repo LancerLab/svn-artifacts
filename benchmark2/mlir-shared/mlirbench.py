@@ -993,13 +993,32 @@ def _decode_payload(raw: str) -> str | None:
 class Classification:
     """One mutant's measured behaviour.
 
-    `outcome` is the §6 taxonomy: compile / runtime / never / n/a.
+    `outcome` is the §6 taxonomy: compile / runtime / never / n/a. Under the
+    §9.6.1b measured vocabulary (mutation-specs-v2.md), `runtime` means exactly
+    `rt-check`: an *emitted* check the toolchain generated for the bug fired. A
+    raw hang, segfault, or abort that is not an emitted check is `never`, not
+    `runtime` (rule 3) -- `detected_by` says which.
+
+    `detected_by` splits the v1 `outcome` field, which conflated the mechanism:
+    `rt-check` (an emitted check fired) shared `runtime` with a plain hang/crash,
+    and `ct-check` (a diagnostic about the bug) shared `compile` with the
+    generator-defect `corrupt` state. It is one of:
+
+    * ``rtv-assert``    -- host RTV ``cf.assert`` aborted the run (exit 134)
+    * ``gpu-assert``    -- device ``cf.assert`` fired (``CUDA_ERROR_ASSERT``)
+    * ``hang``          -- the kernel did not terminate (`EXIT_TIMEOUT`)
+    * ``segv``          -- the kernel died on SIGSEGV
+    * ``nonzero-exit``  -- any other non-zero exit, no check attributed
+    * ``none``          -- it ran to a (possibly wrong) result; nothing fired
+    * ``n/a``           -- not expressible, no kernel to run
+
     `manifest` is the §7 ground-truth oracle: corrupts / noop.
     """
 
     outcome: str = "never"
     stage: str = "compile"
     manifest: str = "noop"
+    detected_by: str = "none"
     compile_ok: bool = False
     run_ok: bool = False
     ref_check: bool = False
@@ -1032,11 +1051,23 @@ def classify(
     §7 manifest oracle:
 
     * compile error                      -> outcome=compile,  manifest=corrupts
-    * RTV assert fires (exit 134)        -> outcome=runtime, manifest=corrupts
-    * kernel hangs (timeout)             -> outcome=runtime, manifest=corrupts
+    * an emitted check fires             -> outcome=runtime,  manifest=corrupts
+        - host RTV assert (exit 134):        detected_by=rtv-assert
+        - device cf.assert fired:            detected_by=gpu-assert
+    * kernel hangs (timeout)             -> outcome=never,    manifest=corrupts
+        detected_by=hang
+    * kernel dies on SIGSEGV             -> outcome=never,    manifest=corrupts
+        detected_by=segv
+    * other non-zero exit, no check       -> outcome=never,    manifest=corrupts
+        detected_by=nonzero-exit
     * exit 0, mismatch > 0               -> outcome=never,    manifest=corrupts
     * exit 0, mismatch == 0              -> outcome=never,    manifest=noop
                                             (a false success; specs §7.1 discards it)
+
+    `outcome=runtime` therefore means exactly the §9.6.1b `rt-check`. A raw hang
+    or crash is `never`, not `runtime` (mutation-specs-v2.md §9.6.1b rule 3): the
+    toolchain emitted no check for the bug, so it did not catch it. `detected_by`
+    carries the mechanism the v1 `outcome` enum could not.
 
     Note the `never`/`corrupts` row is the interesting one for this lane: the
     defect survived the verifier *and* RTV, yet the oracle proves the output is
@@ -1051,7 +1082,8 @@ def classify(
     """
     if na:
         return Classification(
-            outcome="n/a", stage="compile", manifest="noop", notes=na_reason
+            outcome="n/a", stage="compile", manifest="noop",
+            detected_by="n/a", notes=na_reason
         )
 
     c = Classification()
@@ -1070,6 +1102,7 @@ def classify(
         c.compile_ok = False
         c.outcome = "compile"
         c.stage = "compile"
+        c.detected_by = "compile-error"
         c.compile_error = (res.stderr or res.stdout).strip()[:2000]
         # A mutant that fails to compile cannot be run, so the §7 oracle is
         # answered statically: the defect is real (it broke the build).
@@ -1113,6 +1146,7 @@ def _verdict_from_run(
     if run.rc == EXIT_JIT_SYMBOL and any(m in combined for m in _JIT_SYMBOL_MARKERS):
         c.run_ok = False
         c.outcome = "never"
+        c.detected_by = "none"
         c.manifest = "noop"
         c.notes = "JIT symbol error (missing shared libs) -- not a detection"
         c.abort_message = combined.strip()[:1000]
@@ -1122,6 +1156,7 @@ def _verdict_from_run(
         c.run_ok = False
         c.outcome = "runtime"
         c.stage = "runtime"
+        c.detected_by = "rtv-assert"
         c.manifest = "corrupts"
         # First line of the RTV diagnostic, e.g. "^ out-of-bounds access".
         c.abort_message = _first_diagnostic(run.stdout) or combined.strip()[:1000]
@@ -1136,35 +1171,42 @@ def _verdict_from_run(
         c.run_ok = False
         c.outcome = "runtime"
         c.stage = "runtime"
+        c.detected_by = "gpu-assert"
         c.manifest = "corrupts"
         c.abort_message = _first_gpu_assert(combined) or combined.strip()[:1000]
         return c
 
     if run.rc == EXIT_TIMEOUT:
-        # The kernel never terminated. This is a real detection outcome, not a
-        # harness failure: an out-of-bounds *write* can corrupt the heap or an
-        # index can wrap so the loop bound is never reached, and the damage shows
-        # up as a hang rather than a fault. Kept distinct from `abort` so the
-        # record says which mechanism caught the defect.
+        # The kernel never terminated, but no emitted check fired: under
+        # mutation-specs-v2.md §9.6.1b rule 3 this is `never`, not `runtime`.
+        # `rt-check` is reserved for a check the toolchain *emitted* for the bug;
+        # a bare hang is a miss. It stays visible through `detected_by=hang`, and
+        # through the M1 lanes' UB-nondeterministic reduction, so a wrapped index
+        # is not silently conflated with a clean wrong result.
         c.run_ok = False
-        c.outcome = "runtime"
+        c.outcome = "never"
         c.stage = "runtime"
+        c.detected_by = "hang"
         c.manifest = "corrupts"
         c.abort_message = f"TIMEOUT: kernel did not terminate within {run_timeout}s"
         return c
 
     if run.rc not in (0, EXIT_SEGV):
+        # A non-zero exit with no RTV diagnostic and no device assert is a raw
+        # crash, not an emitted check -> `never` (§9.6.1b rule 3).
         c.run_ok = False
-        c.outcome = "runtime"
+        c.outcome = "never"
         c.stage = "runtime"
+        c.detected_by = "nonzero-exit"
         c.manifest = "corrupts"
         c.abort_message = f"exit {run.rc}: " + combined.strip()[:800]
         return c
 
     if run.rc == EXIT_SEGV:
         c.run_ok = False
-        c.outcome = "runtime"
+        c.outcome = "never"
         c.stage = "runtime"
+        c.detected_by = "segv"
         c.manifest = "corrupts"
         c.abort_message = "SIGSEGV"
         return c
@@ -1180,6 +1222,7 @@ def _verdict_from_run(
     c.manifest = "noop" if c.ref_check else "corrupts"
     c.outcome = "never"
     c.stage = "runtime"
+    c.detected_by = "none"
     return c
 
 
@@ -1212,7 +1255,8 @@ def classify_repeat(
     """
     if na:
         return [
-            Classification(outcome="n/a", stage="compile", manifest="noop", notes=na_reason)
+            Classification(outcome="n/a", stage="compile", manifest="noop",
+                           detected_by="n/a", notes=na_reason)
         ] * n
 
     work.mkdir(parents=True, exist_ok=True)
@@ -1229,6 +1273,7 @@ def classify_repeat(
         c.compile_ok = False
         c.outcome = "compile"
         c.stage = "compile"
+        c.detected_by = "compile-error"
         c.compile_error = (res.stderr or res.stdout).strip()[:2000]
         c.manifest = "corrupts"
         return [c] * n
@@ -1259,12 +1304,13 @@ def reduce_verdicts(verdicts: list[Classification]) -> tuple[Classification, dic
     false success), applied in order:
 
     1. every run `compile`            -> `compile`/`corrupts` (deterministic).
-    2. any run `runtime` (abort/hang/segv/nonzero) -> `runtime`/`corrupts`.
-       The defect faulted at least once, so the surface did not silently accept
-       it. NOTE for S1: at RTV-off this fault is *incidental UB*, not a generated
-       check -- see mlir-shared/README.md "UB-nondeterministic mutants".
-    3. else all runs `never`: any `corrupts` -> `never`/`corrupts` (output wrong
-       in at least one run); only if *every* run is `noop` -> `never`/`noop`.
+    2. any run `runtime` -- an emitted check fired -> `runtime`/`corrupts`.
+       The toolchain caught the defect at runtime. NOTE for S1: at RTV-off this
+       fault is *incidental UB*, not a generated check -- see mlir-shared/README.md
+       "UB-nondeterministic mutants".
+    3. else all runs `never`: any `corrupts` -> `never`/`corrupts` (the output
+       was wrong, or the run hung/crashed without an emitted check, in at least
+       one run); only if *every* run is `noop` -> `never`/`noop`.
 
     A mutant is therefore a `noop` false success (specs §7.1) only when it is
     noop in *every* run of *every* mode -- the correct reading of "did this
