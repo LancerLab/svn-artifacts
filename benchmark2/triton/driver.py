@@ -6,10 +6,13 @@ Implements the plan's lifecycle (§2.3) and outcome taxonomy (specs §6):
   (specs §7: unmutated vs mutated output must differ for `never`/`runtime`
   to count; `noop` mutants are discarded).
 
-Outcome mapping for Triton (see onboarding report R-T3):
+Outcome mapping for Triton (see onboarding report R-T3, corrected by §9.6.1b):
   compile = JIT compile error before any device work (e.g. tl.dot shape rules)
-  runtime = launch/runtime failure (illegal memory access, assert, sanitizer flag)
-  never   = runs to completion; output corruption confirmed by the oracle
+  runtime = an emitted check fired at run time. Triton emits no run-time
+            checks, so this lane records no `runtime`; a raw launch/runtime
+            failure is `never` (rule 3: a bare crash is never a detection)
+  never   = a raw launch/runtime failure (illegal access, non-zero exit) or
+            runs to completion with output corruption confirmed by the oracle
   n/a     = the surface cannot express the defect
 """
 from __future__ import annotations
@@ -77,12 +80,12 @@ def current_arch() -> str:
 
 # ---------------------------------------------------------------- oracle
 def oracle_check(category, ref_out, mut_out) -> str:
-    """manifest field: corrupts | noop.
+    """manifest field: value-changing | noop.
 
     NOTE: this lane is torch-free by design (gpubuf.py is a ctypes libcudart
     shim), so the comparison is numpy. It used to call `torch.allclose` with
     no `import torch` anywhere in the file: the `except Exception` swallowed
-    the resulting NameError and returned `corrupts` for every mutant. The
+    the resulting NameError and returned `value-changing` for every mutant. The
     function is currently unreferenced -- the live manifest comes from
     `run_mutant` -- so the bug was latent, not active. Do not "fix" it by
     adding a torch dependency.
@@ -90,13 +93,13 @@ def oracle_check(category, ref_out, mut_out) -> str:
     import numpy as np
 
     if mut_out is None:
-        return "corrupts"  # never wrote output
+        return "value-changing"  # never wrote output
     try:
         same = bool(np.allclose(np.asarray(ref_out), np.asarray(mut_out),
                                 atol=1e-4, equal_nan=True))
     except Exception:
         same = False
-    return "noop" if same else "corrupts"
+    return "noop" if same else "value-changing"
 
 
 # ---------------------------------------------------------------- records
@@ -163,6 +166,11 @@ def stage_of(outcome: str) -> str:
     return {"compile": "compile", "runtime": "runtime"}.get(outcome, "none")
 
 
+# §9.6.1b measured vocabulary: the finest statement the data supports.
+MEASURED = {"compile": "ct-check", "runtime": "rt-check",
+            "never": "never", "n/a": "avoid"}
+
+
 def mutant_record(category, cls, paper_cat, mid, level, outcome, manifest,
                   detail=""):
     # family number is carried in the mutant_id (`{mod}-f{family}`), so every
@@ -181,6 +189,7 @@ def mutant_record(category, cls, paper_cat, mid, level, outcome, manifest,
         "outcome": outcome,
         "stage": stage_of(outcome),
         "manifest": manifest,
+        "measured": MEASURED.get(outcome, "never"),
         "detail": detail[:200],
         "toolchain_version": triton_version(),
     }
@@ -432,32 +441,35 @@ def run_mutant(category: str, family: int, raw: Path, size: str = "full"):
             capture_output=True, text=True, timeout=900,
             cwd=str(HERE))
     except subprocess.TimeoutExpired:
-        return mutant_record(category, cls, pcat, mid, 1, "runtime",
-                             "corrupts", "timeout")
+        # §9.6.1b rule 3: a raw hang with no emitted check is `never`.
+        return mutant_record(category, cls, pcat, mid, 1, "never",
+                             "value-changing", "timeout: no check emitted")
     out = r.stdout + r.stderr
     m = re.search(r"RESULT run=(\w+) out=(\S+)", out)
     if m is None:
         # crashed before printing: classify by error class
         if any(k in out for k in COMPILE_ERR_MARKERS):
             return mutant_record(category, cls, pcat, mid, 1, "compile",
-                                 "corrupts",
+                                 "value-changing",
                                  "jit: " + out.strip().splitlines()[-1][:140])
-        return mutant_record(category, cls, pcat, mid, 1, "runtime",
-                             "corrupts",
+        # §9.6.1b rule 3: a raw launch crash is `never`, not a detection.
+        return mutant_record(category, cls, pcat, mid, 1, "never",
+                             "value-changing",
                              "crash: " + out.strip().splitlines()[-1][:140])
     run, oracle = m.group(1), m.group(2)
     if run == "crash":
         # error text sits above the RESULT line in the child output
         if any(k in out for k in COMPILE_ERR_MARKERS):
             return mutant_record(category, cls, pcat, mid, 1, "compile",
-                                 "corrupts", "jit: child reported crash")
-        return mutant_record(category, cls, pcat, mid, 1, "runtime",
-                             "corrupts", "child crash")
+                                 "value-changing", "jit: child reported crash")
+        # §9.6.1b rule 3: a raw child crash is `never`, not a detection.
+        return mutant_record(category, cls, pcat, mid, 1, "never",
+                             "value-changing", "child crash")
     # ran to completion: was anything caught? Triton catches nothing at
     # runtime; manifestation decides never vs noop-discard.
-    manifest = "corrupts" if ("diff" in oracle
+    manifest = "value-changing" if ("diff" in oracle
                               or "CLOBBERED" in oracle) else "noop"
-    outcome = "never" if manifest == "corrupts" else "never"
+    outcome = "never" if manifest == "value-changing" else "never"
     return mutant_record(category, cls, pcat, mid, 1, outcome, manifest,
                          f"oracle={oracle}")
 

@@ -3,7 +3,7 @@
 
 Per the requirement that mutants must *actually work*, a mutant is only usable if
 it fails to compile, aborts at runtime, or runs clean but produces a provably
-wrong output (`corrupts`). A mutant that runs clean and still matches the
+wrong output (`value-changing`). A mutant that runs clean and still matches the
 reference is a `noop` false success and must be discarded (specs §7.1).
 
 The reference checksums are always taken from the **unmutated** case, so a mutant

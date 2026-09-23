@@ -26,7 +26,7 @@ Eight instances, four loop shapes x two pad degeneracies:
   idx 4..7  emptypad `PAD = -127` -> `ext = 0`  -> M4.8
 
 Outcome mapping: every instance runs to completion with `y` untouched
-(`oracle=diff`) -> manifest `corrupts`, outcome `never` (Triton authors no
+(`oracle=diff`) -> manifest `value-changing`, outcome `never` (Triton authors no
 LoopBound check; silent).
 """
 import argparse

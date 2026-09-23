@@ -478,7 +478,7 @@ def cmd_minimal(level2: bool = False):
         "the host entry via `hal.buffer_view.assert` "
         "(`INVALID_ARGUMENT: shape dimension mismatch`) -> **runtime**.\n"
         "- **Dynamic extent** mutants (operand dim is `?`): IREE silently computes a "
-        "wrong result -> **never/corrupts** (verified by numeric diff against the "
+        "wrong result -> **never/value-changing** (verified by numeric diff against the "
         "reference output; see `mutant_oracle.py`).\n\n"
         "## Level-2 (mutation-specs §5)\n\n"
         "- M1 rows (max_pool2d, conv2d, embedding, batch_norm) -> n/a.\n"
@@ -527,7 +527,7 @@ def cmd_minimal(level2: bool = False):
                              for i in range(len(args))]
                 rc, mlog, mshape = _run_out(vmfb, fname, mut_specs)
                 if rc != 0:
-                    outcome, manifest = "runtime", "corrupts"
+                    outcome, manifest = "runtime", "value-changing"
                 else:
                     # silent: numeric ground-truth oracle. Re-run reference and
                     # mutant with distinct inputs (small dynamic dims so values
@@ -548,11 +548,11 @@ def cmd_minimal(level2: bool = False):
                     o_ref = _parse_result(r2log) if r2rc == 0 else None
                     o_mut = _parse_result(m2log) if m2rc == 0 else None
                     if o_ref is not None and o_mut is not None:
-                        manifest = ("corrupts" if (len(o_ref) != len(o_mut) or
+                        manifest = ("value-changing" if (len(o_ref) != len(o_mut) or
                                     any(abs(a - b) > 1e-3 for a, b in zip(o_ref, o_mut)))
                                     else "noop")
                     else:
-                        manifest = "corrupts"  # contract differs; IREE ran but not cleanly
+                        manifest = "value-changing"  # contract differs; IREE ran but not cleanly
                 if outcome == "never" and manifest == "noop":
                     continue  # false-success mutant discarded (plan §11.1)
                 # materialise the mutated version (definition file)
@@ -816,11 +816,11 @@ def _m2_measure(cat: str, stem: str, kind: str, params) -> dict | None:
     rc, mlog, mshape = _run_out(vmfb, fname, mut_specs)
     ref_dims_rec = [list(x) for x in feed]
     if rc != 0:
-        return {"compile": "ok", "outcome": "runtime", "manifest": "corrupts",
+        return {"compile": "ok", "outcome": "runtime", "manifest": "value-changing",
                 "reference_dims": ref_dims_rec, "mutant_dims": mut,
                 "kind": kind, "params": list(params)}
     if mshape != rshape and mshape:
-        return {"compile": "ok", "outcome": "never", "manifest": "corrupts",
+        return {"compile": "ok", "outcome": "never", "manifest": "value-changing",
                 "reference_dims": ref_dims_rec, "mutant_dims": mut,
                 "kind": kind, "params": list(params)}
     # same-shape silent run: numeric ground truth with raw-binary inputs.
@@ -836,12 +836,12 @@ def _m2_measure(cat: str, stem: str, kind: str, params) -> dict | None:
     ro = _parse_result(rl) if rr == 0 else None
     mo = _parse_result(ml) if mm == 0 else None
     if ro is None or mo is None:
-        manifest = "corrupts"
+        manifest = "value-changing"
     elif len(ro) != len(mo) or any(abs(a - b) > 1e-3 for a, b in zip(ro, mo)):
-        manifest = "corrupts"
+        manifest = "value-changing"
     else:
         manifest = "noop"
-    outcome = "never" if manifest == "corrupts" else "noop"
+    outcome = "never" if manifest == "value-changing" else "noop"
     return {"compile": "ok", "outcome": outcome, "manifest": manifest,
             "reference_dims": ref_dims_rec, "mutant_dims": mut,
             "kind": kind, "params": list(params)}
@@ -884,7 +884,7 @@ def _m2_17_measure(cat: str, stem: str, aidx: int, dim_idx: int,
     rdims = [list(x) for x in small]
     rdims[aidx][dim_idx] = ref_v
     if mrc != 0:
-        return {"compile": "ok", "outcome": "runtime", "manifest": "corrupts",
+        return {"compile": "ok", "outcome": "runtime", "manifest": "value-changing",
                 "reference_dims": rdims, "mutant_dims": mfd,
                 "kind": "runtime-shape", "params": [aidx, dim_idx, ref_v, mut_v]}
     in_n = 1
@@ -896,7 +896,7 @@ def _m2_17_measure(cat: str, stem: str, aidx: int, dim_idx: int,
     corrupts = in_n != out_n
     return {"compile": "ok",
             "outcome": "never" if corrupts else "noop",
-            "manifest": "corrupts" if corrupts else "noop",
+            "manifest": "value-changing" if corrupts else "noop",
             "reference_dims": rdims, "mutant_dims": mfd,
             "kind": "runtime-shape", "params": [aidx, dim_idx, ref_v, mut_v],
             "in_elems": in_n, "out_elems": out_n}
@@ -1084,18 +1084,18 @@ def _m2_only_measure(cat: str, stem: str, ref_dims: list, mut_dims: list) -> dic
     ref_rec = [list(x) for x in ref_dims]
     mut_rec = [list(x) for x in mut_dims]
     if mrc != 0:
-        return {"compile": "ok", "outcome": "runtime", "manifest": "corrupts",
+        return {"compile": "ok", "outcome": "runtime", "manifest": "value-changing",
                 "reference_dims": ref_rec, "mutant_dims": mut_rec}
     ro = _parse_result(rlog)
     mo = _parse_result(mlog)
     if mshape != rshape or ro is None or mo is None:
-        manifest = "corrupts"
+        manifest = "value-changing"
     elif len(ro) != len(mo) or any(abs(a - b) > 1e-3 for a, b in zip(ro, mo)):
-        manifest = "corrupts"
+        manifest = "value-changing"
     else:
         manifest = "noop"
     return {"compile": "ok",
-            "outcome": "never" if manifest == "corrupts" else "noop",
+            "outcome": "never" if manifest == "value-changing" else "noop",
             "manifest": manifest,
             "reference_dims": ref_rec, "mutant_dims": mut_rec}
 

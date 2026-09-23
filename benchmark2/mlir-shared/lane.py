@@ -1039,6 +1039,8 @@ class Lane:
             # hang/crash (both used to be `runtime`) and a bug diagnostic with a
             # generator defect (both `compile`). `detected_by` records which.
             "detected_by": c.detected_by,
+            # §9.6.1b measured-outcome vocabulary, derived from outcome+detected_by.
+            "measured": c.measured,
             "manifest": c.manifest or "noop",
             "n_asserts": c.n_asserts,
         })

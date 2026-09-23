@@ -56,7 +56,7 @@
     "M4-a": {
       "ceiling": 8,
       "kind": "unchecked",
-      "basis": "zero bound: Triton authors every loop with Python `range`, so a zero extent (`range(0, 0)`) is a source value and LEGAL -- the loop performs zero iterations and the kernel runs to completion with its output untouched (probe_lb A, 2026-09-24: run=ok out=diff, oracle=diff, manifest=corrupts). The lane emits no `LoopBound` obligation (the bound is the programmer's), so the state is silently accepted: `unchecked`, NOT `u` -- a legal program states it (channels/README.md new-kernel rule). REALISED 8/8 on `mutants/loop_bound.py` families 1..8 (M4.1/M4.2; four loop shapes x two block sizes)."
+      "basis": "zero bound: Triton authors every loop with Python `range`, so a zero extent (`range(0, 0)`) is a source value and LEGAL -- the loop performs zero iterations and the kernel runs to completion with its output untouched (probe_lb A, 2026-09-24: run=ok out=diff, oracle=diff, manifest=value-changing). The lane emits no `LoopBound` obligation (the bound is the programmer's), so the state is silently accepted: `unchecked`, NOT `u` -- a legal program states it (channels/README.md new-kernel rule). REALISED 8/8 on `mutants/loop_bound.py` families 1..8 (M4.1/M4.2; four loop shapes x two block sizes)."
     },
     "M4-b": {
       "ceiling": 8,
@@ -81,7 +81,7 @@
     "M4-g": {
       "ceiling": 8,
       "kind": "unchecked",
-      "basis": "degenerate pad: the padded extent is a source value -- the loop bound is derived from the pad (`ext = N + 2*PAD - KERNEL + 1`), so a pad that drives `ext` negative (M4.7) or to zero (M4.8) is stateable in Triton source and LEGAL: `range(0, ext)` iterates emptily and the kernel runs to completion with its output untouched (pad_bound probe, 2026-09-24: all 8 families run=ok out=diff, oracle=diff, manifest=corrupts). Triton emits no `LoopBound` obligation, so the state is silently accepted: `unchecked`, NOT `u` -- the family's realisations M4.7/M4.8 are `rt-check` in choreo, and a mutation-only kernel may carry the state on a lane whose surface authors no padded extent (channels/README.md). REALISED 8/8 on `mutants/pad_bound.py` families 1..8 (four loop shapes x two pad degeneracies; 1..4 negpad -> M4.7, 5..8 emptypad -> M4.8)."
+      "basis": "degenerate pad: the padded extent is a source value -- the loop bound is derived from the pad (`ext = N + 2*PAD - KERNEL + 1`), so a pad that drives `ext` negative (M4.7) or to zero (M4.8) is stateable in Triton source and LEGAL: `range(0, ext)` iterates emptily and the kernel runs to completion with its output untouched (pad_bound probe, 2026-09-24: all 8 families run=ok out=diff, oracle=diff, manifest=value-changing). Triton emits no `LoopBound` obligation, so the state is silently accepted: `unchecked`, NOT `u` -- the family's realisations M4.7/M4.8 are `rt-check` in choreo, and a mutation-only kernel may carry the state on a lane whose surface authors no padded extent (channels/README.md). REALISED 8/8 on `mutants/pad_bound.py` families 1..8 (four loop shapes x two pad degeneracies; 1..4 negpad -> M4.7, 5..8 emptypad -> M4.8)."
     }
   }
 }

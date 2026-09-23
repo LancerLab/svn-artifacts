@@ -186,6 +186,15 @@ def cmd_e2(size):
 # --------------------------------------------------------------------------
 # mutants (E1): M1 index OOB on relu, M3 K-divisibility on matmul
 # --------------------------------------------------------------------------
+# §9.6.1b measured vocabulary: the finest statement the data supports.
+_MEASURED = {"compile": "ct-check", "runtime": "rt-check",
+             "never": "never", "n/a": "avoid"}
+
+
+def _measured(outcome):
+    return _MEASURED.get(outcome, "never")
+
+
 def cmd_minimal():
     rng = np.random.default_rng(0)
     M = FULL_RAGGED["relu"][0]          # ragged full magnitude
@@ -198,18 +207,21 @@ def cmd_minimal():
         mut = relu_oob(M, 256)(torch.from_numpy(x).cuda())
         torch.cuda.synchronize()
         got = mut.cpu().numpy()
-        manifest = "noop" if np.allclose(got, ref, atol=1e-2) else "corrupts"
+        manifest = "noop" if np.allclose(got, ref, atol=1e-2) else "value-changing"
         _emit(RAW / "mutants.jsonl",
               {**rec, "category": "relu", "mutant_id": "relu-f2-offbyone",
                "outcome": "never", "manifest": manifest,
+               "measured": _measured("never"),
                "stage": "none", "detail": "off-by-one index (reads X[idx+1])"})
         print(f"[tilelang/minimal] relu M1 off-by-one -> never/{manifest}")
     except Exception as e:  # noqa: BLE001
+        # §9.6.1b rule 3: a bare crash carries no emitted check -> never.
         _emit(RAW / "mutants.jsonl",
               {**rec, "category": "relu", "mutant_id": "relu-f2-offbyone",
-               "outcome": "runtime", "manifest": "corrupts", "stage": "runtime",
+               "outcome": "never", "manifest": "value-changing",
+               "measured": _measured("never"), "stage": "none",
                "detail": f"crash: {type(e).__name__}: {str(e)[:60]}"})
-        print(f"[tilelang/minimal] relu M1 off-by-one -> runtime (crash)")
+        print("[tilelang/minimal] relu M1 off-by-one -> never (crash)")
 
     # M3: matmul K not divisible by the gemm atom
     rec2 = {"toolchain": "tilelang", "class": "M3", "paper_category": "hw",
@@ -219,13 +231,15 @@ def cmd_minimal():
         matmul(M3, N3, K3, 16, 16, 32)   # compile with non-divisible K
         _emit(RAW / "mutants.jsonl",
               {**rec2, "category": "matmul", "mutant_id": "matmul-f1-kdiv",
-               "outcome": "never", "manifest": "corrupts", "stage": "none",
+               "outcome": "never", "manifest": "value-changing", "stage": "none",
+               "measured": _measured("never"),
                "detail": "K=48 not divisible by gemm atom 32 (silently handled)"})
         print("[tilelang/minimal] matmul M3 K-div -> never")
     except Exception as e:  # noqa: BLE001
         _emit(RAW / "mutants.jsonl",
               {**rec2, "category": "matmul", "mutant_id": "matmul-f1-kdiv",
-               "outcome": "compile", "manifest": "corrupts", "stage": "compile",
+               "outcome": "compile", "manifest": "value-changing", "stage": "compile",
+               "measured": _measured("compile"),
                "detail": f"gemm: {str(e)[:80]}"})
         print("[tilelang/minimal] matmul M3 K-div -> compile")
 

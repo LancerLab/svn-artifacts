@@ -594,7 +594,7 @@ def _fill_formula(e: Emitter, buf: str, mtype: str, nd: int, offset: int = 0) ->
     `compose.input_values` exactly so the numpy oracle agrees bit-for-bit.
 
     Not optional. A bare `memref.alloc` is uninitialized, and an unfilled input
-    makes even the *clean* kernel report `corrupts` -- which silently invalidates
+    makes even the *clean* kernel report `value-changing` -- which silently invalidates
     every verdict measured against it.
     """
     from emit import _flat_index_body

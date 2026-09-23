@@ -37,8 +37,8 @@
     "L": {
       "n_injected": 2,
       "n_compile": 0,
-      "n_runtime": 1,
-      "n_never": 0,
+      "n_runtime": 0,
+      "n_never": 1,
       "n_discarded_noop": 1
     }
   },

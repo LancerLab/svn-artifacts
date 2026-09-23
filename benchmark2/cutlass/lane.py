@@ -142,17 +142,17 @@ def classify_record(spec_id, cat, mut, outcome, detail, kernel_hash,
                                   prohibition="observation", applicable=False,
                                   **common)
     if outcome == "ct-check":
-        return mutrec.make_record(path_class="ct-check", manifest="corrupts",
+        return mutrec.make_record(path_class="ct-check", manifest="value-changing",
                                   prohibition="", applicable=True, **common)
     if outcome == "rt-check":
-        return mutrec.make_record(path_class="rt-check", manifest="corrupts",
+        return mutrec.make_record(path_class="rt-check", manifest="value-changing",
                                   prohibition="absent", applicable=True,
                                   **common)
     if outcome == "unchecked":
         # M3 is compile-only here: the defect compiled, but we did not run it,
         # so whether it corrupts is undecidable. M4 is launched and the output
         # differs, so it corrupts.
-        manifest = "undecidable" if spec_id.startswith("M3") else "corrupts"
+        manifest = "undecidable" if spec_id.startswith("M3") else "value-changing"
         return mutrec.make_record(path_class="unchecked", manifest=manifest,
                                   prohibition="absent", applicable=True,
                                   **common)
@@ -238,8 +238,15 @@ def mutants_pass(base, outdir, records_path):
         else:
             rc2, err2 = run_bin(binp, outp, env)
             if rc2 != 0:
-                r = classify_record(spec_id, cat, allmut, "rt-check",
-                                    err2.strip()[-200:], kh[cat], sh[cat])
+                # §9.6.1b rule 3: only an *emitted* check (CUT_CHECK) is an
+                # rt-check; any other non-zero exit is a bare crash -> never.
+                if "CUT_CHECK" in err2:
+                    r = classify_record(spec_id, cat, allmut, "rt-check",
+                                        err2.strip()[-200:], kh[cat], sh[cat])
+                else:
+                    r = classify_record(spec_id, cat, allmut, "unchecked",
+                                        "raw crash: " + err2.strip()[-180:],
+                                        kh[cat], sh[cat])
             elif not os.path.exists(outp) or sha(outp) == base[cat]["sha"]:
                 r = classify_record(spec_id, cat, allmut, "noop", "",
                                     kh[cat], sh[cat])

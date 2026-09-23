@@ -31,5 +31,6 @@
     ]
   },
   "outcome": "runtime",
-  "manifest": "corrupts"
+  "manifest": "value-changing",
+  "measured": "rt-check"
 }

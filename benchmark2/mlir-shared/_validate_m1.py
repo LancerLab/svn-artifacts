@@ -39,7 +39,7 @@ never reached (-> `hang`), and which happens depends on heap layout, varying run
 to run and shape to shape. Measured on small-size RTV-off over 30 runs: relu/dyn
 M1.1 is a stable noop (30/30), while relu/static M1.1 is a coin flip at
 p(noop) = 0.633 (19/30 noop, 11/30 heap-corruption abort). RTV-on is
-deterministic at both shapes (30/30 runtime/corrupts). A single `classify()`
+deterministic at both shapes (30/30 runtime/value-changing). A single `classify()`
 therefore *samples the UB once* and any finding derived from it is not
 reproducible. This validator runs each (mutant, mode) `N_REPEAT` times via
 `mlirbench.classify_repeat` and reports the measured distribution, so the

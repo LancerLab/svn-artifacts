@@ -114,7 +114,7 @@ into two structurally different halves:
   report 24 false negatives where there are none.
 * **40 ran clean under real device coverage.** Each records `instrumented > 0`
   (device launches under memcheck). The output is genuinely wrong
-  (`outcome=never, manifest=corrupts`) but **every access stays inside its
+  (`outcome=never, manifest=value-changing`) but **every access stays inside its
   allocation**, so no memory checker can see it.
 
 That 40 is the S12 residue the paper reports: shape faults are not memory faults. It

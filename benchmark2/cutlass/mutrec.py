@@ -48,6 +48,12 @@ SPEC_VERSION = "v2.1"
 OUTCOME = {"ct-check": "compile", "rt-check": "runtime",
            "unchecked": "never", "noop": "n/a"}
 
+# §9.6.1b measured vocabulary: the finest statement the data supports. A
+# `compile` is a ct-check unless audited to the emitter (then `corrupt`); a
+# bare crash carries no emitted check, so it is `never`.
+MEASURED = {"compile": "ct-check", "runtime": "rt-check",
+            "never": "never", "n/a": "avoid"}
+
 # spec -> paper category. M3.2/M3.4 are stride (a descriptor/stride overshoot);
 # the rest of the M3 battery is a shape/divisibility overshoot (dim-mismatch).
 # Every M4 spec is a loop/stride bound, so stride. `L` is the launch-status path
@@ -131,6 +137,7 @@ def make_record(*, spec_id, category, mutation, outcome, path_class,
         "outcome": o,
         "stage": REC.stage_for(o),
         "manifest": manifest,
+        "measured": MEASURED.get(o, "never"),
         "spec_id": spec_id,
         "path_class": path_class,
         "prohibition": prohibition,

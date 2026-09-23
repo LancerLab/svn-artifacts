@@ -666,3 +666,36 @@ becomes "and why it is not a choice"), §2 and §6, plus `HANDOFF.md` §3.1 and
 - `mlir-low` S1 (`M4`): `n_runtime` 8 -> **0**, `n_never` 48 -> **56**; `M1`
   unchanged (RTV-on 44/18). Record level: 44 `runtime` (gpu-assert) + 192
   `never` (176 none + 16 hang).
+
+## 2026-09-24 — `measured` vocabulary + manifest rename `corrupts` → `value-changing`
+
+- §9.6.1b fixes the recorded vocabulary at `measured ∈ {avoid, corrupt, ct-check,
+  rt-check, never}` ("the finest statement the data supports") and flags that the
+  §7 manifest value `corrupts` collides with the new `corrupt` value: it describes
+  *output changed*, not an illegal-code emitter defect, and should be renamed.
+- `Classification.measured` (shared classifier) derives that field from `outcome`
+  via `MEASURED_BY_OUTCOME` (`compile → ct-check`, `runtime → rt-check`,
+  `never → never`, `n/a → avoid`), overridable when a mechanism audit lands
+  (`emitter-defect → corrupt`). `lane.py` writes it into every mutant record.
+  `record-schema.json` declares `measured`; the manifest enum gains
+  `value-changing` and keeps `corrupts` as a deprecated alias while `choreo`
+  migrates.
+- `schema/migrate_manifest_value.py` re-expressed every clean-lane corpus
+  (renames the manifest value and adds the derived `measured`), then each lane's
+  `collect`/`stats` was re-run. Renamed in code: `cutlass`, `iree`, `tilelang`,
+  `triton`, and the shared `mlir-shared/*`. `choreo` (code + corpora) is deferred
+  to avoid its in-flight edits; it still emits `corrupts`.
+- §9.6.1b rule 3 also hits the other lanes' v1 `runtime`: those rows were bare
+  crashes, not emitted checks. `triton` (11 rows, all `child crash`; the lane
+  emits no run-time check) and `cutlass` (1 launch fault, `CUDA error: invalid
+  argument`, not a `CUT_CHECK`) reclassify to `never`/`never`; `iree`'s 24
+  `runtime` rows have empty `detail` and are left for its owner to probe.
+  `tilelang` had none (its code path is aligned).
+- New S1 views: `triton` 0 `runtime` (M1 0/56 compile/never… M1 8/56, M3 40/16,
+  M4 8/48), `cutlass` path-class `L` 0 `runtime`; `measured` on all clean-lane
+  records. `mlir-linalg`'s 48 `compile` rows default to `ct-check` pending an
+  emitter-vs-defect audit (rule 1).
+- `make guards` unchanged: 20 pre-existing `choreo` M1/M2/M3 instance/coverage
+  findings, none naming a clean lane; `make test-guards` still 4 pre-existing
+  control failures. `render/stats-merged.json` carries only the vocabulary
+  rename; a full re-render waits for `choreo` to settle.

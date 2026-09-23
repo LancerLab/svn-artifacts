@@ -43,5 +43,6 @@
     ]
   },
   "outcome": "never",
-  "manifest": "corrupts"
+  "manifest": "value-changing",
+  "measured": "never"
 }

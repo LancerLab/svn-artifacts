@@ -234,7 +234,7 @@
             "instrumented_max": 44
           }
         },
-        "miss_note": "each of these ran with real ASan coverage (instrumented > 0) and still produced no report: the injected defect corrupts the result WITHOUT any access leaving its allocation, so no memory checker can see it. This residue \u2014 not the flagged count \u2014 is what S12 measures."
+        "miss_note": "each of these ran with real ASan coverage (instrumented > 0) and still produced no report: the injected defect value-changing the result WITHOUT any access leaving its allocation, so no memory checker can see it. This residue \u2014 not the flagged count \u2014 is what S12 measures."
       },
       "M1": {
         "flagged_and_exercised": 0,
@@ -280,7 +280,7 @@
             "instrumented_max": 13
           }
         },
-        "miss_note": "each of these ran with real ASan coverage (instrumented > 0) and still produced no report: the injected defect corrupts the result WITHOUT any access leaving its allocation, so no memory checker can see it. This residue \u2014 not the flagged count \u2014 is what S12 measures."
+        "miss_note": "each of these ran with real ASan coverage (instrumented > 0) and still produced no report: the injected defect value-changing the result WITHOUT any access leaving its allocation, so no memory checker can see it. This residue \u2014 not the flagged count \u2014 is what S12 measures."
       },
       "M2": {
         "flagged_and_exercised": 0,
@@ -520,7 +520,7 @@
         "class": "M1",
         "category": "layer_normalization",
         "detector": "crash",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "HOISTING_DEFECT",
         "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
         "note": null
@@ -530,7 +530,7 @@
         "class": "M1",
         "category": "layer_normalization",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "HOISTING_DEFECT",
         "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
         "note": null
@@ -540,7 +540,7 @@
         "class": "M1",
         "category": "layer_normalization",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "HOISTING_DEFECT",
         "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
         "note": null
@@ -550,7 +550,7 @@
         "class": "M1",
         "category": "layer_normalization",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "HOISTING_DEFECT",
         "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
         "note": null
@@ -560,7 +560,7 @@
         "class": "M1",
         "category": "layer_normalization",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C1_COST_FILTER_SUPPRESSED",
         "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
         "note": null
@@ -570,7 +570,7 @@
         "class": "M1",
         "category": "layer_normalization",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C1_COST_FILTER_SUPPRESSED",
         "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
         "note": null
@@ -580,7 +580,7 @@
         "class": "M1",
         "category": "layer_normalization",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "HOISTING_DEFECT",
         "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
         "note": null
@@ -590,7 +590,7 @@
         "class": "M1",
         "category": "layer_normalization",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C5_OUT_OF_SCOPE",
         "never_cause_reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
         "note": null
@@ -600,7 +600,7 @@
         "class": "M1",
         "category": "relu",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C3_LOWER_BOUND_OMITTED",
         "never_cause_reason": "choreo assessed the mutated index but generated only ONE of its two bounds. Every literal index in the same kernel gets both (`>= 0` and `< N`); the mutated expression gets one. When the mutation moves the index in the direction of the missing bound (q-1 at q==0) nothing can fire. A croqtile obligation-generation bug.",
         "note": null
@@ -610,7 +610,7 @@
         "class": "M1",
         "category": "relu",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C3_LOWER_BOUND_OMITTED",
         "never_cause_reason": "choreo assessed the mutated index but generated only ONE of its two bounds. Every literal index in the same kernel gets both (`>= 0` and `< N`); the mutated expression gets one. When the mutation moves the index in the direction of the missing bound (q-1 at q==0) nothing can fire. A croqtile obligation-generation bug.",
         "note": null
@@ -620,7 +620,7 @@
         "class": "M1",
         "category": "relu",
         "detector": "crash",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -630,7 +630,7 @@
         "class": "M1",
         "category": "relu",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -640,7 +640,7 @@
         "class": "M1",
         "category": "relu",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -650,7 +650,7 @@
         "class": "M1",
         "category": "transpose",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C3_LOWER_BOUND_OMITTED",
         "never_cause_reason": "choreo assessed the mutated index but generated only ONE of its two bounds. Every literal index in the same kernel gets both (`>= 0` and `< N`); the mutated expression gets one. When the mutation moves the index in the direction of the missing bound (q-1 at q==0) nothing can fire. A croqtile obligation-generation bug.",
         "note": null
@@ -660,7 +660,7 @@
         "class": "M1",
         "category": "transpose",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C3_LOWER_BOUND_OMITTED",
         "never_cause_reason": "choreo assessed the mutated index but generated only ONE of its two bounds. Every literal index in the same kernel gets both (`>= 0` and `< N`); the mutated expression gets one. When the mutation moves the index in the direction of the missing bound (q-1 at q==0) nothing can fire. A croqtile obligation-generation bug.",
         "note": null
@@ -670,7 +670,7 @@
         "class": "M1",
         "category": "transpose",
         "detector": "crash",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -680,7 +680,7 @@
         "class": "M1",
         "category": "transpose",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -690,7 +690,7 @@
         "class": "M2",
         "category": "concat",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C5_OUT_OF_SCOPE",
         "never_cause_reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
         "note": null
@@ -700,7 +700,7 @@
         "class": "M2",
         "category": "concat",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C5_OUT_OF_SCOPE",
         "never_cause_reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
         "note": null
@@ -710,7 +710,7 @@
         "class": "M2",
         "category": "concat",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C5_OUT_OF_SCOPE",
         "never_cause_reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
         "note": null
@@ -720,7 +720,7 @@
         "class": "M2",
         "category": "concat",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C5_OUT_OF_SCOPE",
         "never_cause_reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
         "note": null
@@ -730,7 +730,7 @@
         "class": "M2",
         "category": "layer_normalization",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C5_OUT_OF_SCOPE",
         "never_cause_reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
         "note": null
@@ -740,7 +740,7 @@
         "class": "M2",
         "category": "layer_normalization",
         "detector": "runtime_lib",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -750,7 +750,7 @@
         "class": "M2",
         "category": "layer_normalization",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "HOISTING_DEFECT",
         "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
         "note": null
@@ -760,7 +760,7 @@
         "class": "M2",
         "category": "layer_normalization",
         "detector": "runtime_lib",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -770,7 +770,7 @@
         "class": "M2",
         "category": "matmul",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -780,7 +780,7 @@
         "class": "M2",
         "category": "matmul",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -790,7 +790,7 @@
         "class": "M3",
         "category": "matmul",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -800,7 +800,7 @@
         "class": "M3",
         "category": "matmul",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -810,7 +810,7 @@
         "class": "M3",
         "category": "matmul",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -820,7 +820,7 @@
         "class": "M3",
         "category": "matmul",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -830,7 +830,7 @@
         "class": "M3",
         "category": "matmul",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -840,7 +840,7 @@
         "class": "M3",
         "category": "matmul",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -850,7 +850,7 @@
         "class": "M3",
         "category": "matmul",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -860,7 +860,7 @@
         "class": "M3",
         "category": "matmul",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -870,7 +870,7 @@
         "class": "M3",
         "category": "matmul",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null
@@ -880,7 +880,7 @@
         "class": "M3",
         "category": "matmul",
         "detector": "oracle",
-        "manifest": "corrupts",
+        "manifest": "value-changing",
         "never_cause": "C4_NOT_ASSESSED",
         "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
         "note": null

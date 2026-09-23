@@ -4,8 +4,8 @@
   "M1": {
    "n_injected": 64,
    "n_compile": 8,
-   "n_runtime": 11,
-   "n_never": 45,
+   "n_runtime": 0,
+   "n_never": 56,
    "n_na": 0
   },
   "M4": {

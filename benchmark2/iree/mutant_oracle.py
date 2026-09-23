@@ -14,7 +14,7 @@ reference that mirrors the operator semantics:
                semantics REQUIRE the dimension that the mutant breaks.
   * never    — IREE accepts and silently computes. We prove corruption by
                comparing the device result against the NumPy reference: a
-               mismatch is silent corruption (corrupts), a match is a no-op
+               mismatch is silent corruption (value-changing), a match is a no-op
                mutant (discarded per plan §11.1).
 
 Output: raw/mutant_oracle.jsonl

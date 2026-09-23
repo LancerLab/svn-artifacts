@@ -35,7 +35,7 @@ are not the same number:
   — two manifestations of one injection — so it emits **two** records.
 
 Both spec-5 variants are kept because both are real defects: each lands in the
-`never`/`corrupts` row (survived the verifier *and* RTV, oracle proves the output
+`never`/`value-changing` row (survived the verifier *and* RTV, oracle proves the output
 wrong), which is exactly the silent-bug residue the benchmark measures. Dropping
 one to make the arithmetic tidy would delete a genuine finding.
 
@@ -104,7 +104,7 @@ Measured on `relu/static`, with the output dumped via `func.call @printMemref2dF
 | clean | `[[0,5,3],[1,0,0]]` | 9 | 35 | — |
 | M1.2 off-by-one | `[[5,3,1],[0,0,4.6e-44]]` | **9** | **35** | `noop` ← **false success** |
 | M1.3 negative-index | `[[0,0,5],[3,1,0]]` | **9** | **35** | `noop` ← **false success** |
-| M1.4 transposed-stride | `[[0,1,2.4e-41],[5,0,0]]` | 6 | 26 | `corrupts` ✓ |
+| M1.4 transposed-stride | `[[0,1,2.4e-41],[5,0,0]]` | 6 | 26 | `value-changing` ✓ |
 
 The fix weights each element by its flat position,
 $w(i) = ((i \cdot 41) \bmod 127) - 63$, breaking the symmetry (M1.2: 9 → −37).
@@ -204,8 +204,8 @@ family M1-g:
 
 | mode | verdict | why |
 |---|---|---|
-| RTV-**off** | `never/corrupts` (8/8 at `N=16`) | no dynamic view check; the overrun is silent |
-| RTV-**on** | `runtime/corrupts` (8/8 at `N=16`) | RTV's `memref.subview` runtime verification fires: `Runtime op verification failed %… = "memref.subview"(…)` |
+| RTV-**off** | `never/value-changing` (8/8 at `N=16`) | no dynamic view check; the overrun is silent |
+| RTV-**on** | `runtime/value-changing` (8/8 at `N=16`) | RTV's `memref.subview` runtime verification fires: `Runtime op verification failed %… = "memref.subview"(…)` |
 
 This is worth stating because the spec's `M1.20` note calls the path "unchecked…
 symbols neither refused nor checked" — that describes the choreo toolchain, whose
@@ -235,8 +235,8 @@ kernel. The `trunci` chain has no such fold. Outcome:
 
 | mode | verdict | why |
 |---|---|---|
-| RTV-**off** | `never/corrupts` (8/8 at `N=16`) | no index check; the wrapped read is a silent misread |
-| RTV-**on** | `runtime/corrupts` (8/8 at `N=16`) | RTV's `memref.load` descriptor check fires on the negative index |
+| RTV-**off** | `never/value-changing` (8/8 at `N=16`) | no index check; the wrapped read is a silent misread |
+| RTV-**on** | `runtime/value-changing` (8/8 at `N=16`) | RTV's `memref.load` descriptor check fires on the negative index |
 
 On the device both checkers see this family: memcheck flags all 8 carrier cells as
 out-of-bounds device reads (`Invalid __global__ read`). The earlier host-ASan
@@ -273,9 +273,9 @@ reproducible. Measured over **30 runs** of the same lowered module, small-size:
 | cell | measured distribution | p(noop) |
 |---|---|---|
 | `relu/dyn` M1.1, RTV-**off** | 30× `never/noop` | **1.000** (deterministic) |
-| `relu/dyn` M1.1, RTV-**on** | 30× `runtime/corrupts` | 0.000 (deterministic) |
-| `relu/static` M1.1, RTV-**on** | 30× `runtime/corrupts` | 0.000 (deterministic) |
-| `relu/static` M1.1, RTV-**off** | 19× `never/noop`, 11× `runtime/corrupts` | **0.633** ← coin flip |
+| `relu/dyn` M1.1, RTV-**on** | 30× `runtime/value-changing` | 0.000 (deterministic) |
+| `relu/static` M1.1, RTV-**on** | 30× `runtime/value-changing` | 0.000 (deterministic) |
+| `relu/static` M1.1, RTV-**off** | 19× `never/noop`, 11× `runtime/value-changing` | **0.633** ← coin flip |
 
 That study covers **`relu` only** — it was scoped to the cell that motivated the
 repeat count, so it is not a census of nondeterminism on this surface. Sampling the
@@ -292,7 +292,7 @@ RTV-off, all M1). Each row pools every draw of that cell made so far:
 
 So **four cells are nondeterministic, but only one is nondeterministic enough to
 matter.** The reduction rule (`reduce_verdicts`) is conservative — any `runtime`
-run wins, and any `corrupts` beats `noop` — so a recorded cell flips only when
+run wins, and any `value-changing` beats `noop` — so a recorded cell flips only when
 *every* one of the N runs lands in the weaker bucket. For the three
 `transpose`/`layer_norm` cells $p(\text{noop})$ is ~1/16 or less, making that
 $\lesssim 10^{-19}$: they are nondeterministic in the strict sense and stable in
@@ -309,7 +309,7 @@ twenty-five would have silently shifted a tally cell's `never`/`runtime` split.
 Note that this churns the *artifact* without moving the *gate*. A mutant counts as a
 `noop` false success (specs §7.1) only when it is noop in every run of **every**
 mode, and `relu/static` M1.1 RTV-**on** is deterministically 16/16
-`runtime/corrupts` — so the validator's exit code is reproducible at any `N`, and
+`runtime/value-changing` — so the validator's exit code is reproducible at any `N`, and
 what `N=16` actually protects is the committed `distribution` text, not the verdict.
 
 > **Vocabulary note (`mutation-specs-v2.md` §9.6.1b).** The `runtime` label
@@ -317,11 +317,22 @@ what `N=16` actually protects is the committed `distribution` text, not the verd
 > exactly an *emitted check firing* (`detected_by ∈ {rtv-assert, gpu-assert}`);
 > a bare RTV-off abort/hang with no emitted check is `never`
 > (`detected_by ∈ {hang, segv, nonzero-exit}`). The RTV-off
-> `runtime/corrupts` draws in this section therefore re-express as
-> `never/corrupts` (the corrupts/noop manifest is unchanged), and the
+> `runtime/value-changing` draws in this section therefore re-express as
+> `never/value-changing` (the value-changing/noop manifest is unchanged), and the
 > `never`/`runtime` split named below becomes a `never/noop` vs
-> `never/corrupts` split. The reduction (`corrupts` beats `noop`) and the `N=16`
+> `never/value-changing` split. The reduction (`value-changing` beats `noop`) and the `N=16`
 > sizing argument are unaffected.
+>
+> Every record also carries the finer `measured` field, the normative §9.6.1b
+> vocabulary `{avoid, corrupt, ct-check, rt-check, never}`: `avoid` = the surface
+> cannot express the defect, `corrupt` = an emitter/base artifact (only after
+> auditing a compile to the emitter), `ct-check` = a compile-time check fired,
+> `rt-check` = an emitted run-time check fired, `never` = no check fired. `measured`
+> is derived from `outcome` (`compile → ct-check`, `runtime → rt-check`,
+> `never → never`, `n/a → avoid`) unless a mechanism audit overrides it, so it
+> states the same verdict more finely without changing any aggregate. The §7
+> manifest value `corrupts` is renamed `value-changing` (it describes *output
+> changed*), removing its collision with the `corrupt` `measured` value.
 
 No aggregate moves in any of these cases. All four cells reduce to the same
 `outcome`/`manifest` pair in every sample, and `stats.json` was byte-identical
@@ -366,11 +377,11 @@ recorded outcome.
 
 `_validate_m1.py` runs each (mutant, mode) `N_REPEAT` times via
 `mlirbench.classify_repeat` and reduces the verdict over the measured distribution
-(`reduce_verdicts`: any `corrupts` wins). The **gate is reproducible at any N** — a
+(`reduce_verdicts`: any `value-changing` wins). The **gate is reproducible at any N** — a
 mutant is a false success only when *every run of every mode* is noop, and RTV-on
 always corrupts, so `all_noop_every_run` can never trigger here. Findings are listed
 under `MODE-DEPENDENT DEFECT(S)` with their measured distribution (e.g. `relu/static
-M1.1: RTV-off [8x never/noop, 4x runtime/corrupts], RTV-on [12x runtime/corrupts]`)
+M1.1: RTV-off [8x never/noop, 4x runtime/value-changing], RTV-on [12x runtime/value-changing]`)
 rather than a hardcoded idempotent-write story, and the validator exits 0. The
 finding *set* still grows with N — deeper sampling surfaces rarer noop events (4 at
 N=5, 7 at N=12) — while the record tally stayed byte-identical across the N=5 and
@@ -449,13 +460,13 @@ negatives rather than instrumentation failures.
   `softmax`, `transpose`. The mutant performs **no out-of-bounds access at all** —
   a zero stride or an empty range keeps every address inside the buffer. There is
   nothing for memcheck to report. The output is still wrong, so the mutant records
-  `outcome=never, manifest=corrupts`.
+  `outcome=never, manifest=value-changing`.
 * **8× M1.11** (overlap-write), 4 categories × both shapes. Shrinking the shared
   tile makes neighbouring writes alias, but every store stays inside the buffer —
-  a write-after-write hazard no bounds checker can see. `outcome=never, corrupts`.
+  a write-after-write hazard no bounds checker can see. `outcome=never, value-changing`.
 * **8× M1.12** (broadcast-index reuse), 4 categories × both shapes. The read index
   is replaced by another in-range index, so the load is legal but wrong.
-  `outcome=never, corrupts`.
+  `outcome=never, value-changing`.
 * **2× M1.4** (transposed-stride), `relu` **dynamic** and `transpose` **dynamic**
   only. Static M1.4 on both *is* flagged (`Invalid __global__ read`).
 

@@ -11,7 +11,7 @@ numbers are comparable:
 * the pinned LLVM-21 toolchain location and the exact pass pipelines,
 * assert counting (which is stage-dependent -- see `count_asserts`),
 * the compile / run / classify protocol,
-* the §7 manifest oracle (`corrupts` vs `noop`),
+* the §7 manifest oracle (`value-changing` vs `noop`),
 * record emission against `schema/record-schema.json`.
 
 Measurement rules that are easy to get wrong and are therefore enforced here:
@@ -988,6 +988,17 @@ def _decode_payload(raw: str) -> str | None:
 # Classification
 # --------------------------------------------------------------------------
 
+# §9.6.1b measured-outcome vocabulary (mutation-specs-v2.md). `outcome` keeps the
+# v1 four values; `measured` is the normative five every lane reports. A compile
+# failure defaults to `ct-check` (the compiler caught the injected defect) and is
+# pinned to `corrupt` only when an audit shows the emitter/base is at fault.
+MEASURED_BY_OUTCOME = {
+    "n/a": "avoid",
+    "compile": "ct-check",
+    "runtime": "rt-check",
+    "never": "never",
+}
+
 
 @dataclass
 class Classification:
@@ -1012,7 +1023,16 @@ class Classification:
     * ``none``          -- it ran to a (possibly wrong) result; nothing fired
     * ``n/a``           -- not expressible, no kernel to run
 
-    `manifest` is the §7 ground-truth oracle: corrupts / noop.
+    `measured` is the §9.6.1b *measured-outcome* vocabulary, normative for every
+    lane: `avoid | corrupt | ct-check | rt-check | never`. It is derived from
+    `outcome`/`detected_by` via `MEASURED_BY_OUTCOME`, except that an audited
+    emitter artifact is pinned to `corrupt` through `measured_override` (rule 1:
+    a compile failure is `corrupt` only when it comes from the emitter/base, not
+    from the injected defect).
+
+    `manifest` is the §7 ground-truth oracle, renamed `value-changing` / `noop` /
+    `undecidable` (§9.6.1b: the old `corrupts` collided with the `corrupt`
+    `measured` value).
     """
 
     outcome: str = "never"
@@ -1028,6 +1048,16 @@ class Classification:
     abort_message: str = ""
     compile_error: str = ""
     notes: str = ""
+    measured_override: str = ""
+
+    @property
+    def measured(self) -> str:
+        """§9.6.1b measured outcome: the vocabulary every lane reports."""
+        if self.measured_override:
+            return self.measured_override
+        if self.detected_by == "emitter-defect":
+            return "corrupt"
+        return MEASURED_BY_OUTCOME.get(self.outcome, "never")
 
     def as_record(self) -> dict:
         return asdict(self)
@@ -1050,17 +1080,17 @@ def classify(
     when either disagrees. That single value is both the ref-check gate and the
     §7 manifest oracle:
 
-    * compile error                      -> outcome=compile,  manifest=corrupts
-    * an emitted check fires             -> outcome=runtime,  manifest=corrupts
+    * compile error                      -> outcome=compile,  manifest=value-changing
+    * an emitted check fires             -> outcome=runtime,  manifest=value-changing
         - host RTV assert (exit 134):        detected_by=rtv-assert
         - device cf.assert fired:            detected_by=gpu-assert
-    * kernel hangs (timeout)             -> outcome=never,    manifest=corrupts
+    * kernel hangs (timeout)             -> outcome=never,    manifest=value-changing
         detected_by=hang
-    * kernel dies on SIGSEGV             -> outcome=never,    manifest=corrupts
+    * kernel dies on SIGSEGV             -> outcome=never,    manifest=value-changing
         detected_by=segv
-    * other non-zero exit, no check       -> outcome=never,    manifest=corrupts
+    * other non-zero exit, no check       -> outcome=never,    manifest=value-changing
         detected_by=nonzero-exit
-    * exit 0, mismatch > 0               -> outcome=never,    manifest=corrupts
+    * exit 0, mismatch > 0               -> outcome=never,    manifest=value-changing
     * exit 0, mismatch == 0              -> outcome=never,    manifest=noop
                                             (a false success; specs §7.1 discards it)
 
@@ -1069,7 +1099,7 @@ def classify(
     toolchain emitted no check for the bug, so it did not catch it. `detected_by`
     carries the mechanism the v1 `outcome` enum could not.
 
-    Note the `never`/`corrupts` row is the interesting one for this lane: the
+    Note the `never`/`value-changing` row is the interesting one for this lane: the
     defect survived the verifier *and* RTV, yet the oracle proves the output is
     wrong. That is precisely the silent-bug residue the paper measures.
 
@@ -1106,7 +1136,7 @@ def classify(
         c.compile_error = (res.stderr or res.stdout).strip()[:2000]
         # A mutant that fails to compile cannot be run, so the §7 oracle is
         # answered statically: the defect is real (it broke the build).
-        c.manifest = "corrupts"
+        c.manifest = "value-changing"
         return c
     c.compile_ok = True
 
@@ -1157,7 +1187,7 @@ def _verdict_from_run(
         c.outcome = "runtime"
         c.stage = "runtime"
         c.detected_by = "rtv-assert"
-        c.manifest = "corrupts"
+        c.manifest = "value-changing"
         # First line of the RTV diagnostic, e.g. "^ out-of-bounds access".
         c.abort_message = _first_diagnostic(run.stdout) or combined.strip()[:1000]
         return c
@@ -1172,7 +1202,7 @@ def _verdict_from_run(
         c.outcome = "runtime"
         c.stage = "runtime"
         c.detected_by = "gpu-assert"
-        c.manifest = "corrupts"
+        c.manifest = "value-changing"
         c.abort_message = _first_gpu_assert(combined) or combined.strip()[:1000]
         return c
 
@@ -1187,7 +1217,7 @@ def _verdict_from_run(
         c.outcome = "never"
         c.stage = "runtime"
         c.detected_by = "hang"
-        c.manifest = "corrupts"
+        c.manifest = "value-changing"
         c.abort_message = f"TIMEOUT: kernel did not terminate within {run_timeout}s"
         return c
 
@@ -1198,7 +1228,7 @@ def _verdict_from_run(
         c.outcome = "never"
         c.stage = "runtime"
         c.detected_by = "nonzero-exit"
-        c.manifest = "corrupts"
+        c.manifest = "value-changing"
         c.abort_message = f"exit {run.rc}: " + combined.strip()[:800]
         return c
 
@@ -1207,7 +1237,7 @@ def _verdict_from_run(
         c.outcome = "never"
         c.stage = "runtime"
         c.detected_by = "segv"
-        c.manifest = "corrupts"
+        c.manifest = "value-changing"
         c.abort_message = "SIGSEGV"
         return c
 
@@ -1219,7 +1249,7 @@ def _verdict_from_run(
         c.manifest = "noop"
         return c
     c.ref_check = c.mismatch_count == 0
-    c.manifest = "noop" if c.ref_check else "corrupts"
+    c.manifest = "noop" if c.ref_check else "value-changing"
     c.outcome = "never"
     c.stage = "runtime"
     c.detected_by = "none"
@@ -1245,7 +1275,7 @@ def classify_repeat(
     bound is never reached (`hang`). Which happens depends on heap layout and
     varies run to run. Measured on `mlir-low` small-size: relu/static M1.1 at
     RTV-off gives ~3 `noop` / ~3 `abort` over 6 runs, and transpose/dyn M1.1
-    gives ~5 `corrupts` / ~1 `noop`. A single `classify()` therefore *samples the
+    gives ~5 `value-changing` / ~1 `noop`. A single `classify()` therefore *samples the
     UB once* and its verdict -- and any finding derived from it -- is not
     reproducible. This compiles the (deterministic) lowering once and runs it `n`
     times so the caller can aggregate over the distribution.
@@ -1275,7 +1305,7 @@ def classify_repeat(
         c.stage = "compile"
         c.detected_by = "compile-error"
         c.compile_error = (res.stderr or res.stdout).strip()[:2000]
-        c.manifest = "corrupts"
+        c.manifest = "value-changing"
         return [c] * n
 
     n_asserts = n_asserts_total = 0
@@ -1303,12 +1333,12 @@ def reduce_verdicts(verdicts: list[Classification]) -> tuple[Classification, dic
     Canonical rule (conservative -- a defect that manifests in *any* run is not a
     false success), applied in order:
 
-    1. every run `compile`            -> `compile`/`corrupts` (deterministic).
-    2. any run `runtime` -- an emitted check fired -> `runtime`/`corrupts`.
+    1. every run `compile`            -> `compile`/`value-changing` (deterministic).
+    2. any run `runtime` -- an emitted check fired -> `runtime`/`value-changing`.
        The toolchain caught the defect at runtime. NOTE for S1: at RTV-off this
        fault is *incidental UB*, not a generated check -- see mlir-shared/README.md
        "UB-nondeterministic mutants".
-    3. else all runs `never`: any `corrupts` -> `never`/`corrupts` (the output
+    3. else all runs `never`: any `value-changing` -> `never`/`value-changing` (the output
        was wrong, or the run hung/crashed without an emitted check, in at least
        one run); only if *every* run is `noop` -> `never`/`noop`.
 
@@ -1331,9 +1361,9 @@ def reduce_verdicts(verdicts: list[Classification]) -> tuple[Classification, dic
         rep = next((v for v in verdicts if v.outcome == "runtime" and v.abort_message), None)
         rep = rep or next(v for v in verdicts if v.outcome == "runtime")
         return rep, census
-    # all `never` (or n/a): corrupts wins over noop unless every run is noop.
-    if any(v.manifest == "corrupts" for v in verdicts):
-        rep = next(v for v in verdicts if v.manifest == "corrupts")
+    # all `never` (or n/a): value-changing wins over noop unless every run is noop.
+    if any(v.manifest == "value-changing" for v in verdicts):
+        rep = next(v for v in verdicts if v.manifest == "value-changing")
         return rep, census
     return verdicts[0], census
 

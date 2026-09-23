@@ -46,15 +46,15 @@ cells. Four cells have produced a mixed distribution at least once (all RTV-off,
 M1): `relu/static` M1.1, `transpose/static` M1.1, `transpose/dynamic` M1.1, and
 `layer_norm/dynamic` M1.2. That field records a 16-sample draw from genuinely
 undefined behaviour, so its split varies run to run — e.g. `relu/static` reads
-`12x never/noop, 4x runtime/corrupts` in the committed file and `7x/9x` in a fresh
+`12x never/noop, 4x runtime/value-changing` in the committed file and `7x/9x` in a fresh
 run. Every one of these cells reduces to the *same* `outcome`/`manifest` pair under
-the lane's conservative reduction rule (any `runtime` wins; any `corrupts` beats
+the lane's conservative reduction rule (any `runtime` wins; any `value-changing` beats
 `noop`), so no aggregate in `stats.json` moves — it was byte-identical across the
 re-run. Only the raw distribution text moves, on up to four lines. A dirty `git
 diff` confined to those `distribution` strings after a re-run is expected and is
 **not** a regression. The `mlir-linalg` lane has no such cell and is
 byte-reproducible throughout: its 120 M2 records are all `compile` (68, verifier
-rejects a shape mutant — compilation is deterministic) or `never`/`corrupts` (40,
+rejects a shape mutant — compilation is deterministic) or `never`/`value-changing` (40,
 in-bounds wrong output, not undefined behaviour) or `n/a` (12), with **zero**
 `runtime` outcomes, so nothing samples UB and it runs at `n_repeat=1`. That is a
 structural argument, not a repeated-sample one: an M2 shape-contract defect either
@@ -180,14 +180,14 @@ instrumentation failures.
   `softmax`, `transpose`, at both shapes. The mutant performs **no out-of-bounds
   access at all**: a zero stride or an empty range keeps every address inside the
   buffer. There is nothing for memcheck to report. The output is still wrong, so the
-  mutant records `outcome=never, manifest=corrupts`.
+  mutant records `outcome=never, manifest=value-changing`.
 * **8× M1.11** (read-after-write aliasing / overlap-write) — 4 categories × both
   shapes. The kind shrinks the shared tile, so neighbouring writes alias each other
   but every store still lands inside the buffer: an in-bounds write-after-write
-  hazard, invisible to a bounds checker. Records `never, corrupts`.
+  hazard, invisible to a bounds checker. Records `never, value-changing`.
 * **8× M1.12** (broadcast-index reuse) — 4 categories × both shapes. The read index
   is replaced by another index already in range, so the load is in-bounds but reads
-  the wrong element. Records `never, corrupts`.
+  the wrong element. Records `never, value-changing`.
 * **2× M1.4** (transposed-stride) — `relu` **dynamic** and `transpose` **dynamic**
   only. Static M1.4 on both *is* flagged.
 
@@ -242,8 +242,8 @@ first in family `M1-g`:
 
 | mode | verdict | why |
 |---|---|---|
-| RTV-**off** | `never/corrupts` | no dynamic view check; the overrun is silent |
-| RTV-**on** | `runtime/corrupts` | RTV's `memref.subview` verification fires (`Runtime op verification failed … "memref.subview"`) |
+| RTV-**off** | `never/value-changing` | no dynamic view check; the overrun is silent |
+| RTV-**on** | `runtime/value-changing` | RTV's `memref.subview` verification fires (`Runtime op verification failed … "memref.subview"`) |
 
 The spec's `M1.20` note calls this path `unchecked` — *"symbols neither refused nor
 checked"* — which describes choreo's `_StaticFail_`-only view checks. On the MLIR
@@ -274,8 +274,8 @@ fold and survives both pipelines. The mutant is mode-dependent like the others:
 
 | mode | verdict | why |
 |---|---|---|
-| RTV-**off** | `never/corrupts` | no index check; the wrapped read is a silent misread |
-| RTV-**on** | `runtime/corrupts` | RTV's `memref.load` descriptor check fires on the negative index |
+| RTV-**off** | `never/value-changing` | no index check; the wrapped read is a silent misread |
+| RTV-**on** | `runtime/value-changing` | RTV's `memref.load` descriptor check fires on the negative index |
 
 Unlike the host-ASan measurement, the device sanitizer catches this family:
 `compute-sanitizer --tool memcheck` reports all 8 carrier cells as
@@ -307,7 +307,7 @@ sample *nondeterminism*, not to test size correctness. Its RTV split reads
 nondeterministic cell that can actually flip (`relu/static` M1.1 RTV-off) sampled
 once instead of 16 times.
 That cell is a genuine coin flip — the current committed small-size draw logged
-`9x never/noop, 7x runtime/corrupts` (p(noop)=0.5625), the separate 30-run study in
+`9x never/noop, 7x runtime/value-changing` (p(noop)=0.5625), the separate 30-run study in
 `../mlir-shared/README.md` measured 0.633, and earlier draws measured 0.75, 0.44,
 0.44 and 0.31 — so which bucket it lands in varies run to run by construction. That is the
 expected consequence of N=1, not a size effect: the injection census, the §5.1

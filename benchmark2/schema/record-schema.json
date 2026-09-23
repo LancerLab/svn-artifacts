@@ -85,9 +85,17 @@
           "none"
         ],
         "manifest": [
-          "corrupts",
+          "value-changing",
           "noop",
-          "undecidable"
+          "undecidable",
+          "corrupts"
+        ],
+        "measured": [
+          "avoid",
+          "corrupt",
+          "ct-check",
+          "rt-check",
+          "never"
         ],
         "detected_by": [
           "compile-error",
@@ -97,6 +105,7 @@
           "segv",
           "nonzero-exit",
           "none",
+          "emitter-defect",
           "n/a"
         ],
         "path_class": [

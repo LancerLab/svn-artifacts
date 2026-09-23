@@ -24,10 +24,10 @@ inside; reduction loop) x two block sizes, exactly the "structure variants"
 pattern the other lanes use to fill a family.
 
 Outcome mapping:
-  A/B/C/D/E  run to completion, output untouched  -> manifest `corrupts`,
+  A/B/C/D/E  run to completion, output untouched  -> manifest `value-changing`,
              outcome `never` (the lane authors no LoopBound check; silent).
   F          the frontend raises `CompilationError` at trace (a `static_range`
-             with step 0) -> manifest `corrupts`, outcome `compile`
+             with step 0) -> manifest `value-changing`, outcome `compile`
              (`avoided`).  NOTE: plain `range(0, K, 0)` does NOT refuse -- it
              lowers to `scf.for ... step 0` and hangs (probed 2026-09-24); the
              refusal is specific to `tl.static_range`, which Python evaluates

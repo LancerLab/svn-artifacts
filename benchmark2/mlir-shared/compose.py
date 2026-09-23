@@ -16,7 +16,7 @@ Design decisions that matter for the numbers:
   kernel's output matches the numpy reference, `1` when it does not. Two
   checksums (sum and sum-of-squares) are compared to keep accidental collisions
   unlikely. This single return value answers both the ref-check gate (§2.3) and
-  the §7 manifest oracle (`corrupts` vs `noop`) at any input size.
+  the §7 manifest oracle (`value-changing` vs `noop`) at any input size.
 * **Small vs full follow the lane convention** pinned in `manifest.md` §5.2:
   rank and the static-vs-dynamic *pattern* are preserved exactly; only the
   extents shrink.
@@ -221,7 +221,7 @@ class Mutation:
 # ("extent order"). Spec 5 names two distinct defects ("partial write (omitted
 # tail tile) / duplicate write (overlapping tile)"), so it is expanded into two
 # variants that share ONE injection identity (M2.5) for the purposes of N = 40
-# (§0). Both variants are real defects -- each lands in the `never`/`corrupts`
+# (§0). Both variants are real defects -- each lands in the `never`/`value-changing`
 # row, the silent-bug residue -- so neither is dropped: `lane.py` deals the two
 # round-robin across the family's hosts, one program per injection.
 M2_SPECS: list[Mutation] = [

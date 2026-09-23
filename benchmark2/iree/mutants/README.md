@@ -11,7 +11,7 @@ A mutant is represented as `mutants/M2/<category>/<mutant_id>.json` (reference k
 ## Measured outcome (ground truth, numeric oracle)
 
 - **Static extent** mutants (operand dim is a fixed int): IREE rejects at the host entry via `hal.buffer_view.assert` (`INVALID_ARGUMENT: shape dimension mismatch`) -> **runtime**.
-- **Dynamic extent** mutants (operand dim is `?`): IREE silently computes a wrong result -> **never/corrupts** (verified by numeric diff against the reference output; see `mutant_oracle.py`).
+- **Dynamic extent** mutants (operand dim is `?`): IREE silently computes a wrong result -> **never/value-changing** (verified by numeric diff against the reference output; see `mutant_oracle.py`).
 
 ## Family M2-a (`run.sh minimal --level2`)
 
@@ -38,14 +38,14 @@ unchanged and edits only what the caller passes to the compiled module:
 | M2-h | M2.17 | non-divisible dynamic split extent | reshape |
 
 - M2-b/M2-c edits change rank or the extent order, so IREE rejects them at the
-  entry -> **runtime/corrupts** (caught).
+  entry -> **runtime/value-changing** (caught).
 - M2-d/M2-e edits keep the operand rank and static extents, so IREE accepts the
-  call and computes a wrong result -> **never/corrupts** (numeric oracle over
+  call and computes a wrong result -> **never/value-changing** (numeric oracle over
   raw-binary `@file.bin` inputs, since the ramp values exceed `ARG_MAX`).
 - M2-h: the dynamic-split reshape kernels compute the split factor with a
   runtime floor division (`arith.divui flat_sz, static_factor`) and never check
   divisibility. A caller extent that is not a multiple is accepted (rc=0) and
-  the tail elements are silently dropped -> **never/corrupts**.
+  the tail elements are silently dropped -> **never/value-changing**.
 
 ## Families M2-f (`M2.5`) and M2-g (`M2.15`) -- authored mutation-only kernels
 
@@ -60,8 +60,8 @@ kernel is unchanged; only the caller's control extent moves. Authored under
 
 | family | spec | kernels | edit | outcome |
 | --- | --- | --- | --- | --- |
-| M2-f | M2.5 | `tile_write/{1..4}_tile` | control extent `n` covers the output; mutant `n-1` omits the tail tile, `n+1` wraps an overlapping tile onto row 0 | **never/corrupts** |
-| M2-g | M2.15 | `pad_shift/{1..4}_pad` | `pad_low`/`pad_high` both `P`; mutant `(P+1, P-1)` or `(P-1, P+1)` shifts one row across the core, total preserved | **never/corrupts** |
+| M2-f | M2.5 | `tile_write/{1..4}_tile` | control extent `n` covers the output; mutant `n-1` omits the tail tile, `n+1` wraps an overlapping tile onto row 0 | **never/value-changing** |
+| M2-g | M2.15 | `pad_shift/{1..4}_pad` | `pad_low`/`pad_high` both `P`; mutant `(P+1, P-1)` or `(P-1, P+1)` shifts one row across the core, total preserved | **never/value-changing** |
 
 4 kernels x 2 realisations = 8 each. Both keep the operand rank and static
 output shape, so IREE accepts the call and returns a wrong result (numeric oracle

@@ -8,7 +8,7 @@ Why a checksum oracle rather than printing outputs:
 
 * it works at *any* input size, so the same kernel serves `--small` and `--full`
   without change;
-* it answers the ref-check gate and the §7 manifest oracle (`corrupts` vs `noop`)
+* it answers the ref-check gate and the §7 manifest oracle (`value-changing` vs `noop`)
   with a single value, so a `noop` false success cannot slip through;
 * two independent checksums (sum and sum-of-squares) are compared, which makes an
   accidental collision far less likely than a single sum.
