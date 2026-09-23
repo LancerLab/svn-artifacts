@@ -10,8 +10,11 @@
 // question is whether the *compiler* catches the defect, independent of launch.
 //
 // PROBE map:  10/11 M3.1 atom divisibility | 20/21 M3.2 descriptor dim
-//             40/41 M3.4 footprint <4GB     | 50/51 M3.5 swizzle
-//             80/81 M3.8 GMMA rank          | 120/121 L1 static smem
+//             30/31 M3.3 TMA box bytes      | 40/41 M3.4 footprint <4GB
+//             50/51 M3.5 swizzle            | 60/61 M3.6 vector divisibility
+//             70/71 M3.7 TMA inner align    | 80/81 M3.8 GMMA rank
+//             110/111 M3.11 smem base align | 120/121 L1 static smem
+//             130/131 M3.13 swizzle/box inner
 #include <cute/tensor.hpp>
 #include <cute/atom/mma_traits_sm90_gmma.hpp>
 #include <cute/atom/copy_traits_sm90_tma.hpp>
@@ -80,14 +83,94 @@ __global__ void k_probe() {
 // ---- M3.8 GMMA descriptor rank outside the supported set -----------------
 #if PROBE == 80 || PROBE == 81
 __global__ void k_probe() {
+  using namespace cute::SM90::GMMA;
 #if PROBE == 80
   auto s = make_tensor(make_smem_ptr((float*)nullptr),
-                       make_layout(make_shape(Int<8>{}, Int<8>{}), GenRowMajor{}));
+                       tile_to_shape(Layout_MN_SW128_Atom<float>{}, Shape<_128, _16>{}));
 #else
   auto s = make_tensor(make_smem_ptr((float*)nullptr),
-                       make_layout(make_shape(Int<8>{}, Int<8>{}, Int<8>{}), GenRowMajor{}));
+                       make_layout(make_shape(Int<128>{}, Int<16>{}, Int<2>{})));
 #endif
-  auto d = cute::SM90::GMMA::make_gmma_desc<Major::MN>(s); (void)d;
+  auto d = make_gmma_desc<Major::MN>(s); (void)d;
+}
+#endif
+
+// ---- M3.3 TMA box byte-size bound (box bytes < 2^24) ---------------------
+#if PROBE == 30 || PROBE == 31
+void host_probe() {
+#if PROBE == 30
+  auto g = make_tensor(make_gmem_ptr((float const*)nullptr),
+                       make_layout(make_shape(Int<256>{}, Int<256>{}), GenRowMajor{}));
+  auto t = make_tma_copy(SM90_TMA_LOAD{}, g,
+                         make_layout(make_shape(Int<8>{}, Int<8>{}), GenRowMajor{}));
+#else
+  auto g = make_tensor(make_gmem_ptr((float const*)nullptr),
+                       make_layout(make_shape(Int<256>{}, Int<256>{}, Int<256>{}),
+                                   GenRowMajor{}));
+  auto t = make_tma_copy(SM90_TMA_LOAD{}, g,
+                         make_layout(make_shape(Int<256>{}, Int<256>{}, Int<256>{}),
+                                     GenRowMajor{}));
+#endif
+  (void)t;
+}
+#endif
+
+// ---- M3.6 leading dim not aligned to descriptor granularity (vector) -----
+#if PROBE == 60 || PROBE == 61
+__global__ void k_probe() {
+#if PROBE == 60
+  constexpr int E = 4;   // exactly one 128-bit (4 x f32) vector
+#else
+  constexpr int E = 3;   // not divisible by the vector width
+#endif
+  auto src = make_tensor(make_gmem_ptr((float*)nullptr), make_layout(Int<E>{}));
+  auto dst = make_tensor(make_smem_ptr((float*)nullptr), make_layout(Int<E>{}));
+  Copy_Atom<UniversalCopy<uint128_t>, float> atom;
+  copy(atom, src, dst);
+}
+#endif
+
+// ---- M3.7 TMA inner box not 128-bit (16B) aligned ------------------------
+#if PROBE == 70 || PROBE == 71
+void host_probe() {
+  auto g = make_tensor(make_gmem_ptr((float const*)nullptr),
+                       make_layout(make_shape(Int<1024>{}, Int<256>{}), GenRowMajor{}));
+#if PROBE == 70
+  auto s = make_layout(make_shape(Int<128>{}, Int<32>{}), GenRowMajor{}); // 128B inner
+#else
+  auto s = make_layout(make_shape(Int<128>{}, Int<2>{}), GenRowMajor{});  // 8B inner
+#endif
+  auto t = make_tma_copy(SM90_TMA_LOAD{}, g, s); (void)t;
+}
+#endif
+
+// ---- M3.11 shared operand base not 128B aligned (sm_90+) -----------------
+#if PROBE == 110 || PROBE == 111
+__global__ void k_probe() {
+  using namespace cute::SM90::GMMA;
+#if PROBE == 110
+  float* p = (float*)nullptr;         // 0B offset
+#else
+  float* p = (float*)nullptr + 1;     // 4B offset: not 16B/128B aligned
+#endif
+  auto s = make_tensor(make_smem_ptr(p),
+                       tile_to_shape(Layout_MN_SW128_Atom<float>{}, Shape<_128, _16>{}));
+  auto d = make_gmma_desc<Major::MN>(s); (void)d;
+}
+#endif
+
+// ---- M3.13 swizzle width vs box inner dim vs shared alignment ------------
+#if PROBE == 130 || PROBE == 131
+__global__ void k_probe() {
+  using namespace cute::SM90::GMMA;
+#if PROBE == 130
+  auto s = make_tensor(make_smem_ptr((float*)nullptr),
+                       tile_to_shape(Layout_MN_SW128_Atom<float>{}, Shape<_128, _16>{}));
+#else
+  auto s = make_tensor(make_smem_ptr((float*)nullptr),
+                       tile_to_shape(Layout_MN_SW128_Atom<float>{}, Shape<_128, _8>{}));
+#endif
+  auto d = make_gmma_desc<Major::MN>(s); (void)d;
 }
 #endif
 
@@ -101,7 +184,8 @@ __global__ void k_probe() { __shared__ float s[32768]; s[threadIdx.x] = 1.f; }
 #endif
 
 int main() {
-#if PROBE == 20 || PROBE == 21 || PROBE == 40 || PROBE == 41
+#if PROBE == 20 || PROBE == 21 || PROBE == 40 || PROBE == 41 || \
+    PROBE == 30 || PROBE == 31 || PROBE == 70 || PROBE == 71
   host_probe();
 #endif
   return 0;

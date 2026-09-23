@@ -28,19 +28,28 @@ SRC = os.path.join(ROOT, "kernels", "probe_m3.cu")
 
 # spec_id, control, mutant, arch, note
 PROBES = [
-    ("M3.1", 10, 11, "sm_90",
+    ("M3.1", 10, 11, "sm_90a",
      "atom-M divisibility: partition_A accepts a non-divisible extent"),
-    ("M3.2", 20, 21, "sm_90",
+    ("M3.2", 20, 21, "sm_90a",
      "descriptor dim: 2^23 vs 2^24 tensor extent"),
-    ("M3.4", 40, 41, "sm_90",
+    ("M3.3", 30, 31, "sm_90a",
+     "TMA box byte-size: 256B vs 64MB (3D 256^3 box)"),
+    ("M3.4", 40, 41, "sm_90a",
      "footprint: 2^30B vs 2^32B tensor product"),
-    ("M3.5", 50, 51, "sm_90",
+    ("M3.5", 50, 51, "sm_90a",
      "swizzle B-field: Swizzle<3,4,3> vs Swizzle<7,4,3>"),
-    # M3.8 (GMMA descriptor rank) is PENDING: the probe's control does not
-    # compile (namespace visibility in cute::SM90::GMMA), which is a generator
-    # defect. Per §9.6 rule 1 it is excluded, not counted, until fixed.
+    ("M3.6", 60, 61, "sm_90a",
+     "vector divisibility: extent 4 vs 3 with a 128-bit copy atom"),
+    ("M3.7", 70, 71, "sm_90a",
+     "TMA inner box: 128B vs 8B (not 16B aligned)"),
+    ("M3.8", 80, 81, "sm_90a",
+     "GMMA descriptor rank: rank-2 vs rank-3 smem tensor"),
+    ("M3.11", 110, 111, "sm_90a",
+     "shared operand base: 0B vs 4B offset (not 128B aligned)"),
     ("M3.12", 120, 121, "sm_86",
      "static shared tile: 16KB vs 128KB (over the sm_86 48KB static limit)"),
+    ("M3.13", 130, 131, "sm_90a",
+     "swizzle vs box inner dim: SW128 with 128B vs 32B inner"),
 ]
 
 

@@ -71,9 +71,11 @@ def main(records_path, out_dir):
             "vertical slice: launch-time M4/L battery + compile-only M3 probe battery",
             "M3 outcomes are COMPILE-ONLY: `unchecked` means nvcc/CuTe did not "
             "detain the defect at compile time; runtime behaviour is unmeasured",
-            "M3.8 GMMA-rank probe excluded as a generator defect (§9.6 rule 1)",
-            "M3.6 vectorization: no clean control/mutant pair; no cell emitted",
-            "arch-gated TMA probes compiled for sm_90 (compile-only)",
+            "M3 ct-check probes: M3.5 swizzle, M3.6 vector divisibility, "
+            "M3.8 GMMA descriptor rank",
+            "M3 unchecked (compile) probes: M3.1/M3.2/M3.3/M3.4/M3.7/M3.11/"
+            "M3.12/M3.13; TMA/GMMA pairs target sm_90a, static-smem pair sm_86",
+            "M3.9/M3.10/M3.16 not yet built (TMA pad-field surface)",
             "n_discarded_noop counts admissible noop controls (e.g. M4.4)",
         ],
         "records": len(recs),

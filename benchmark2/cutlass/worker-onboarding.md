@@ -42,7 +42,7 @@ deferred to a post-deadline extension.
 | F1 | CuTe compiles/runs on `sm_86`, CUDA 12.9 | **green** — `cute::Layout` + managed-memory kernel probe. |
 | F2 | Library + headers reachable | **green** — CUTLASS 4.2.1 at croqtile `extern/cutlass`; `nvcc -std=c++17 -arch=sm_86 -I include -I tools/util/include`. |
 | F3 | MMA-atom divisibility is caught by CuTe | **negative** — `TiledMMA::partition_A` on an indivisible tiling (24 vs atom-M 16) compiles cleanly and returns a rest/padded layout; no `static_assert`. M3.1 on this surface is `unchecked`, not `ct-check`. |
-| F4 | Copy/vectorization violation yields `ct-check` | **not demonstrated** — `copy_atom.hpp:111` fires, but also for the intended control, so it is a harness-usage defect, not a clean detection; must be re-probed before any M3.6 claim. |
+| F4 | Copy/vectorization violation yields `ct-check` | **confirmed** — a rank-1 extent (3) not divisible by the 128-bit (4×f32) copy atom trips `copy_atom.hpp:111` while the divisible control (4) compiles; clean M3.6 pair. |
 | F5 | M4 zero-trip iteration | **green** — compiles, runs, `acc=0`; empty iteration space is a noop by construction (§9.6/§9.1 M4.4). |
 | F6 | Faithful 16-operator CuTe kernels | **in flight** — this is the long pole; correctness is gated per operator against a CPU reference. |
 
@@ -94,38 +94,46 @@ deferred to a post-deadline extension.
     **`rt-check`** (`CUDA error: invalid argument`) on `elemwise_add`; `noop`
     on `matmul` (that kernel sizes smem from its tiles, so the knob is inert).
 - **Compile-only M3 probe battery** (`probes.py` + `kernels/probe_m3.cu`),
-  each a control/mutant pair compiled with `nvcc -c` (TMA/GMMA pairs target
-  `sm_90`, never run):
+  11 control/mutant pairs compiled with `nvcc -c` (TMA/GMMA/vector pairs target
+  `sm_90a`, the static-smem pair `sm_86`; never linked or run):
   - **`M3.5` swizzle-incompatible box shape → `ct-check`** — `Swizzle<7,4,3>`
     trips `cute/swizzle.hpp:63` "Unsupported layout swizzle"; the legal control
-    compiles. The one clean compile-time detection found so far.
+    compiles.
+  - **`M3.6` vector divisibility → `ct-check`** — a rank-1 extent of 3 floats
+    with a 128-bit (4×f32) copy atom trips `copy_atom.hpp:111` "Src/Dst
+    partitioning does not match the instruction requirement"; extent 4 compiles.
+  - **`M3.8` GMMA descriptor rank → `ct-check`** — a rank-3 smem tensor trips
+    `mma_traits_sm90_gmma.hpp:202` "GMMA Descriptors can only be constructed on
+    rank-2 tensors"; the canonical rank-2 layout compiles.
   - **`M3.1` atom-M divisibility → `unchecked`** — `partition_A` accepts a
     24-row tiling with a 16-wide atom; no `static_assert` (confirms F3).
   - **`M3.2` descriptor dim ≥ 2²⁴ → `unchecked`** — a 2²⁴-extent TMA tensor
-    compiles (driver would check at runtime).
+    compiles.
+  - **`M3.3` TMA box byte-size ≥ 2²⁴ → `unchecked`** — a 256³ box (64 MB)
+    compiles.
   - **`M3.4` footprint ≥ 4 GB → `unchecked`** — a 2³²-byte product compiles.
+  - **`M3.7` TMA inner box not 16 B aligned → `unchecked`** — an 8 B-inner box
+    compiles (driver `cuTensorMapEncodeTiled` would check at runtime).
+  - **`M3.11` shared base not 128 B aligned → `unchecked`** — a 4 B-offset smem
+    base compiles.
   - **`M3.12` static shared over cap → `unchecked` (compile)** — 128 KB static
     shared compiles on `sm_86`; the limit is a launch-time (driver) check.
-  - `M3.8` (GMMA rank) probe excluded as a **generator defect** (control did
-    not compile); `M3.6` (vectorization) has **no clean control/mutant pair**
-    (`copy_atom.hpp:111` fires for the control too). Neither emits a cell.
+  - **`M3.13` swizzle vs box inner dim (SW128, 128 B vs 32 B) → `unchecked`** —
+    both tile-to-shape variants compile; the mismatch is not statically detained.
 - **Harness:** `lane.py` (base+mutants+collect), `probes.py`, `reference.py`
   (bit-exact `fill` + refs + tolerance gate), `collect.py` (spec-§8-shaped
   `stats.json`, merges both record streams), `run.sh`
   (setup/minimal/e2/e3/collect/stats/all). `results/cutlass/stats.json`:
-  M3 = 5 injected / 1 ct-check / 4 unchecked; M4 = 9 unchecked;
+  M3 = 11 injected / 3 ct-check / 8 unchecked; M4 = 9 unchecked;
   L = 1 rt-check / 1 noop. Flagged `lane_phase: vertical-slice`,
   `complete: false`.
 
 **Not yet done (the M3 hard remainder):**
 
-- **M3.6** needs a clean vectorization control/mutant pair; the only
-  `static_assert` found (`copy_atom.hpp:111`) also fires for the intended
-  control, so it is presently a generator defect, not a detection.
-- **M3.3 / M3.7 / M3.8 / M3.9–M3.11 / M3.13 / M3.16** descriptor/TMA geometry
-  probes are not yet built (the 4-arg `make_tma_copy` tiler and the
-  `cute::SM90::GMMA` namespace need a working pattern).
-- The large-dim/index-width families are compile-only `unchecked`; whether the
+- **M3.9 / M3.10 / M3.16** (TMA descriptor pad-field surface) not yet built;
+  the padding fields are not exposed through CuTe's public `make_tma_copy` API,
+  so these may end up `unexpressible` rather than a probe cell.
+- The large-dim/TMA-geometry families are compile-only `unchecked`; whether the
   driver detains them at launch is unmeasured (needs the final host).
 - The 9 non-required categories are deferred.
 
