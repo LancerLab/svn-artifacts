@@ -18,44 +18,43 @@
     "n_specs": 77,
     "choreo_realized": 56,
     "choreo_unrealized": 21,
-    "recorded_by_a_sota_lane": 30,
-    "recorded_over_choreo": 0.5357,
-    "recorded_over_all_specs": 0.3896,
-    "achievable_by_a_sota_lane": 64,
-    "achievable_over_all_specs": 0.8312,
+    "recorded_by_a_sota_lane": 31,
+    "recorded_over_choreo": 0.5536,
+    "recorded_over_all_specs": 0.4026,
+    "achievable_by_a_sota_lane": 65,
+    "achievable_over_all_specs": 0.8442,
     "achievable_among_choreo_realized": 56,
     "achievable_over_choreo": 1.0,
-    "choreo_only_and_achievable": 26,
-    "choreo_only_and_recorded": 30,
+    "choreo_only_and_achievable": 25,
+    "choreo_only_and_recorded": 31,
     "constitutional_n_a_anywhere": 47,
     "lane_recorded_counts": {
       "triton": 8,
       "mlir-low": 9,
-      "mlir-linalg": 6,
+      "mlir-linalg": 17,
       "iree": 15
     },
     "lane_achievable_counts": {
       "triton": 45,
-      "mlir-linalg": 35,
+      "mlir-linalg": 36,
       "mlir-low": 17,
       "iree": 35
     },
     "lane_recorded_over_achievable": {
       "triton": 0.1778,
-      "mlir-linalg": 0.1714,
+      "mlir-linalg": 0.4722,
       "mlir-low": 0.5294,
       "iree": 0.4286
     },
     "union_metric_caveat": "`achievable_by_a_sota_lane` is the union over lanes and reaches 100% because each obligation class is declared expressible by at least one lane.  It answers 'could ANY lane express this?' and must not be quoted as a per-lane rate.  Quote `lane_recorded_over_achievable` instead.",
-    "n_duplicate_findings": 30,
-    "n_exact_duplicate_mutants": 6,
+    "n_duplicate_findings": 29,
+    "n_exact_duplicate_mutants": 5,
     "n_cross_spec_same_site": 6,
     "n_constant_only_mutants": 24,
     "n_mechanism_mismatches": 5,
     "specs_with_duplicates": [
       "M1.11",
       "M1.14",
-      "M1.2",
       "M1.21",
       "M1.4",
       "M1.5",
@@ -71,8 +70,8 @@
       "M3.6",
       "M4.1"
     ],
-    "n_under_powered_cells": 3,
-    "n_absent_cells": 12,
+    "n_under_powered_cells": 4,
+    "n_absent_cells": 10,
     "suite_surface_gaps": [
       "M1.15",
       "M1.16",
@@ -128,7 +127,7 @@
     {
       "lane": "triton",
       "class": "M1",
-      "n_mutants": 65,
+      "n_mutants": 64,
       "power_floor": 35,
       "status": "ok",
       "annotation": "meets the power floor"
@@ -152,10 +151,10 @@
     {
       "lane": "triton",
       "class": "M4",
-      "n_mutants": 0,
+      "n_mutants": 56,
       "power_floor": 35,
-      "status": "absent",
-      "annotation": "no cell: the lane was never run against this class -- unmeasured, not n/a"
+      "status": "ok",
+      "annotation": "meets the power floor"
     },
     {
       "lane": "mlir-linalg",
@@ -192,7 +191,7 @@
     {
       "lane": "mlir-low",
       "class": "M1",
-      "n_mutants": 72,
+      "n_mutants": 64,
       "power_floor": 35,
       "status": "ok",
       "annotation": "meets the power floor"
@@ -216,10 +215,10 @@
     {
       "lane": "mlir-low",
       "class": "M4",
-      "n_mutants": 0,
+      "n_mutants": 8,
       "power_floor": 35,
-      "status": "absent",
-      "annotation": "no cell: the lane was never run against this class -- unmeasured, not n/a"
+      "status": "under-powered",
+      "annotation": "8 < 35: a rate must not be reported from this cell"
     },
     {
       "lane": "iree",
@@ -651,7 +650,7 @@
     {
       "kind": "exact-duplicate",
       "category": "softmax",
-      "case": "1_bert_32x512x768_32x512x768",
+      "case": "15_gpt_16x1024x4096_16x1024x4096",
       "specs": [
         "M1.14",
         "M1.5"
@@ -662,8 +661,8 @@
       ],
       "edit": [
         [
-          "dma.copy l1_out => output.chunkat(i#p, q, _)",
-          "dma.copy l1_out => output.chunkat(i#p + 1, q, _)"
+          "dma.copy l1_out => output.chunkat(i, p#q, _)",
+          "dma.copy l1_out => output.chunkat(i + 1, p#q, _)"
         ]
       ],
       "n_redundant": 1,
@@ -754,27 +753,6 @@
       "disposition": "one mutant per cluster is redundant; retire the spec whose declared mechanism the edit does NOT actually implement"
     },
     {
-      "kind": "exact-duplicate",
-      "category": "softmax",
-      "case": "1_bert_32x512x768_32x512x768",
-      "specs": [
-        "M1.2",
-        "M1.9"
-      ],
-      "mutant_ids": [
-        "M1.9.sm1.baseoff",
-        "M1.s2.sm1.read"
-      ],
-      "edit": [
-        [
-          "l1_input.data.at(0, j, k)",
-          "l1_input.data.at(0, j, k + 1)"
-        ]
-      ],
-      "n_redundant": 1,
-      "disposition": "one mutant per cluster is redundant; retire the spec whose declared mechanism the edit does NOT actually implement"
-    },
-    {
       "kind": "mechanism-mismatch",
       "spec": "M1.4",
       "category": "relu",
@@ -832,14 +810,14 @@
       "kind": "mechanism-mismatch",
       "spec": "M1.9",
       "category": "softmax",
-      "case": "1_bert_32x512x768_32x512x768",
+      "case": "15_gpt_16x1024x4096_16x1024x4096",
       "mutant_ids": [
         "M1.9.sm1.baseoff"
       ],
       "edit": [
         [
-          "l1_input.data.at(0, j, k)",
-          "l1_input.data.at(0, j, k + 1)"
+          "l1_input = dma.copy input.chunkat(i, p#q, _) => local;",
+          "l1_input = dma.copy input.chunkat(i + 1, p#q, _) => local;"
         ]
       ],
       "n_redundant": 0,
@@ -1063,6 +1041,7 @@
         "realized": true,
         "n_mutants": 3,
         "cases": [
+          "15_gpt_16x1024x4096_16x1024x4096",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_32x768x512"
         ],
@@ -1107,7 +1086,7 @@
         "realized": true,
         "n_mutants": 2,
         "cases": [
-          "1_bert_32x512x768_32x512x768",
+          "15_gpt_16x1024x4096_16x1024x4096",
           "1_bert_32x512x768_768_768"
         ],
         "admissible": true,
@@ -1191,9 +1170,9 @@
       "mechanism": "offset-view overrun",
       "choreo": {
         "realized": true,
-        "n_mutants": 7,
+        "n_mutants": 6,
         "cases": [
-          "11_dynamic_32xSx768_32xSx768",
+          "15_gpt_16x1024x4096_16x1024x4096",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_32x768x512",
           "1_bert_32x512x768_768_768",
@@ -1283,8 +1262,9 @@
       "mechanism": "base offset applied WITHOUT shrinking the extent",
       "choreo": {
         "realized": true,
-        "n_mutants": 1,
+        "n_mutants": 2,
         "cases": [
+          "15_gpt_16x1024x4096_16x1024x4096",
           "1_bert_32x512x768_32x512x768"
         ],
         "admissible": true,
@@ -1421,17 +1401,17 @@
         "realized": true,
         "n_mutants": 4,
         "cases": [
-          "11_dynamic_32xSx768_32xSx768",
           "11_dynamic_32xSx768_768_768",
-          "1_bert_32x512x768_32x512x768",
+          "14_efficientnet_64x1280x7x7_64x1280x7x7",
+          "15_gpt_16x1024x4096_16x1024x4096",
           "1_bert_32x512x768_768_768"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 4,
-        "n_distinct_realisations": 4
+        "n_operators": 5,
+        "n_distinct_realisations": 5
       },
       "lanes": {
         "triton": {
@@ -1513,6 +1493,8 @@
         "n_mutants": 5,
         "cases": [
           "11_dynamic_32xSx768_32xSx768",
+          "14_efficientnet_64x1280x7x7_64x1280x7x7",
+          "15_gpt_16x1024x4096_16x1024x4096",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_32x768x512"
         ],
@@ -1520,8 +1502,8 @@
         "registry_status": "implemented",
         "prohibition": null,
         "note": "load-bearing: the only spec targeting a check the compiler wrote and then disabled (272 chunkat obligations, 0 enabled at -rtc=entry)",
-        "n_operators": 5,
-        "n_distinct_realisations": 5
+        "n_operators": 6,
+        "n_distinct_realisations": 6
       },
       "lanes": {
         "triton": {
@@ -2109,10 +2091,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-linalg": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/mlir-linalg/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py M2 spec 6 (two extents transposed (right multiset, wrong permutation))"
         },
         "mlir-low": {
           "status": "constitutional-n-a",
@@ -2157,10 +2137,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-linalg": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/mlir-linalg/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py M2 spec 7 (reduced-rank view: a declared dimension dropped)"
         },
         "mlir-low": {
           "status": "constitutional-n-a",
@@ -2202,10 +2180,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-linalg": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/mlir-linalg/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py M2 spec 8 (broadcast extent N -> 1)"
         },
         "mlir-low": {
           "status": "constitutional-n-a",
@@ -2249,10 +2225,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-linalg": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/mlir-linalg/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py M2 spec 9 (batch/group dimension swapped)"
         },
         "mlir-low": {
           "status": "constitutional-n-a",
@@ -2294,10 +2268,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-linalg": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/mlir-linalg/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py M2 spec 10 (transpose permutation on a SQUARE operand (memory order only))"
         },
         "mlir-low": {
           "status": "constitutional-n-a",
@@ -2433,10 +2405,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-linalg": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/mlir-linalg/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py M2 spec 13 (shape-equal / layout-unequal (indexing map differs))"
         },
         "mlir-low": {
           "status": "constitutional-n-a",
@@ -2521,10 +2491,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-linalg": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/mlir-linalg/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py M2 spec 15 (pad_low <-> pad_high swapped (length preserved))"
         },
         "mlir-low": {
           "status": "constitutional-n-a",
@@ -2567,10 +2535,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-linalg": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/mlir-linalg/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py M2 spec 16 (span_as preserving ElementCount, different rank/split)"
         },
         "mlir-low": {
           "status": "constitutional-n-a",
@@ -2613,10 +2579,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-linalg": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/mlir-linalg/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py M2 spec 17 (runtime-shaped flatten with a stale extent (guard skipped))"
         },
         "mlir-low": {
           "status": "constitutional-n-a",
@@ -2655,10 +2619,8 @@
           "needs": "a new base case -- see the suite-gap register"
         },
         "mlir-linalg": {
-          "status": "blocked-by-suite",
-          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
-          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
-          "needs": "a new base case -- see the suite-gap register"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py M2 spec 18 (strided sub-span reread as contiguous (warning-only path))"
         },
         "mlir-low": {
           "status": "blocked-by-suite",
@@ -2750,10 +2712,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-linalg": {
-          "status": "expressible-not-recorded",
-          "declared_ability": "partial",
-          "evidence": "results/mlir-linalg/stats.json S8_expressibility[shape] = partial",
-          "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+          "status": "recorded",
+          "evidence": "mlir-shared/mutate.py M2 spec 21 (MSB broadcast extent neither 1 nor equal)"
         },
         "mlir-low": {
           "status": "constitutional-n-a",
@@ -4349,6 +4309,7 @@
         "cases": [
           "11_dynamic_32xSx768_32x768xS",
           "11_dynamic_32xSx768_32xSx768",
+          "15_gpt_16x1024x4096_16x1024x4096",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_32x768x512",
           "1_bert_32x512x768_768_768"

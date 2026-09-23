@@ -114,6 +114,21 @@ MLIR_LINALG_SPEC = {
     # kernel rhs's leading extent IS the contraction dim K, so the SITE is the
     # register's M2.14.  Recorded here rather than silently dropped.
     "M2.14": "M2.1 bump-leading-extent(rhs) applied to matmul -> K pm1",
+    # v2.1 additions.  These were realised by the lane (compose.M2_SPECS) but
+    # left out of the ledger, so the audit read them off the expressibility
+    # branch and marked M2.18 "blocked-by-suite" on choreo's registry note.
+    # `_check_mlir_linalg_ledger` now pins this dict to compose.M2_SPECS.
+    "M2.6": "two extents transposed (right multiset, wrong permutation)",
+    "M2.7": "reduced-rank view: a declared dimension dropped",
+    "M2.8": "broadcast extent N -> 1",
+    "M2.9": "batch/group dimension swapped",
+    "M2.10": "transpose permutation on a SQUARE operand (memory order only)",
+    "M2.13": "shape-equal / layout-unequal (indexing map differs)",
+    "M2.15": "pad_low <-> pad_high swapped (length preserved)",
+    "M2.16": "span_as preserving ElementCount, different rank/split",
+    "M2.17": "runtime-shaped flatten with a stale extent (guard skipped)",
+    "M2.18": "strided sub-span reread as contiguous (warning-only path)",
+    "M2.21": "MSB broadcast extent neither 1 nor equal",
 }
 IREE_SPEC = {
     "M2.1": "layer_norm beta/gamma len pm1",
@@ -542,8 +557,52 @@ def _check_mlir_low_ledger() -> None:
             f"not realised by the lane: {extra})")
 
 
+def _compose_m2_spec_ids() -> set[str]:
+    """Spec ids realised by the linalg lane, read out of `mlir-shared/compose.py`.
+
+    Parsed with `ast` for the same reason as `_compose_m1_spec_ids`.  Returns
+    the lane's own labels; the register-level cross-labels are handled by the
+    caller.
+    """
+    src = (ROOT / "mlir-shared" / "compose.py").read_text()
+    for node in ast.parse(src).body:
+        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+            continue
+        tgt = node.targets[0] if isinstance(node, ast.Assign) else node.target
+        if not (isinstance(tgt, ast.Name) and tgt.id == "M2_SPECS"):
+            continue
+        return {
+            f"M2.{elt.args[1].value}"
+            for elt in node.value.elts
+            if isinstance(elt, ast.Call)
+            and isinstance(elt.func, ast.Name)
+            and elt.func.id == "Mutation"
+        }
+    raise SystemExit("build_correspondence: M2_SPECS not found in compose.py")
+
+
+def _check_mlir_linalg_ledger() -> None:
+    """Tie `MLIR_LINALG_SPEC` to the lane's realised set.  Mirrors
+    `_check_mlir_low_ledger`: the ledger that drifted when the v2.1 M2 specs
+    (M2.6-M2.21) landed without it, which made the audit read mlir-linalg's own
+    realisations as `expressible-not-recorded` and, for M2.18, `blocked-by-suite`
+    on a choreo-only registry note.  `CROSS_LABEL_SPEC` targets are allowed as
+    ledger-only entries: the lane realises them under a different label."""
+    realised = _compose_m2_spec_ids()
+    ledger = set(MLIR_LINALG_SPEC)
+    cross = {sid for sid, m in CROSS_LABEL_SPEC.items() if "mlir-linalg" in m}
+    missing = sorted(realised - ledger, key=lambda s: int(s.split(".")[1]))
+    extra = sorted(ledger - realised - cross, key=lambda s: int(s.split(".")[1]))
+    if missing or extra:
+        raise SystemExit(
+            "build_correspondence: MLIR_LINALG_SPEC is out of step with "
+            f"compose.M2_SPECS (missing from ledger: {missing}; "
+            f"not realised by the lane: {extra})")
+
+
 def build():
     _check_mlir_low_ledger()
+    _check_mlir_linalg_ledger()
     reg, man = load_choreo()
     ops = choreo_operators()
     ops_by_spec = collections.defaultdict(list)
