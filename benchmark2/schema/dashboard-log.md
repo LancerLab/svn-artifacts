@@ -631,3 +631,21 @@ becomes "and why it is not a choice"), §2 and §6, plus `HANDOFF.md` §3.1 and
   attributed to `V1_SPEC_ID[('M4', 2)]`, a *different* registry entry, and is
   therefore invisible to its own family. Always pass `spec_id=` when reusing a
   spec integer across classes.
+
+## 2026-09-23 — `mlir-low` M4 cell complete: lane 72 -> 120, M4 8 -> 56
+
+- Directive `m4-lanes.md` (reverse `U-1`): enable `M4` on the authored-loop
+  lanes. The low surface authors its own bounds, so it hosts all seven families.
+- Realised `M4-a/-b/-c/-e/-f/-g` in `mlir-shared/emit_low.py` (`M4-d` was already
+  on disk via `M1.6`); `mutate.py` untouched. `lane.py` routes `M4`/`M1.7` to the
+  structural path; `expected_injected` 72 -> **120**.
+- `mlir-low` corpus 144 -> **240 rows** (72 -> 120 injections). M1 **64**,
+  M4 **56**; `minimal-census` 120/120; `S1_declared_uncompared = {}`.
+- S1 (`M4`): 56 injected, 8 `runtime` (`M4-f` is a genuine device hang),
+  48 `never`; identical RTV-off/on. S12: 120 sanitized, 0 not-expressible.
+- Two probe-verified findings: `M4-f` hangs through `SCFToControlFlow`'s
+  increment-form lowering, and `M4-g`'s 0-length `memref.subview` needs the
+  degenerate axis's stride neutralised to keep RTV's `(size-1)*stride` slice
+  check silent. S12 miss accounting now requires real `exercised` coverage.
+- `make guards`: no finding names `mlir-low`; `m4.a`…`m4.g.instances` pass.
+  Commit `d32884f` on `work/no-data-guard`.
