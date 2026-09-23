@@ -283,10 +283,11 @@ for _key, _cfg in SURFACES.items():
     if not set(MUTATION_CLASSES) <= set(fwd):
         raise AssertionError("the class axis is missing an obligation mapping")
 
-# manifest §1 counts 15 categories. These lanes compose 7 (linalg) and 4 (low).
-# The user's ruling: ship green at the composed subset and document the breadth
-# gap explicitly rather than block on it. The missing eight are named in
-# stats.json so the coordinator sees a flagged follow-up, not a silent hole.
+# manifest §1 counts 15 categories. The linalg lane composes 21 (8 canonical +
+# 13 rank/axis variants); the low lane composes 4.  The user's ruling: ship green
+# at the composed subset and document the breadth gap explicitly rather than
+# block on it.  The missing canonical categories are named in stats.json so the
+# coordinator sees a flagged follow-up, not a silent hole.
 ALL_CATEGORIES = ["batch_norm", "concat", "conv2d", "elemwise_add", "embedding",
                   "gelu", "layer_normalization", "matmul", "max_pool2d",
                   "reduce_mean", "relu", "reshape", "sigmoid", "softmax",

@@ -123,21 +123,26 @@ run produced the same aggregate (0 flagged, 40 exercised, 24 rejected), so the d
 substrate does not change the residue — but only the memcheck run measures the
 execution the lane actually performs.
 
-## Breadth gap — FLAGGED FOLLOW-UP for the coordinator
+## Breadth gap — 7 canonical categories still unwritten
 
-Manifest §1 counts **15** categories. This lane composes **7**:
-`concat`, `elemwise_add`, `layer_normalization`, `matmul`, `relu`, `softmax`,
-`transpose`.
+Manifest §1 counts **15** categories. This lane composes **21**: the 8 canonical
+categories it can write (`concat`, `elemwise_add`, `layer_normalization`,
+`matmul`, `relu`, `reshape`, `softmax`, `transpose`) plus 13 rank/axis variants
+(`transpose_square`, `transpose_cube`, `pad`, `pad_last`, `pad_mid`, `pad_r3`,
+`broadcast`, `broadcast_r2`, `broadcast_r4`, `broadcast_r5`, `reshape_r3`,
+`reshape_r4`, `reshape_r5`) that host the M2-d/e/g/h family budgets. The variants
+are real emitters, not aliases: each composes and gates through E2 exactly like
+its base category.
 
-**Missing 8:** `batch_norm`, `conv2d`, `embedding`, `gelu`, `max_pool2d`,
-`reduce_mean`, `reshape`, `sigmoid`.
+**Missing 7 (canonical):** `batch_norm`, `conv2d`, `embedding`, `gelu`,
+`max_pool2d`, `reduce_mean`, `sigmoid`.
 
-S8 and the kernel gate are emitted over the composed subset **only**. The 8 missing
+S8 and the kernel gate are emitted over the composed 21 **only**. The 7 missing
 categories have no emitter on this surface yet, so their expressibility is
 **UNMEASURED, not "no"**. Fabricating a `no` row for them would understate the SOTA
 baseline and manufacture a result the lane did not obtain.
 
-> **S8's denominator here is 7, not 15, so this lane's S8 row is NOT directly
+> **S8's denominator here is 21, not 15, so this lane's S8 row is NOT directly
 > comparable to the `triton`/`iree` rows whose denominator is 15.** The gap is
 > recorded in `stats.json`'s `scope` block and restated here so it cannot be missed
 > when the rows are assembled into a table.
@@ -151,18 +156,20 @@ is a separate, flagged follow-up.
 S8's `shape` column is not uniform in how well it is evidenced, and `e3-detail.json`
 records which:
 
-| category | basis |
-|---|---|
-| `concat` | `mutation+diagnostic` — a shape mutant was injected *and* RTV emits a shape diagnostic |
-| `elemwise_add`, `layer_normalization`, `matmul`, `softmax` | `mutation-only` — shape compile rejections measured (16, 16, 12, 8) but no shape-specific assert message |
-| `relu`, `transpose` | `diagnostic-only (no shape diagnostic)` — composed and RTV-guarded, but not M2 injection targets, so no shape mutant was ever injected |
+| basis | categories | why |
+|---|---|---|
+| `mutation+diagnostic` | `concat`, `pad` | a shape mutant was injected *and* RTV emits a shape-specific diagnostic |
+| `mutation-only` | `broadcast`, `elemwise_add`, `layer_normalization`, `matmul`, `softmax` | shape compile rejections measured (2, 8, 10, 12, 4) but no shape-specific assert message |
+| `diagnostic-only` | `pad_last`, `pad_mid`, `pad_r3`, `reshape`, `reshape_r3`, `reshape_r4`, `reshape_r5` | the clean kernel's RTV guards include an extent/subview class |
+| `diagnostic-only (no shape diagnostic)` | `broadcast_r2`, `broadcast_r4`, `broadcast_r5`, `relu`, `transpose`, `transpose_cube`, `transpose_square` | composed and RTV-guarded, but not M2 injection targets and their clean guards emit only `^ out-of-bounds access` — the 7 `shape: no` rows |
 
-A composed category that is not a mutation-battery target never had a shape mutant
-injected, so its verdict rests on the RTV diagnostic alone. That is still a
-measurement, but a weaker one, and it is recorded as such rather than silently
-counted equal.
+The last row is the S8 `shape` shortfall: those 7 categories are composed and
+gated, but neither signal fires, so their shape obligation is unmeasured. That is
+recorded as `no` rather than silently counted equal. Per-category detail lives in
+`raw/e3-detail.json`'s `shape_evidence_basis`.
 
-Assert diagnostic classes measured: `^ out-of-bounds access` ×104,
-`^ subview runs out-of-bounds along dimension N` ×16, `^ offset N is out-of-bounds`
-×16. There are **zero** alignment diagnostics on either MLIR surface — the
-independent confirmation behind the M3.2 ruling.
+Assert diagnostic classes measured: `^ out-of-bounds access` ×176,
+`^ subview runs out-of-bounds along dimension N` ×64, `^ offset N is out-of-bounds`
+×64, `^ stride mismatch of dim N` ×14, `^ offset mismatch` ×4. There are **zero**
+alignment diagnostics on either MLIR surface — the independent confirmation behind
+the M3.2 ruling.
