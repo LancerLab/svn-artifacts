@@ -18,32 +18,32 @@
     "n_specs": 77,
     "choreo_realized": 56,
     "choreo_unrealized": 21,
-    "recorded_by_a_sota_lane": 31,
-    "recorded_over_choreo": 0.5536,
-    "recorded_over_all_specs": 0.4026,
+    "recorded_by_a_sota_lane": 37,
+    "recorded_over_choreo": 0.6607,
+    "recorded_over_all_specs": 0.4805,
     "achievable_by_a_sota_lane": 65,
     "achievable_over_all_specs": 0.8442,
     "achievable_among_choreo_realized": 56,
     "achievable_over_choreo": 1.0,
-    "choreo_only_and_achievable": 25,
-    "choreo_only_and_recorded": 31,
+    "choreo_only_and_achievable": 19,
+    "choreo_only_and_recorded": 37,
     "constitutional_n_a_anywhere": 47,
     "lane_recorded_counts": {
       "triton": 8,
-      "mlir-low": 9,
+      "mlir-low": 15,
       "mlir-linalg": 17,
       "iree": 15
     },
     "lane_achievable_counts": {
       "triton": 45,
       "mlir-linalg": 36,
-      "mlir-low": 17,
+      "mlir-low": 23,
       "iree": 35
     },
     "lane_recorded_over_achievable": {
       "triton": 0.1778,
       "mlir-linalg": 0.4722,
-      "mlir-low": 0.5294,
+      "mlir-low": 0.6522,
       "iree": 0.4286
     },
     "union_metric_caveat": "`achievable_by_a_sota_lane` is the union over lanes and reaches 100% because each obligation class is declared expressible by at least one lane.  It answers 'could ANY lane express this?' and must not be quoted as a per-lane rate.  Quote `lane_recorded_over_achievable` instead.",
@@ -59,6 +59,7 @@
       "M1.4",
       "M1.5",
       "M1.6",
+      "M1.7",
       "M1.9",
       "M2.11",
       "M2.2",
@@ -70,8 +71,8 @@
       "M3.6",
       "M4.1"
     ],
-    "n_under_powered_cells": 4,
-    "n_absent_cells": 10,
+    "n_under_powered_cells": 2,
+    "n_absent_cells": 9,
     "suite_surface_gaps": [
       "M1.15",
       "M1.16",
@@ -95,34 +96,34 @@
     {
       "lane": "choreo",
       "class": "M1",
-      "n_mutants": 30,
+      "n_mutants": 47,
       "power_floor": 35,
-      "status": "under-powered",
-      "annotation": "30 < 35: a rate must not be reported from this cell"
+      "status": "ok",
+      "annotation": "meets the power floor"
     },
     {
       "lane": "choreo",
       "class": "M2",
-      "n_mutants": 30,
+      "n_mutants": 26,
       "power_floor": 35,
       "status": "under-powered",
-      "annotation": "30 < 35: a rate must not be reported from this cell"
+      "annotation": "26 < 35: a rate must not be reported from this cell"
     },
     {
       "lane": "choreo",
       "class": "M3",
-      "n_mutants": 12,
+      "n_mutants": 4,
       "power_floor": 35,
       "status": "under-powered",
-      "annotation": "12 < 35: a rate must not be reported from this cell"
+      "annotation": "4 < 35: a rate must not be reported from this cell"
     },
     {
       "lane": "choreo",
       "class": "M4",
-      "n_mutants": 0,
+      "n_mutants": 43,
       "power_floor": 35,
-      "status": "absent",
-      "annotation": "no cell: the lane was never run against this class -- unmeasured, not n/a"
+      "status": "ok",
+      "annotation": "meets the power floor"
     },
     {
       "lane": "triton",
@@ -191,7 +192,7 @@
     {
       "lane": "mlir-low",
       "class": "M1",
-      "n_mutants": 64,
+      "n_mutants": 62,
       "power_floor": 35,
       "status": "ok",
       "annotation": "meets the power floor"
@@ -215,10 +216,10 @@
     {
       "lane": "mlir-low",
       "class": "M4",
-      "n_mutants": 8,
+      "n_mutants": 56,
       "power_floor": 35,
-      "status": "under-powered",
-      "annotation": "8 < 35: a rate must not be reported from this cell"
+      "status": "ok",
+      "annotation": "meets the power floor"
     },
     {
       "lane": "iree",
@@ -586,21 +587,24 @@
       "specs": [
         "M1.21",
         "M1.6",
+        "M1.7",
         "M4.1"
       ],
       "mutant_ids": [
         "M1.21.tp1.extent",
+        "M1.7.tp1.revbound",
         "M1.s6.tp1.empty",
         "M4.1.tp1.zeroextent"
       ],
       "site": "foreach {y, z} in [N, N]",
       "constants": [
         "foreach {y, z} in [0, 12]",
+        "foreach {y, z} in [12, 512]",
         "foreach {y, z} in [512, 0]",
         "foreach {y, z} in [512, 12]",
         "foreach {y, z} in [513, 12]"
       ],
-      "n_redundant": 2,
+      "n_redundant": 3,
       "disposition": "several specs claim one declaration with different constants; adjudicate which spec owns the site and fold the others in as variants-of, or re-site them on a distinct declaration"
     },
     {
@@ -1215,9 +1219,11 @@
       "mechanism": "stride scaling (stride x 2)",
       "choreo": {
         "realized": true,
-        "n_mutants": 3,
+        "n_mutants": 5,
         "cases": [
           "11_dynamic_32xSx768_768_768",
+          "11_dynamic_32xSx768_768x768_32xSx768",
+          "15_gpt_16x1024x4096_16x1024x4096",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_768_768"
         ],
@@ -1225,8 +1231,8 @@
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 4,
-        "n_distinct_realisations": 4
+        "n_operators": 6,
+        "n_distinct_realisations": 6
       },
       "lanes": {
         "triton": {
@@ -1399,19 +1405,21 @@
       "mechanism": "wrong loop variable for a dimension (broadcast index reuse)",
       "choreo": {
         "realized": true,
-        "n_mutants": 4,
+        "n_mutants": 8,
         "cases": [
+          "11_dynamic_32xSx768",
           "11_dynamic_32xSx768_768_768",
           "14_efficientnet_64x1280x7x7_64x1280x7x7",
           "15_gpt_16x1024x4096_16x1024x4096",
+          "1_bert_32x512x768",
           "1_bert_32x512x768_768_768"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 5,
-        "n_distinct_realisations": 5
+        "n_operators": 9,
+        "n_distinct_realisations": 9
       },
       "lanes": {
         "triton": {
@@ -2160,16 +2168,17 @@
       "mechanism": "broadcast extent set to 1 instead of N",
       "choreo": {
         "realized": true,
-        "n_mutants": 2,
+        "n_mutants": 4,
         "cases": [
+          "11_dynamic_32xSx768_768_768_32xSx768",
           "1_bert_32x512x768_768_768"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 2,
-        "n_distinct_realisations": 2
+        "n_operators": 4,
+        "n_distinct_realisations": 4
       },
       "lanes": {
         "triton": {
@@ -4052,9 +4061,10 @@
       "mechanism": "with-in mdspan dim mutated to 0 -- control",
       "choreo": {
         "realized": true,
-        "n_mutants": 5,
+        "n_mutants": 6,
         "cases": [
           "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
+          "11_dynamic_32xSx768_768_768",
           "14_efficientnet_64x1280x7x7_64x7x7x1280",
           "1_bert_32x512x768_32x512x768",
           "1_bert_32x512x768_32x768x512",
@@ -4064,8 +4074,8 @@
         "registry_status": "implemented",
         "prohibition": null,
         "note": "LoopBound, forced to ENTRY cost, enabled 11/11",
-        "n_operators": 14,
-        "n_distinct_realisations": 14
+        "n_operators": 15,
+        "n_distinct_realisations": 15
       },
       "lanes": {
         "triton": {
@@ -4082,11 +4092,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-low": {
-          "status": "constitutional-n-a",
-          "kind": "constitutional",
-          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
-          "evidence": "results/mlir-low/stats.json S8_expressibility[loop] = no",
-          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+          "status": "recorded",
+          "evidence": "mlir-shared/emit_low.py m4-zero-bound"
         },
         "iree": {
           "status": "constitutional-n-a",
@@ -4104,16 +4111,17 @@
       "mechanism": "parallelby bound mutated to 0 (a legal but empty iteration space)",
       "choreo": {
         "realized": true,
-        "n_mutants": 1,
+        "n_mutants": 2,
         "cases": [
-          "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D"
+          "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
+          "11_dynamic_32xSx768_768_768"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 10,
-        "n_distinct_realisations": 10
+        "n_operators": 11,
+        "n_distinct_realisations": 11
       },
       "lanes": {
         "triton": {
@@ -4152,21 +4160,23 @@
       "mechanism": "parallelby bound symbolic and zero only at runtime",
       "choreo": {
         "realized": true,
-        "n_mutants": 6,
+        "n_mutants": 8,
         "cases": [
           "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
           "11_dynamic_32xSx768_32x768xS",
+          "11_dynamic_32xSx768_768_768",
           "18_resnet_64x256x56x56_64x256x56x56",
-          "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
           "1_bert_32x512x768_32x768x512",
-          "2_cnn_128x128x28x28_128x128x28x28"
+          "1_bert_32x512x768_768_768",
+          "2_cnn_128x128x28x28_128x128x28x28",
+          "4_dynamic_32x128xHxW_256x128x3x3_32x256xHxW_S_P_D"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 8,
-        "n_distinct_realisations": 8
+        "n_operators": 10,
+        "n_distinct_realisations": 10
       },
       "lanes": {
         "triton": {
@@ -4183,11 +4193,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-low": {
-          "status": "constitutional-n-a",
-          "kind": "constitutional",
-          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
-          "evidence": "results/mlir-low/stats.json S8_expressibility[loop] = no",
-          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+          "status": "recorded",
+          "evidence": "mlir-shared/emit_low.py m4-runtime-zero-bound"
         },
         "iree": {
           "status": "constitutional-n-a",
@@ -4252,12 +4259,14 @@
       "mechanism": "stride/step = 0 in an iteration",
       "choreo": {
         "realized": true,
-        "n_mutants": 6,
+        "n_mutants": 8,
         "cases": [
           "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
           "11_dynamic_32xSx768_32x768xS",
+          "11_dynamic_32xSx768_32xSx768",
           "17_mobilenet_128x96x112x112_128x96x112x112",
           "18_unet_16x64x128x128_128x64x3x3_16x128x128x128_S_P_D",
+          "1_bert_32x512x768_32x512x768",
           "2_cnn_128x128x28x28_128x128x28x28",
           "2_cnn_128x128x28x28_128x28x28x128"
         ],
@@ -4265,8 +4274,8 @@
         "registry_status": "implemented",
         "prohibition": null,
         "note": null,
-        "n_operators": 7,
-        "n_distinct_realisations": 7
+        "n_operators": 9,
+        "n_distinct_realisations": 9
       },
       "lanes": {
         "triton": {
@@ -4283,11 +4292,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-low": {
-          "status": "constitutional-n-a",
-          "kind": "constitutional",
-          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
-          "evidence": "results/mlir-low/stats.json S8_expressibility[loop] = no",
-          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+          "status": "recorded",
+          "evidence": "mlir-shared/emit_low.py m4-zero-step"
         },
         "iree": {
           "status": "constitutional-n-a",
@@ -4353,12 +4359,14 @@
       "mechanism": "parallelby bound mutated to negative -- invalid, so unlike an empty space it must be rejected",
       "choreo": {
         "realized": true,
-        "n_mutants": 6,
+        "n_mutants": 8,
         "cases": [
           "11_dynamic_32xSx768_32x768xS",
           "11_dynamic_32xSx768_32xSx768",
+          "11_dynamic_32xSx768_768_768",
           "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
           "1_bert_32x512x768_32x768x512",
+          "1_bert_32x512x768_768_768",
           "2_cnn_128x128x28x28_128x128x28x28",
           "2_dynamic_Nx64x56x56_128x64x3x3_Nx128x56x56_S_P_D"
         ],
@@ -4366,8 +4374,8 @@
         "registry_status": "implemented",
         "prohibition": null,
         "note": "split out of M4.2 so one operator is not evidence for two families: M4-a (zero bound) and M4-b (negative bound) have different oracle expectations, and while they shared a spec_id M4.2 was the sole realisation of M4-b and one of M4-a's two (defect D1)",
-        "n_operators": 6,
-        "n_distinct_realisations": 6
+        "n_operators": 8,
+        "n_distinct_realisations": 8
       },
       "lanes": {
         "triton": {
@@ -4384,11 +4392,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-low": {
-          "status": "constitutional-n-a",
-          "kind": "constitutional",
-          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
-          "evidence": "results/mlir-low/stats.json S8_expressibility[loop] = no",
-          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+          "status": "recorded",
+          "evidence": "mlir-shared/emit_low.py m4-negative-bound"
         },
         "iree": {
           "status": "constitutional-n-a",
@@ -4406,17 +4411,23 @@
       "mechanism": "reversed loop bound (upper < lower) -> overrun instead of empty",
       "choreo": {
         "realized": true,
-        "n_mutants": 2,
+        "n_mutants": 8,
         "cases": [
           "11_dynamic_32xSx768_32x768xS",
-          "1_bert_32x512x768_32x512x768"
+          "11_dynamic_32xSx768_768_768",
+          "1_bert_32x512x768_32x512x768",
+          "1_bert_32x512x768_32x768x512",
+          "1_bert_32x512x768_768_768",
+          "2_cnn_128x128x28x28_128x128x28x28",
+          "3_dynamic_16x256xHxW_256x256x3x3_16x256xHxW_S_P_D",
+          "4_dynamic_32x128xHxW_256x128x3x3_32x256xHxW_S_P_D"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": "class is M4, not M1: same re-homing as M1.6 -- the defect is M4's 'reversed bound' (family M4-e), so the operator must not be counted in M1's cell",
-        "n_operators": 2,
-        "n_distinct_realisations": 2
+        "n_operators": 8,
+        "n_distinct_realisations": 8
       },
       "lanes": {
         "triton": {
@@ -4433,11 +4444,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-low": {
-          "status": "constitutional-n-a",
-          "kind": "constitutional",
-          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
-          "evidence": "results/mlir-low/stats.json S8_expressibility[loop] = no",
-          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+          "status": "recorded",
+          "evidence": "mlir-shared/emit_low.py m4-reversed-bound"
         },
         "iree": {
           "status": "constitutional-n-a",
@@ -4455,16 +4463,19 @@
       "mechanism": "padded extent goes NEGATIVE -- the negative-padding corner the GSC study names",
       "choreo": {
         "realized": true,
-        "n_mutants": 1,
+        "n_mutants": 4,
         "cases": [
-          "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D"
+          "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
+          "12_pad_extent_32x512x768_768_768",
+          "22_pad_extent_32x512x768_32x512x768",
+          "22_pad_extent_32x512x768_32x768x512"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": "re-realises M2.12's negative-padding trigger on rt-check (method-taxonomy.json `reassigned.M2.12`): the rank repair through `.pad` was avoided/`repaired` and so never generated. The edit is on the padded-extent derivation, not on a loop literal, which is what keeps it distinct from the empty-range control M4-d",
-        "n_operators": 1,
-        "n_distinct_realisations": 1
+        "n_operators": 4,
+        "n_distinct_realisations": 4
       },
       "lanes": {
         "triton": {
@@ -4503,16 +4514,19 @@
       "mechanism": "padded extent goes EMPTY -- the zero-length half of the GSC corner-case trigger",
       "choreo": {
         "realized": true,
-        "n_mutants": 1,
+        "n_mutants": 4,
         "cases": [
-          "14_mobilenet_128x32x112x112_32x32x3x3_128x32x112x112_S_P_D"
+          "12_pad_extent_32x512x768_768_768",
+          "14_mobilenet_128x32x112x112_32x32x3x3_128x32x112x112_S_P_D",
+          "22_pad_extent_32x512x768_32x512x768",
+          "22_pad_extent_32x512x768_32x768x512"
         ],
         "admissible": true,
         "registry_status": "implemented",
         "prohibition": null,
         "note": "the second rt-check realisation of M4-g, so the family is not evidence from a single operator (defect D1). An empty padded extent is a legal zero-trip loop whose body never runs, so the expected verdict is a miss, not a refusal",
-        "n_operators": 1,
-        "n_distinct_realisations": 1
+        "n_operators": 4,
+        "n_distinct_realisations": 4
       },
       "lanes": {
         "triton": {
@@ -4529,11 +4543,8 @@
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
         },
         "mlir-low": {
-          "status": "constitutional-n-a",
-          "kind": "constitutional",
-          "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
-          "evidence": "results/mlir-low/stats.json S8_expressibility[loop] = no",
-          "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+          "status": "recorded",
+          "evidence": "mlir-shared/emit_low.py m4-degenerate-pad"
         },
         "iree": {
           "status": "constitutional-n-a",

@@ -103,6 +103,15 @@ MLIR_LOW_SPEC = {
     "M1.14": "tile-coord",
     "M1.19": "narrow-carrier",
     "M1.20": "subview-symbolic",
+    # M4 battery (2026-09-23): the lane authors its own loop bounds, so it
+    # hosts all seven M4 families.  These six are the detection specs; M4-d is
+    # the M1.6 noop control above.  Realised by emit_low.py, not mutate.py.
+    "M4.1": "m4-zero-bound",
+    "M4.3": "m4-runtime-zero-bound",
+    "M4.5": "m4-zero-step",
+    "M4.6": "m4-negative-bound",
+    "M4.8": "m4-degenerate-pad",
+    "M1.7": "m4-reversed-bound",
 }
 MLIR_LINALG_SPEC = {
     "M2.1": "bump leading extent of rhs/b/scale",
@@ -542,11 +551,34 @@ def _compose_m1_spec_ids() -> set[str]:
     raise SystemExit("build_correspondence: M1_SPECS not found in compose.py")
 
 
+def _compose_m4_spec_ids() -> set[str]:
+    """Spec ids realised by the low lane's `M4` battery, read out of
+    `mlir-shared/compose.py` (`M4_LOW_SPECS`).  Parsed for the same reason as
+    `_compose_m1_spec_ids`.  The class letter is the first `Mutation` argument
+    because `M4-e` re-homes the register's `M1.7`."""
+    src = (ROOT / "mlir-shared" / "compose.py").read_text()
+    for node in ast.parse(src).body:
+        if not isinstance(node, (ast.Assign, ast.AnnAssign)):
+            continue
+        tgt = node.targets[0] if isinstance(node, ast.Assign) else node.target
+        if not (isinstance(tgt, ast.Name) and tgt.id == "M4_LOW_SPECS"):
+            continue
+        return {
+            f"{elt.args[0].value}.{elt.args[1].value}"
+            for elt in node.value.elts
+            if isinstance(elt, ast.Call)
+            and isinstance(elt.func, ast.Name)
+            and elt.func.id == "Mutation"
+        }
+    raise SystemExit("build_correspondence: M4_LOW_SPECS not found in compose.py")
+
+
 def _check_mlir_low_ledger() -> None:
     """Tie `MLIR_LOW_SPEC` to the lane's realised set.  A spec added to
-    `compose.M1_SPECS` (or dropped) cannot land without the ledger moving with
-    it, and vice versa -- the pair that drifted when M1.19 was realised."""
-    realised = _compose_m1_spec_ids()
+    `compose.M1_SPECS`/`M4_LOW_SPECS` (or dropped) cannot land without the
+    ledger moving with it, and vice versa -- the pair that drifted when M1.19
+    was realised."""
+    realised = _compose_m1_spec_ids() | _compose_m4_spec_ids()
     ledger = set(MLIR_LOW_SPEC)
     if realised != ledger:
         missing = sorted(realised - ledger)
@@ -603,6 +635,7 @@ def _check_mlir_linalg_ledger() -> None:
 def build():
     _check_mlir_low_ledger()
     _check_mlir_linalg_ledger()
+    low_m4 = _compose_m4_spec_ids()
     reg, man = load_choreo()
     ops = choreo_operators()
     ops_by_spec = collections.defaultdict(list)
@@ -655,7 +688,10 @@ def build():
                     f, sym, _fam = TRITON_FAMILY[sid]
                     ev = f"{f}::{sym}"
                 elif lane == "mlir-low":
-                    ev = f"mlir-shared/mutate.py Structural({MLIR_LOW_SPEC[sid]})"
+                    kind = MLIR_LOW_SPEC[sid]
+                    ev = (f"mlir-shared/emit_low.py {kind}"
+                          if sid in low_m4
+                          else f"mlir-shared/mutate.py Structural({kind})")
                 elif lane == "mlir-linalg":
                     ev = (f"mlir-shared/mutate.py M2 spec "
                           f"{sid.split('.')[1]} ({MLIR_LINALG_SPEC[sid]})")
