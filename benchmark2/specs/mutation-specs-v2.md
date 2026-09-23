@@ -903,11 +903,37 @@ generator artifact:
   valid rank-1 op and fail with the same `expected operand rank` diagnostic as the rest —
   still `ct-check`.
 
-Specs affected: M2.1 (2), M2.2 (4), M2.3 (1), M2.4 (2), M2.6 (7), M2.7 (4), M2.9 (1), M2.16 (4).
+Specs affected: M2.1 (2), M2.2 (3), M2.3 (1), M2.4 (2), M2.6 (7), M2.7 (4), M2.9 (1), M2.16 (4).
 M2 tally **unchanged: ct-check 24, rt-check 0, never 40, corrupt 0**. The S1 `n_compile 24`
 is correct; **no re-expression is required**. An earlier revision of this addendum mislabelled
 the 24 as `corrupt` by reading rule 1's "inconsistent operand shapes" as covering the injected
 defect itself; that reading was wrong and is retracted here.
+
+**Per-lane audit record — normative (added 2026-09-24).** Every lane appends an
+`**Audit result — <lane>, <date>**` block here before its numbers are read into
+the paper. The block names the source file, the injected population, the verdict
+counts, and the controls (runtime verification off/on; a sanitizer where the lane
+executes). The raw `mlirbench` fields (`compile` / `runtime` / `never` / `n/a`,
+plus `undecidable`) are **not** this vocabulary: until a lane audits them, a
+`compile` row is `ct-check` or `corrupt`, and a `runtime` row is `rt-check` or
+`never`. The procedure is `HANDOFF.md` §8.2.
+
+Measured state, 2026-09-24 (committed `results/*/stats.json`; `†` = provisional
+raw-field mapping, not yet audited):
+
+| lane | class(es) | injections | ct-check | rt-check | never | n/a | audit |
+|---|---|---|---|---|---|---|---|
+| `choreo` | M1–M4 | 123 | 4† | 24† | 36 | 2 | raw (v1 fields; 37 `undecidable`, 4 discarded-noop) |
+| `cutlass` | M1, M3, M4 | 41 | 1† | 0 | 37 | 0 | raw; lane `complete = false` |
+| `iree` | M2 | 64 | 0† | 24† | 40 | 0 | raw |
+| `mlir-linalg` | M2 | 64 | **24** | 0 | **40** | 0 | audited (above) |
+| `mlir-low` | M1, M4 | 118 | 0 | **44** | **74** | 0 | audited |
+| `triton` | — | — | — | — | — | — | no committed results in this checkout |
+
+Two flags for the owner. `mlir-low` records an `M4` cell although `U-1` places
+`M4` out of scope beyond `choreo`. And the S8 denominators differ by lane
+(`mlir-linalg` over 21 composed categories, `mlir-low` over 4, `iree` over 15), so
+their `yes` / `no` columns are not yet comparable.
 
 ### §9.6.2 Verified additions
 
