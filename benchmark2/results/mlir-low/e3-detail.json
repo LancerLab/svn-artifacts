@@ -21,7 +21,5 @@
     "softmax": "diagnostic-only (no shape diagnostic)",
     "transpose": "diagnostic-only (no shape diagnostic)"
   },
-  "assert_diagnostic_classes": {
-    "^ out-of-bounds access": 42
-  }
+  "assert_diagnostic_classes": {}
 }

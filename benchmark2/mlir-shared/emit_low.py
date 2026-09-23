@@ -71,6 +71,13 @@ _NEG_INF = "0xFF800000"
 # `1e-5` (see `emit.f32_lit`).
 _EPS = "1.0e-5"
 
+# Threads per block. The trailing axis is strided over by this many lanes in a
+# single block; the axes outside it are one block each. 256 is the smallest
+# multiple of the 32-lane warp that still lets the carrier extent (40000) be
+# covered in a bounded number of strides without exceeding the shared-memory the
+# `gpu.all_reduce` lowering stages per block.
+_GPU_BLOCK = 256
+
 
 class NotExpressible(Exception):
     """The low-level surface cannot realize this defect on this category.
@@ -189,9 +196,37 @@ def _round_up(e: Emitter, extent: str, tile: int) -> str:
     return b
 
 
-def _apply(e: Emitter, expr: str, v: str) -> str:
+def _cidx(e: Emitter, n: int) -> str:
+    """An `index` constant. Used inside GPU kernels, where `affine.apply` is not
+    available (the kernel region is lowered by the NVVM pipeline, which runs
+    `scf-to-cf` before `lower-affine`), so every index adjustment the M1
+    perturbations need is spelled with `arith`."""
+    c = e.new("c")
+    e.emit(f"{c} = arith.constant {n} : index")
+    return c
+
+
+def _addi(e: Emitter, a: str, b: str) -> str:
     r = e.new("ix")
-    e.emit(f"{r} = affine.apply affine_map<(d0) -> ({expr})>({v})")
+    e.emit(f"{r} = arith.addi {a}, {b} : index")
+    return r
+
+
+def _subi(e: Emitter, a: str, b: str) -> str:
+    r = e.new("ix")
+    e.emit(f"{r} = arith.subi {a}, {b} : index")
+    return r
+
+
+def _muli(e: Emitter, a: str, b: str) -> str:
+    r = e.new("ix")
+    e.emit(f"{r} = arith.muli {a}, {b} : index")
+    return r
+
+
+def _remsi(e: Emitter, a: str, b: str) -> str:
+    r = e.new("ix")
+    e.emit(f"{r} = arith.remsi {a}, {b} : index")
     return r
 
 
@@ -236,13 +271,13 @@ def _perturb(e: Emitter, idx: list[str], st: Structural | None, axis: int) -> li
         return idx
     k = st.axis
     if st.kind == "off-by-one":
-        idx[k] = _apply(e, "d0 + 1", idx[k])
+        idx[k] = _addi(e, idx[k], _cidx(e, 1))
     elif st.kind == "negative-index":
-        idx[k] = _apply(e, "d0 - 1", idx[k])
+        idx[k] = _subi(e, idx[k], _cidx(e, 1))
     elif st.kind == "offset-overrun":
-        idx[k] = _apply(e, f"d0 + {st.offset}", idx[k])
+        idx[k] = _addi(e, idx[k], _cidx(e, st.offset))
     elif st.kind == "zero-stride":
-        idx[k] = _apply(e, "d0 * 0", idx[k])
+        idx[k] = _muli(e, idx[k], _cidx(e, 0))
     elif st.kind == "transposed-stride":
         if k < 1:
             raise NotExpressible("transposed-stride needs at least two axes to swap")
@@ -257,7 +292,7 @@ def _perturb(e: Emitter, idx: list[str], st: Structural | None, axis: int) -> li
     elif st.kind == "tile-coord":
         # Advance by one whole tile (M1.14). `st.tile` is the axis extent, so the
         # tile size comes from the same rule the clean nest uses.
-        idx[k] = _apply(e, f"d0 + {_tile_for(st.tile)}", idx[k])
+        idx[k] = _addi(e, idx[k], _cidx(e, _tile_for(st.tile)))
     elif st.kind == "narrow-carrier":
         # Carry the element index in an integer narrower than the axis (M1.19).
         # `st.tile` is the carrier bit width. The clean kernel carries the index
@@ -302,24 +337,23 @@ def _write_perturb(
     """
     if st is None or st.kind != "overlap-write":
         return widx
-    widx[axis] = _apply(e, f"d0 mod {st.tile}", widx[axis])
+    widx[axis] = _remsi(e, widx[axis], _cidx(e, st.tile))
     return widx
 
 
 def _read(
     e: Emitter, buf: str, buf_t: str, idx: Sequence[str], st: Structural | None
 ) -> str:
-    """Load `buf[idx]` with the op the index's provenance requires.
+    """Load `buf[idx]`.
 
-    A clean index (an `affine.for` induction variable, or an `affine.apply` of
-    one) is an affine dimension id, so `affine.load` composes with the affine
-    analyses. A narrow-carrier index has been cast through `i16` and is no longer
-    a dimension id, so it must go through `memref.load`, which accepts an
-    arbitrary SSA index. Both lower to the same `llvm.getelementptr`.
+    Always `memref.load`. The GPU surface derives every index from a thread/block
+    coordinate (or from `arith` arithmetic on one), which is not an affine
+    dimension id, so `affine.load` -- legal only when the index is a dimension id
+    -- is unavailable. `memref.load` accepts arbitrary SSA indices and lowers to
+    the same `llvm.getelementptr`, and RTV instruments it identically.
     """
     v = e.new("v")
-    op = "memref.load" if (st is not None and st.kind == "narrow-carrier") else "affine.load"
-    e.emit(f"{v} = {op} {buf}[{', '.join(idx)}] : {buf_t}")
+    e.emit(f"{v} = memref.load {buf}[{', '.join(idx)}] : {buf_t}")
     return v
 
 
@@ -343,106 +377,129 @@ def _loops(e: Emitter, ivs: Sequence[str], bounds: Sequence[str]) -> Iterator[No
 
 
 @contextmanager
-def _tiled(
-    e: Emitter,
-    ivs: Sequence[str],
-    bounds: Sequence[str],
-    ext: str,
-    st: Structural | None,
-    axis: int,
-    buf: str | None = None,
-    buf_t: str | None = None,
-    dims: Sequence[int | None] | None = None,
-) -> Iterator[tuple[list[str], str, str]]:
-    """Open the tiled nest and yield `(read_indices, read_buf, read_buf_type)`.
+def _launch(e: Emitter, grid: str, nblock: str) -> Iterator[tuple[str, str]]:
+    """Open a one-dimensional `gpu.launch` and yield `(blockIdx.x, threadIdx.x)`.
 
-    The guard is emitted unless the defect *is* the guard's removal (M1.1). The
-    index perturbation is applied here, inside the nest, so the `affine.apply`
-    sees a bound induction variable.
-
-    For `subview-symbolic` (M1.20) the read buffer is replaced by a subview whose
-    axis-0 offset is `ivs[0]`, created inside the nest so the offset is a live
-    runtime value. The read index is left alone, so the doubled axis-0 coordinate
-    overruns the parent for every tile but the first -- and neither the verifier
-    nor RTV can resolve the symbolic offset to refuse or check it.
+    A 1-D grid indexes the iteration space *outside* the trailing axis (one
+    thread-block per row/tile); a 1-D block strides over the trailing axis. That
+    keeps the trailing-axis guard -- the boundary mask M1.1 drops -- a real,
+    per-element predicate rather than an artifact of the grid shape, and it works
+    for the carrier shapes whose trailing extent (40000) exceeds any block size.
     """
+    bx, by, bz = e.new("bx"), e.new("by"), e.new("bz")
+    tx, ty, tz = e.new("tx"), e.new("ty"), e.new("tz")
+    c1 = _cidx(e, 1)
+    gx, gy, gz = e.new("gx"), e.new("gy"), e.new("gz")
+    b1, b2, b3 = e.new("b"), e.new("b"), e.new("b")
+    e.emit(
+        f"gpu.launch blocks({bx}, {by}, {bz}) in "
+        f"({gx} = {grid}, {gy} = {c1}, {gz} = {c1}) "
+        f"threads({tx}, {ty}, {tz}) in "
+        f"({b1} = {nblock}, {b2} = {c1}, {b3} = {c1}) {{"
+    )
+    e.indent += 1
+    try:
+        yield bx, tx
+    finally:
+        e.emit("gpu.terminator")
+        e.indent -= 1
+        e.emit("}")
+
+
+def _decompose(e: Emitter, base: str, bounds: Sequence[str]) -> list[str]:
+    """Decompose `base` into row-major coordinates over `bounds`.
+
+    `bounds` are the live extents of the axes outside the trailing one, so the
+    coordinates are always in range and only the trailing axis (whose loop is
+    guarded) can leave its extent.
+    """
+    nd = len(bounds)
+    coords: list[str] = [""] * nd
+    rem = base
+    for k in range(nd - 1, -1, -1):
+        if k == 0:
+            coords[0] = rem
+        else:
+            c = e.new("ci")
+            e.emit(f"{c} = arith.remsi {rem}, {bounds[k]} : index")
+            n = e.new("cd")
+            e.emit(f"{n} = arith.divsi {rem}, {bounds[k]} : index")
+            coords[k] = c
+            rem = n
+    return coords
+
+
+@contextmanager
+def _guarded_axis_loop(
+    e: Emitter, tx: str, bound: str, nblock: str, ext: str, st: Structural | None
+) -> Iterator[str]:
+    """Strided loop over the trailing axis, guarded by `j < ext`.
+
+    The guard is the boundary mask of the chunked access: the loop runs to the
+    rounded-up `bound`, and the predicate keeps the ragged tail safe. `drop-mask`
+    (M1.1) is exactly the removal of this predicate, so it is emitted unless the
+    defect *is* the removal.
+    """
+    j = e.new("j")
+    e.emit(f"scf.for {j} = {tx} to {bound} step {nblock} {{")
+    e.indent += 1
     guarded = guarded_needed(st)
-    for iv, b in zip(ivs, bounds):
-        e.emit(f"affine.for {iv} = 0 to {b} {{")
-        e.indent += 1
-    read_buf, read_t = buf, buf_t
-    if st is not None and st.kind == "subview-symbolic":
-        read_buf, read_t = _subview(e, buf, buf_t, dims, ivs[0])
     if guarded:
         inb = e.new("inb")
-        e.emit(f"{inb} = arith.cmpi slt, {ivs[axis]}, {ext} : index")
+        e.emit(f"{inb} = arith.cmpi slt, {j}, {ext} : index")
         e.emit(f"scf.if {inb} {{")
         e.indent += 1
     try:
-        yield _perturb(e, list(ivs), st, axis), read_buf, read_t
+        yield j
     finally:
         if guarded:
             e.indent -= 1
             e.emit("}")
-        for _ in bounds:
-            e.indent -= 1
-            e.emit("}")
+        e.indent -= 1
+        e.emit("}")
 
 
-def _guarded_reduce(
+def _block_reduce(
     e: Emitter,
     outer: Sequence[str],
-    buf: str,
-    buf_t: str,
     ext: str,
     bound: str,
     axis: int,
     init: str,
     st: Structural | None,
+    tx: str,
+    nblock: str,
     body: Callable[[Emitter, list[str], str, str], str],
+    reduce_op: str,
 ) -> str:
-    """One guarded reduction over the trailing axis; returns the result SSA.
+    """Block-parallel guarded reduction over the trailing axis.
 
-    `body(e, read_indices, acc, iv)` emits the per-iteration contribution and
-    returns its SSA name. `iv` is the loop's own induction variable, supplied so a
-    body that also *writes* can target the unperturbed index: the defect belongs
-    in the read expression alone (§1), and letting it leak into the write would
-    corrupt the destination too and blur which access was actually out of range.
+    Each thread accumulates its strided share (`body`), then `gpu.all_reduce`
+    folds the per-thread partials with `reduce_op` across the whole block. The
+    block's shared-memory staging is supplied by the `gpu.all_reduce` lowering.
 
-    The body runs inside the guard when there is one, so a dropped guard (M1.1)
-    makes it execute for the whole rounded-up range -- which is exactly the
-    out-of-bounds access the spec describes.
-
-    The guard threads its value out through `scf.if ... -> (f32)` with an `else`
-    arm yielding the incoming accumulator. The alternative -- defining the
-    contribution inside a result-less `scf.if` and `arith.select`-ing it
-    afterwards -- is a use-outside-defining-region, because `scf.if` opens a new
-    scope.
+    `body(e, read_indices, acc, iv)` mirrors `_guarded_reduce`: it runs inside the
+    guard, so a dropped guard (M1.1) makes it execute over the rounded-up range.
+    The read index is perturbed; a body that also writes targets the loop's own
+    `iv`, so the defect stays isolated in the read.
     """
     guarded = guarded_needed(st)
     j = e.new("j")
     acc = e.new("a")
     res = e.new("r")
     e.emit(
-        f"{res} = affine.for {j} = 0 to {bound} "
+        f"{res} = scf.for {j} = {tx} to {bound} step {nblock} "
         f"iter_args({acc} = {init}) -> (f32) {{"
     )
     e.indent += 1
-
-    inb = None
     if guarded:
         inb = e.new("inb")
         e.emit(f"{inb} = arith.cmpi slt, {j}, {ext} : index")
-        # The `scf.if` carries a result type, so the guarded contribution can be
-        # threaded out. `contrib` itself is scoped inside the `if` region and
-        # cannot be referenced by the `affine.yield` below.
         sel = e.new("g")
         e.emit(f"{sel} = scf.if {inb} -> (f32) {{")
         e.indent += 1
-
     ridx = _perturb(e, list(outer) + [j], st, axis)
     contrib = body(e, ridx, acc, j)
-
     if guarded:
         e.emit(f"scf.yield {contrib} : f32")
         e.indent -= 1
@@ -451,13 +508,75 @@ def _guarded_reduce(
         e.emit(f"scf.yield {acc} : f32")
         e.indent -= 1
         e.emit("}")
-        e.emit(f"affine.yield {sel} : f32")
+        e.emit(f"scf.yield {sel} : f32")
     else:
-        e.emit(f"affine.yield {contrib} : f32")
-
+        e.emit(f"scf.yield {contrib} : f32")
     e.indent -= 1
     e.emit("}")
-    return res
+
+    red = e.new("red")
+    e.emit(f"{red} = gpu.all_reduce {res} uniform {{")
+    e.indent += 1
+    la, lb = e.new("la"), e.new("lb")
+    e.emit(f"^bb({la} : f32, {lb} : f32):")
+    e.indent += 1
+    m = e.new("m")
+    e.emit(f"{m} = {reduce_op} {la}, {lb} : f32")
+    e.emit(f'"gpu.yield"({m}) : (f32) -> ()')
+    e.indent -= 1
+    e.indent -= 1
+    e.emit("} : (f32) -> (f32)")
+    return red
+
+
+# --------------------------------------------------------------------------
+# Device-buffer prologue / epilogue
+# --------------------------------------------------------------------------
+
+
+def _gpu_alloc(
+    e: Emitter, dims: Sequence[int | None], resolved: Sequence[int],
+    mtype: str, tok: str, name: str,
+) -> tuple[str, str]:
+    """`gpu.alloc async`, mirroring `_alloc` (dynamic extents bound to constants).
+
+    Device memory specifically: `gpu.host_register`/`host_shared` allocations are
+    invisible to compute-sanitizer's out-of-bounds checks (it tracks only CUDA
+    device allocations), so they cannot carry the S12 surface.
+    """
+    args = []
+    for k, d in enumerate(dims):
+        if d is None:
+            v = e.new("d")
+            e.emit(f"{v} = arith.constant {resolved[k]} : index")
+            args.append(v)
+    ssa = e.new(name)
+    t = e.new("t")
+    if args:
+        e.emit(f"{ssa}, {t} = gpu.alloc async [{tok}] ({', '.join(args)}) : {mtype}")
+    else:
+        e.emit(f"{ssa}, {t} = gpu.alloc async [{tok}] () : {mtype}")
+    return ssa, t
+
+
+def _gpu_memcpy(e: Emitter, tok: str, dst: str, src: str, mtype: str) -> str:
+    t = e.new("t")
+    e.emit(f"{t} = gpu.memcpy async [{tok}] {dst}, {src} : {mtype}, {mtype}")
+    return t
+
+
+def _gpu_wait(e: Emitter, tok: str) -> None:
+    e.emit(f"gpu.wait [{tok}]")
+
+
+def _prod(e: Emitter, vals: Sequence[str]) -> str:
+    """Product of live `index` operands (for the grid size)."""
+    if not vals:
+        return _cidx(e, 1)
+    acc = vals[0]
+    for v in vals[1:]:
+        acc = _muli(e, acc, v)
+    return acc
 
 
 # --------------------------------------------------------------------------
@@ -634,6 +753,21 @@ def emit_oracle_low(e: Emitter, out: str, out_mtype: str, nd: int, ref: np.ndarr
 # --------------------------------------------------------------------------
 
 
+def _device_in(
+    e: Emitter, dims: Sequence[int | None], resolved: Sequence[int], mtype: str,
+    host: str, tok: str, name: str,
+) -> tuple[str, str]:
+    """Allocate a device buffer and copy `host` into it; returns `(buffer, tok)`.
+
+    Used for every input *and* for the output buffer: the kernel may read the
+    output before writing it (softmax normalizes in place), so the device copy has
+    to be seeded from the same zeroed host buffer the CPU surface reads.
+    """
+    d, t = _gpu_alloc(e, dims, resolved, mtype, tok, name)
+    t = _gpu_memcpy(e, t, d, host, mtype)
+    return d, t
+
+
 def _low_relu(e: Emitter, case: C.Case, st: Structural | None):
     inp_dims, out_dims = case.dims["inp"], case.dims["out"]
     inp_r = concrete(inp_dims, case.dyn, "inp")
@@ -646,23 +780,39 @@ def _low_relu(e: Emitter, case: C.Case, st: Structural | None):
     out, out_t = _alloc(e, out_dims, out_r, "out")
     _zero_fill(e, out, out_t, nd)
 
+    # Extents and the rounded-up bound are read off the *host* buffer and captured
+    # by the launch as index operands, so the kernel body never needs `affine` and
+    # the guard compares against a live extent rather than a literal.
     ext = _dim(e, inp, inp_t, axis)
     bound = _round_up(e, ext, _tile_for(inp_r[axis]))
-    ivs = [e.new("i") for _ in range(nd)]
-    bounds = [_dim(e, inp, inp_t, k) for k in range(axis)] + [bound]
+    obounds = [_dim(e, inp, inp_t, k) for k in range(axis)]
 
+    tok = e.new("tok")
+    e.emit(f"{tok} = gpu.wait async")
+    d_inp, tok = _device_in(e, inp_dims, inp_r, inp_t, inp, tok, "dinp")
+    d_out, tok = _device_in(e, out_dims, out_r, out_t, out, tok, "dout")
+
+    nblock = _cidx(e, _GPU_BLOCK)
+    grid = _prod(e, obounds)
     z = e.new("c")
     e.emit(f"{z} = arith.constant 0.0 : f32")
-    with _tiled(e, ivs, bounds, ext, st, axis, inp, inp_t, inp_dims) as (
-        ridx, rd, rd_t
-    ):
-        v = _read(e, rd, rd_t, ridx, st)
-        # `arith.maxf` was renamed in LLVM 21; `maximumf` propagates NaN like
-        # numpy.maximum, which is what the reference oracle uses.
-        r = e.new("r")
-        e.emit(f"{r} = arith.maximumf {v}, {z} : f32")
-        widx = _write_perturb(e, list(ivs), st, nd - 1)
-        e.emit(f"affine.store {r}, {out}[{', '.join(widx)}] : {out_t}")
+    with _launch(e, grid, nblock) as (bx, tx):
+        outer = _decompose(e, bx, obounds)
+        rd, rd_t = d_inp, inp_t
+        if st is not None and st.kind == "subview-symbolic":
+            rd, rd_t = _subview(e, d_inp, inp_t, inp_dims, outer[0])
+        with _guarded_axis_loop(e, tx, bound, nblock, ext, st) as j:
+            ridx = _perturb(e, outer + [j], st, axis)
+            v = _read(e, rd, rd_t, ridx, st)
+            # `arith.maxf` was renamed in LLVM 21; `maximumf` propagates NaN like
+            # numpy.maximum, which is what the reference oracle uses.
+            r = e.new("r")
+            e.emit(f"{r} = arith.maximumf {v}, {z} : f32")
+            widx = _write_perturb(e, outer + [j], st, nd - 1)
+            e.emit(f"memref.store {r}, {d_out}[{', '.join(widx)}] : {out_t}")
+
+    tok = _gpu_memcpy(e, tok, out, d_out, out_t)
+    _gpu_wait(e, tok)
     return out, out_t, out_r
 
 
@@ -680,17 +830,30 @@ def _low_transpose(e: Emitter, case: C.Case, st: Structural | None):
 
     ext = _dim(e, inp, inp_t, axis)
     bound = _round_up(e, ext, _tile_for(inp_r[axis]))
-    ivs = [e.new("i") for _ in range(nd)]
-    bounds = [_dim(e, inp, inp_t, k) for k in range(axis)] + [bound]
+    obounds = [_dim(e, inp, inp_t, k) for k in range(axis)]
 
-    with _tiled(e, ivs, bounds, ext, st, axis, inp, inp_t, inp_dims) as (
-        ridx, rd, rd_t
-    ):
-        v = _read(e, rd, rd_t, ridx, st)
-        # The store reverses the loop indices, so the tiled axis (ivs[nd-1]) is
-        # coordinate 0 here; overlap-write wraps that coordinate.
-        widx = _write_perturb(e, list(reversed(ivs)), st, 0)
-        e.emit(f"affine.store {v}, {out}[{', '.join(widx)}] : {out_t}")
+    tok = e.new("tok")
+    e.emit(f"{tok} = gpu.wait async")
+    d_inp, tok = _device_in(e, inp_dims, inp_r, inp_t, inp, tok, "dinp")
+    d_out, tok = _device_in(e, out_dims, out_r, out_t, out, tok, "dout")
+
+    nblock = _cidx(e, _GPU_BLOCK)
+    grid = _prod(e, obounds)
+    with _launch(e, grid, nblock) as (bx, tx):
+        outer = _decompose(e, bx, obounds)
+        rd, rd_t = d_inp, inp_t
+        if st is not None and st.kind == "subview-symbolic":
+            rd, rd_t = _subview(e, d_inp, inp_t, inp_dims, outer[0])
+        with _guarded_axis_loop(e, tx, bound, nblock, ext, st) as j:
+            ridx = _perturb(e, outer + [j], st, axis)
+            v = _read(e, rd, rd_t, ridx, st)
+            # The store reverses the loop indices, so the tiled axis (j) is
+            # coordinate 0 here; overlap-write wraps that coordinate.
+            widx = _write_perturb(e, list(reversed(outer + [j])), st, 0)
+            e.emit(f"memref.store {v}, {d_out}[{', '.join(widx)}] : {out_t}")
+
+    tok = _gpu_memcpy(e, tok, out, d_out, out_t)
+    _gpu_wait(e, tok)
     return out, out_t, out_r
 
 
@@ -698,7 +861,9 @@ def _low_softmax(e: Emitter, case: C.Case, st: Structural | None):
     """Row-wise softmax over the trailing axis, rank-generic.
 
     Three passes per row (max, exp+sum, normalize), the standard formulation and
-    the one `compose.reference` implements.
+    the one `compose.reference` implements. Each pass is block-parallel over the
+    row's trailing axis and folded with a `gpu.all_reduce`, which stages the
+    per-thread partials through workgroup shared memory.
     """
     inp_dims, out_dims = case.dims["inp"], case.dims["out"]
     inp_r = concrete(inp_dims, case.dyn, "inp")
@@ -713,7 +878,6 @@ def _low_softmax(e: Emitter, case: C.Case, st: Structural | None):
 
     ext = _dim(e, inp, inp_t, axis)
     bound = _round_up(e, ext, _tile_for(inp_r[axis]))
-    outer = [e.new("p") for _ in range(axis)]
     obounds = [_dim(e, inp, inp_t, k) for k in range(axis)]
 
     ninf = e.new("c")
@@ -721,10 +885,19 @@ def _low_softmax(e: Emitter, case: C.Case, st: Structural | None):
     zero = e.new("c")
     e.emit(f"{zero} = arith.constant 0.0 : f32")
 
-    with _loops(e, outer, obounds):
-        rd, rd_t = inp, inp_t
+    tok = e.new("tok")
+    e.emit(f"{tok} = gpu.wait async")
+    d_inp, tok = _device_in(e, inp_dims, inp_r, inp_t, inp, tok, "dinp")
+    d_out, tok = _device_in(e, out_dims, out_r, out_t, out, tok, "dout")
+
+    nblock = _cidx(e, _GPU_BLOCK)
+    grid = _prod(e, obounds)
+    with _launch(e, grid, nblock) as (bx, tx):
+        outer = _decompose(e, bx, obounds)
+        rd, rd_t = d_inp, inp_t
         if st is not None and st.kind == "subview-symbolic":
-            rd, rd_t = _subview(e, inp, inp_t, inp_dims, outer[0])
+            rd, rd_t = _subview(e, d_inp, inp_t, inp_dims, outer[0])
+
         # --- pass 1: row max -------------------------------------------------
         def _maxbody(e: Emitter, ridx: list[str], acc: str, iv: str) -> str:
             v = _read(e, rd, rd_t, ridx, st)
@@ -732,8 +905,9 @@ def _low_softmax(e: Emitter, case: C.Case, st: Structural | None):
             e.emit(f"{m} = arith.maximumf {acc}, {v} : f32")
             return m
 
-        mx = _guarded_reduce(
-            e, outer, inp, inp_t, ext, bound, axis, ninf, st, _maxbody
+        mx = _block_reduce(
+            e, outer, ext, bound, axis, ninf, st, tx, nblock, _maxbody,
+            "arith.maximumf",
         )
 
         # --- pass 2: exp and row sum -----------------------------------------
@@ -747,33 +921,45 @@ def _low_softmax(e: Emitter, case: C.Case, st: Structural | None):
             # the defect stays isolated in the read. The store is still inside the
             # guard, so dropping the guard (M1.1) overruns the destination too.
             widx = list(outer) + [iv]
-            e.emit(f"affine.store {ex}, {out}[{', '.join(widx)}] : {out_t}")
+            e.emit(f"memref.store {ex}, {d_out}[{', '.join(widx)}] : {out_t}")
             ns = e.new("t")
             e.emit(f"{ns} = arith.addf {acc}, {ex} : f32")
             return ns
 
-        sm = _guarded_reduce(
-            e, outer, inp, inp_t, ext, bound, axis, zero, st, _expbody
+        sm = _block_reduce(
+            e, outer, ext, bound, axis, zero, st, tx, nblock, _expbody,
+            "arith.addf",
         )
+
+        # Pass 2 wrote the exponentials; pass 3 re-reads them, so the block must
+        # rendezvous before normalizing.
+        e.emit("gpu.barrier")
 
         # --- pass 3: normalize (unguarded; walks the true extent) ------------
         k = e.new("k")
-        e.emit(f"affine.for {k} = 0 to {ext} {{")
+        e.emit(f"scf.for {k} = {tx} to {ext} step {nblock} {{")
         e.indent += 1
         widx3 = _write_perturb(e, list(outer) + [k], st, axis)
         ev = e.new("v")
-        e.emit(f"{ev} = affine.load {out}[{', '.join(widx3)}] : {out_t}")
+        e.emit(f"{ev} = memref.load {d_out}[{', '.join(widx3)}] : {out_t}")
         nv = e.new("t")
         e.emit(f"{nv} = arith.divf {ev}, {sm} : f32")
-        e.emit(f"affine.store {nv}, {out}[{', '.join(widx3)}] : {out_t}")
+        e.emit(f"memref.store {nv}, {d_out}[{', '.join(widx3)}] : {out_t}")
         e.indent -= 1
         e.emit("}")
 
+    tok = _gpu_memcpy(e, tok, out, d_out, out_t)
+    _gpu_wait(e, tok)
     return out, out_t, out_r
 
 
 def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
-    """Layer normalization over the trailing axis, rank-generic."""
+    """Layer normalization over the trailing axis, rank-generic.
+
+    The two reductions (row sum, then sum of squared deviations) are each folded
+    with a `gpu.all_reduce`, so the workgroup shared-memory path carries the
+    statistics just as it does for softmax.
+    """
     lhs_dims = case.dims["lhs"]
     out_dims = case.dims["out"]
     sc_dims = case.dims["scale"]
@@ -796,16 +982,31 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
 
     ext = _dim(e, lhs, lhs_t, axis)
     bound = _round_up(e, ext, _tile_for(lhs_r[axis]))
-    outer = [e.new("p") for _ in range(axis)]
     obounds = [_dim(e, lhs, lhs_t, k) for k in range(axis)]
 
     zero = e.new("c")
     e.emit(f"{zero} = arith.constant 0.0 : f32")
+    # The row length as f32, computed once on the host and captured.
+    nf = e.new("n")
+    e.emit(f"{nf} = arith.index_cast {ext} : index to i64")
+    nf32 = e.new("nf")
+    e.emit(f"{nf32} = arith.sitofp {nf} : i64 to f32")
 
-    with _loops(e, outer, obounds):
-        rd, rd_t = lhs, lhs_t
+    tok = e.new("tok")
+    e.emit(f"{tok} = gpu.wait async")
+    d_lhs, tok = _device_in(e, lhs_dims, lhs_r, lhs_t, lhs, tok, "dlhs")
+    d_scale, tok = _device_in(e, sc_dims, sc_r, scale_t, scale, tok, "dscale")
+    d_bias, tok = _device_in(e, bi_dims, bi_r, bias_t, bias, tok, "dbias")
+    d_out, tok = _device_in(e, out_dims, out_r, out_t, out, tok, "dout")
+
+    nblock = _cidx(e, _GPU_BLOCK)
+    grid = _prod(e, obounds)
+    with _launch(e, grid, nblock) as (bx, tx):
+        outer = _decompose(e, bx, obounds)
+        rd, rd_t = d_lhs, lhs_t
         if st is not None and st.kind == "subview-symbolic":
-            rd, rd_t = _subview(e, lhs, lhs_t, lhs_dims, outer[0])
+            rd, rd_t = _subview(e, d_lhs, lhs_t, lhs_dims, outer[0])
+
         # --- mean ------------------------------------------------------------
         def _sumbody(e: Emitter, ridx: list[str], acc: str, iv: str) -> str:
             v = _read(e, rd, rd_t, ridx, st)
@@ -813,14 +1014,11 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
             e.emit(f"{a} = arith.addf {acc}, {v} : f32")
             return a
 
-        tot = _guarded_reduce(
-            e, outer, lhs, lhs_t, ext, bound, axis, zero, st, _sumbody
+        tot = _block_reduce(
+            e, outer, ext, bound, axis, zero, st, tx, nblock, _sumbody,
+            "arith.addf",
         )
 
-        nf = e.new("t")
-        e.emit(f"{nf} = arith.index_cast {ext} : index to i64")
-        nf32 = e.new("t")
-        e.emit(f"{nf32} = arith.sitofp {nf} : i64 to f32")
         mean = e.new("mean")
         e.emit(f"{mean} = arith.divf {tot}, {nf32} : f32")
 
@@ -835,8 +1033,9 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
             e.emit(f"{a} = arith.addf {acc}, {m} : f32")
             return a
 
-        sq = _guarded_reduce(
-            e, outer, lhs, lhs_t, ext, bound, axis, zero, st, _sqbody
+        sq = _block_reduce(
+            e, outer, ext, bound, axis, zero, st, tx, nblock, _sqbody,
+            "arith.addf",
         )
 
         var = e.new("var")
@@ -850,7 +1049,7 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
 
         # --- normalize + affine (unguarded; walks the true extent) -----------
         k = e.new("k")
-        e.emit(f"affine.for {k} = 0 to {ext} {{")
+        e.emit(f"scf.for {k} = {tx} to {ext} step {nblock} {{")
         e.indent += 1
         ridx_k = _perturb(e, list(outer) + [k], st, axis)
         xv = _read(e, rd, rd_t, ridx_k, st)
@@ -859,18 +1058,20 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
         n2 = e.new("t")
         e.emit(f"{n2} = arith.divf {d2}, {sd} : f32")
         sc = e.new("t")
-        e.emit(f"{sc} = affine.load {scale}[{k}] : {scale_t}")
+        e.emit(f"{sc} = memref.load {d_scale}[{k}] : {scale_t}")
         m1 = e.new("t")
         e.emit(f"{m1} = arith.mulf {n2}, {sc} : f32")
         bi = e.new("t")
-        e.emit(f"{bi} = affine.load {bias}[{k}] : {bias_t}")
+        e.emit(f"{bi} = memref.load {d_bias}[{k}] : {bias_t}")
         m2 = e.new("t")
         e.emit(f"{m2} = arith.addf {m1}, {bi} : f32")
         widx = _write_perturb(e, list(outer) + [k], st, axis)
-        e.emit(f"affine.store {m2}, {out}[{', '.join(widx)}] : {out_t}")
+        e.emit(f"memref.store {m2}, {d_out}[{', '.join(widx)}] : {out_t}")
         e.indent -= 1
         e.emit("}")
 
+    tok = _gpu_memcpy(e, tok, out, d_out, out_t)
+    _gpu_wait(e, tok)
     return out, out_t, out_r
 
 

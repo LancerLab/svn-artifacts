@@ -212,7 +212,7 @@ symbols neither refused nor checked" — that describes the choreo toolchain, wh
 view checks are `_StaticFail_`-only. On the MLIR surface, RTV *does* insert a
 dynamic bounds check on a `memref.subview`, so the symbolic offset is caught in the
 instrumented mode. The mutant is still a real, non-noop defect (RTV-off is silent
-and ASan flags 6 of the 8 cells), but the local model is stronger here than the
+and memcheck flags 8 of the 8 cells), but the local model is stronger here than the
 spec assumed.
 
 ### M1.19 — the narrow index carrier (mutation-only kernels)
@@ -235,13 +235,15 @@ kernel. The `trunci` chain has no such fold. Outcome:
 
 | mode | verdict | why |
 |---|---|---|
-| RTV-**off** | `never/corrupts` (two cells `runtime/SEGV`) | no index check; the wrapped read is silent or crashes |
-| RTV-**on** | `runtime/corrupts` (8/8) | RTV's `memref.load` descriptor check fires on the negative index |
+| RTV-**off** | `never/corrupts` (8/8 at `N=16`) | no index check; the wrapped read is a silent misread |
+| RTV-**on** | `runtime/corrupts` (8/8 at `N=16`) | RTV's `memref.load` descriptor check fires on the negative index |
 
-The wrap distance is ±2¹⁵ elements ≈ 128 KB — far past ASan's redzone, so only 1 of
-8 cells is ASan-flagged. This is the family where the in-language RTV is strongest
-and the external sanitizer weakest. The 2³¹→2¹⁶ relocation is a per-toolchain
-feasibility choice and must be reported as such, not as the same carrier as triton's.
+On the device both checkers see this family: memcheck flags all 8 carrier cells as
+out-of-bounds device reads (`Invalid __global__ read`). The earlier host-ASan
+measurement saw only 1 of 8 — the wrap distance, ±2¹⁵ elements ≈ 128 KB, is far past
+a host redzone — but that weakness is a property of host ASan, not of the checker
+class. The 2³¹→2¹⁶ relocation is a per-toolchain feasibility choice and must be
+reported as such, not as the same carrier as triton's.
 
 ### The manifestation check is per *mutant*, not per record
 
@@ -364,7 +366,15 @@ N=5, 7 at N=12) — while the record tally stayed byte-identical across the N=5 
 N=12 runs. That is the intended split: the artifact is reproducible, the
 characterization is honestly reported as a sample.
 
-## S12 — external sanitizer supplement (real ASan, measured)
+## S12 — external sanitizer supplement (measured)
+
+**Two checkers, one per execution model.** `mlir-linalg` runs on the host CPU, so
+its S12 uses natively-linked **ASan**; `mlir-low` was retargeted (2026-09-23) to run
+on a CUDA GPU, so its S12 uses `compute-sanitizer --tool memcheck`. The chain below
+is the **ASan** chain and applies to `mlir-linalg`; the `mlir-low` method is recorded
+in its own `stats.json` (`S12_method`) and in `mlir-low/README.md`. A host-ASan
+binary cannot observe a device access, so each surface is checked by the tool that
+shares its model.
 
 Owner ruling: S12 is a **real measurement**, not `n/a`. The chain is
 
@@ -399,33 +409,34 @@ nothing was instrumented. `stats` refuses to report a run containing such a reco
 a zero-coverage record is split by stage into `rejected_before_run` (legitimate —
 the verifier killed it, no binary ever existed) or `not_instrumented` (hard failure
 — the chain is broken and the run is not green). Measured coverage on the mutants
-that did run: 7–13 sites on `low`, 23–44 on `linalg`.
+that did run: 23–44 sites on `linalg`; on `low` the count is **device launches**
+(1 per kernel) rather than instrumented host sites, since the checker is memcheck.
 
 ### Measured results
 
-| lane | class | flagged ∧ exercised | total | split |
-|---|---|---|---|---|
-| `mlir-low` | M1 | **37** | 72 | 37 flagged, 35 genuine misses |
-| `mlir-linalg` | M2 | **0** | 54 | 34 rejected before run, 20 ran clean |
+| lane | class | checker | flagged ∧ exercised | total | split |
+|---|---|---|---|---|---|
+| `mlir-low` | M1 | compute-sanitizer memcheck | **46** | 64 | 46 flagged, 18 genuine misses |
+| `mlir-linalg` | M2 | ASan | **0** | 54 | 34 rejected before run, 20 ran clean |
 
 The two rows are the whole point of S12 and they must not be averaged. On `low` the
 injected defects are **memory** faults — an out-of-bounds index really does leave
-the allocation — so an external checker sees 37 of 72. On `linalg` they are
+the allocation — so the device checker sees 46 of 64. On `linalg` they are
 **shape** faults: 34 of 54 never reach a binary at all because the verifier rejects
 the type contract at lowering, and the 20 that do run are all M2.5
 (partial-write / duplicate-write), which produce a wrong *result* while every
 access stays inside its allocation. A memory checker is structurally blind to those.
 That is the ledger-minus-sanitizer gap, and it matches what `iree` shows.
 
-### The 35 `low` misses, audited individually
+### The 18 `low` misses, audited individually
 
-All 35 carry `instrumented` 7, 10 or 13, so all are genuine sanitizer negatives
-rather than instrumentation failures.
+All 18 carry `instrumented` = 1 device launch, so all are genuine sanitizer
+negatives rather than instrumentation failures.
 
 * **8× M1.6** (zero-stride / empty-range), 2 each on `layer_normalization`, `relu`,
   `softmax`, `transpose`. The mutant performs **no out-of-bounds access at all** —
   a zero stride or an empty range keeps every address inside the buffer. There is
-  nothing for ASan to report. The output is still wrong, so the mutant records
+  nothing for memcheck to report. The output is still wrong, so the mutant records
   `outcome=never, manifest=corrupts`.
 * **8× M1.11** (overlap-write), 4 categories × both shapes. Shrinking the shared
   tile makes neighbouring writes alias, but every store stays inside the buffer —
@@ -434,21 +445,13 @@ rather than instrumentation failures.
   is replaced by another in-range index, so the load is legal but wrong.
   `outcome=never, corrupts`.
 * **2× M1.4** (transposed-stride), `relu` **dynamic** and `transpose` **dynamic**
-  only. Static M1.4 on both *is* flagged (`heap-buffer-overflow, 0B after end of
-  region`).
-* **2× M1.20** (symbolic-view-offset), `softmax` **dynamic** and
-  `layer_normalization` **dynamic** only. On those cells the symbolic base moves
-  by one but the doubled read index still lands inside the parent's flat span
-  (the dynamic axis is bound large enough that `2·i+1` stays under the extent for
-  the sampled `i`), so ASan sees nothing; the other six M1.20 cells are flagged
-  (`heap-buffer-overflow, 0B–12B after end`). `outcome=never, corrupts`.
-* **7× M1.19** (index-carrier overflow), the four carrier hosts at both shapes,
-  `transpose_carrier` **static** the only flagged cell (`SEGV`). The i16 carrier
-  wraps by ±2¹⁵ elements, so the faulty index sits ~128 KB outside the
-  allocation — far past ASan's redzone and onto other mapped pages, which ASan
-  cannot attribute. RTV flags all eight (`memref.load` descriptor check), so this
-  is the one family where the external sanitizer is visibly weaker than the
-  in-language checker. `outcome=never, corrupts`.
+  only. Static M1.4 on both *is* flagged (`Invalid __global__ read`).
+
+`M1.19` and `M1.20` — which the earlier host-ASan measurement missed almost
+entirely — are now flagged **8/8 each** by memcheck (the wrapped `i16` carrier and
+the symbolic view offset are ordinary out-of-bounds device reads). The
+`transpose_carrier` `SEGV` and the ASan-redzone explanation are superseded by this
+retarget.
 
 ### M1.4 is size-dependent — and the rule is exact
 

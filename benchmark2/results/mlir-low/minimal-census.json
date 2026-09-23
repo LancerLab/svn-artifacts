@@ -20,8 +20,7 @@
   "n_repeat": 16,
   "by_rtv": {
     "off": {
-      "never": 66,
-      "runtime": 6
+      "never": 72
     },
     "on": {
       "never": 26,

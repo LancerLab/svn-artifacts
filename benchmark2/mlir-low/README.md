@@ -6,8 +6,8 @@ This is the lower of the two MLIR surfaces — what a compiler produces *after*
 lowering — and it is where the M1 index-and-stride defect class actually lives.
 
 All recorded numbers live in `results/mlir-low/*.jsonl` + `stats.json`. They are
-**generated**, never hand-edited. To re-derive every number (CPU only — this lane
-JITs on the host and has **no GPU dependency**):
+**generated**, never hand-edited. To re-derive every number (this lane lowers to a
+CUDA cubin, JIT-compiles it, and runs the kernels on the **GPU** — no CPU path):
 
 ```bash
 # 0. pinned toolchain: LLVM 21.1.0 at $MLIR_LLVM_ROOT
@@ -26,7 +26,7 @@ benchmark2/mlir-low/run.sh e2 --full
 #   run.sh minimal [--small|--full]   E1 mutants  -> raw/mutants.jsonl
 #   run.sh e2      [--small|--full]   kernel gate -> raw/kernels.jsonl
 #   run.sh e3      [--small|--full]   expressibility + remainder
-#   run.sh s12     [--small|--full]   ASan        -> raw/sanitizer.jsonl
+#   run.sh s12     [--small|--full]   compute-sanitizer -> raw/sanitizer.jsonl
 #   run.sh collect                    raw/*.jsonl -> results/mlir-low/
 #   run.sh stats                                  -> results/mlir-low/stats.json
 ```
@@ -85,9 +85,11 @@ lowest-id spec (`M1.1`) only, so `M1-a` matches the single-spec budget of
 realises `M1-g` through a symbolic `memref.subview` offset, and `M1.19` realises
 `M1-f` through four mutation-only carrier kernels (both noted below).
 
-M2 and M3 are `n/a` on this surface (`n_na: 40` each): M2's specs are tensor-level
-shape-contract defects, which do not exist once everything is a `memref`, and M3 is
-hardware-specific with no GPU here. S1 therefore reports **M1 only** for this lane.
+M2 is `n/a` on this surface (`n_na: 40`): M2's specs are tensor-level
+shape-contract defects, which do not exist once everything is a `memref`. M3 is
+also `n/a` (`n_na: 40`): it is not injected on this surface — the lane's mandate
+is the M1 index-and-stride battery. S1 therefore reports **M1** (and, by
+re-homing `M1.6` → `M4-d`, **M4**) for this lane.
 
 `minimal` checks its census against a **pinned literal**, not a value derived from the
 categories it iterated — see `../mlir-linalg/README.md` for the tautology this
@@ -100,10 +102,12 @@ also drives), so the check cannot silently degrade when the composed set grows.
 | statistic | value |
 |---|---|
 | kernel gate | **16/16 green** (4 operator categories × 2 shapes × 2 sizes), 0 gate failures |
-| S1 M1 | `n_injected: 72, n_compile: 0, n_runtime: 46, n_never: 26, n_na: 0` |
+| device | `cuda (sm_86; kernels JIT-compiled to a cubin and run on the device)` |
+| S1 M1 | `n_injected: 64, n_compile: 0, n_runtime: 46, n_never: 18, n_na: 0` |
+| S1 M4 | `n_injected: 8, n_compile: 0, n_runtime: 0, n_never: 8, n_na: 0` (the `M1.6` rows, re-homed to `M4-d`) |
 | S8 | `elem {yes:4}`, `shape {no:4}`, `loop {no:4}`, `hw {no:4}` |
 | S9 | **108** kernel guards (layer_normalization 42, softmax 26, relu 20, transpose 20) |
-| S12 M1 | `flagged_and_exercised: 37` of 72 — 37 flagged, 35 genuine misses |
+| S12 M1 | `flagged_and_exercised: 46` of 64 — 46 flagged, 18 genuine misses |
 
 `n_compile: 0` is the headline difference from `mlir-linalg`. At memref level there
 is **no shape contract left to check** — every operand is a bare pointer with a
@@ -115,14 +119,15 @@ why RTV matters so much on this surface and not at all on the other.
 
 | | RTV off | RTV on | effect |
 |---|---|---|---|
-| `low` M1 | `never:66, runtime:6` | `never:26, runtime:46` | **40 records flip** |
+| `low` M1 | `never:64, runtime:0` | `never:18, runtime:46` | **46 records flip** |
 | `linalg` M2 | `compile:34, never:20, n/a:6` | identical | **no change at all** |
 
-Bare MLIR on an out-of-bounds `memref.load` **silently returns garbage with exit 0**.
-That is the fairness requirement manifest §5.1 exists to enforce: RTV is opt-in, so
-the honest baseline is what happens without it. On this lane RTV does essentially all
-of the detection work. Reporting only the RTV-on column would flatter this lane;
-reporting only RTV-off would understate it by an order of magnitude.
+Bare MLIR on an out-of-bounds `memref.load` **silently returns garbage with exit 0** —
+on the device the access is undefined, not trapped. That is the fairness requirement
+manifest §5.1 exists to enforce: RTV is opt-in, so the honest baseline is what happens
+without it. On this lane RTV does essentially all of the detection work. Reporting only
+the RTV-on column would flatter this lane; reporting only RTV-off would understate it
+by an order of magnitude.
 
 ## S9 is size-dependent on this lane
 
@@ -150,28 +155,31 @@ read that as a regression. The `mlir-linalg` lane's S9 *is* size-invariant at 15
 because a `linalg.generic`'s instrumented access count is fixed by its indexing maps
 rather than by rank.
 
-## S12 — external sanitizer (real ASan)
+## S12 — external sanitizer (compute-sanitizer memcheck)
 
-Owner ruling: a **real measurement**, not `n/a`. ASan is applied natively on the host
-CPU via `mlir-opt | mlir-translate | opt -passes=asan | clang -fsanitize=address`,
-with RTV **off** (RTV's own `cf.assert` would abort before the faulty access and make
-the sanitizer silent). The chain, its four LLVM-21 defects, and the false-negative
-gate are documented in `../mlir-shared/README.md`.
+Owner ruling: a **real measurement**, not `n/a`. Because the kernel runs on the
+device, the external checker is `compute-sanitizer --tool memcheck`, wrapping the
+bare GPU pipeline (`mlir-opt` lower-affine → `gpu-lower-to-nvvm-pipeline`, then
+`compute-sanitizer --tool memcheck --error-exitcode 99 mlir-runner`), with RTV
+**off** (RTV's own `cf.assert` would abort before the faulty access and make the
+sanitizer silent). A natively-linked host ASan binary cannot observe a device
+access, so memcheck is the checker that shares the lane's execution model; the
+method block in `stats.json` records this as `why_not_asan`.
 
-Result: **37 of 72 flagged** (`heap-buffer-overflow`), with all 72 exercised and
-`instrumented` 7–13 sites each. This lane is the positive control for S12: the M1
-defects really are memory faults, so an external checker sees many of them — against
-`mlir-linalg`'s 0 of 54, where the defects are shape faults.
+Result: **46 of 64 flagged** (`Invalid __global__ read/write`), with all 64
+exercised and `instrumented` 1 launch each. This lane is the positive control for
+S12: the M1 defects really are memory faults, so a device-memory checker sees most
+of them — against `mlir-linalg`'s 0 of 54, where the defects are shape faults.
 
-### The 35 misses, audited individually
+### The 18 misses, audited individually
 
-All 35 carry `instrumented` > 0, so all are genuine sanitizer negatives rather than
+All 18 carry `instrumented` > 0, so all are genuine sanitizer negatives rather than
 instrumentation failures.
 
 * **8× M1.6** (zero-stride / empty-range) — 2 each on `layer_normalization`, `relu`,
   `softmax`, `transpose`, at both shapes. The mutant performs **no out-of-bounds
   access at all**: a zero stride or an empty range keeps every address inside the
-  buffer. There is nothing for ASan to report. The output is still wrong, so the
+  buffer. There is nothing for memcheck to report. The output is still wrong, so the
   mutant records `outcome=never, manifest=corrupts`.
 * **8× M1.11** (read-after-write aliasing / overlap-write) — 4 categories × both
   shapes. The kind shrinks the shared tile, so neighbouring writes alias each other
@@ -182,18 +190,12 @@ instrumentation failures.
   the wrong element. Records `never, corrupts`.
 * **2× M1.4** (transposed-stride) — `relu` **dynamic** and `transpose` **dynamic**
   only. Static M1.4 on both *is* flagged.
-* **2× M1.20** (symbolic-view-offset) — `softmax` **dynamic** and
-  `layer_normalization` **dynamic** only. The symbolic base moves by one step but
-  the doubled read index still lands inside the parent's flat span on those cells,
-  so no access leaves the allocation; the other six M1.20 cells *are* flagged
-  (`0B`–`12B` after the region). Records `never, corrupts`.
-* **7× M1.19** (index-carrier overflow) — the four carrier hosts, with
-  `transpose_carrier` **static** the only flagged cell (`SEGV`); the other seven
-  are silent. The i16 carrier wraps by ±2¹⁵ elements, so the faulty index is
-  ~128 KB outside the allocation — far past ASan's redzone, landing on other
-  mapped pages ASan cannot attribute. RTV flags all eight (the `memref.load`
-  descriptor check is index-level, not page-level), so this is the family where
-  the two checkers disagree most. Records `never, corrupts`.
+
+`M1.6/static` and `M1.6/dynamic` carry 4 misses each in `stats.json`; the remaining
+three families account for 4 + 4 + 2. `M1.19` and `M1.20` — which the previous
+host-ASan measurement missed most of — are now **8/8 and 8/8 flagged**: memcheck
+sees the wrapped `i16` carrier and the symbolic view offset as ordinary
+out-of-bounds device accesses.
 
 ### M1.4 is size-dependent, and the rule is exact
 
@@ -215,7 +217,7 @@ step: `DYNAMIC_SLOT` binds axis 0 of `relu`/`softmax`/`transpose` to
 `3x3` and `transpose`'s becomes `3x3` too — equal trailing extents, hence clean,
 while their static forms keep `(2,3)` and are flagged.
 
-Consequence for the paper: **S12's M1 flagged count is 37/72 at small size**
+Consequence for the paper: **S12's M1 flagged count is 46/64 at small size**
 (committed); the pre-v2.1 full-size run reported 36/48 and has not been rerun for
 the v2.1 specs (M1.11/M1.12/M1.14/M1.19/M1.20). The committed artifact reports the small-size
 figure and the size-dependence is documented here rather than hidden. This is the
@@ -247,8 +249,8 @@ The spec's `M1.20` note calls this path `unchecked` — *"symbols neither refuse
 checked"* — which describes choreo's `_StaticFail_`-only view checks. On the MLIR
 surface RTV **does** insert a dynamic bounds check on the view, so the symbolic
 offset is caught in the instrumented mode. The mutant is still real (all 8 cells
-silent under RTV-off, 6/8 ASan-flagged), but the local model is stronger here than
-the spec assumed.
+silent under RTV-off, 8/8 memcheck-flagged), but the local model is stronger here
+than the spec assumed.
 
 ### M1.19 — the narrow index carrier
 
@@ -272,27 +274,30 @@ fold and survives both pipelines. The mutant is mode-dependent like the others:
 
 | mode | verdict | why |
 |---|---|---|
-| RTV-**off** | `never/corrupts`, two cells `runtime/SEGV` | no index check; the wrapped read is silent or crashes |
+| RTV-**off** | `never/corrupts` | no index check; the wrapped read is a silent misread |
 | RTV-**on** | `runtime/corrupts` | RTV's `memref.load` descriptor check fires on the negative index |
 
-This is the family where the external sanitizer is weakest (7/8 miss) and the
-in-language RTV the strongest (8/8): the wrap distance, ±2¹⁵ elements ≈ 128 KB,
-is far past ASan's redzone. The `M1-f` cell is therefore complete — 8 instances,
-all exercised, all corrupting — but its detection story is RTV-only. The relocation
-from 2³¹ (triton) to 2¹⁶ (here) is a per-toolchain feasibility choice; the paper
-must state it as such, not as the same carrier.
+Unlike the host-ASan measurement, the device sanitizer catches this family:
+`compute-sanitizer --tool memcheck` reports all 8 carrier cells as
+out-of-bounds device reads, because it checks device addresses against the
+allocation rather than relying on a host redzone. The `M1-f` cell is complete —
+8 instances, all exercised, all corrupting — and both the in-language RTV and the
+external memcheck flag it. The relocation from 2³¹ (triton) to 2¹⁶ (here) is a
+per-toolchain feasibility choice; the paper must state it as such, not as the same
+carrier.
 
 ## Full-size validation
 
 Full-size extents are ~1000× larger (`relu` is `32×512×8×8` ≈ 1.05M elements), so
-this is a real exposure test rather than a repeat. The full column predates the
-v2.1 spec additions and was not rerun:
+this is a real exposure test rather than a repeat. The full column is the
+**host-ASan-era** run: it predates both the v2.1 spec additions and the GPU
+retarget, and has not been rerun on the GPU backend:
 
-| check | small | full |
+| check | small (GPU) | full (pre-GPU, pre-v2.1) |
 |---|---|---|
 | e2 | 8/8 green | 8/8 green |
-| minimal | 144 rec / 72 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK (pre-v2.1) |
-| s12 | 72 sanitized, reconciled, 37 flagged | 48 sanitized, reconciled, 36 flagged (pre-v2.1) |
+| minimal | 144 rec / 72 inj, §5.1 OK | 96 rec / 48 inj, §5.1 OK |
+| s12 | 64 sanitized, reconciled, 46 flagged | 48 sanitized, reconciled, 36 flagged |
 | S9 | 108 | 132 |
 
 The full-size `minimal` was run with `M1_REPEAT=1` rather than the committed `16`,

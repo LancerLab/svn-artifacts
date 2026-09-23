@@ -387,7 +387,7 @@
     },
     "mlir-low": {
       "M2": "no cross-tensor shape contract exists on the memref/affine surface: shapes are already concrete buffer descriptors, so a rank/extent disagreement is not expressible (mutation-specs-v2.md 5)",
-      "M3": "hardware-constraint defects need a device target; this lane is a CPU JIT with no hardware contract to violate (mutation-specs-v2.md 5, measured)"
+      "M3": "hardware-constraint defects have no expressible form on the plain memref/affine kernel surface: it authors no mma/tma/alignment construct, and lowering it to a device launch does not add one; launch-geometry (M3.17-M3.26) is outside this lane's M1 mandate (mutation-specs-v2.md 5, measured)"
     },
     "iree": {
       "M1": "no interior access at the IREE entry surface: a mutant has no expressible form because the shape is the only thing the entry check can see (mutation-specs-v2.md 5)",

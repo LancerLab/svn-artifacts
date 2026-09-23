@@ -11,10 +11,11 @@
 # Assigned mutation class: M1 (element-access / out-of-bounds). M2 and M3 are
 # n/a on this surface — see mlir-shared/lane.py SURFACES["low"]["na_classes"].
 #
-# DEVICE is accepted for template compatibility but IGNORED: this lane is a
-# CPU JIT on the host, so there is no GPU, no .gpu-lock and no exclusive run.
-# S12 therefore uses LLVM AddressSanitizer on a natively linked binary rather
-# than compute-sanitizer, which needs a CUDA device.
+# DEVICE: the kernel executes on the GPU. The lowered `gpu.launch` is compiled
+# to a cubin (compute capability 8.6 by default) and JIT-run on the device, so
+# there is no CPU fallback. S12 therefore uses `compute-sanitizer --tool
+# memcheck` over the same cubin, not ASan (which instruments a host binary and
+# could not see a device access).
 #
 # All logic lives in ../mlir-shared/lane.py so the two MLIR lanes cannot drift
 # apart; this file is the §12.1 contract surface only.
@@ -77,7 +78,7 @@ cmd_all() {
 
 usage() {
   echo "usage: $0 {setup|minimal[--level2]|e2|e3|s12|e4|e5|collect|stats|all} [--small|--full] [--device i]"
-  echo "  note: --device is accepted but ignored (CPU JIT; no GPU dependency)"
+  echo "  note: --device is accepted for template compatibility; the lane runs on the GPU"
 }
 
 SUB="${1:-}"; shift || true
