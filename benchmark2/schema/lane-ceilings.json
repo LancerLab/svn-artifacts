@@ -1,17 +1,17 @@
 {
-  "_purpose": "Per-lane per-family CREATE ceiling: the most instances a lane can author for a family given its own expressible surface. A declared ceiling below N means the remaining slots are not authorable ON THAT LANE, so the family stays short of N in the obligation column (`short = N - have`, per the reporting rule: a resolved slot is annotated, never subtracted) but is NOT assignable operator work. `kind` names WHY the capped slots are not authorable, using the canonical outcome vocabulary (mutation-specs-v2.md section 9.6): `unexpressible` (u -- no legal program states the defect), `avoided` (a -- the lane's model repairs or refuses the state), or `unchecked` (a legal program exists and the lane emits NOTHING -- which makes the slot a CREATED mutant, not a `u`; the ceiling counts it). `bound` records a lane-specific numeric bound where the spec's own bound is a no-op here (spec vs lane). This is the lane-generic counterpart of choreo's candidate-table ceiling (`family_ceiling`). `gen_worklist.py` reads it, publishes it in the `ceiling` column, and quotes `kind`/`bound`/`basis` in `blocker`.",
+  "_purpose": "Per-lane per-family CREATE ceiling: the most instances a lane can author for a family given its own expressible surface. A declared ceiling below N means the remaining slots are not authorable ON THAT LANE, so the family stays short of N in the obligation column (`short = N - have`, per the reporting rule: a resolved slot is annotated, never subtracted) but is NOT assignable operator work. `kind` names WHY the capped slots are not authorable, using the canonical outcome vocabulary (mutation-specs-v2.md sections 9.6/9.6.1b): `unexpressible` (u -- no legal program states the defect), `avoided` (a -- the lane's model derives/restores the invariant, so no legal program states it), `ct-check` (the injected defect IS stateable and the frontend refuses it with a diagnostic about that defect -- a CREATED, non-inert mutant; per section 9.6.1b rule 1 this is `ct-check`, NOT `corrupt`, and NOT `avoided`), or `unchecked` (a legal program exists and the lane emits NOTHING -- which makes the slot a CREATED mutant, not a `u`; the ceiling counts it). `bound` records a lane-specific numeric bound where the spec's own bound is a no-op here (spec vs lane). This is the lane-generic counterpart of choreo's candidate-table ceiling (`family_ceiling`). `gen_worklist.py` reads it, publishes it in the `ceiling` column, and quotes `kind`/`bound`/`basis` in `blocker`.",
   "_status": "declared, pending host sign-off",
   "_protocol": "Lane-owned claims. Add an entry only with a `basis` that names the channel/report that established it and a `kind`. Omitting a family leaves its ceiling measured/unknown as before -- never assume a low ceiling.",
   "triton": {
     "M1-g": {
       "ceiling": 8,
-      "kind": "avoided",
-      "basis": "rank/arity: Triton HAS a source-level rank/index/arity model -- `tl.permute`, `tl.reshape`, `tl.expand_dims`, `tl.sum(axis=)`, `tl.trans`, `tl.split` all take a rank- or axis-shaped argument (probe_m1g2, 2026-09-24: permute arity, permute non-permutation, sum axis>=rank, sum negative axis, reshape count change, expand_dims axis>rank, trans rank-1, tl.split last-dim!=2 are all stateable and all CompilationError). A stateable+refused defect is a CREATED, non-inert mutant (`avoided`), so the family is NOT `u`. REALISED 8/8 on the mutation-only surface `mutants/rank_arity.py` (f1->M1.20, f2->M1.15, f3/f4->M1.17, f5->M1.20, f6->M1.15, f7/f8->M1.16). The earlier ceiling 0/`u` claimed 'no current kernel states rank arity', which the mutation-only rule (channels/README.md, HANDOFF.md section 8.1) rejects as a `u` basis (channels/triton.md, batch 8)."
+      "kind": "ct-check",
+      "basis": "rank/arity: Triton HAS a source-level rank/index/arity model -- `tl.permute`, `tl.reshape`, `tl.expand_dims`, `tl.sum(axis=)`, `tl.trans`, `tl.split` all take a rank- or axis-shaped argument (probe_m1g2, 2026-09-24: permute arity, permute non-permutation, sum axis>=rank, sum negative axis, reshape count change, expand_dims axis>rank, trans rank-1, tl.split last-dim!=2 are all stateable and all CompilationError). A stateable+refused defect is a CREATED, non-inert mutant whose measured outcome is `ct-check` (section 9.6.1b rule 1), so the family is NOT `u`. REALISED 8/8 on the mutation-only surface `mutants/rank_arity.py` (f1->M1.20, f2->M1.15, f3/f4->M1.17, f5->M1.20, f6->M1.15, f7/f8->M1.16). The earlier ceiling 0/`u` claimed 'no current kernel states rank arity', which the mutation-only rule (channels/README.md, HANDOFF.md section 8.1) rejects as a `u` basis (channels/triton.md, batch 8)."
     },
     "M3-a": {
       "ceiling": 8,
-      "kind": "avoided",
-      "basis": "atom divisibility: the `tl.dot` atom rule is a real Triton surface, and a NEW mutation-only kernel may host it (channels/README.md, HANDOFF.md section 8.1), so the family is NOT `u` -- the earlier ceiling 1/`u` claimed `matmul` is the only `tl.dot` kernel, which the 'new mutation-only kernel is always allowed' rule rejects as a `u` basis. Realised once on the matmul surface (matmul-f1, f16 BK=8 -> JIT CompilationError). The remaining 7 slots are owed authoring on further `tl.dot` mutation-only kernels, not unexpressible (channels/triton.md, batch 7)."
+      "kind": "ct-check",
+      "basis": "atom divisibility: the `tl.dot` atom rule is a real Triton surface, and a NEW mutation-only kernel may host it (channels/README.md, HANDOFF.md section 8.1), so the family is NOT `u` -- the earlier ceiling 1/`u` claimed `matmul` is the only `tl.dot` kernel, which the 'new mutation-only kernel is always allowed' rule rejects as a `u` basis. The frontend refuses an illegal atom (`Input shapes should have M >= 1, N >= 1 and K >= 16`) -- a diagnostic about the injected defect, so the measured outcome is `ct-check` (section 9.6.1b rule 1), not `avoided`. REALISED 8/8 (`mutants/dot_atom.py` f1..f7 + matmul-f1, all M3.1)."
     },
     "M3-b": {
       "ceiling": 8,
@@ -25,8 +25,8 @@
     },
     "M3-c": {
       "ceiling": 8,
-      "kind": "avoided",
-      "basis": "byte / swizzle box: `tl.make_tensor_descriptor`'s `block_shape` IS a source-level box descriptor, so the box state is writable; the frontend refuses an illegal box at trace time (probe_forms + probe_swz5, 2026-09-24: non-power-of-2 inner [48]/[24]/[20]/[5]/[6] -> 'Shape element 1 must be a power of 2', and 8-32 MB boxes -> 'numel exceeds triton maximum tensor numel'). The swizzle geometry is DERIVED from this box, but the box itself is the state, so the mismatch is expressible as a created non-inert mutant (`avoided`), NOT `u`. REALISED 8/8 on `mutants/box_swizzle.py` (f1..f5->M3.5, f6..f8->M3.3). M3.13 (survive-repair; a box that merely exceeds the extent is zero-padded, not defective) is not separately instantiated -- the family is covered by M3.3/M3.5."
+      "kind": "ct-check",
+      "basis": "byte / swizzle box: `tl.make_tensor_descriptor`'s `block_shape` IS a source-level box descriptor, so the box state is writable; the frontend refuses an illegal box at trace time (probe_forms + probe_swz5, 2026-09-24: non-power-of-2 inner [48]/[24]/[20]/[5]/[6] -> 'Shape element 1 must be a power of 2', and 8-32 MB boxes -> 'numel exceeds triton maximum tensor numel'). The swizzle geometry is DERIVED from this box, but the box itself is the state, so the mismatch is a created non-inert mutant whose measured outcome is `ct-check` (section 9.6.1b rule 1), NOT `u`. REALISED 8/8 on `mutants/box_swizzle.py` (f1..f5->M3.5, f6..f8->M3.3). M3.13 (survive-repair; a box that merely exceeds the extent is zero-padded, not defective) is not separately instantiated -- the family is covered by M3.3/M3.5."
     },
     "M3-d": {
       "ceiling": 0,
@@ -35,13 +35,13 @@
     },
     "M3-e": {
       "ceiling": 8,
-      "kind": "avoided",
-      "basis": "base / inner-box alignment: the last dimension of a descriptor `block_shape` is a source value and Triton's frontend requires it to span >= 16 bytes (128-bit), so the sub-16-byte inner-box state (M3.7) IS writable. probe_align/box_align (2026-09-24): f32 [1,1]=4B, [1,2]=8B, [2,1]/[4,1]=4B and f16 [1,1]=2B, [1,2]=4B, [2,1]=2B, [4,2]=4B are all refused with 'Descriptor block shape must have at least 16 bytes in the last dimension' -> created non-inert mutant (`avoided`). REALISED 8/8 on `mutants/box_align.py` (all M3.7). The M3.11/M3.16 base-alignment residues are arch-owned (need sm_90) and are NOT required to fill the family."
+      "kind": "ct-check",
+      "basis": "base / inner-box alignment: the last dimension of a descriptor `block_shape` is a source value and Triton's frontend requires it to span >= 16 bytes (128-bit), so the sub-16-byte inner-box state (M3.7) IS writable. probe_align/box_align (2026-09-24): f32 [1,1]=4B, [1,2]=8B, [2,1]/[4,1]=4B and f16 [1,1]=2B, [1,2]=4B, [2,1]=2B, [4,2]=4B are all refused with 'Descriptor block shape must have at least 16 bytes in the last dimension' -> created non-inert mutant whose measured outcome is `ct-check` (section 9.6.1b rule 1). REALISED 8/8 on `mutants/box_align.py` (all M3.7). The M3.11/M3.16 base-alignment residues are arch-owned (need sm_90) and are NOT required to fill the family."
     },
     "M3-f": {
       "ceiling": 8,
-      "kind": "avoided",
-      "basis": "descriptor rank: a rank-6 descriptor IS stateable in Triton source, and the frontend REFUSES it at trace time -- `Expected 1 <= ndim <= 5 but got 6` (semantic.py:1854; probe_m3_surface). That is a created, non-inert mutant whose testing outcome is a compile refusal (the avoided/`repaired` shape of M3.8's RankLE5 in choreo), so it is NOT `u`. Realised 0 today; the 8 slots are owed authoring on mutation-only rank-6 kernels, one `d` each (channels/triton.md, batch 7)."
+      "kind": "ct-check",
+      "basis": "descriptor rank: a rank-6 descriptor IS stateable in Triton source, and the frontend REFUSES it at trace time -- `Expected 1 <= ndim <= 5 but got 6` (semantic.py:1854; probe_m3_surface). That is a created, non-inert mutant whose measured outcome is `ct-check` (section 9.6.1b rule 1; a diagnostic about the injected defect, not `avoided`/`corrupt`), so it is NOT `u`. REALISED 8/8 on `mutants/desc_rank.py` (all M3.8)."
     },
     "M3-g": {
       "ceiling": 8,
@@ -50,8 +50,8 @@
     },
     "M3-h": {
       "ceiling": 8,
-      "kind": "avoided",
-      "basis": "on-chip capacity: Triton block sizes are `constexpr`, so an oversized tile is refused at compile time -- the M3.12 realisation is `avoided` (a created, non-inert mutant whose outcome is a compile refusal). A mutation-only kernel may host it on further kernels, so the family is NOT `u`; the runtime-shaped extent (M3.27/M3.28) is unavailable because the tile extent is never symbolic (it must be constexpr), which is the one genuinely capped pair. Realised once (matmul-f2); the remaining slots are owed authoring on mutation-only kernels (channels/triton.md, batch 7)."
+      "kind": "ct-check",
+      "basis": "on-chip capacity: Triton block sizes are `constexpr`, so an oversized tile is refused at compile time with `OutOfResources: out of resource: shared memory` -- a diagnostic about the injected defect, so the measured outcome is `ct-check` (section 9.6.1b rule 1; host/user ruling 2026-09-24: the resource-limit refusal counts as ct-check here, not a separate `L` observation). A mutation-only kernel may host it on further kernels, so the family is NOT `u`; the runtime-shaped extent (M3.27/M3.28) is unavailable because the tile extent is never symbolic (it must be constexpr), which is the one genuinely capped pair. REALISED 8/8 (`mutants/smem_cap.py` f1..f7 + matmul-f2, all M3.12)."
     },
     "M4-a": {
       "ceiling": 8,
@@ -75,8 +75,8 @@
     },
     "M4-f": {
       "ceiling": 8,
-      "kind": "avoided",
-      "basis": "zero step: a step of 0 is stateable as `tl.static_range(0, BLOCK, 0)`, which the frontend evaluates eagerly and REFUSES at trace -- `CompilationError: ValueError('range() arg 3 must not be zero')` (probe_step0b, 2026-09-24). That is a created, non-inert mutant whose outcome is a compile refusal, so the family is `avoided` (host ruling 2026-09-24; outcome `compile`, manifest `corrupts`). The construct matters: plain `range(0, K, 0)` does NOT refuse -- it lowers to `scf.for ... step 0` and HANGS on device (probe_lb F / probe_step0_run: launch succeeds, `cudaDeviceSynchronize` never returns) -- so the `avoided` realisation uses `static_range`. REALISED 8/8 on `mutants/loop_bound.py` families 40..47 (M4.5), all CompilationError."
+      "kind": "ct-check",
+      "basis": "zero step: a step of 0 is stateable as `tl.static_range(0, BLOCK, 0)`, which the frontend evaluates eagerly and REFUSES at trace -- `CompilationError: ValueError('range() arg 3 must not be zero')` (probe_step0b, 2026-09-24). That is a created, non-inert mutant whose measured outcome is `ct-check` (section 9.6.1b rule 1: a diagnostic about the injected defect), not `avoided`. The construct matters: plain `range(0, K, 0)` does NOT refuse -- it lowers to `scf.for ... step 0` and HANGS on device (probe_lb F / probe_step0_run: launch succeeds, `cudaDeviceSynchronize` never returns) -- which would be `never`, so the realised mutant uses `static_range`. REALISED 8/8 on `mutants/loop_bound.py` families 40..47 (M4.5), all CompilationError."
     },
     "M4-g": {
       "ceiling": 8,

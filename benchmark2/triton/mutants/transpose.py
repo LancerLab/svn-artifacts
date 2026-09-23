@@ -23,9 +23,9 @@ def tr_offbyone(x_ptr, y_ptr, M, N, BM: tl.constexpr, BN: tl.constexpr):
     pid_m = tl.program_id(0); pid_n = tl.program_id(1)
     om = pid_m * BM + tl.arange(0, BM)
     on = pid_n * BN + tl.arange(0, BN)
-    m = (om[:, None] < M + 1) & (on[None, :] < N)                  # M1.2
+    m = (om[:, None] < M) & (on[None, :] < N + 1)                  # M1.2
     t = tl.load(x_ptr + om[:, None] * N + on[None, :], mask=m)
-    mo = (on[:, None] < N) & (om[None, :] < M + 1)
+    mo = (on[:, None] < N + 1) & (om[None, :] < M)
     tl.store(y_ptr + on[:, None] * M + om[None, :], tl.trans(t), mask=mo)
 
 

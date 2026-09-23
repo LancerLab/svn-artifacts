@@ -18,7 +18,7 @@ assignable work at all. `blocker` states that ceiling per row.
 per lane: choreo measures it from its candidate table, every other lane declares
 it in `schema/lane-ceilings.json` (blank where unmeasured). A family whose
 ceiling has been reached is surface-bound -- its remaining slots are
-inexpressible (u) or avoided (a), never assignable operator work -- and the
+inexpressible (u), avoided (a), or a created ct-check mutant, never assignable operator work -- and the
 console summary reports that residue separately from the raw shortfall.
 
     python3 schema/gen_worklist.py [out.csv]
@@ -109,8 +109,8 @@ AX_UNCMP = AX.get("uncompared_reason", "")
 # Per-lane create ceilings (schema/lane-ceilings.json). The lane-generic
 # counterpart of choreo's candidate-table ceiling. A lane declares, per family,
 # the most instances it can author given its own expressible surface; a declared
-# ceiling below N means the remaining slots are inexpressible (u) or avoided (a)
-# ON THAT LANE. The family stays short of N in the obligation column (`short`)
+# ceiling below N means the remaining slots are inexpressible (u), avoided (a),
+# or a created ct-check mutant ON THAT LANE. The family stays short of N in the obligation column (`short`)
 # -- a resolved slot is annotated, never subtracted -- but `ceiling == have`
 # makes it read as surface-bound, not as missing mutation code. Lane-owned
 # claims; each carries a `basis` quoted in `blocker`.
@@ -338,10 +338,12 @@ def lane_family_ceiling(lane, cls, fam):
 def lane_family_ceiling_kind(lane, cls, fam):
     """Why the declared ceiling is what it is, or "" when unmeasured.
 
-    One of the canonical outcome names: `unexpressible` (u), `avoided` (a), or
-    `unchecked` (a legal program exists that the lane silently accepts -- so the
-    capped slot is a CREATED mutant, not a `u`). Published next to `ceiling` so
-    a reader can tell "nothing writable" from "writable but silent".
+    One of the canonical outcome names: `unexpressible` (u), `avoided` (a),
+    `ct-check` (the defect is stateable and the frontend refuses it with a
+    diagnostic about that defect -- a CREATED mutant, section 9.6.1b rule 1),
+    or `unchecked` (a legal program exists that the lane silently accepts -- so
+    the capped slot is a CREATED mutant, not a `u`). Published next to `ceiling`
+    so a reader can tell "nothing writable" from "writable but silent".
     """
     dec = declared_ceiling(lane, fam)
     if dec is not None:
@@ -582,7 +584,7 @@ def main():
             # The obligation `short` splits into authorable work and slots the
             # lane cannot express. `ceiling` blank means unmeasured: keep the
             # whole row authorable. `ceiling` at or below `have` means every
-            # remaining slot is surface-bound (u/avoided), not missing code.
+            # remaining slot is surface-bound (u/avoided/ct-check), not missing code.
             ceil = as_int(r["ceiling"])
             if ceil is not None:
                 authorable = max(0, min(r["short"], ceil - r["have"]))
@@ -602,7 +604,7 @@ def main():
         "%s=%d" % (l, tot[l]) for l in LANES if tot[l]) +
         "  TOTAL=%d" % sum(tot.values()))
     if any(bound.values()):
-        print("  of which surface-bound (published ceiling reached; u/avoided, "
+        print("  of which surface-bound (published ceiling reached; u/avoided/ct-check, "
               "NOT assignable operator work): " + ", ".join(
                   "%s=%d" % (l, bound[l]) for l in LANES if bound[l]) +
               "  TOTAL=%d" % sum(bound.values()))

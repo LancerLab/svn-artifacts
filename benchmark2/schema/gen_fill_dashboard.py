@@ -312,13 +312,18 @@ def main(argv):
                    "fix is a new instrument, not another operator. The `kind` "
                    "column names *why* the capped slots are not writable: `u` "
                    "= unexpressible (no legal program states the defect), `a` "
-                   "= avoided (the lane's model repairs or refuses it), or "
-                   "`unchecked` = a legal program exists that the lane accepts "
-                   "silently -- a **created** mutant, not a `u`.")
+                   "= avoided (the lane's model derives/restores the invariant "
+                   "so no legal program states it), `ct-check` = the defect is "
+                   "stateable and the frontend refuses it with a diagnostic "
+                   "about that defect (a **created** mutant, per section "
+                   "9.6.1b rule 1 -- not `corrupt`, not `a`), or `unchecked` = "
+                   "a legal program exists that the lane accepts silently -- a "
+                   "**created** mutant, not a `u`.")
         out.append("")
         out.append("| lane | class | family | kind | have | ceiling | planned | short | blocker |")
         out.append("|---|---|---|---|---|---|---|---|---|")
-        KIND_ABBR = {"unexpressible": "u", "avoided": "a", "unchecked": "unchecked"}
+        KIND_ABBR = {"unexpressible": "u", "avoided": "a",
+                     "ct-check": "ct-check", "unchecked": "unchecked"}
         for r in sat:
             pl = plan[(r["lane"], r["family"])]
             kind = (r.get("ceiling_kind") or "").strip() or "--"
