@@ -11,11 +11,17 @@ PY="$VENV/bin/python"
 SIZE="small"
 LEVEL2=0
 DEVICE="${CUDA_VISIBLE_DEVICES:-0}"
+# --arch labels records with the host arch (sm_86 dev box, sm_120 final host);
+# default `auto` trusts Triton's device detection. See driver.py --arch.
+ARCH="${TRITON_LANE_ARCH:-auto}"
+ARCHES="sm_86,sm_120"
 for arg in "$@"; do
   case "$arg" in
     --small) SIZE="small";; --full) SIZE="full";;
     --level2) LEVEL2=1;;
     --device=*) DEVICE="${arg#*=}";;
+    --arch=*) ARCH="${arg#*=}";;
+    --arches=*) ARCHES="${arg#*=}";;
   esac
 done
 
@@ -61,12 +67,24 @@ EOF
 
 cmd_minimal() {
   need
-  "$PY" "$HERE/driver.py" minimal --device "$DEVICE"
+  "$PY" "$HERE/driver.py" minimal --device "$DEVICE" --arch "$ARCH"
 }
 
 cmd_e2() {
   need
-  "$PY" "$HERE/driver.py" e2 --size "$SIZE" --device "$DEVICE"
+  "$PY" "$HERE/driver.py" e2 --size "$SIZE" --device "$DEVICE" --arch "$ARCH"
+}
+
+cmd_sanitizer() {
+  need
+  "$PY" "$HERE/driver.py" sanitizer --device "$DEVICE" \
+    ${LEVEL2:+--level2} --arch "$ARCH"
+}
+
+cmd_archcheck() {
+  # compile-only cross-arch proof (no GPU needed); records raw/archcheck.json
+  need
+  "$PY" "$HERE/driver.py" archcheck --arches "$ARCHES"
 }
 
 cmd_e3() {
@@ -86,11 +104,12 @@ cmd_stats() {
   "$PY" "$HERE/collect.py" --stats
 }
 
-cmd_all() { cmd_setup; cmd_minimal; cmd_e2; cmd_e3; cmd_collect; cmd_stats; }
+cmd_all() { cmd_minimal; cmd_e2; cmd_e3; cmd_collect; cmd_stats; }
 
 sub="${1:-}"; shift || true
 case "$sub" in
   setup) cmd_setup;; minimal) cmd_minimal;; e2) cmd_e2;; e3) cmd_e3;;
+  sanitizer) cmd_sanitizer;; archcheck) cmd_archcheck;;
   collect) cmd_collect;; stats) cmd_stats;; all) cmd_all;;
-  *) die "unknown subcommand: $sub (want setup|minimal|e2|e3|collect|stats|all)";;
+  *) die "unknown subcommand: $sub (want setup|minimal|e2|e3|sanitizer|archcheck|collect|stats|all)";;
 esac

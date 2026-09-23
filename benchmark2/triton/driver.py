@@ -24,6 +24,9 @@ import sys
 import traceback
 from pathlib import Path
 
+import triton
+import triton.language as tl
+
 
 HERE = Path(__file__).resolve().parent
 B2 = HERE.parent
@@ -46,11 +49,30 @@ def triton_version() -> str:
     return triton.__version__
 
 
-def current_arch() -> str:
-    """Auto-detected GPU arch as 'sm_90'/'sm_120' (Triton targets the GPU
-    it runs on; there is no separate arch flag in this lane)."""
+# Set by `--arch` in main(); read by current_arch() so every record carries the
+# requested arch, not just the one auto-detected. `None`/`"auto"` = auto-detect.
+ARCH_OVERRIDE: str | None = None
+VALID_ARCHES = ("auto", "sm_86", "sm_90", "sm_120")
+
+
+def device_arch() -> str:
+    """The physical GPU's arch, regardless of any `--arch` override."""
     from triton.runtime import driver
-    return f"sm_{driver.active.get_current_target().arch}"
+    try:
+        return f"sm_{driver.active.get_current_target().arch}"
+    except Exception:
+        return "unknown"
+
+
+def current_arch() -> str:
+    """Requested arch if `--arch` was given, else the auto-detected GPU arch.
+
+    Auto-detection alone cannot label a corpus for a host it is not running on
+    (this checkout has sm_86; the final host has sm_120). `--arch` makes the
+    label explicit and main() refuses a mismatch unless --allow-mismatch."""
+    if ARCH_OVERRIDE and ARCH_OVERRIDE != "auto":
+        return ARCH_OVERRIDE
+    return device_arch()
 
 
 # ---------------------------------------------------------------- oracle
@@ -188,13 +210,16 @@ def gate_kernel(category: str, size: str, device: str, raw: Path):
 
 # ---------------------------------------------------------------- mutants
 MUTANTS = {
+    # f3 (M1.3) is NOT generated: family M1-a already holds its 8 from f1/f2
+    # across these four categories, so f3 would over-deliver to 12. The family
+    # lists below are the reproducible corpus; do not re-add f3.
     "layer_normalization": ("layer_norm", "M1", "oob",
-                            [1, 2, 3, 4, 5, 8, 9, 12, 121, 19, 21, 211]),
+                            [1, 2, 4, 5, 8, 9, 12, 121, 19, 21, 211]),
     "softmax": ("softmax", "M1", "oob",
-                [1, 2, 3, 4, 5, 8, 9, 12, 121, 14, 141, 19]),
-    "relu": ("relu", "M1", "oob", [1, 2, 3, 4, 5, 6, 8, 9, 14, 141]),
+                [1, 2, 4, 5, 8, 9, 12, 121, 14, 141, 19]),
+    "relu": ("relu", "M1", "oob", [1, 2, 4, 5, 6, 8, 9, 14, 141]),
     "transpose": ("transpose", "M1", "stride",
-                  [1, 2, 3, 4, 5, 8, 9, 12, 121, 14, 141]),
+                  [1, 2, 4, 5, 8, 9, 12, 121, 14, 141]),
     "matmul": ("matmul", "M3", "hw", [1, 2, 3]),
     # mutation-only descriptor-pad surface: M3-g (M3.9/M3.10), four ranks x two
     # overrun geometries (mutants/desc_pad.py).
@@ -508,15 +533,136 @@ def cmd_sanitizer(device: str, level2: bool = False):
                   rec["fault"], "exercised=" + rec["exercised"])
 
 
+# ---------------------------------------------------------------- archcheck
+# The sm_90 final host is gone; the lane must be valid on sm_86 (dev) and
+# sm_120 (available host). The mutation-only surfaces are frontend refusals, so
+# their outcome should not depend on the codegen arch. This stage *proves* that
+# by compiling one representative kernel per mechanism for each requested arch
+# (compile-only; no GPU needed), then reports whether the verdict is invariant.
+#
+# `refused` = non-inert mutant / `avoided`; `lowered` = no refusal (a silent
+# defect such as M3.2 int32 narrowing, or a valid control such as rank-1).
+@triton.jit
+def _p_nonpow2(x, o, B: tl.constexpr):
+    d = tl.make_tensor_descriptor(x, shape=[64, 256], strides=[256, 1],
+                                  block_shape=[1, B])
+    tl.store(o, tl.sum(tl.ravel(d.load([0, 0]))))
+
+
+@triton.jit
+def _p_bigbox(x, o, B: tl.constexpr):
+    d = tl.make_tensor_descriptor(x, shape=[1 << 20, 64], strides=[64, 1],
+                                  block_shape=[1, B])
+    tl.store(o, tl.sum(tl.ravel(d.load([0, 0]))))
+
+
+@triton.jit
+def _p_tinybox(x, o):
+    d = tl.make_tensor_descriptor(x, shape=[64, 256], strides=[256, 1],
+                                  block_shape=[1, 1])
+    tl.store(o, tl.sum(tl.ravel(d.load([0, 0]))))
+
+
+@triton.jit
+def _p_rank6(x, o, B: tl.constexpr):
+    d = tl.make_tensor_descriptor(x, shape=[2, 2, 2, 2, 2, 64],
+                                  strides=[64, 32, 16, 8, 4, 1],
+                                  block_shape=[1, 1, 1, 1, 1, B])
+    tl.store(o, tl.sum(tl.ravel(d.load([0, 0, 0, 0, 0, 0]))))
+
+
+@triton.jit
+def _p_rank1(x, o, B: tl.constexpr):
+    d = tl.make_tensor_descriptor(x, shape=[256], strides=[1], block_shape=[B])
+    tl.store(o, tl.sum(tl.ravel(d.load([0]))))
+
+
+@triton.jit
+def _p_int32dim(x, o, B: tl.constexpr):
+    d = tl.make_tensor_descriptor(x, shape=[1 << 31, 64], strides=[64, 1],
+                                  block_shape=[1, B])
+    tl.store(o, tl.sum(tl.ravel(d.load([0, 0]))))
+
+
+ARCHCHECK_PROBES = {
+    # name -> (kernel, signature, constexprs, mechanism)
+    "nonpow2_box": (_p_nonpow2, {"B": 48}, "M3.5 non-power-of-2 box"),
+    "big_box": (_p_bigbox, {"B": 1 << 21}, "M3.3 box numel over budget"),
+    "tiny_box": (_p_tinybox, {}, "M3.7 inner box < 16 B"),
+    "rank6_desc": (_p_rank6, {"B": 16}, "M3.8 descriptor rank > 5"),
+    "rank1_desc": (_p_rank1, {"B": 16}, "control: legal rank-1 descriptor"),
+    "int32_dim": (_p_int32dim, {"B": 16}, "M3.2 int32 dim (silent, not refused)"),
+}
+
+
+def _cap_of(arch: str) -> int:
+    return int(arch.split("_")[1])
+
+
+def cmd_archcheck(arches, raw: Path):
+    from triton.compiler import ASTSource, compile as tcompile
+    from triton.backends.compiler import GPUTarget
+    sig_base = {"x": "*fp32", "o": "*fp32"}
+    out = {}
+    for arch in arches:
+        out[arch] = {}
+        for name, (fn, cst, mech) in ARCHCHECK_PROBES.items():
+            sig = dict(sig_base)
+            sig.update({k: "constexpr" for k in cst})
+            try:
+                tcompile(ASTSource(fn, sig, constexprs=cst),
+                         target=GPUTarget("cuda", _cap_of(arch), 32))
+                verdict, msg = "lowered", ""
+            except Exception as e:
+                verdict = "refused"
+                msg = str(e).strip().splitlines()[-1][:90]
+            out[arch][name] = {"verdict": verdict, "mechanism": mech,
+                               "detail": msg}
+            print(f"{arch} {name:12s} {verdict:8s} {msg}")
+    # invariance: every arch must agree on each probe
+    for name in ARCHCHECK_PROBES:
+        verdicts = {a: out[a][name]["verdict"] for a in arches}
+        same = len(set(verdicts.values())) == 1
+        print(f"INVARIANT {name:12s} {'yes' if same else 'NO'} {verdicts}")
+    (raw / "archcheck.json").write_text(json.dumps(out, indent=2) + "\n")
+
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("stage", choices=["gate", "minimal", "e2", "sanitizer"])
+    ap.add_argument("stage", choices=["gate", "minimal", "e2", "sanitizer",
+                                      "archcheck"])
+    ap.add_argument("--arch", default="auto", choices=list(VALID_ARCHES),
+                    help="arch to label records with (default: auto-detect). "
+                         "Refuses if it differs from the physical GPU unless "
+                         "--allow-mismatch is set.")
+    ap.add_argument("--arches", default="sm_86,sm_90,sm_120",
+                    help="archcheck: comma-separated archs to cross-compile")
+    ap.add_argument("--allow-mismatch", action="store_true",
+                    help="allow --arch to differ from the physical GPU "
+                         "(compile-only cross-checks; do NOT use for a run "
+                         "whose outcomes depend on device execution)")
     ap.add_argument("--category", default=None)
     ap.add_argument("--size", default="full", choices=["small", "full"])
     ap.add_argument("--device", default="0")
     ap.add_argument("--level2", action="store_true")
     args = ap.parse_args()
     raw = HERE / "raw"
+
+    global ARCH_OVERRIDE
+    if args.arch != "auto":
+        ARCH_OVERRIDE = args.arch
+        dev = device_arch()
+        # The arch label must be the arch the code actually runs on; a mismatch
+        # would mislabel records (or, worse, launch a cubin the GPU cannot load).
+        if (dev not in ("unknown", args.arch)
+                and not args.allow_mismatch
+                and args.stage in ("gate", "minimal", "e2", "sanitizer")):
+            sys.exit(f"ERROR: --arch {args.arch} but physical GPU is {dev}; "
+                     "pass --allow-mismatch only for compile-only checks")
+    if args.stage == "archcheck":
+        arches = [a.strip() for a in args.arches.split(",") if a.strip()]
+        cmd_archcheck(arches, raw)
+        return
     if args.stage == "gate":
         ok = gate_kernel(args.category, args.size, args.device, raw)
         sys.exit(0 if ok else 1)

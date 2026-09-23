@@ -21,9 +21,23 @@ B2 = HERE.parent
 if str(B2) not in sys.path:
     sys.path.insert(0, str(B2))
 from schema import class_axis as AX                    # noqa: E402
+from schema import method_taxonomy as T                # noqa: E402
 from schema import records as RS                       # noqa: E402
 
 LANE_NAME = "triton"
+
+
+def attr_class(rec: dict) -> str:
+    """The class a mutant record belongs to, resolved from its spec_id.
+
+    NOT `rec["class"]`: this lane's relu-f6 control is the M1.6 spec re-homed to
+    family M4-d (`method-taxonomy.json::reassigned`), but the record still
+    stamps `class: M1`. Reading the stamp would keep the lane's only M4 instance
+    filed under M1 and leave M4 with no cell. The taxonomy is the authority;
+    fall back to the stamp only when the spec_id names no family.
+    """
+    fam = T.family_of(rec.get("spec_id", ""))
+    return T._FAM[fam]["class"] if fam else rec.get("class", "")
 
 
 def load_jsonl(p: Path):
@@ -86,7 +100,7 @@ def main():
     # S12: sanitizer supplement — flagged∧exercised per class
     s12 = {}
     for r in san:
-        c = r["class"]
+        c = attr_class(r)
         s12.setdefault(c, {"flagged_and_exercised": 0, "total": 0,
                            "flagged": 0})
         s12[c]["total"] += 1
@@ -97,7 +111,7 @@ def main():
     # stats (schema/statistics-manifest.md): S1 detection matrix for this lane
     by_class = {}
     for r in mutants:
-        c = r["class"]
+        c = attr_class(r)
         by_class.setdefault(c, Counter())
         by_class[c][r["outcome"]] += 1
     s1 = {c: {"n_injected": sum(v.values()),

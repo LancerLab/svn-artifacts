@@ -1,0 +1,66 @@
+{
+  "sm_86": {
+    "nonpow2_box": {
+      "verdict": "refused",
+      "mechanism": "M3.5 non-power-of-2 box",
+      "detail": "Shape element 1 must be a power of 2"
+    },
+    "big_box": {
+      "verdict": "refused",
+      "mechanism": "M3.3 box numel over budget",
+      "detail": "numel (2097152) exceeds triton maximum tensor numel (1048576)"
+    },
+    "tiny_box": {
+      "verdict": "refused",
+      "mechanism": "M3.7 inner box < 16 B",
+      "detail": "Descriptor block shape must have at least 16 bytes in the last dimension, but got 1 * 4 = "
+    },
+    "rank6_desc": {
+      "verdict": "refused",
+      "mechanism": "M3.8 descriptor rank > 5",
+      "detail": "Expected 1 <= ndim <= 5 but got 6 dimensions"
+    },
+    "rank1_desc": {
+      "verdict": "lowered",
+      "mechanism": "control: legal rank-1 descriptor",
+      "detail": ""
+    },
+    "int32_dim": {
+      "verdict": "lowered",
+      "mechanism": "M3.2 int32 dim (silent, not refused)",
+      "detail": ""
+    }
+  },
+  "sm_120": {
+    "nonpow2_box": {
+      "verdict": "refused",
+      "mechanism": "M3.5 non-power-of-2 box",
+      "detail": "Shape element 1 must be a power of 2"
+    },
+    "big_box": {
+      "verdict": "refused",
+      "mechanism": "M3.3 box numel over budget",
+      "detail": "numel (2097152) exceeds triton maximum tensor numel (1048576)"
+    },
+    "tiny_box": {
+      "verdict": "refused",
+      "mechanism": "M3.7 inner box < 16 B",
+      "detail": "Descriptor block shape must have at least 16 bytes in the last dimension, but got 1 * 4 = "
+    },
+    "rank6_desc": {
+      "verdict": "refused",
+      "mechanism": "M3.8 descriptor rank > 5",
+      "detail": "Expected 1 <= ndim <= 5 but got 6 dimensions"
+    },
+    "rank1_desc": {
+      "verdict": "lowered",
+      "mechanism": "control: legal rank-1 descriptor",
+      "detail": ""
+    },
+    "int32_dim": {
+      "verdict": "lowered",
+      "mechanism": "M3.2 int32 dim (silent, not refused)",
+      "detail": ""
+    }
+  }
+}

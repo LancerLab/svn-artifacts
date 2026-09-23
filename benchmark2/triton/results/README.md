@@ -2,9 +2,28 @@
 
 Machine: 2× NVIDIA H800 PCIe (sm_90), driver 590.48.01, CUDA 13.0 toolkit,
 Triton 3.8.0 (uv venv, torch-free: gpubuf.py ctypes/libcudart shim + numpy refs).
-Arch is auto-detected by Triton (no separate flag): every record carries
-`"arch": "sm_90"` (added to kernel/mutant records this run). Re-derived on the
-sm_90 host; outcomes are arch-invariant and match the 2026-09-09 sm_120 dev run.
+Every record carries `"arch"`, auto-detected from the GPU the lane runs on
+(the sm_90 host produced `sm_90`; the current dev box produces `sm_86`).
+Outcomes were shown arch-invariant against a 2026-09-09 sm_120 dev run.
+
+## Arch handling (updated 2026-09-24)
+
+The sm_90 H800 host is no longer available. The lane now targets **sm_86**
+(dev box) and **sm_120** (available host); `--arch sm_86|sm_120|auto` labels
+records with the requested arch and `driver.py` refuses the run if it differs
+from the physical GPU (`--allow-mismatch` only for compile-only checks):
+
+```
+benchmark2/triton/run.sh minimal --arch=sm_120   # run on the sm_120 host
+benchmark2/triton/run.sh archcheck               # compile-only cross-arch proof
+```
+
+`archcheck` compiles one representative kernel per mutation-only mechanism for
+each arch without a GPU and asserts the verdict is identical; current verdict
+(`raw/archcheck.json`): non-pow2 box / oversized box / sub-16-B box / rank-6
+descriptor all **refused** on sm_86 and sm_120, rank-1 descriptor and int32-dim
+(M3.2, a silent defect) **lowered** on both — i.e. the frontend surfaces are
+arch-invariant.
 
 ## S1 — detection matrix (bare Triton) — FINAL, full-size runs
 
