@@ -7,6 +7,32 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ---
 
+## 2026-09-24 — `triton` over-delivery trimmed; every family exactly 8 except M3-d
+
+`M3-a`/`M3-b`/`M3-h` were at 9 because each already owned a corpus kernel
+(`matmul-f1`/`f3`/`f2`); trimmed the redundant 8th form of the three new
+surfaces (`dot_atom-f8`, `desc_dim-f8`, `smem_cap-f8`), ranges → `[1..7]`.
+Rows 124 → **121**, triton **have 121 / short 8**, all families exactly 8/8
+except `M3-d` (`u`). `test-guards` 27/27; no triton guard FAIL.
+
+## 2026-09-24 — `triton` shortage composed down 32 → 8; M1-g / M3-c / M3-e realised
+
+Composed the remaining surface-bound shortfall. Three more families were still
+capped on the batch-7 bases, but their *states* were statable — only the corpus
+anchor was missing — so they are new kernels to author, not `(u)`.
+
+- **M1-g, M3-c, M3-e, 0 → 8/8 each.** Three new mutation-only surfaces:
+  `rank_arity.py` (rank/axis/arity args: `permute` arity, `sum` axis≥rank,
+  `reshape` count, `expand_dims`, `trans`, `split` — all stateable, all
+  compile-refused), `box_swizzle.py` (`block_shape` is the box: non-power-of-2
+  inner, 8–32 MB boxes) and `box_align.py` (sub-16-byte inner box, spec M3.7).
+  `triton` corpus rows 100 → 124, `short` 32 → **8**.
+- **M3-d is the only cap left, `u`.** Re-probed: a rank-5 `2^50` footprint
+  compiles and reads identically to the faithful small footprint — Triton has no
+  footprint/size field (shape int32 per-dim, strides int64), so the ≥4 GB product
+  is never truncated. There is no kernel that can state the defect.
+- `make test-guards` 27/27; `make guards` 29 FAIL lines / 40 drift, none triton.
+
 ## 2026-09-24 — `triton` M3-g realised; the M3 `u` ceilings corrected
 
 Read `channels/README.md` §"A new mutation-only kernel is always allowed" and
@@ -14,19 +40,20 @@ re-triaged all eight `triton` M3 families against Triton 3.8's real surface. The
 rule that moves the numbers: a spec with no anchor in the *current* corpus is a
 **new kernel to author (`d`)**, not `(u)`.
 
-- **M3-g pad encoding, 0 → 8/8.** New mutation-only surface
-  `triton/mutants/desc_pad.py`: `padding_option` is the pad field the family
-  names; four ranks (2–5) × two overrun geometries (tail `M3.9` / mid `M3.10`),
-  faithful `zero` vs mutated `nan`. All 8 `never corrupts oracle=diff`, sm_86.
-  `triton` corpus rows 60 → 68, `short` 69 → 61.
-- **M3-a/b/f/h reclassified `u` → owed.** `tl.dot` (a), descriptors (b), rank-6
-  (f) and oversized constexpr tiles (h) are all stateable; the old bases read
-  "the current corpus has no such kernel". 29 triton slots move from
-  surface-bound to assignable operator work: triton surface-bound **69 → 32**
-  (only `M1-g` + `M3-c/d/e` remain capped).
-- **M3-c → `avoided`** (swizzle is *derived* by the lowering; no source knob).
-  **M3-d/M3-e keep a cap but with corrected bases**: Triton has no footprint
-  container (d) and an unaligned base is a noop on sm_86 (e, per spec M3.11).
+- **M3-a/b/f/g/h, 0–1 → 8/8 each.** Five new mutation-only surfaces:
+  `desc_pad.py` (`padding_option` is the pad field; ranks 2–5 × tail/mid
+  overrun, `zero` vs `nan`, `oracle=diff`), `desc_dim.py` (ranks 2–5 ×
+  {2³¹, 2³²}, silent zero-fill), `desc_rank.py` (rank 6/0, compile-refused),
+  `dot_atom.py` (`tl.dot` 4 shapes × {K=8, K=4}, compile-refused), `smem_cap.py`
+  (4 shapes × {256², 512²} tiles, `OutOfResources`). `triton` corpus rows
+  60 → 100, `short` 69 → 32, and the whole M3 class is now discharged: every
+  family realised or capped with evidence.
+- **M3-c/d/e capped.** `M3-c` → `avoided` (swizzle is *derived* by the lowering;
+  no source knob). `M3-d`/`M3-e` keep `u` with corrected bases: Triton has no
+  footprint container (d); an unaligned descriptor base is a noop on sm_86 (e,
+  per spec M3.11 — needs an sm_90 box). The old bases read "the current corpus
+  has no such kernel", which the mutation-only ruling forbids. Awaiting host
+  sign-off on d/e.
 - `make test-guards` 27/27; `make guards` 29 findings, none triton.
 
 ## 2026-09-23 — `mlir-linalg` fills its M2 family budget; M2 43/64 → 64/64

@@ -4,6 +4,9 @@ Interface: python3 matmul.py --family N  (see mutants/README.md)
 M3 families for Triton (specs §3 → §4 translation: partial, tl.dot rules):
  1 K not divisible by the tensor-core atom (tl.dot BK=8 -> JIT rejects)
  2 oversized tile / shared-memory budget exceeded (BM=BN=256, BK=64)
+ 3 descriptor dimension >= 2**31 (M3.2): the descriptor shape carrier is
+   narrowed to int32 with no range check, so the state is silently accepted and
+   the read zero-fills. Not a source edit -- the injected state is the shape.
 """
 import argparse
 import sys
@@ -32,8 +35,47 @@ def mm_katom(a_ptr, b_ptr, c_ptr, M, N, K,
              mask=(om[:, None] < M) & (on[None, :] < N))
 
 
+@triton.jit
+def mm_desc(x_ptr, out_ptr, R0, C: tl.constexpr, ROW, BC: tl.constexpr):
+    d = tl.make_tensor_descriptor(x_ptr, shape=[R0, C], strides=[C, 1],
+                                  block_shape=[1, BC])
+    v = d.load([ROW, 0])
+    tl.store(out_ptr + tl.arange(0, BC), tl.reshape(v, [BC]))
+
+
 FAMILIES = {1: dict(BM=32, BN=32, BK=8),    # K atom violation
             2: dict(BM=256, BN=256, BK=64)}  # shared-memory blowup
+
+# family 3: the descriptor surface matmul uses for its A operand on sm_90.
+# R0 = 2**31 is the injected state (>= 2**31 is unrepresentable in the int32
+# shape carrier and silently reads zero); a small row is read so the reference
+# is exact and the only difference from a faithful descriptor is the carrier.
+DESC_C = 64
+DESC_ROWS = 64
+DESC_ROW = 32
+DESC_R0 = 2 ** 31
+
+
+def run_desc_family():
+    import numpy as np
+    from gpubuf import GpuBuf, sync, install_descriptor_allocator
+    install_descriptor_allocator()
+    x = GpuBuf(DESC_ROWS * DESC_C,
+               np.arange(DESC_ROWS * DESC_C, dtype=np.float32))
+    out = GpuBuf(DESC_C, np.full(DESC_C, -7.0, dtype=np.float32))
+    run = "ok"
+    try:
+        mm_desc[(1,)](x, out, DESC_R0, DESC_C, DESC_ROW, BC=DESC_C)
+        sync()
+    except Exception as e:
+        print(f"EXC {type(e).__name__}: {e}", file=sys.stderr)
+        run = "crash"
+    got = out.to_host() if run == "ok" else None
+    ref = np.arange(DESC_ROW * DESC_C, DESC_ROW * DESC_C + DESC_C,
+                    dtype=np.float32)
+    out_s = "none" if got is None else (
+        "same" if np.array_equal(got, ref) else "diff")
+    print(f"RESULT run={run} out={out_s}")
 
 
 def main():
@@ -43,6 +85,9 @@ def main():
     args = ap.parse_args()
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    if args.family == 3:
+        run_desc_family()
+        return
     from gpubuf import GpuBuf, randn, sync
     import numpy as np
     import numpy as np

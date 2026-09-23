@@ -188,12 +188,55 @@ def gate_kernel(category: str, size: str, device: str, raw: Path):
 
 # ---------------------------------------------------------------- mutants
 MUTANTS = {
-    "layer_normalization": ("layer_norm", "M1", "oob", [1, 2, 3, 4, 5]),
-    "softmax": ("softmax", "M1", "oob", [1, 2, 3, 4, 5]),
-    "relu": ("relu", "M1", "oob", [1, 2, 3, 4, 5, 6]),
-    "transpose": ("transpose", "M1", "stride", [1, 2, 3, 4, 5]),
-    "matmul": ("matmul", "M3", "hw", [1, 2]),
+    "layer_normalization": ("layer_norm", "M1", "oob",
+                            [1, 2, 3, 4, 5, 8, 9, 12, 121, 19, 21, 211]),
+    "softmax": ("softmax", "M1", "oob",
+                [1, 2, 3, 4, 5, 8, 9, 12, 121, 14, 141, 19]),
+    "relu": ("relu", "M1", "oob", [1, 2, 3, 4, 5, 6, 8, 9, 14, 141]),
+    "transpose": ("transpose", "M1", "stride",
+                  [1, 2, 3, 4, 5, 8, 9, 12, 121, 14, 141]),
+    "matmul": ("matmul", "M3", "hw", [1, 2, 3]),
+    # mutation-only descriptor-pad surface: M3-g (M3.9/M3.10), four ranks x two
+    # overrun geometries (mutants/desc_pad.py).
+    "desc_pad": ("desc_pad", "M3", "hw", [1, 2, 3, 4, 5, 6, 7, 8]),
+    # mutation-only descriptor-dim surface: M3-b (M3.2), ranks 2..5 x two
+    # int32 carriers (2**31 / 2**32) -- structure variants of matmul-f3
+    # (mutants/desc_dim.py).
+    # corpus kernel already holds one desc_dim instance; surface supplies 7.
+    "desc_dim": ("desc_dim", "M3", "hw", [1, 2, 3, 4, 5, 6, 7]),
+    # mutation-only descriptor-rank surface: M3-f (M3.8), four base shapes x
+    # {rank 6, rank 0}; the frontend refuses at trace time (mutants/desc_rank.py).
+    "desc_rank": ("desc_rank", "M3", "hw", [1, 2, 3, 4, 5, 6, 7, 8]),
+    # mutation-only tl.dot atom surface: M3-a (M3.1), four base shapes x two
+    # sub-atom K values; JIT refuses the tile (mutants/dot_atom.py).
+    # corpus kernel already holds one dot_atom instance; surface supplies 7.
+    "dot_atom": ("dot_atom", "M3", "hw", [1, 2, 3, 4, 5, 6, 7]),
+    # mutation-only on-chip capacity surface: M3-h (M3.12), four base shapes x
+    # two over-budget tilings; JIT refuses OutOfResources (mutants/smem_cap.py).
+    # corpus kernel already holds one smem_cap instance; surface supplies 7.
+    "smem_cap": ("smem_cap", "M3", "hw", [1, 2, 3, 4, 5, 6, 7]),
+    # mutation-only descriptor box surface: M3-c (M3.3/M3.5/M3.13), oversized /
+    # non-power-of-2 / shape-incompatible / oversized boxes; frontend refuses
+    # (mutants/box_swizzle.py).
+    "box_swizzle": ("box_swizzle", "M3", "hw", [1, 2, 3, 4, 5, 6, 7, 8]),
+    # mutation-only inner-box alignment surface: M3-e (M3.7), sub-16-byte last
+    # dimension of a descriptor box; frontend refuses (mutants/box_align.py).
+    "box_align": ("box_align", "M3", "hw", [1, 2, 3, 4, 5, 6, 7, 8]),
+    # mutation-only rank/arity surface: M1-g (M1.15/16/17/20), rank/axis/arity
+    # arguments out of domain; frontend refuses (mutants/rank_arity.py).
+    "rank_arity": ("rank_arity", "M1", "oob", [1, 2, 3, 4, 5, 6, 7, 8]),
     "conv2d": ("conv2d", "M3", "hw", []),
+    # carrier-only categories: M1.19 is a generator setting (huge extent), not a
+    # source edit, so these hold only family 19 and are not re-run by `minimal`.
+    "sigmoid": ("sigmoid", "M1", "oob", []),
+    "gelu": ("gelu", "M1", "oob", []),
+    "elemwise_add": ("elemwise_add", "M1", "oob", []),
+    "reshape": ("reshape", "M1", "oob", []),
+    # level-2 categories extended with M1.12 (batch_norm) / M1.19 (concat)
+    # realisations; empty base fams keep `minimal` from re-running the whole
+    # level-2 surface.
+    "batch_norm": ("batch_norm", "M1", "oob", []),
+    "concat": ("concat", "M1", "oob", []),
 }
 # level-2 (plan §3.1 priority rows; run only via `minimal --level2`)
 MUTANTS_L2 = {
@@ -212,6 +255,7 @@ PAPER_CAT = {"M1": "oob", "M3": "hw"}
 #   embedding f2  idx = -1          -> M1.3
 #   batch_norm f1 c = pid%C + 1     -> M1.2
 #   matmul    f2  BM=BN=256, BK=64  -> M3.12 (on-chip capacity, not M3.11)
+#   matmul    f3  descriptor dim=2**31 -> M3.2 (silent int32 shape narrowing)
 # Every other (category, family) is M{class}.{family}. relu f6 is the
 # noop-by-construction control: its spec_id is M1.6, which the registry classes
 # M4, so it lands in family M4-d and does NOT count toward this lane's M1=64.
@@ -220,6 +264,97 @@ SPEC_ID = {
     ("embedding", 2): "M1.3",
     ("batch_norm", 1): "M1.2",
     ("matmul", 2): "M3.12",
+    ("matmul", 3): "M3.2",  # descriptor dim >= 2**31 silently zero-fills
+    # desc_pad mutation-only surface: odd = tail overrun (M3.9), even = mid
+    # overrun (M3.10); four ranks each.
+    ("desc_pad", 1): "M3.9",
+    ("desc_pad", 2): "M3.10",
+    ("desc_pad", 3): "M3.9",
+    ("desc_pad", 4): "M3.10",
+    ("desc_pad", 5): "M3.9",
+    ("desc_pad", 6): "M3.10",
+    ("desc_pad", 7): "M3.9",
+    ("desc_pad", 8): "M3.10",
+    # desc_dim: every rank/carrier variant is the same M3.2 defect on rank 2..5
+    ("desc_dim", 1): "M3.2",
+    ("desc_dim", 2): "M3.2",
+    ("desc_dim", 3): "M3.2",
+    ("desc_dim", 4): "M3.2",
+    ("desc_dim", 5): "M3.2",
+    ("desc_dim", 6): "M3.2",
+    ("desc_dim", 7): "M3.2",
+    # ("desc_dim", 8) trimmed: family already holds 8 with the corpus kernel.
+    # ("desc_dim", 8): "M3.2",
+    # desc_rank: rank-6 (odd) and rank-0 (even) are both M3.8
+    ("desc_rank", 1): "M3.8",
+    ("desc_rank", 2): "M3.8",
+    ("desc_rank", 3): "M3.8",
+    ("desc_rank", 4): "M3.8",
+    ("desc_rank", 5): "M3.8",
+    ("desc_rank", 6): "M3.8",
+    ("desc_rank", 7): "M3.8",
+    ("desc_rank", 8): "M3.8",
+    # dot_atom: every base shape / sub-atom K is the M3.1 atom defect
+    ("dot_atom", 1): "M3.1",
+    ("dot_atom", 2): "M3.1",
+    ("dot_atom", 3): "M3.1",
+    ("dot_atom", 4): "M3.1",
+    ("dot_atom", 5): "M3.1",
+    ("dot_atom", 6): "M3.1",
+    ("dot_atom", 7): "M3.1",
+    # ("dot_atom", 8) trimmed: family already holds 8 with the corpus kernel.
+    # ("dot_atom", 8): "M3.1",
+    # smem_cap: every base shape / tiling is the M3.12 capacity defect
+    ("smem_cap", 1): "M3.12",
+    ("smem_cap", 2): "M3.12",
+    ("smem_cap", 3): "M3.12",
+    ("smem_cap", 4): "M3.12",
+    ("smem_cap", 5): "M3.12",
+    ("smem_cap", 6): "M3.12",
+    ("smem_cap", 7): "M3.12",
+    # ("smem_cap", 8) trimmed: family already holds 8 with the corpus kernel.
+    # ("smem_cap", 8): "M3.12",
+    # box_swizzle: box<->swizzle<->alignment relation (M3.5), survive-repair
+    # (M3.13), and ceiled byte size (M3.3)
+    ("box_swizzle", 1): "M3.5",
+    ("box_swizzle", 2): "M3.5",
+    ("box_swizzle", 3): "M3.5",
+    ("box_swizzle", 4): "M3.5",
+    ("box_swizzle", 5): "M3.5",
+    ("box_swizzle", 6): "M3.3",
+    ("box_swizzle", 7): "M3.3",
+    ("box_swizzle", 8): "M3.3",
+    # box_align: inner-box geometry not 128-bit aligned (M3.7, family M3-e)
+    ("box_align", 1): "M3.7",
+    ("box_align", 2): "M3.7",
+    ("box_align", 3): "M3.7",
+    ("box_align", 4): "M3.7",
+    ("box_align", 5): "M3.7",
+    ("box_align", 6): "M3.7",
+    ("box_align", 7): "M3.7",
+    ("box_align", 8): "M3.7",
+    # rank_arity: dimof index (M1.15), select factor (M1.16), rank-5 5th-index
+    # (M1.17), view/subspan rank arity (M1.20)
+    ("rank_arity", 1): "M1.20",
+    ("rank_arity", 2): "M1.15",
+    ("rank_arity", 3): "M1.17",
+    ("rank_arity", 4): "M1.17",
+    ("rank_arity", 5): "M1.20",
+    ("rank_arity", 6): "M1.15",
+    ("rank_arity", 7): "M1.16",
+    ("rank_arity", 8): "M1.16",
+    ("relu", 141): "M1.14",   # second M1.14 realisation (dest tile coord)
+    ("softmax", 141): "M1.14",  # second M1.14 realisation (source tile coord)
+    ("transpose", 141): "M1.14",  # second M1.14 realisation (dest tile coord)
+    ("layer_normalization", 211): "M1.21",  # second M1.21 realisation
+    ("layer_normalization", 121): "M1.12",  # second M1.12 realisation (store)
+    ("softmax", 121): "M1.12",  # second M1.12 realisation (store)
+    ("transpose", 121): "M1.12",  # second M1.12 realisation (store)
+    ("batch_norm", 121): "M1.12",  # second M1.12 realisation (store)
+    ("relu", 111): "M1.11",       # second M1.11 realisation (forward shift)
+    ("sigmoid", 111): "M1.11",    # second M1.11 realisation (forward shift)
+    ("gelu", 111): "M1.11",       # second M1.11 realisation (forward shift)
+    ("reshape", 111): "M1.11",    # second M1.11 realisation (forward shift)
 }
 
 

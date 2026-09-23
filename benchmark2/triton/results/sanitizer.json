@@ -23,16 +23,6 @@
   "toolchain": "triton",
   "category": "layer_normalization",
   "class": "M1",
-  "mutant_id": "layer_norm-f3",
-  "flagged": "true",
-  "fault": "oob",
-  "exercised": "true",
-  "detail": "sanitizer: EXC AttributeError: 'int' object has no attribute 'decode'"
- },
- {
-  "toolchain": "triton",
-  "category": "layer_normalization",
-  "class": "M1",
   "mutant_id": "layer_norm-f4",
   "flagged": "true",
   "fault": "oob",
@@ -73,16 +63,6 @@
   "toolchain": "triton",
   "category": "softmax",
   "class": "M1",
-  "mutant_id": "softmax-f3",
-  "flagged": "true",
-  "fault": "oob",
-  "exercised": "true",
-  "detail": "sanitizer: EXC AttributeError: 'int' object has no attribute 'decode'"
- },
- {
-  "toolchain": "triton",
-  "category": "softmax",
-  "class": "M1",
   "mutant_id": "softmax-f4",
   "flagged": "true",
   "fault": "oob",
@@ -114,16 +94,6 @@
   "category": "relu",
   "class": "M1",
   "mutant_id": "relu-f2",
-  "flagged": "true",
-  "fault": "oob",
-  "exercised": "true",
-  "detail": "sanitizer: EXC AttributeError: 'int' object has no attribute 'decode'"
- },
- {
-  "toolchain": "triton",
-  "category": "relu",
-  "class": "M1",
-  "mutant_id": "relu-f3",
   "flagged": "true",
   "fault": "oob",
   "exercised": "true",
@@ -183,16 +153,6 @@
   "toolchain": "triton",
   "category": "transpose",
   "class": "M1",
-  "mutant_id": "transpose-f3",
-  "flagged": "false",
-  "fault": "none",
-  "exercised": "true",
-  "detail": "clean"
- },
- {
-  "toolchain": "triton",
-  "category": "transpose",
-  "class": "M1",
   "mutant_id": "transpose-f4",
   "flagged": "true",
   "fault": "oob",
@@ -228,65 +188,5 @@
   "fault": "none",
   "exercised": "false",
   "detail": "clean"
- },
- {
-  "toolchain": "triton",
-  "category": "conv2d",
-  "class": "M1",
-  "mutant_id": "conv2d-f1",
-  "flagged": "true",
-  "fault": "oob",
-  "exercised": "true",
-  "detail": "sanitizer: EXC AttributeError: 'int' object has no attribute 'decode'"
- },
- {
-  "toolchain": "triton",
-  "category": "max_pool2d",
-  "class": "M1",
-  "mutant_id": "max_pool2d-f1",
-  "flagged": "true",
-  "fault": "oob",
-  "exercised": "true",
-  "detail": "sanitizer: EXC AttributeError: 'int' object has no attribute 'decode'"
- },
- {
-  "toolchain": "triton",
-  "category": "max_pool2d",
-  "class": "M1",
-  "mutant_id": "max_pool2d-f2",
-  "flagged": "false",
-  "fault": "none",
-  "exercised": "true",
-  "detail": "clean"
- },
- {
-  "toolchain": "triton",
-  "category": "embedding",
-  "class": "M1",
-  "mutant_id": "embedding-f1",
-  "flagged": "true",
-  "fault": "oob",
-  "exercised": "true",
-  "detail": "sanitizer: EXC AttributeError: 'int' object has no attribute 'decode'"
- },
- {
-  "toolchain": "triton",
-  "category": "embedding",
-  "class": "M1",
-  "mutant_id": "embedding-f2",
-  "flagged": "true",
-  "fault": "oob",
-  "exercised": "true",
-  "detail": "sanitizer: EXC AttributeError: 'int' object has no attribute 'decode'"
- },
- {
-  "toolchain": "triton",
-  "category": "batch_norm",
-  "class": "M1",
-  "mutant_id": "batch_norm-f1",
-  "flagged": "true",
-  "fault": "oob",
-  "exercised": "true",
-  "detail": "sanitizer: EXC AttributeError: 'int' object has no attribute 'decode'"
  }
 ]

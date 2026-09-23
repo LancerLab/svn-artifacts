@@ -62,8 +62,81 @@ def tr_offsetview(x_ptr, y_ptr, M, N, BM: tl.constexpr, BN: tl.constexpr):
     tl.store(y_ptr + on[:, None] * M + om[None, :], tl.trans(t), mask=mo)
 
 
+@triton.jit
+def tr_stride2(x_ptr, y_ptr, M, N, BM: tl.constexpr, BN: tl.constexpr):
+    pid_m = tl.program_id(0); pid_n = tl.program_id(1)
+    om = pid_m * BM * 2 + tl.arange(0, BM)                          # M1.8
+    on = pid_n * BN + tl.arange(0, BN)
+    m = (om[:, None] < M) & (on[None, :] < N)
+    t = tl.load(x_ptr + om[:, None] * N + on[None, :], mask=m)
+    mo = (on[:, None] < N) & (om[None, :] < M)
+    tl.store(y_ptr + on[:, None] * M + om[None, :], tl.trans(t), mask=mo)
+
+
+@triton.jit
+def tr_baseoff1(x_ptr, y_ptr, M, N, BM: tl.constexpr, BN: tl.constexpr):
+    pid_m = tl.program_id(0); pid_n = tl.program_id(1)
+    om = pid_m * BM + tl.arange(0, BM)
+    on = pid_n * BN + tl.arange(0, BN)
+    m = (om[:, None] < M) & (on[None, :] < N)
+    t = tl.load(x_ptr + om[:, None] * N + on[None, :] + 1, mask=m)  # M1.9
+    mo = (on[:, None] < N) & (om[None, :] < M)
+    tl.store(y_ptr + on[:, None] * M + om[None, :], tl.trans(t), mask=mo)
+
+
+@triton.jit
+def tr_tile_load(x_ptr, y_ptr, M, N, BM: tl.constexpr, BN: tl.constexpr):
+    pid_m = tl.program_id(0); pid_n = tl.program_id(1)
+    om = pid_m * BM + tl.arange(0, BM)
+    on = pid_n * BN + tl.arange(0, BN)
+    om_src = om + BM                                               # M1.14
+    m = (om[:, None] < M) & (on[None, :] < N)
+    t = tl.load(x_ptr + om_src[:, None] * N + on[None, :], mask=m)
+    mo = (on[:, None] < N) & (om[None, :] < M)
+    tl.store(y_ptr + on[:, None] * M + om[None, :], tl.trans(t), mask=mo)
+
+
+@triton.jit
+def tr_tile_store(x_ptr, y_ptr, M, N, BM: tl.constexpr, BN: tl.constexpr):
+    pid_m = tl.program_id(0); pid_n = tl.program_id(1)
+    om = pid_m * BM + tl.arange(0, BM)
+    on = pid_n * BN + tl.arange(0, BN)
+    m = (om[:, None] < M) & (on[None, :] < N)
+    t = tl.load(x_ptr + om[:, None] * N + on[None, :], mask=m)
+    om_dst = om + BM                                               # M1.14
+    mo = (on[:, None] < N) & (om[None, :] < M)
+    tl.store(y_ptr + on[:, None] * M + om_dst[None, :], tl.trans(t), mask=mo)
+
+
+@triton.jit
+def tr_idxsub_load(x_ptr, y_ptr, M, N, BM: tl.constexpr, BN: tl.constexpr):
+    pid_m = tl.program_id(0); pid_n = tl.program_id(1)
+    om = pid_m * BM + tl.arange(0, BM)
+    on = pid_n * BN + tl.arange(0, BN)
+    m = (om[:, None] < M) & (on[None, :] < N)
+    # M1.12: the row loop variable is reused for both address dimensions
+    # (broadcast index reuse) instead of pairing om with on.
+    t = tl.load(x_ptr + om[:, None] * N + om[None, :], mask=m)
+    mo = (on[:, None] < N) & (om[None, :] < M)
+    tl.store(y_ptr + on[:, None] * M + om[None, :], tl.trans(t), mask=mo)
+
+
+@triton.jit
+def tr_idxsub_store(x_ptr, y_ptr, M, N, BM: tl.constexpr, BN: tl.constexpr):
+    pid_m = tl.program_id(0); pid_n = tl.program_id(1)
+    om = pid_m * BM + tl.arange(0, BM)
+    on = pid_n * BN + tl.arange(0, BN)
+    m = (om[:, None] < M) & (on[None, :] < N)
+    t = tl.load(x_ptr + om[:, None] * N + on[None, :], mask=m)
+    mo = (on[:, None] < N) & (om[None, :] < M)
+    # M1.12: the column loop variable is reused for both store dimensions.
+    tl.store(y_ptr + on[:, None] * M + on[None, :], tl.trans(t), mask=mo)
+
+
 FAMILIES = {1: tr_nomask, 2: tr_offbyone, 3: tr_negidx, 4: tr_badstride,
-            5: tr_offsetview}
+            5: tr_offsetview, 8: tr_stride2, 9: tr_baseoff1,
+            12: tr_idxsub_load, 121: tr_idxsub_store,
+            14: tr_tile_load, 141: tr_tile_store}
 
 CANARY = 4096
 

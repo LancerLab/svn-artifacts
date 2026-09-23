@@ -28,6 +28,48 @@ def bn_offlane(x_ptr, mean_ptr, var_ptr, s_ptr, b_ptr, y_ptr, CHW, C, HW, eps,
              (x - mean) / tl.sqrt(var + eps) * s + b, mask=mask)
 
 
+@triton.jit
+def bn_idxsub_load(x_ptr, mean_ptr, var_ptr, s_ptr, b_ptr, y_ptr, CHW, C, HW,
+                   eps, BLOCK: tl.constexpr):
+    pid = tl.program_id(0)
+    n = pid // C
+    c = pid % C
+    offs = tl.arange(0, BLOCK)
+    mask = offs < HW
+    # M1.12: the channel index is reused for the image (n) dimension
+    # (broadcast index reuse) -- CHW and HW swap roles.
+    base = x_ptr + n * HW + c * CHW
+    x = tl.load(base + offs, mask=mask, other=0.0)
+    mean = tl.load(mean_ptr + c)
+    var = tl.load(var_ptr + c)
+    s = tl.load(s_ptr + c)
+    b = tl.load(b_ptr + c)
+    tl.store(y_ptr + n * CHW + c * HW + offs,
+             (x - mean) / tl.sqrt(var + eps) * s + b, mask=mask)
+
+
+@triton.jit
+def bn_idxsub_store(x_ptr, mean_ptr, var_ptr, s_ptr, b_ptr, y_ptr, CHW, C, HW,
+                    eps, BLOCK: tl.constexpr):
+    pid = tl.program_id(0)
+    n = pid // C
+    c = pid % C
+    offs = tl.arange(0, BLOCK)
+    mask = offs < HW
+    base = x_ptr + n * CHW + c * HW
+    x = tl.load(base + offs, mask=mask, other=0.0)
+    mean = tl.load(mean_ptr + c)
+    var = tl.load(var_ptr + c)
+    s = tl.load(s_ptr + c)
+    b = tl.load(b_ptr + c)
+    # M1.12: the image index is reused for the channel dimension on the store.
+    tl.store(y_ptr + n * HW + c * CHW + offs,
+             (x - mean) / tl.sqrt(var + eps) * s + b, mask=mask)
+
+
+FAMILIES = {1: bn_offlane, 12: bn_idxsub_load, 121: bn_idxsub_store}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--family", type=int, required=True)
@@ -44,10 +86,13 @@ def main():
     y = GpuBuf(N * C * HW)
     run = "ok"
     try:
-        bn_offlane[(N * C,)](GpuBuf.from_numpy(x), GpuBuf.from_numpy(mean),
-                             GpuBuf.from_numpy(var), GpuBuf.from_numpy(s),
-                             GpuBuf.from_numpy(b), y, C * HW, C, HW, 1e-5,
-                             BLOCK=triton.next_power_of_2(HW))
+        FAMILIES[args.family][(N * C,)](GpuBuf.from_numpy(x),
+                                        GpuBuf.from_numpy(mean),
+                                        GpuBuf.from_numpy(var),
+                                        GpuBuf.from_numpy(s),
+                                        GpuBuf.from_numpy(b), y, C * HW, C, HW,
+                                        1e-5,
+                                        BLOCK=triton.next_power_of_2(HW))
         sync()
     except Exception as e:
         print(f"EXC {type(e).__name__}: {e}", file=sys.stderr)

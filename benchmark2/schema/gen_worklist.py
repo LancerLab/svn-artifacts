@@ -14,6 +14,13 @@ worklist read as "M1 and M4 are the work" -- and, worse, hid the fact that M3's
 coverage set holds 2 kernels where `N` needs 4, so part of M3's shortfall is not
 assignable work at all. `blocker` states that ceiling per row.
 
+`short` is always the obligation `N - have`. `ceiling` is the published supply,
+per lane: choreo measures it from its candidate table, every other lane declares
+it in `schema/lane-ceilings.json` (blank where unmeasured). A family whose
+ceiling has been reached is surface-bound -- its remaining slots are
+inexpressible (u) or avoided (a), never assignable operator work -- and the
+console summary reports that residue separately from the raw shortfall.
+
     python3 schema/gen_worklist.py [out.csv]
 """
 
@@ -98,6 +105,22 @@ AX = load(SCHEMA / "class-axis.json", {})
 AX_STATUS = {lane: dict(v.get("status", {}))
              for lane, v in (AX.get("lanes") or {}).items()}
 AX_UNCMP = AX.get("uncompared_reason", "")
+
+# Per-lane create ceilings (schema/lane-ceilings.json). The lane-generic
+# counterpart of choreo's candidate-table ceiling. A lane declares, per family,
+# the most instances it can author given its own expressible surface; a declared
+# ceiling below N means the remaining slots are inexpressible (u) or avoided (a)
+# ON THAT LANE. The family stays short of N in the obligation column (`short`)
+# -- a resolved slot is annotated, never subtracted -- but `ceiling == have`
+# makes it read as surface-bound, not as missing mutation code. Lane-owned
+# claims; each carries a `basis` quoted in `blocker`.
+CEILINGS = load(SCHEMA / "lane-ceilings.json", {})
+
+
+def declared_ceiling(lane, family):
+    """The lane's declared ceiling row for `family`, or None if undeclared."""
+    row = (CEILINGS.get(lane) or {}).get(family)
+    return row if isinstance(row, dict) else None
 
 
 def generatable(sid):
@@ -295,6 +318,37 @@ def family_ceiling(cls: str, fam: str) -> int:
     return min(N, total)
 
 
+def lane_family_ceiling(lane, cls, fam):
+    """Published create ceiling for (lane, family), or "" when unmeasured.
+
+    choreo measures it from its candidate table. Every other lane publishes an
+    explicit declaration in `schema/lane-ceilings.json`; a blank means nobody
+    measured one, which `gen_fill_dashboard` reads as `unwritten` (maybe
+    writable) rather than as a zero ceiling (nothing writable). Never assumes a
+    low ceiling for a family a lane has not spoken about.
+    """
+    dec = declared_ceiling(lane, fam)
+    if dec is not None:
+        return dec.get("ceiling", "")
+    if lane == "choreo":
+        return family_ceiling(cls, fam)
+    return ""
+
+
+def lane_family_ceiling_kind(lane, cls, fam):
+    """Why the declared ceiling is what it is, or "" when unmeasured.
+
+    One of the canonical outcome names: `unexpressible` (u), `avoided` (a), or
+    `unchecked` (a legal program exists that the lane silently accepts -- so the
+    capped slot is a CREATED mutant, not a `u`). Published next to `ceiling` so
+    a reader can tell "nothing writable" from "writable but silent".
+    """
+    dec = declared_ceiling(lane, fam)
+    if dec is not None:
+        return dec.get("kind", "")
+    return ""
+
+
 def kernel_ceiling(cls) -> int:
     """The most instances a family of `cls` can hold, given its coverage set.
 
@@ -313,8 +367,21 @@ def kernel_ceiling(cls) -> int:
     return len(MINIMAL.get(cls, [])) * N_R
 
 
-def blocker(cls, family, rf, ra):
+def blocker(cls, family, rf, ra, lane=None, declared=None):
     parts = []
+    if declared is not None and declared.get("ceiling", N) < N:
+        qual = "kind=%s" % declared.get("kind", "unexpressible")
+        bnd = declared.get("bound")
+        if isinstance(bnd, dict) and bnd:
+            vals = ", ".join("%s=%s" % (k, v)
+                             for k, v in bnd.items() if k != "parameter")
+            where = bnd.get("parameter", "")
+            qual += " [lane-bound: %s%s]" % (
+                vals, (" on %s" % where) if where else "")
+        parts.append(
+            "DECLARED CEILING %d (%s; lane-owned, pending host sign-off): %s"
+            % (declared["ceiling"], qual,
+               declared.get("basis", "see schema/lane-ceilings.json")))
     if kernel_ceiling(cls) < N:
         order = list(MINIMAL.get(cls, []))
         parts.append(
@@ -421,7 +488,7 @@ for cls in CLASSES:
             else:
                 short = max(0, N - have)
             if short:
-                blk = blocker(cls, f, rf, ra)
+                blk = blocker(cls, f, rf, ra, lane, declared_ceiling(lane, f))
             elif state == "UNCOMPARED-conflict":
                 blk = ("in_scope_lanes[%s] lists this lane but class-axis "
                        "holds it at `uncompared` (declared scope decision, "
@@ -451,8 +518,11 @@ for cls in CLASSES:
                 "short": short,
                 # The supply, not the obligation. `short` is `N - have`; this
                 # is what the family can actually reach today. When the two
-                # differ the row is corpus work, not a CPU run.
-                "ceiling": (family_ceiling(cls, f) if lane == "choreo" else ""),
+                # differ the row is corpus work, not a CPU run. choreo measures
+                # it from its candidate table; other lanes publish a declaration
+                # in `schema/lane-ceilings.json`, blank when unmeasured.
+                "ceiling": lane_family_ceiling(lane, cls, f),
+                "ceiling_kind": lane_family_ceiling_kind(lane, cls, f),
                 "unattributed_rows": (
                     "" if state == "in-scope" and lane not in lane_fam
                     else ""),
@@ -479,20 +549,37 @@ def main():
         out = OUT_DEFAULT
     out.parent.mkdir(parents=True, exist_ok=True)
     cols = ["lane", "class", "family", "family_name", "state", "specs", "R_f",
-            "R_a", "have", "ceiling", "need", "short", "fill_plan", "blocker",
-            "guarded"]
+            "R_a", "have", "ceiling", "ceiling_kind", "need", "short",
+            "fill_plan", "blocker", "guarded"]
     with out.open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=cols)
         w.writeheader()
         for r in rows:
             w.writerow({k: r[k] for k in cols})
 
+    def as_int(v):
+        # `v or ""` would turn the measured ceiling 0 into "unmeasured" -- the
+        # exact conflation this column exists to prevent. Test None explicitly.
+        if v is None:
+            return None
+        s = str(v).strip()
+        return int(s) if s else None
+
     tot = defaultdict(int)
+    bound = defaultdict(int)     # shortfall beyond the published ceiling
     conflict = defaultdict(int)
     nodata = defaultdict(int)
     for r in rows:
         if r["state"] == "in-scope":
             tot[r["lane"]] += r["short"]
+            # The obligation `short` splits into authorable work and slots the
+            # lane cannot express. `ceiling` blank means unmeasured: keep the
+            # whole row authorable. `ceiling` at or below `have` means every
+            # remaining slot is surface-bound (u/avoided), not missing code.
+            ceil = as_int(r["ceiling"])
+            if ceil is not None:
+                authorable = max(0, min(r["short"], ceil - r["have"]))
+                bound[r["lane"]] += r["short"] - authorable
         elif r["state"] == "UNCOMPARED-conflict":
             conflict[r["lane"]] += 1
         elif r["state"].startswith("no-data"):
@@ -507,6 +594,11 @@ def main():
     print("in-scope shortfall: " + ", ".join(
         "%s=%d" % (l, tot[l]) for l in LANES if tot[l]) +
         "  TOTAL=%d" % sum(tot.values()))
+    if any(bound.values()):
+        print("  of which surface-bound (published ceiling reached; u/avoided, "
+              "NOT assignable operator work): " + ", ".join(
+                  "%s=%d" % (l, bound[l]) for l in LANES if bound[l]) +
+              "  TOTAL=%d" % sum(bound.values()))
     if conflict:
         print("taxonomy-in-scope but class-axis `uncompared` (CONFLICT, not "
               "work): " +

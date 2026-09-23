@@ -13,6 +13,7 @@ import ctypes
 import numpy as np
 
 _rt = ctypes.CDLL("libcudart.so")
+_rt.cudaGetErrorString.restype = ctypes.c_char_p
 
 
 def _ck(rc: int, what: str):
@@ -60,6 +61,24 @@ class GpuBuf:
     def free(self):
         _rt.cudaFree(self.ptr)
         self.ptr = ctypes.c_void_p()
+
+
+def install_descriptor_allocator():
+    """Give Triton a libcudart allocator for tensor descriptors.
+
+    `tl.make_tensor_descriptor` needs a device allocation for the tensormap; the
+    default allocator is torch-backed and this lane is torch-free (see module
+    docstring), so install a cudaMalloc one. Idempotent.
+    """
+    import triton
+
+    def _alloc(size, align, stream):
+        p = ctypes.c_void_p()
+        _ck(_rt.cudaMalloc(ctypes.byref(p), ctypes.c_size_t(size + 128)),
+            "cudaMalloc(tensormap)")
+        return p.value
+
+    triton.set_allocator(_alloc)
 
 
 def randn(n: int, seed: int = 0) -> np.ndarray:

@@ -70,8 +70,107 @@ def sm_offsetview(x_ptr, y_ptr, n_cols, BLOCK: tl.constexpr):
     tl.store(y_ptr + row * n_cols + cols, e / s, mask=mask)
 
 
+@triton.jit
+def sm_stride2(x_ptr, y_ptr, n_cols, BLOCK: tl.constexpr):
+    pid = tl.program_id(axis=0)
+    cols = tl.arange(0, BLOCK) * 2                       # M1.8: column step 2
+    mask = cols < n_cols
+    x = tl.load(x_ptr + pid * n_cols + cols, mask=mask,
+                other=float("-inf"))
+    x = x - tl.max(x, axis=0)
+    e = tl.exp(x)
+    s = tl.sum(tl.where(mask, e, 0.0), axis=0)
+    tl.store(y_ptr + pid * n_cols + tl.arange(0, BLOCK), e / s,
+             mask=tl.arange(0, BLOCK) < n_cols)
+
+
+@triton.jit
+def sm_baseoff1(x_ptr, y_ptr, n_cols, BLOCK: tl.constexpr):
+    row = tl.program_id(axis=0)
+    cols = tl.arange(0, BLOCK)
+    mask = cols < n_cols
+    x = tl.load(x_ptr + row * n_cols + cols + 1, mask=mask,
+                other=float("-inf"))                          # M1.9: origin +1
+    x = x - tl.max(x, axis=0)
+    e = tl.exp(x)
+    s = tl.sum(tl.where(mask, e, 0.0), axis=0)
+    tl.store(y_ptr + row * n_cols + cols, e / s, mask=mask)
+
+
+@triton.jit
+def sm_tile_store(x_ptr, y_ptr, n_cols, BLOCK: tl.constexpr):
+    pid = tl.program_id(axis=0)
+    cols = tl.arange(0, BLOCK)
+    mask = cols < n_cols
+    x = tl.load(x_ptr + pid * n_cols + cols, mask=mask,
+                other=float("-inf"))
+    x = x - tl.max(x, axis=0)
+    e = tl.exp(x)
+    s = tl.sum(tl.where(mask, e, 0.0), axis=0)
+    tl.store(y_ptr + (pid + 1) * n_cols + cols, e / s, mask=mask)  # M1.14
+
+
+@triton.jit
+def sm_tile_load(x_ptr, y_ptr, n_cols, BLOCK: tl.constexpr):
+    pid = tl.program_id(axis=0)
+    cols = tl.arange(0, BLOCK)
+    mask = cols < n_cols
+    x = tl.load(x_ptr + (pid + 1) * n_cols + cols, mask=mask,
+                other=float("-inf"))
+    x = x - tl.max(x, axis=0)
+    e = tl.exp(x)
+    s = tl.sum(tl.where(mask, e, 0.0), axis=0)
+    tl.store(y_ptr + pid * n_cols + cols, e / s, mask=mask)         # M1.14
+
+
+@triton.jit
+def sm_idxsub_load(x_ptr, y_ptr, n_cols, BLOCK: tl.constexpr):
+    row = tl.program_id(axis=0)
+    cols = tl.arange(0, BLOCK)
+    mask = cols < n_cols
+    x = tl.load(x_ptr + cols * n_cols + row, mask=mask,
+                other=float("-inf"))                              # M1.12
+    x = x - tl.max(x, axis=0)
+    e = tl.exp(x)
+    s = tl.sum(tl.where(mask, e, 0.0), axis=0)
+    tl.store(y_ptr + row * n_cols + cols, e / s, mask=mask)
+
+
+@triton.jit
+def sm_idxsub_store(x_ptr, y_ptr, n_cols, BLOCK: tl.constexpr):
+    row = tl.program_id(axis=0)
+    cols = tl.arange(0, BLOCK)
+    mask = cols < n_cols
+    x = tl.load(x_ptr + row * n_cols + cols, mask=mask,
+                other=float("-inf"))
+    x = x - tl.max(x, axis=0)
+    e = tl.exp(x)
+    s = tl.sum(tl.where(mask, e, 0.0), axis=0)
+    tl.store(y_ptr + cols * n_cols + row, e / s, mask=mask)        # M1.12
+
+
+@triton.jit
+def sm_carrier(x_ptr, y_ptr, n_cols, BLOCK: tl.constexpr):
+    # M1.19: no source defect; the injected state is a >2^31 element extent
+    # whose row-major flat index `row*n_cols + cols` overflows int32.
+    # f16 in-place, with the exp upcast (Triton 3.8 rejects fp16 exp) -- the
+    # same upcast as the base sigmoid carrier; the index carrier is unchanged.
+    row = tl.program_id(axis=0)
+    cols = tl.arange(0, BLOCK)
+    mask = cols < n_cols
+    x = tl.load(x_ptr + row * n_cols + cols, mask=mask,
+                other=float("-inf")).to(tl.float32)
+    x = x - tl.max(x, axis=0)
+    e = tl.exp(x)
+    s = tl.sum(tl.where(mask, e, 0.0), axis=0)
+    tl.store(y_ptr + row * n_cols + cols, e / s, mask=mask)
+
+
 FAMILIES = {1: sm_nomask, 2: sm_offbyone, 3: sm_negidx, 4: sm_badstride,
-            5: sm_offsetview}
+            5: sm_offsetview, 8: sm_stride2, 9: sm_baseoff1,
+            12: sm_idxsub_load, 121: sm_idxsub_store,
+            14: sm_tile_store, 141: sm_tile_load,
+            19: sm_carrier}
 
 CANARY = 4096
 
@@ -86,6 +185,22 @@ def main():
     from gpubuf import GpuBuf, randn, sync
     import numpy as np
     from sizes import SMALL, FULL_RAGGED
+
+    if args.family == 19:
+        # M1.19 carrier: rows*cols = 2^31 + 4096, BLOCK = 4096.
+        rows, cols = 524289, 4096
+        n = rows * cols
+        x = GpuBuf(n, np.zeros(n, dtype=np.float16))
+        run = "ok"
+        try:
+            sm_carrier[(rows,)](x, x, cols, BLOCK=cols)
+            sync()
+        except Exception as e:
+            print(f"EXC {type(e).__name__}: {e}", file=sys.stderr)
+            run = "crash"
+        print(f"RESULT run={run} out=none")
+        return
+
     rows, cols = (FULL_RAGGED if args.size == "full" else SMALL)["softmax"]
     x = randn(rows * cols)
     yhost = np.full(rows * cols + CANARY, -777.0, dtype=np.float32)

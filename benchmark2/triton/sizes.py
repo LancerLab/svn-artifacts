@@ -46,6 +46,22 @@ FULL = {
     "embedding": (999, 768, 32 * 128),                    # vocab, dim, batch*seq
 }
 
+# M1.19 carrier family: an extent whose element count exceeds INT_MAX so the
+# flat index `pid*BLOCK + arange` in the flat-index kernels wraps in the int32
+# carrier. The overflow is a property of the *index*, not the element type, so
+# the family runs f16 in-place to keep the allocation bounded (single 4.3 GB
+# buffer on an 8 GB device); f32 is equivalent and uncommentable on a host with
+# >2x headroom. Choreo realization (b) declares the extent without materialising
+# it; Triton has no declared-but-unmaterialised shape, so (a) large-shape is the
+# faithful realization here.
+HUGE = {
+    "relu": (2 ** 31 + 4096,),
+    "sigmoid": (2 ** 31 + 4096,),
+    "gelu": (2 ** 31 + 4096,),
+    "elemwise_add": (2 ** 31 + 4096,),
+    "reshape": (2 ** 31 + 4096,),
+}
+
 # Mutant runs must *manifest* the defect (specs §7 oracle): a perfectly
 # divisible full shape would make a dropped mask a no-op. Mutants therefore
 # run at FULL_RAGGED: the FULL magnitudes with the boundary extent perturbed

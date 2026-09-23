@@ -2,17 +2,17 @@
  "toolchain": "triton",
  "S1_detection_matrix": {
   "M1": {
-   "n_injected": 27,
-   "n_compile": 0,
-   "n_runtime": 2,
-   "n_never": 25,
+   "n_injected": 65,
+   "n_compile": 8,
+   "n_runtime": 11,
+   "n_never": 46,
    "n_na": 0
   },
   "M3": {
-   "n_injected": 2,
-   "n_compile": 2,
+   "n_injected": 56,
+   "n_compile": 40,
    "n_runtime": 0,
-   "n_never": 0,
+   "n_never": 16,
    "n_na": 0
   },
   "M2": {
@@ -72,9 +72,9 @@
  "S9_remainder": "n/a (no generated checks)",
  "S12_sanitizer_supplement": {
   "M1": {
-   "flagged_and_exercised": 23,
-   "total": 27,
-   "flagged": 23
+   "flagged_and_exercised": 15,
+   "total": 17,
+   "flagged": 15
   },
   "M3": {
    "flagged_and_exercised": 0,
