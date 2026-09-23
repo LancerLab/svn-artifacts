@@ -74,6 +74,22 @@ RUNNER_LIBS = ",".join(
     str(LLVM_LIB / n) for n in ("libmlir_runner_utils.so", "libmlir_c_runner_utils.so")
 )
 
+# The GPU path needs the CUDA runtime in addition to the two CPU runner libs:
+# it is the shared object that owns `mgpuLaunchKernel`/`mgpuMemAlloc`, which
+# `gpu-to-llvm` emits calls to. It ships with MLIR but is only built when
+# `MLIR_ENABLE_CUDA_RUNNER=ON` (`llvm-project/lib/libmlir_cuda_runtime.so`).
+CUDA_RUNTIME_LIB = LLVM_LIB / "libmlir_cuda_runtime.so"
+RUNNER_LIBS_GPU = RUNNER_LIBS + "," + str(CUDA_RUNTIME_LIB)
+
+# S12 on the GPU surface uses `compute-sanitizer` (the CUDA memcheck) instead of
+# ASan: the kernel runs on the device, where a natively-linked ASan binary
+# cannot observe the access. Pinned by absolute path because it ships with the
+# CUDA toolkit and is not on `PATH`; `check_toolchain()` verifies it.
+COMPUTE_SANITIZER = Path(
+    os.environ.get("MLIR_COMPUTE_SANITIZER", "/usr/local/cuda/bin/compute-sanitizer")
+)
+SANITIZER_EXIT = 99  # the `--error-exitcode` passed below
+
 TOOLCHAIN_VERSION = "LLVM 21.1.0"
 
 # Exit codes we care about.
@@ -200,6 +216,206 @@ def pipeline(surface: str, rtv: bool) -> str:
 
 
 # --------------------------------------------------------------------------
+# GPU path (mlir-linalg on CUDA)
+# --------------------------------------------------------------------------
+#
+# The lane audits *GPU* kernels, so the linalg surface executes on the device.
+# The pipelines below are the GPU counterpart of PIPELINES' linalg entries: the
+# same bufferize/lower-affine front end, but linalg maps to hardware instead of
+# to `scf` loops, and the device module is serialized to a cubin.
+#
+# RTV sits after `lower-affine` and before the GPU mapping, so its `cf.assert`
+# guards land *inside* the outlined `gpu.func` and keep their `loc("kernel")`
+# tag. That is what lets the S9 census separate the kernel's guards from the host
+# oracle's, exactly as on the CPU path (verified: kernel guards appear in
+# `gpu.func`, oracle guards stay in the host function).
+#
+# The host oracle stays on the CPU by construction: a linalg body with reduction
+# iterators does not map to `gpu.thread_id`, so `convert-linalg-to-parallel-loops`
+# only turns the parallel kernel body into `scf.parallel`; the reduction lowers
+# to host `scf.for`. Only the parallel body is outlined into a `gpu.module`. The
+# host/device split is therefore a property of the pipeline, not a hand-written
+# boundary in the emitter.
+_GPU_MID_BODY = (
+    "func.func(lower-affine),"
+    "one-shot-bufferize,"
+    "buffer-deallocation-pipeline,"
+    "func.func(convert-linalg-to-parallel-loops,lower-affine"
+)
+_GPU_MID_TAIL = (
+    ",gpu-map-parallel-loops,convert-parallel-loops-to-gpu),"
+    "gpu-kernel-outlining"
+)
+
+GPU_MID = {
+    ("linalg", False): f"builtin.module({_GPU_MID_BODY}{_GPU_MID_TAIL})",
+    ("linalg", True): (
+        f"builtin.module({_GPU_MID_BODY},generate-runtime-verification"
+        f"{_GPU_MID_TAIL})"
+    ),
+}
+
+# Guard census for the GPU surface runs the same RTV-on mid pipeline, so the
+# counted `cf.assert`s are the ones that actually reach the device module.
+GPU_RTV_ONLY = {
+    ("linalg", True): GPU_MID[("linalg", True)],
+    # The low surface already carries its own `gpu.launch` in the source, so RTV
+    # instruments the kernel body in place: the one-step host pipeline is also
+    # the pre-GPU IR, and its `loc("kernel")` asserts are exactly the ones that
+    # lower into the device module.
+    ("low", True): RTV_ONLY["low"],
+}
+
+# mlir-low GPU front end. The source is memref/affine on the host plus an
+# explicit `gpu.launch` for the kernel body, so the only work before the NVVM
+# pipeline is lowering the *host* affine (the checksum oracle). Letting the
+# NVVM pipeline do it does not work: GPUToNVVM runs `scf-to-cf` before
+# `lower-affine`, so a surviving host `affine.for` is converted to `scf.for` and
+# left un-lowered. Device memory is `gpu.alloc`-backed, so the linalg path's
+# `gpu.host_register` injection is neither needed nor wanted.
+GPU_LOW_PRE = {
+    False: "builtin.module(func.func(lower-affine))",
+    True: (
+        "builtin.module(func.func(lower-affine,generate-runtime-verification,"
+        "canonicalize,cse))"
+    ),
+}
+
+
+def cuda_chip() -> str:
+    """Target SM for cubin serialization.
+
+    Host-parametric: the dev box is `sm_86` while the final host may be `sm_120`.
+    `MLIR_CUDA_CHIP` overrides; otherwise the driver is asked. A wrong chip makes
+    every compile fail with an opaque ptxas error, so the value is never guessed
+    silently.
+    """
+    env = os.environ.get("MLIR_CUDA_CHIP")
+    if env:
+        return env
+    try:
+        out = subprocess.run(
+            ["nvidia-smi", "--query-gpu=compute_cap", "--format=csv,noheader"],
+            capture_output=True, text=True, timeout=10,
+        ).stdout.strip().splitlines()
+        if out and out[0].strip():
+            return "sm_" + out[0].strip().replace(".", "")
+    except Exception:
+        pass
+    return "sm_86"
+
+
+def backend_for(surface: str) -> str:
+    """Execution backend for a surface: `cuda` for linalg/low, else `cpu`.
+
+    The env overrides (`MLIR_LINALG_BACKEND`, `MLIR_LOW_BACKEND`) keep the
+    previously committed CPU numbers reproducible without a code edit.
+    """
+    if surface == "linalg":
+        return "cpu" if os.environ.get("MLIR_LINALG_BACKEND", "cuda").lower() == "cpu" else "cuda"
+    if surface == "low":
+        return "cpu" if os.environ.get("MLIR_LOW_BACKEND", "cuda").lower() == "cpu" else "cuda"
+    return "cpu"
+
+
+# --------------------------------------------------------------------------
+# Host-buffer registration for the GPU path
+# --------------------------------------------------------------------------
+#
+# `gpu-to-llvm` passes kernel memrefs through as raw pointers. A buffer from
+# `memref.alloc` is host memory, so the driver faults on the first device access
+# (`CUDA_ERROR_ILLEGAL_ADDRESS`) unless it is registered first. `gpu.host_register`
+# is the op that performs `cuMemHostRegister`; no upstream pass inserts it, so the
+# GPU path does it here.
+#
+# Only memrefs that are actually passed to a `gpu.launch_func` are registered,
+# deduplicated by SSA name. Registering *every* allocation is wrong: the small
+# scalar accumulators used by the host oracle trip `cuMemHostRegister` with
+# `CUDA_ERROR_NOT_SUPPORTED`, and a value passed to two launches must be
+# registered once.
+_HOSTREG_ARG_RE = re.compile(r"(%[\w.]+)\s*:\s*(memref<[^>]*>)")
+_HOSTREG_DEF_RE = re.compile(r"^(\s*)(%[\w.]+)\s*=")
+
+
+def _unranked_memref(ty: str) -> str:
+    """`memref<2x3xf32>` -> `memref<*xf32>` (the type `gpu.host_register` takes)."""
+    return "memref<*x" + ty[len("memref<"):-1].split("x")[-1] + ">"
+
+
+def insert_host_register(text: str) -> str:
+    """Register every memref passed to a `gpu.launch_func`, after its definition.
+
+    Element types in this harness are flat (`f32`/`i32`/`i64`), so the shape
+    prefix is everything before the last `x` of the memref body.
+    """
+    needed: dict[str, str] = {}
+    for line in text.splitlines():
+        if "gpu.launch_func" in line:
+            for name, ty in _HOSTREG_ARG_RE.findall(line):
+                needed[name] = ty
+    if not needed:
+        return text
+    out: list[str] = []
+    seen: set[str] = set()
+    for line in text.splitlines():
+        out.append(line)
+        m = _HOSTREG_DEF_RE.match(line)
+        if m and m.group(2) in needed and m.group(2) not in seen:
+            name = m.group(2)
+            ty = needed[name]
+            seen.add(name)
+            ind, ur, urt = m.group(1), name + "_hostreg", _unranked_memref(ty)
+            out.append(f"{ind}{ur} = memref.cast {name} : {ty} to {urt}")
+            out.append(f"{ind}gpu.host_register {ur} : {urt}")
+    return "\n".join(out) + "\n"
+
+
+def lower_gpu(src: Path, work: Path, surface: str, rtv: bool, ll: Path) -> ProcResult:
+    """Two-step GPU lowering.
+
+    For `linalg`, step one maps linalg to `parallel` then `gpu`, and step two
+    serializes the outlined device module to a cubin. For `low`, the source
+    already holds the `gpu.launch`, so step one only lowers the host affine (with
+    RTV if requested) and step two runs the NVVM pipeline.
+
+    Returns the first failing `ProcResult`, or the final (successful) one. The
+    intermediate IR is written beside `ll` so a failing mutant leaves the IR that
+    produced the diagnostic on disk for inspection.
+    """
+    if surface == "low":
+        pre = work / f"{src.stem}.gpu.pre.mlir"
+        res = run_mlir_opt(GPU_LOW_PRE[rtv], src, pre)
+        if not res.ok:
+            return res
+        return _run([
+            str(MLIR_OPT), str(pre),
+            "-gpu-lower-to-nvvm-pipeline="
+            f"cubin-format=bin cubin-chip={cuda_chip()} opt-level=3",
+            "-o", str(ll),
+        ])
+
+    mid = work / f"{src.stem}.gpu.mid.mlir"
+    res = run_mlir_opt(GPU_MID[(surface, rtv)], src, mid)
+    if not res.ok:
+        return res
+    reg = work / f"{src.stem}.gpu.hostreg.mlir"
+    reg.write_text(insert_host_register(mid.read_text()))
+    return _run([
+        str(MLIR_OPT), str(reg),
+        "-gpu-lower-to-nvvm-pipeline="
+        f"cubin-format=bin cubin-chip={cuda_chip()} opt-level=3",
+        # The upstream pipeline lowers memrefs only where the GPU conversion
+        # touches them, so a host-side `memref.reshape` (the dynamic-reshape
+        # oracle) survives into an otherwise-LLVM module that `mlir-runner`
+        # refuses to parse. The CPU path handles it via full bufferization; here
+        # the residual memref op is finalized explicitly. No-op when none remain.
+        "-finalize-memref-to-llvm",
+        "-reconcile-unrealized-casts",
+        "-o", str(ll),
+    ])
+
+
+# --------------------------------------------------------------------------
 # Process helpers
 # --------------------------------------------------------------------------
 
@@ -268,19 +484,22 @@ def verify(src: Path) -> ProcResult:
 
 
 def run_kernel(
-    ll_mlir: Path, entry_result: str = "i32", timeout: int = 120
+    ll_mlir: Path, entry_result: str = "i32", timeout: int = 120, gpu: bool = False
 ) -> ProcResult:
     """Execute lowered IR with `mlir-runner`.
 
     `stdbuf -o0` is mandatory: the RTV assert message goes to stdout via `puts`
     before `abort()` and is lost to buffering otherwise.
+
+    `gpu=True` loads the CUDA runtime alongside the CPU runner libs, so a module
+    that calls `mgpuLaunchKernel` can resolve it.
     """
     cmd = [
         "stdbuf",
         "-o0",
         str(MLIR_RUNNER),
         f"--entry-point-result={entry_result}",
-        f"--shared-libs={RUNNER_LIBS}",
+        f"--shared-libs={RUNNER_LIBS_GPU if gpu else RUNNER_LIBS}",
         str(ll_mlir),
     ]
     return _run(cmd, timeout=timeout)
@@ -546,10 +765,109 @@ def run_asan(
                       run.rc, detail)
 
 
+_CUDA_ERROR_SUMMARY_RE = re.compile(r"ERROR SUMMARY: (\d+) errors?")
+_CUDA_OOB_RE = re.compile(r"Invalid __global__ (read|write)")
+_CUDA_MISALIGN_RE = re.compile(r"Misaligned address")
+
+
+def run_sanitizer_gpu(
+    src_mlir: Path,
+    work: Path,
+    surface: str,
+    rtv: bool = False,
+    timeout: int = 300,
+) -> AsanResult:
+    """S12 on the GPU surface: run the lowered cubin under `compute-sanitizer`.
+
+    The interface matches `run_asan` so the caller's tally/`as_record` code does
+    not fork. The `instrumented` gate changes meaning, though: on the native path
+    it counts ASan call sites, while here it counts the device launch the
+    sanitizer will actually watch. Zero launches means there was no device work
+    to check, and a "clean" verdict would be a false negative -- the same failure
+    mode the ASan path guards against.
+
+    `rtv=False` for the same reason as `run_asan`: RTV's generated `cf.assert`
+    fires on the device *before* the faulty access, so memcheck would see a
+    clean run. S12 asks what an external checker catches on the bare pipeline.
+    """
+    work.mkdir(parents=True, exist_ok=True)
+    ll = work / "sanitizer.gpu.mlir"
+    res = lower_gpu(src_mlir, work, surface, rtv, ll)
+    if not res.ok:
+        return AsanResult(False, "lower", 0, False, "none", False, res.rc,
+                          _first_diagnostic(res.stderr or res.stdout)
+                          or "GPU lowering failed")
+
+    instrumented = len(re.findall(r"\bgpu\.launch_func\b",
+                                  ll.read_text(errors="replace")))
+    if instrumented == 0:
+        return AsanResult(False, "instrument", 0, False, "none", False, 0,
+                          "no device launch in the lowered module")
+
+    cmd = [
+        str(COMPUTE_SANITIZER), "--tool", "memcheck",
+        "--error-exitcode", str(SANITIZER_EXIT),
+        str(MLIR_RUNNER), "--entry-point-result=i32",
+        f"--shared-libs={RUNNER_LIBS_GPU}", str(ll),
+    ]
+    env = {**os.environ}
+    env["LD_LIBRARY_PATH"] = str(LLVM_LIB) + os.pathsep + env.get("LD_LIBRARY_PATH", "")
+    try:
+        p = subprocess.run(cmd, capture_output=True, text=True,
+                           timeout=timeout, env=env)
+        run = ProcResult(p.returncode, p.stdout, p.stderr)
+    except subprocess.TimeoutExpired as e:
+        run = ProcResult(EXIT_TIMEOUT, _as_text(e.stdout), _as_text(e.stderr))
+    except FileNotFoundError as e:
+        return AsanResult(False, "run", instrumented, False, "none", False, -2,
+                          f"compute-sanitizer not found: {e}")
+
+    err = run.stderr + run.stdout
+    summary = _CUDA_ERROR_SUMMARY_RE.search(err)
+    n_err = int(summary.group(1)) if summary else 0
+    if n_err > 0 or run.rc == SANITIZER_EXIT:
+        fault = "oob"
+        cls = "CUDA memcheck"
+        m = _CUDA_OOB_RE.search(err)
+        if m:
+            cls = f"Invalid __global__ {m.group(1)}"
+        elif _CUDA_MISALIGN_RE.search(err):
+            fault = "misaligned"
+            cls = "Misaligned address"
+        detail = f"compute-sanitizer: {cls}"
+        if summary:
+            detail += f" (ERROR SUMMARY: {n_err})"
+        return AsanResult(True, "run", instrumented, True, fault, True,
+                          run.rc, detail)
+
+    crashed = run.rc in (EXIT_ABORT, EXIT_SEGV, EXIT_TIMEOUT) or run.rc < 0
+    exercised = not crashed
+    detail = ("clean" if exercised
+              else f"compute-sanitizer: no report, body did not complete "
+                   f"(rc={run.rc})")
+    return AsanResult(True, "run", instrumented, False, "none", exercised,
+                      run.rc, detail)
+
+
+def run_sanitizer(
+    src_mlir: Path,
+    work: Path,
+    surface: str,
+    rtv: bool = False,
+    timeout: int = 300,
+    backend: str | None = None,
+) -> AsanResult:
+    """Dispatch S12 to the external checker that matches the execution model."""
+    if backend is None:
+        backend = backend_for(surface)
+    if backend == "cuda":
+        return run_sanitizer_gpu(src_mlir, work, surface, rtv=rtv, timeout=timeout)
+    return run_asan(src_mlir, work, surface, rtv=rtv, timeout=timeout)
+
+
 # --------------------------------------------------------------------------
 # Assert counting (stage-dependent -- do not inline a grep)
 # --------------------------------------------------------------------------
-
 _CF_ASSERT = re.compile(r"\bcf\.assert\b")
 _ASSERT_MSG_GLOBAL = re.compile(r"assert_msg_\d+")
 
@@ -704,6 +1022,7 @@ def classify(
     na: bool = False,
     na_reason: str = "",
     run_timeout: int = 60,
+    backend: str | None = None,
 ) -> Classification:
     """Compile, run and classify one kernel.
 
@@ -738,9 +1057,15 @@ def classify(
     c = Classification()
     work.mkdir(parents=True, exist_ok=True)
     ll = work / f"{src.stem}.ll.mlir"
+    if backend is None:
+        backend = backend_for(surface)
+    gpu = backend == "cuda"
 
     # --- compile gate -----------------------------------------------------
-    res = run_mlir_opt(pipeline(surface, rtv), src, ll)
+    if gpu:
+        res = lower_gpu(src, work, surface, rtv, ll)
+    else:
+        res = run_mlir_opt(pipeline(surface, rtv), src, ll)
     if not res.ok:
         c.compile_ok = False
         c.outcome = "compile"
@@ -760,12 +1085,13 @@ def classify(
     # S9. `n_asserts_total` keeps the raw count so the split stays auditable.
     rtv_ir = work / f"{src.stem}.rtv.mlir"
     if rtv:
-        rres = run_mlir_opt(RTV_ONLY[surface], src, rtv_ir)
+        rtv_pipe = GPU_RTV_ONLY[(surface, True)] if gpu else RTV_ONLY[surface]
+        rres = run_mlir_opt(rtv_pipe, src, rtv_ir)
         if rres.ok:
             c.n_asserts, c.n_asserts_total = count_kernel_asserts(rtv_ir)
 
     # --- run gate ---------------------------------------------------------
-    run = run_kernel(ll, entry_result="i32", timeout=run_timeout)
+    run = run_kernel(ll, entry_result="i32", timeout=run_timeout, gpu=gpu)
     return _verdict_from_run(run, run_timeout, c)
 
 
@@ -799,6 +1125,19 @@ def _verdict_from_run(
         c.manifest = "corrupts"
         # First line of the RTV diagnostic, e.g. "^ out-of-bounds access".
         c.abort_message = _first_diagnostic(run.stdout) or combined.strip()[:1000]
+        return c
+
+    # GPU RTV: a device `cf.assert` does NOT abort the host process. The CUDA
+    # runtime prints the assert (with its baked loc) and a `CUDA_ERROR_ASSERT`
+    # from `cuStreamSynchronize`, then `mlir-runner` still exits 0 -- so the exit
+    # code alone would misread a caught defect as a clean run. The marker is
+    # unique to the CUDA runtime, so this test is inert on the CPU path.
+    if "CUDA_ERROR_ASSERT" in combined:
+        c.run_ok = False
+        c.outcome = "runtime"
+        c.stage = "runtime"
+        c.manifest = "corrupts"
+        c.abort_message = _first_gpu_assert(combined) or combined.strip()[:1000]
         return c
 
     if run.rc == EXIT_TIMEOUT:
@@ -853,6 +1192,7 @@ def classify_repeat(
     na: bool = False,
     na_reason: str = "",
     run_timeout: int = 30,
+    backend: str | None = None,
 ) -> list[Classification]:
     """Compile once, run `n` times, return every verdict.
 
@@ -877,7 +1217,13 @@ def classify_repeat(
 
     work.mkdir(parents=True, exist_ok=True)
     ll = work / f"{src.stem}.ll.mlir"
-    res = run_mlir_opt(pipeline(surface, rtv), src, ll)
+    if backend is None:
+        backend = backend_for(surface)
+    gpu = backend == "cuda"
+    if gpu:
+        res = lower_gpu(src, work, surface, rtv, ll)
+    else:
+        res = run_mlir_opt(pipeline(surface, rtv), src, ll)
     if not res.ok:
         c = Classification()
         c.compile_ok = False
@@ -890,13 +1236,14 @@ def classify_repeat(
     n_asserts = n_asserts_total = 0
     if rtv:
         rtv_ir = work / f"{src.stem}.rtv.mlir"
-        rres = run_mlir_opt(RTV_ONLY[surface], src, rtv_ir)
+        rtv_pipe = GPU_RTV_ONLY[(surface, True)] if gpu else RTV_ONLY[surface]
+        rres = run_mlir_opt(rtv_pipe, src, rtv_ir)
         if rres.ok:
             n_asserts, n_asserts_total = count_kernel_asserts(rtv_ir)
 
     out: list[Classification] = []
     for _ in range(n):
-        run = run_kernel(ll, entry_result="i32", timeout=run_timeout)
+        run = run_kernel(ll, entry_result="i32", timeout=run_timeout, gpu=gpu)
         c = _verdict_from_run(run, run_timeout)
         c.compile_ok = True
         c.n_asserts = n_asserts
@@ -951,6 +1298,22 @@ def _first_diagnostic(stdout: str) -> str:
         s = line.strip()
         if s.startswith("^") or "verification failed" in s or "Location:" in s:
             return s
+    return ""
+
+
+def _first_gpu_assert(combined: str) -> str:
+    """Pull the device `cf.assert` message out of the CUDA runtime's stderr.
+
+    The runtime prints `... Assertion \`<message>\` failed.` per offending thread,
+    where `<message>` is the RTV diagnostic with its baked `loc`.
+    """
+    for line in (combined or "").splitlines():
+        s = line.strip()
+        if "Assertion" in s and "failed" in s:
+            return s[:1000]
+    for line in (combined or "").splitlines():
+        if "out-of-bounds" in line or "Location:" in line:
+            return line.strip()[:1000]
     return ""
 
 
@@ -1058,6 +1421,24 @@ def check_toolchain() -> list[str]:
     for lib in RUNNER_LIBS.split(","):
         if not Path(lib).exists():
             problems.append(f"missing runner lib: {lib}")
+    # The linalg surface defaults to the GPU backend, whose runner needs the
+    # CUDA runtime (built only with MLIR_ENABLE_CUDA_RUNNER=ON). Skip when the
+    # backend is explicitly pinned to CPU.
+    if os.environ.get("MLIR_LINALG_BACKEND", "cuda").lower() != "cpu":
+        if not CUDA_RUNTIME_LIB.exists():
+            problems.append(
+                f"missing CUDA runner lib (MLIR_ENABLE_CUDA_RUNNER=OFF?): {CUDA_RUNTIME_LIB}"
+            )
+    # Same for the low surface, which is also GPU by default.
+    if os.environ.get("MLIR_LOW_BACKEND", "cuda").lower() != "cpu":
+        if not CUDA_RUNTIME_LIB.exists():
+            problems.append(
+                f"missing CUDA runner lib (MLIR_ENABLE_CUDA_RUNNER=OFF?): {CUDA_RUNTIME_LIB}"
+            )
+        if not COMPUTE_SANITIZER.exists():
+            problems.append(
+                f"missing compute-sanitizer (see MLIR_COMPUTE_SANITIZER): {COMPUTE_SANITIZER}"
+            )
     for b in (MLIR_TRANSLATE, CLANG, LLVM_OPT):
         if not b.exists():
             problems.append(f"missing binary (S12/ASan): {b}")
@@ -1080,7 +1461,14 @@ def describe_toolchain() -> str:
     too -- a number is only reproducible if the binary that produced it is named.
     """
     problems = check_toolchain()
-    head = f"{TOOLCHAIN_VERSION}  mlir-opt={MLIR_OPT}"
+    lin = backend_for("linalg")
+    low = backend_for("low")
+    any_gpu = "cuda" in (lin, low)
+    head = (
+        f"{TOOLCHAIN_VERSION}  mlir-opt={MLIR_OPT}"
+        f"  linalg-backend={lin}  low-backend={low}"
+        + (f" chip={cuda_chip()}" if any_gpu else "")
+    )
     if problems:
         return head + "\n  TOOLCHAIN PROBLEMS:\n  - " + "\n  - ".join(problems)
     return head + "  [ok]"

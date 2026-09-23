@@ -2,7 +2,7 @@
   "toolchain": "mlir-linalg",
   "toolchain_version": "LLVM 21.1.0",
   "surface": "linalg",
-  "device": "cpu (JIT on host; no GPU dependency)",
+  "device": "cuda (sm_86; kernels JIT-compiled to a cubin and run on the device)",
   "S1_detection": {
     "M1": {
       "n_injected": 0,
@@ -34,7 +34,7 @@
           "n_na": 0
         }
       },
-      "note": "measured on the linalg surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: 128 mutant records reduce to 64 injections."
+      "note": "measured on the linalg surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: the whole lane's 128 mutant records reduce to 64 M2 injections."
     },
     "M3": {
       "n_injected": 0,
@@ -49,7 +49,7 @@
     "classes": [
       "M4"
     ],
-    "reason": "M4 (LoopBound) is DROPPED from this lane (decision 2026-09-23), not merely unmeasured: a `linalg.generic`'s iteration bound is derived from the operand domain by the compiler, so the program authors no bound value to corrupt. The detection families (zero/negative/reversed bound, zero step) have no program-authored defect here -- the prohibition is `derived`; the only M4-adjacent form is a zero-extent operand (the M4-d empty-space control), which is a control, not a detection. M4 is measured on the program-authored-loop lanes choreo, triton and mlir-low. This lane emits NO cell for M4 -- a missing cell is not an `n/a` cell (`n/a` is a measured verdict). See schema/class-axis.json `status_meaning` and render.py.",
+    "reason": "A class this lane was never run against. It emits NO cell -- a missing cell is not an `n/a` cell (`n/a` is a measured verdict), so the two must never read alike. M4 is `uncompared` on mlir-linalg and iree since 2026-09-23 (decision: dropped, not measured -- a `linalg.generic` iteration bound is compiler-derived from the operand domain, so the program authors no bound to corrupt; the prohibition is `derived`). It is measured on the program-authored-loop lanes choreo, triton and mlir-low. See schema/class-axis.json `status_meaning` and render.py.",
     "note": "No cell is emitted for these classes. A missing cell is NOT an n/a cell: `n/a` means this surface was measured and cannot express the defect, while a missing cell means the lane was never run against the class."
   },
   "S1_class_axis": {
@@ -210,12 +210,18 @@
     "chain": "mlir-opt <bare pipeline> | mlir-translate --mlir-to-llvmir | patch sanitize_address + target triple/datalayout | opt -passes=asan | clang -fsanitize=address",
     "rtv": "off (RTV's own cf.assert would abort before the faulty access and make ASan silent)",
     "asan_options": "detect_leaks=0:exitcode=86:abort_on_error=0",
-    "false_negative_gate": "every binary's __asan_report_* call sites are counted; 0 sites => stage=instrument and never a 'clean' verdict",
-    "why_not_compute_sanitizer": "compute-sanitizer needs a CUDA device; these lanes are CPU-only, so ASan on a natively linked binary is the equivalent external checker"
+    "false_negative_gate": "every binary's __asan_report_* call sites are counted; 0 sites => stage=instrument and never a 'clean' verdict"
   },
   "kernel_gate": {
     "broadcast": {
       "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      },
+      "full": {
         "composed": 2,
         "compiled": 2,
         "ran_ok": 2,
@@ -230,6 +236,13 @@
         "ran_ok": 2,
         "ref_pass": 2,
         "rtv_on_ref_pass": 2
+      },
+      "full": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
       }
     },
     "broadcast_r4": {
@@ -239,10 +252,24 @@
         "ran_ok": 2,
         "ref_pass": 2,
         "rtv_on_ref_pass": 2
+      },
+      "full": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
       }
     },
     "broadcast_r5": {
       "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      },
+      "full": {
         "composed": 2,
         "compiled": 2,
         "ran_ok": 2,
@@ -321,10 +348,24 @@
         "ran_ok": 2,
         "ref_pass": 2,
         "rtv_on_ref_pass": 2
+      },
+      "full": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
       }
     },
     "pad_last": {
       "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      },
+      "full": {
         "composed": 2,
         "compiled": 2,
         "ran_ok": 2,
@@ -339,10 +380,24 @@
         "ran_ok": 2,
         "ref_pass": 2,
         "rtv_on_ref_pass": 2
+      },
+      "full": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
       }
     },
     "pad_r3": {
       "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      },
+      "full": {
         "composed": 2,
         "compiled": 2,
         "ran_ok": 2,
@@ -373,10 +428,24 @@
         "ran_ok": 2,
         "ref_pass": 2,
         "rtv_on_ref_pass": 2
+      },
+      "full": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
       }
     },
     "reshape_r3": {
       "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      },
+      "full": {
         "composed": 2,
         "compiled": 2,
         "ran_ok": 2,
@@ -391,10 +460,24 @@
         "ran_ok": 2,
         "ref_pass": 2,
         "rtv_on_ref_pass": 2
+      },
+      "full": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
       }
     },
     "reshape_r5": {
       "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      },
+      "full": {
         "composed": 2,
         "compiled": 2,
         "ran_ok": 2,
@@ -441,10 +524,24 @@
         "ran_ok": 2,
         "ref_pass": 2,
         "rtv_on_ref_pass": 2
+      },
+      "full": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
       }
     },
     "transpose_square": {
       "small": {
+        "composed": 2,
+        "compiled": 2,
+        "ran_ok": 2,
+        "ref_pass": 2,
+        "rtv_on_ref_pass": 2
+      },
+      "full": {
         "composed": 2,
         "compiled": 2,
         "ran_ok": 2,
@@ -455,10 +552,10 @@
   },
   "gate_failures": [],
   "totals": {
-    "kernels": 56,
-    "compiled": 56,
-    "ran_ok": 56,
-    "ref_pass": 56,
+    "kernels": 84,
+    "compiled": 84,
+    "ran_ok": 84,
+    "ref_pass": 84,
     "mutant_records": 128,
     "sanitizer_records": 64,
     "expressibility_records": 84,

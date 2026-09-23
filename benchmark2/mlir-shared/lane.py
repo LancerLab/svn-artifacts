@@ -53,21 +53,26 @@ THREE RULES THAT SHAPE EVERY NUMBER BELOW
 S12: A REAL SANITIZER MEASUREMENT, NOT `n/a`
 --------------------------------------------------------------------------
 
-triton and iree both measure S12 with `compute-sanitizer`, which needs a GPU.
-These lanes are CPU-only, so the obvious move is to report `n/a`. Instead
-`mlirbench.run_asan()` lowers to LLVM IR and builds a native AddressSanitizer
-binary, giving a genuine `flagged ∧ exercised` measurement on the host. That
-required fixing four separate silent-failure modes in the lowering chain; see
-the long comment above `run_asan` in mlirbench.py. The short version: clang does
-not instrument `.ll` inputs, LLVM's ASan pass skips functions lacking the
-`sanitize_address` attribute, `mlir-translate` emits no target triple (so the
-shadow offset is wrong and a real overflow surfaces as a bogus SEGV), and a
-native link needs the MLIR runner utils that the JIT resolves dynamically.
+Each surface measures S12 with the external checker that shares its execution
+model, so the `flagged ∧ exercised` number means what it says:
 
-Because every one of those failures *looks like success*, `run_asan` counts the
-`__asan_report_*` call sites in the instrumented IR and refuses to return a
-"clean" verdict when that count is zero. A clean verdict from an unchecked
-binary is a false negative, which is worse than no measurement.
+* `low` runs on the GPU, so S12 is `compute-sanitizer --tool memcheck` over the
+  same lowered cubin S1 runs. `mlirbench.run_sanitizer_gpu()` lowers with the
+  bare (RTV-off) GPU pipeline and counts the device launches actually under
+  memcheck; zero launches is a harness failure, not a clean result.
+* `linalg` measures S12 with a native AddressSanitizer binary. `run_asan()`
+  lowers the bare pipeline to LLVM IR and builds it; that path exists because the
+  obvious route is silently broken in four separate ways. See the long comment
+  above `run_asan` in mlirbench.py: clang does not instrument `.ll` inputs,
+  LLVM's ASan pass skips functions lacking the `sanitize_address` attribute,
+  `mlir-translate` emits no target triple (wrong shadow offset, real overflow
+  reported as a bogus SEGV), and a native link needs the runner utils the JIT
+  resolves dynamically.
+
+Because every one of those failures *looks like success*, both checkers count
+their instrumentation/coverage and refuse a "clean" verdict when it is zero. A
+clean verdict from an unchecked run is a false negative, which is worse than no
+measurement.
 """
 from __future__ import annotations
 
@@ -123,6 +128,29 @@ def _uncompared_classes(lane: str) -> tuple[str, ...]:
     declared in `S1_declared_uncompared` instead."""
     return tuple(AX.lane_where(lane, "uncompared"))
 
+
+def _attr_class(rec: dict) -> str:
+    """The class a mutant record belongs to, resolved from its spec_id.
+
+    NOT `rec["class"]`: when a spec is re-homed to another class (M1.6 ->
+    M4-d), the writer keeps stamping the old class while the taxonomy files the
+    family under the new one. Reading the stamp files those injections under M1
+    and leaves the M4 cell empty even though its instances were generated. The
+    taxonomy is the one authority (`T.family_of`), so resolve through it and only
+    fall back to the stamp when the spec_id names no family (an avoided or
+    attribution_only operator such as M2.12).
+    """
+    spec = rec.get("spec_id")
+    if not spec:
+        # The sanitizer stream carries no `spec_id`; its `mutant_id` ends in
+        # `...-<spec_id>-<rtv>` (e.g. `mlir-low-relu-static-M1.6-off`), so the
+        # spec is recoverable without re-running the lane. Parsing the id is the
+        # fallback, not the rule: prefer an explicit spec_id when there is one.
+        m = re.search(r"-(M\d+\.\d+)(?:-|$)", rec.get("mutant_id", ""))
+        spec = m.group(1) if m else ""
+    fam = T.family_of(spec)
+    return T._FAM[fam]["class"] if fam else rec.get("class", "")
+
 # --------------------------------------------------------------------------
 # Surface table — the ONLY place the two lanes differ
 # --------------------------------------------------------------------------
@@ -162,6 +190,11 @@ SURFACES = {
         # count legitimately sits below this Cartesian product.
         "expected_injected": {"1": 54, "2": 90},
         "klass": "M2",
+        # S12 tool: the linalg surface lowers to LLVM and builds a native ASan
+        # binary (see the S12 note at the top of this file). It is not switched to
+        # compute-sanitizer with the S1 backend because its S12 measurement is
+        # already committed and is a separate question from where the kernels run.
+        "sanitizer": "asan",
         "specs": C.M2_SPECS,
         "spec_ids": C.M2_SPEC_IDS,
         "level_of": C.LEVEL_OF,
@@ -202,6 +235,13 @@ SURFACES = {
         # = 72. Every M1 record is level-1.
         "expected_injected": {"1": 72},
         "klass": "M1",
+        # The kernel now executes on the device, so S12 must use the checker that
+        # shares that execution model: `compute-sanitizer --tool memcheck` over
+        # the lowered cubin. ASan (the `linalg` surface's tool) instruments a
+        # natively-linked host binary and cannot observe a device access at all,
+        # so it would report every mutant clean -- a false negative, not a
+        # measurement.
+        "sanitizer": "compute-sanitizer",
         "specs": C.M1_LOW_SPECS,
         "spec_ids": [m.spec_id for m in C.M1_LOW_SPECS],
         # mutation-specs.md §5's M1 minimal set is exactly the four categories
@@ -224,10 +264,13 @@ for _key, _cfg in SURFACES.items():
             raise AssertionError(
                 f"surface {_key!r}: class {_cls} is n/a but "
                 f"schema/class-axis.json records no reason for it")
-    if not _uncompared_classes(_lane):
-        raise AssertionError(
-            f"surface {_key!r}: lane {_lane!r} is held at `measured`/`n/a` for "
-            f"every class, so this file's uncompared handling is dead code")
+    # NOTE: this file used to assert that every surface had >= 1 `uncompared`
+    # class, to prove the declaration path below is exercised. As of 2026-09-23
+    # every class is measured on both surfaces (M4 was the last `uncompared`),
+    # so that assertion would fire on a correct axis. The handling stays -- a
+    # future class may be declared `uncompared` again -- it is simply no longer
+    # required to be non-empty. `check_class_axis.py` still reconciles whatever
+    # the axis declares against each lane's stats.
     fwd = {c["id"]: c["obligation"] for c in AX.axis()["classes"]}
     if not set(MUTATION_CLASSES) <= set(fwd):
         raise AssertionError("the class axis is missing an obligation mapping")
@@ -408,6 +451,10 @@ class Lane:
         self.results = ROOT / "results" / self.toolchain
         self.schema = B.load_schema(ROOT)
         self.version = B.TOOLCHAIN_VERSION
+        # Where the kernels actually execute for this surface. `low` is a CUDA
+        # lane: it has no CPU fallback in the committed measurement.
+        self.backend = B.backend_for(self.surface)
+        self.gpu = self.backend == "cuda"
         # The composed categories own a settings file; a mutation-only carrier
         # host borrows its base operator's settings hash (`x_carrier` -> `x`), so
         # the carrier records carry a real provenance hash rather than MISSING.
@@ -451,7 +498,10 @@ class Lane:
             "opt": str(B.LLVM_OPT),
             "runner_libs": B.RUNNER_LIBS,
             "asan_target": B.target_lines(),
-            "device": "cpu (JIT on host; no GPU, so no .gpu-lock / exclusive)",
+            "device": (f"{self.backend} " +
+                       (f"({B.cuda_chip()}; JIT of the lowered cubin on the "
+                        "device)" if self.gpu else
+                        "(JIT on host; no GPU dependency)")),
             "categories_composed": self.cfg["categories"],
             "categories_missing": sorted(set(ALL_CATEGORIES)
                                          - set(self.cfg["categories"])),
@@ -528,7 +578,7 @@ class Lane:
                     "kernel": shape,
                     "shape": shape,
                     "size": size,
-                    "gpu_device": "cpu",
+                    "gpu_device": self.backend,
                     "exclusive": "false",
                     "kernel_hash": B.short(B.sha1_text(src)),
                 })
@@ -906,7 +956,9 @@ class Lane:
                         work.mkdir(parents=True, exist_ok=True)
                         f = work / "m.mlir"
                         f.write_text(src)
-                        r = B.run_asan(f, work, self.surface, rtv=False)
+                        r = (B.run_sanitizer_gpu(f, work, self.surface, rtv=False)
+                             if self.cfg.get("sanitizer") == "compute-sanitizer"
+                             else B.run_asan(f, work, self.surface, rtv=False))
                         rec = r.as_record(self.toolchain, cat, klass,
                                           f"{self.toolchain}-{cat}-{shape}-"
                                           f"{mut.mutant_id}-off")
@@ -972,7 +1024,7 @@ class Lane:
         if sum(unflagged.values()) != n_ran_clean:
             problems.append(
                 f"miss breakdown sums to {sum(unflagged.values())} but "
-                f"{n_ran_clean} mutants ran clean under real ASan coverage")
+                f"{n_ran_clean} mutants ran clean under real sanitizer coverage")
 
         (self.raw / "s12-census.json").write_text(json.dumps({
             "class": klass,
@@ -1030,8 +1082,9 @@ class Lane:
         * `loop`  — no. No loop-bound or trip-count diagnostic class appears in
                     any RTV output on either surface (measured across all
                     composed categories and both shape modes).
-        * `hw`    — no. CPU JIT, no device target, so there is no hardware
-                    contract for a guard to discharge; M3 is n/a on both lanes.
+        * `hw`    — no. No hardware-constraint construct appears in any RTV
+                    output on either surface, so there is no hardware contract
+                    for a guard to discharge; M3 is n/a on both lanes.
 
         S9 counts KERNEL guards only — see rule 2 in the module docstring.
         """
@@ -1238,35 +1291,48 @@ class Lane:
         expr = self._load("expressibility.jsonl")
         rem = self._load("remainder.jsonl")
         klass = self.cfg["klass"]
+        lane = self.cfg["lane"]
 
         # ---- S1: detection matrix, per class, RTV modes broken out --------
         # Aggregate at INJECTION level (spec_id), not record level: any variants
         # a spec declares are collapsed onto their shared injection identity.
+        #
+        # The class a record is filed under is resolved from its spec_id through
+        # the taxonomy (`_attr_class`), NOT read from the record's stamped
+        # `class`. A re-homed spec carries its new family even where the writer
+        # still stamps the old class (M1.6 -> M4-d), so reading the stamp would
+        # file the 8 M4-d injections under M1 and leave this lane's M4 cell
+        # empty when its instances exist.
         inj: dict[tuple[str, str, str, str, str], list[str]] = defaultdict(list)
         for r in mutants:
-            inj[(r["class"], r["rtv"], r["category"], r["shape"],
+            inj[(_attr_class(r), r["rtv"], r["category"], r["shape"],
                  r.get("spec_id", r["mutant_id"]))].append(r["outcome"])
 
-        s1: dict[str, dict] = {}
-        uncompared: list[str] = []
-        measured = {rtv: Counter() for rtv in ("off", "on")}
+        per_cls: dict[str, dict[str, Counter]] = {
+            rtv: defaultdict(Counter) for rtv in ("off", "on")}
         for (cls, rtv, _cat, _shape, _spec), outs in inj.items():
-            measured[rtv][_reduce_injection(outs)] += 1
+            per_cls[rtv][cls][_reduce_injection(outs)] += 1
 
-        def row(tally: Counter, n_injected: int) -> dict:
-            return {"n_injected": n_injected,
+        def row(tally: Counter) -> dict:
+            return {"n_injected": sum(tally.values()),
                     "n_compile": tally.get("compile", 0),
                     "n_runtime": tally.get("runtime", 0),
                     "n_never": tally.get("never", 0),
                     "n_na": tally.get("n/a", 0)}
 
-        n_inj_on = sum(measured["on"].values())
+        # Every class the axis marks `measured` for this lane gets a real cell,
+        # built from that class's own injections. The lane's own `klass` is no
+        # longer the only measured class (M4 is measured on both surfaces too),
+        # so the matrix is driven by the axis, not by a single literal.
+        status = AX.lane_status(lane)
+        s1: dict[str, dict] = {}
+        uncompared: list[str] = []
         for cls in MUTATION_CLASSES:
-            if cls == klass:
-                r = row(measured["on"], n_inj_on)
-                r["by_rtv"] = {"off": row(measured["off"],
-                                           sum(measured["off"].values())),
-                               "on": row(measured["on"], n_inj_on)}
+            if status.get(cls) == "measured":
+                on = per_cls["on"].get(cls, Counter())
+                off = per_cls["off"].get(cls, Counter())
+                r = row(on)
+                r["by_rtv"] = {"off": row(off), "on": row(on)}
                 r["note"] = (
                     f"measured on the {self.surface} surface. Top-level counts "
                     f"are RTV-on (generate-runtime-verification enabled), "
@@ -1275,11 +1341,12 @@ class Lane:
                     f"pipeline, which is the baseline S12's delta is computed "
                     f"against. The two modes are separate measurements and are "
                     f"never merged (manifest §5.1). n_injected counts "
-                    f"INJECTIONS (spec level), not records: {len(mutants)} "
-                    f"mutant records reduce to {n_inj_on} injections.")
+                    f"INJECTIONS (spec level), not records: the whole lane's "
+                    f"{len(mutants)} mutant records reduce to "
+                    f"{r['n_injected']} {cls} injections.")
                 s1[cls] = r
-            elif cls in _na_classes(self.cfg["lane"]):
-                why = AX.na_reason(self.cfg["lane"], cls)
+            elif cls in _na_classes(lane):
+                why = AX.na_reason(lane, cls)
                 # homework-check I2: a class the surface cannot express must be
                 # counted as n/a with n_na = N, never reported as 0 while the
                 # note claims n/a.
@@ -1323,7 +1390,7 @@ class Lane:
         s12: dict[str, dict] = {}
         stale: list[str] = []
         for r in san:
-            c = r["class"]
+            c = _attr_class(r)
             d = s12.setdefault(c, {"flagged_and_exercised": 0, "total": 0,
                                    "flagged": 0, "exercised": 0,
                                    "not_instrumented": 0,
@@ -1429,8 +1496,8 @@ class Lane:
         if s12_census.get("unflagged_by_spec"):
             s12.setdefault(klass, {})["misses"] = s12_census["unflagged_by_spec"]
             s12[klass]["miss_note"] = (
-                "each of these ran with real ASan coverage (instrumented > 0) and "
-                "still produced no report: the injected defect corrupts the "
+                "each of these ran with real sanitizer coverage (instrumented > 0) "
+                "and still produced no report: the injected defect corrupts the "
                 "result WITHOUT any access leaving its allocation, so no memory "
                 "checker can see it. This residue — not the flagged count — is "
                 "what S12 measures.")
@@ -1475,7 +1542,10 @@ class Lane:
             "toolchain": self.toolchain,
             "toolchain_version": self.version,
             "surface": self.surface,
-            "device": "cpu (JIT on host; no GPU dependency)",
+            "device": (f"{self.backend} " +
+                       (f"({B.cuda_chip()}; kernels JIT-compiled to a cubin and "
+                        "run on the device)" if self.gpu else
+                        "(JIT on host; no GPU dependency)")),
             "S1_detection": s1,
             "S1_declared_uncompared": s1_declared_uncompared,
             "S1_class_axis": {
@@ -1503,25 +1573,39 @@ class Lane:
                          "guard structure is not comparable"),
             },
             "S12_sanitizer_supplement": s12,
-            "S12_method": {
-                "tool": "LLVM AddressSanitizer (native, host CPU)",
-                "chain": ("mlir-opt <bare pipeline> | mlir-translate "
-                          "--mlir-to-llvmir | patch sanitize_address + target "
-                          "triple/datalayout | opt -passes=asan | clang "
-                          "-fsanitize=address"),
-                "rtv": "off (RTV's own cf.assert would abort before the faulty "
-                       "access and make ASan silent)",
-                "asan_options": B.ASAN_ENV.get("ASAN_OPTIONS", ""),
-                "false_negative_gate": ("every binary's __asan_report_* call "
-                                        "sites are counted; 0 sites => "
-                                        "stage=instrument and never a 'clean' "
-                                        "verdict"),
-                "why_not_compute_sanitizer": ("compute-sanitizer needs a CUDA "
-                                              "device; these lanes are CPU-only, "
-                                              "so ASan on a natively linked "
-                                              "binary is the equivalent "
-                                              "external checker"),
-            },
+            "S12_method": (
+                {
+                    "tool": "compute-sanitizer --tool memcheck (CUDA)",
+                    "chain": ("mlir-opt <bare GPU pipeline: lower-affine, then "
+                              "gpu-lower-to-nvvm-pipeline> | compute-sanitizer "
+                              "--tool memcheck --error-exitcode 99 mlir-runner"),
+                    "rtv": "off (RTV's own cf.assert fires on the device before "
+                           "the faulty access and would make memcheck silent)",
+                    "false_negative_gate": ("the lowered module's device launch "
+                                            "count is recorded; 0 launches => "
+                                            "stage=instrument and never a "
+                                            "'clean' verdict"),
+                    "why_not_asan": ("the kernel runs on the device, so a "
+                                     "natively-linked host ASan binary cannot "
+                                     "observe the access; memcheck is the "
+                                     "checker that shares the execution model"),
+                }
+                if self.cfg.get("sanitizer") == "compute-sanitizer" else
+                {
+                    "tool": "LLVM AddressSanitizer (native, host CPU)",
+                    "chain": ("mlir-opt <bare pipeline> | mlir-translate "
+                              "--mlir-to-llvmir | patch sanitize_address + target "
+                              "triple/datalayout | opt -passes=asan | clang "
+                              "-fsanitize=address"),
+                    "rtv": "off (RTV's own cf.assert would abort before the faulty "
+                           "access and make ASan silent)",
+                    "asan_options": B.ASAN_ENV.get("ASAN_OPTIONS", ""),
+                    "false_negative_gate": ("every binary's __asan_report_* call "
+                                            "sites are counted; 0 sites => "
+                                            "stage=instrument and never a 'clean' "
+                                            "verdict"),
+                }
+            ),
             "kernel_gate": {c: per_cat[c] for c in sorted(per_cat)},
             "gate_failures": failures,
             "totals": {
@@ -1625,8 +1709,9 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--level2", action="store_true",
                     help="add mutation-specs.md §5's level-2 categories")
     ap.add_argument("--device", default="cpu",
-                    help="accepted for run.sh.template compatibility; these "
-                         "lanes are CPU-only and ignore it")
+                    help="accepted for run.sh.template compatibility; the lane's "
+                         "backend is chosen per surface (mlirbench.backend_for: "
+                         "cuda for linalg/low)")
     a = ap.parse_args(argv)
 
     lane = Lane(a.surface)
