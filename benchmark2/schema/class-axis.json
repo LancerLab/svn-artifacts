@@ -375,6 +375,32 @@
         "S12"
       ],
       "ready": false
+    },
+    "cutlass": {
+      "display": "CUTLASS/CuTe",
+      "status": {
+        "M1": "not_ready",
+        "M2": "not_ready",
+        "M3": "not_ready",
+        "M4": "not_ready"
+      },
+      "stats_key": null,
+      "stats_paths": [
+        "results/cutlass/stats.json"
+      ],
+      "spec_version": {
+        "port": "CUTLASS/CuTe is a candidate lane carrying a vertical slice, not a promoted corpus: 15 operators gated against CPU references, a launch-time M4/L battery, and a compile-only M3 probe battery. It is not covered by the v2.1 port until a promotable corpus and a conforming S1 block exist.",
+        "corpus": "v2.1",
+        "corpus_paths": [],
+        "note": "Candidate lane held at `not_ready`. `results/cutlass/stats.json` is a dev-host (sm_86, not the manifest sm_120 pin) vertical slice with `lane_phase: vertical-slice` and `complete: false`; the raw corpora (`cutlass/records*.jsonl`) are gitignored, so a fresh clone carries none. Promote to `ready` only after the slice is re-run on the manifest pin and the lane emits a conforming S1 block (the current `S1_detection` also carries the `L` path class, which is not a mutation class)."
+      },
+      "owns": [
+        "S1",
+        "S8",
+        "S9",
+        "S12"
+      ],
+      "ready": false
     }
   },
   "na_reasons": {
