@@ -7,6 +7,32 @@ Keep each entry to: what changed, what number moved, what it proved.
 
 ---
 
+## 2026-09-24 — `mlir-linalg` M2-a: an inert `noop` made real; byte-identical emission is now a hard error
+
+`mutate.py` promises no silent no-op — when a perturbation lands on a dynamic
+axis it rebinds the concrete `dyn` value. But `_emit_pad` never read that
+binding: it returned the `tensor.pad` result, whose runtime leading extent is
+inferred. So M2.4 (`output-wrong-leading-extent`) on `pad`/dynamic emitted a
+module **byte-identical** to the clean kernel — a `noop` false success (§7.1)
+recorded as if it were a test. It was the only such cell: 126 `corrupts` + 2
+`noop` (one injection, both RTV modes) out of 128 records.
+
+- **Fix.** `_emit_pad` now sizes its result through `emit_empty(out_dims,
+  out_r)` and copies the padded data in — the pattern every other emitter uses —
+  so a wrong declared leading extent is a real defect. And a byte-identical
+  mutant module is now a hard `AssertionError` in both `cmd_minimal` and
+  `cmd_s12`, so an emitter-blind perturbation surfaces as a harness problem
+  instead of shrinking `N`.
+- **Numbers.** `M2-a` 7 real + 1 inert → **8/8**; records stay **128**, now
+  **all `corrupts`**. S1 `n_compile` 23 → **24**, `n_never` 41 → **40**. S12
+  drops `M2.4/dynamic` from the exercised-miss set.
+- **Stated side-effect.** The pad output buffer adds one bufferized identity
+  generic per pad kernel, so Σ kernel guards (S9) **348 → 364** (`pad`/
+  `pad_last` 12 → 16, `pad_mid`/`pad_r3` 16 → 20). The `low` lane is untouched,
+  and the number is not yet cited in the paper.
+- `run.sh all --small`: 128 mutant records, 0 gate failures; `minimal` and `s12`
+  both exit 0 with zero problems.
+
 ## 2026-09-24 — `triton` over-delivery trimmed; every family exactly 8 except M3-d
 
 `M3-a`/`M3-b`/`M3-h` were at 9 because each already owned a corpus kernel

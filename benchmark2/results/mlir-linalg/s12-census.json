@@ -6,8 +6,8 @@
   "n_mutants_rtv_off": 64,
   "reconciled": true,
   "tally": {
-    "flagged=false/fault=none/exercised=false": 23,
-    "flagged=false/fault=none/exercised=true": 41
+    "flagged=false/fault=none/exercised=false": 24,
+    "flagged=false/fault=none/exercised=true": 40
   },
   "unflagged_by_spec": {
     "M2.10/dynamic": {
@@ -27,13 +27,13 @@
     },
     "M2.15/dynamic": {
       "n": 4,
-      "instrumented_min": 17,
-      "instrumented_max": 19
+      "instrumented_min": 19,
+      "instrumented_max": 21
     },
     "M2.15/static": {
       "n": 4,
-      "instrumented_min": 17,
-      "instrumented_max": 19
+      "instrumented_min": 19,
+      "instrumented_max": 21
     },
     "M2.17/dynamic": {
       "n": 4,
@@ -49,11 +49,6 @@
       "n": 4,
       "instrumented_min": 20,
       "instrumented_max": 20
-    },
-    "M2.4/dynamic": {
-      "n": 1,
-      "instrumented_min": 17,
-      "instrumented_max": 17
     },
     "M2.5/dynamic": {
       "n": 5,

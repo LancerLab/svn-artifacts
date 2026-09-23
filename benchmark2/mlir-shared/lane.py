@@ -251,8 +251,8 @@ ALL_CATEGORIES = ["batch_norm", "concat", "conv2d", "elemwise_add", "embedding",
 # M1.1, layer_norm/dynamic M1.2, all RTV-off) have also produced a mixed
 # distribution at least once, but at p(noop)<=1/16 their flip probability is
 # <=1e-19: nondeterministic in the strict sense, stable in practice. The linalg
-# M2 battery has no such cell — its 120 records are all compile/never/n-a with
-# zero runtime outcomes, so nothing samples UB and it runs once. Both counts are
+# M2 battery has no such cell — its 128 records are all compile/never with zero
+# runtime outcomes, so nothing samples UB and it runs once. Both counts are
 # env-overridable for a quick check or a deeper pass.
 REPEAT = {"low": int(os.environ.get("M1_REPEAT", "16")),
           "linalg": int(os.environ.get("M2_REPEAT", "1"))}
@@ -638,6 +638,7 @@ class Lane:
                 for dynamic in (False, True):
                     shape = "dynamic" if dynamic else "static"
                     clean = C.make_case(cat, size=size, dynamic=dynamic)
+                    clean_src = self._emit_mutant(clean, clean, None)
                     for mut in self.cfg["specs"]:
                         if klass == "M1" and not m1_cell(cat, mut.spec_id):
                             continue
@@ -654,6 +655,11 @@ class Lane:
                             # cannot realize the defect on this category's rank
                             # (e.g. transposed-stride needs two axes to swap).
                             src = self._emit_mutant(mcase, clean, structural)
+                            if src == clean_src:
+                                raise AssertionError(
+                                    "emitter produced a module byte-identical "
+                                    "to the clean kernel -- the perturbation "
+                                    "is invisible to this surface")
                         except M.NotApplicable as exc:
                             # §6: n/a cells are counted and never re-balanced.
                             for rtv in (False, True):
@@ -869,6 +875,7 @@ class Lane:
                 for dynamic in (False, True):
                     shape = "dynamic" if dynamic else "static"
                     clean = C.make_case(cat, size=size, dynamic=dynamic)
+                    clean_src = self._emit_mutant(clean, clean, None)
                     for mut in self.cfg["specs"]:
                         if klass == "M1" and not m1_cell(cat, mut.spec_id):
                             continue
@@ -879,6 +886,11 @@ class Lane:
                         try:
                             mcase, structural = M.apply(clean, mut)
                             src = self._emit_mutant(mcase, clean, structural)
+                            if src == clean_src:
+                                raise AssertionError(
+                                    "emitter produced a module byte-identical "
+                                    "to the clean kernel -- the perturbation "
+                                    "is invisible to this surface")
                         except (M.NotApplicable, L.NotExpressible) as exc:
                             n_na += 1
                             log(f"  {cat:22s} {shape:8s} {mut.mutant_id:16s} "

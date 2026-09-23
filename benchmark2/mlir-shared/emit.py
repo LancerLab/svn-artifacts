@@ -1009,14 +1009,38 @@ def _emit_pad(e: Emitter, case: C.Case, st: Structural | None) -> tuple[str, str
     sentinel = e.new("c")
     e.emit(f"{sentinel} = arith.constant {f32_lit(C.PAD_SENTINEL)} : f32")
 
-    res = e.new("pd")
-    e.emit(f"{res} = tensor.pad {x} low[{', '.join(map(str, lows))}] "
+    pd = e.new("pd")
+    e.emit(f"{pd} = tensor.pad {x} low[{', '.join(map(str, lows))}] "
            f"high[{', '.join(map(str, highs))}] {{")
     e.indent += 1
     e.emit("^bb0(" + ", ".join(f"%i{k}: index" for k in range(nd)) + "):")
     e.emit(f"tensor.yield {sentinel} : f32")
     e.indent -= 1
     e.emit(f"}} : {inp_t} to {out_t}")
+
+    # Declare the result through a buffer sized by the harness-resolved extents
+    # and copy the padded data into it. `tensor.pad` infers its own runtime
+    # shape, so returning it directly would ignore `out_r` -- and a wrong
+    # declared leading extent (M2.4) on a dynamic axis would then emit a module
+    # byte-identical to the clean kernel, a `noop` false success. Sizing the
+    # buffer from `out_r`, as the other emitters do via `emit_empty`, makes that
+    # defect expressible. The copy is a plain identity generic so a mismatched
+    # runtime extent surfaces in the oracle's position-weighted checksum.
+    out = emit_empty(e, out_dims, out_r)
+    dims = ",".join(f"d{k}" for k in range(nd))
+    inmap = f"affine_map<({dims}) -> ({dims})>"
+    res = e.new("cp")
+    e.emit(f"{res} = linalg.generic {{")
+    e.indent += 1
+    e.emit(f"indexing_maps = [{inmap}, {inmap}],")
+    e.emit(f"iterator_types = [{iters_all_parallel(nd)}]")
+    e.indent -= 1
+    e.emit(f"}} ins({pd} : {out_t}) outs({out} : {out_t}) {{")
+    e.indent += 1
+    e.emit("^bb0(%v: f32, %o: f32):")
+    e.emit("linalg.yield %v : f32")
+    e.indent -= 1
+    e.emit(f"}} -> {out_t}")
     return res, out_t
 
 

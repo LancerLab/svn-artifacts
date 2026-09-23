@@ -14,23 +14,23 @@
     },
     "M2": {
       "n_injected": 64,
-      "n_compile": 23,
+      "n_compile": 24,
       "n_runtime": 0,
-      "n_never": 41,
+      "n_never": 40,
       "n_na": 0,
       "by_rtv": {
         "off": {
           "n_injected": 64,
-          "n_compile": 23,
+          "n_compile": 24,
           "n_runtime": 0,
-          "n_never": 41,
+          "n_never": 40,
           "n_na": 0
         },
         "on": {
           "n_injected": 64,
-          "n_compile": 23,
+          "n_compile": 24,
           "n_runtime": 0,
-          "n_never": 41,
+          "n_never": 40,
           "n_na": 0
         }
       },
@@ -101,10 +101,10 @@
       "elemwise_add": 10,
       "layer_normalization": 48,
       "matmul": 14,
-      "pad": 12,
-      "pad_last": 12,
-      "pad_mid": 16,
-      "pad_r3": 16,
+      "pad": 16,
+      "pad_last": 16,
+      "pad_mid": 20,
+      "pad_r3": 20,
       "relu": 6,
       "reshape": 15,
       "reshape_r3": 20,
@@ -115,7 +115,7 @@
       "transpose_cube": 6,
       "transpose_square": 6
     },
-    "total": 348,
+    "total": 364,
     "criterion_ref": "RTV-generated cf.assert at loc(kernel); loc(oracle) guards excluded (folding them in inflated S9 by ~17% overall, ~67% on relu)",
     "note": "never summed with the other MLIR lane's remainder (mutation-specs.md \u00a77): the low lane's kernels are hand-tiled with an explicit boundary guard, so their guard structure is not comparable"
   },
@@ -124,9 +124,9 @@
       "flagged_and_exercised": 0,
       "total": 64,
       "flagged": 0,
-      "exercised": 41,
+      "exercised": 40,
       "not_instrumented": 0,
-      "rejected_before_run": 23,
+      "rejected_before_run": 24,
       "misses": {
         "M2.10/dynamic": {
           "n": 2,
@@ -145,13 +145,13 @@
         },
         "M2.15/dynamic": {
           "n": 4,
-          "instrumented_min": 17,
-          "instrumented_max": 19
+          "instrumented_min": 19,
+          "instrumented_max": 21
         },
         "M2.15/static": {
           "n": 4,
-          "instrumented_min": 17,
-          "instrumented_max": 19
+          "instrumented_min": 19,
+          "instrumented_max": 21
         },
         "M2.17/dynamic": {
           "n": 4,
@@ -167,11 +167,6 @@
           "n": 4,
           "instrumented_min": 20,
           "instrumented_max": 20
-        },
-        "M2.4/dynamic": {
-          "n": 1,
-          "instrumented_min": 17,
-          "instrumented_max": 17
         },
         "M2.5/dynamic": {
           "n": 5,
@@ -478,12 +473,12 @@
     "delta_vs_target": 24,
     "by_rtv": {
       "off": {
-        "compile": 23,
-        "never": 41
+        "compile": 24,
+        "never": 40
       },
       "on": {
-        "compile": 23,
-        "never": 41
+        "compile": 24,
+        "never": 40
       }
     },
     "battery_size": "small",
