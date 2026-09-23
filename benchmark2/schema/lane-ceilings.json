@@ -77,6 +77,11 @@
       "ceiling": 8,
       "kind": "avoided",
       "basis": "zero step: a step of 0 is stateable as `tl.static_range(0, BLOCK, 0)`, which the frontend evaluates eagerly and REFUSES at trace -- `CompilationError: ValueError('range() arg 3 must not be zero')` (probe_step0b, 2026-09-24). That is a created, non-inert mutant whose outcome is a compile refusal, so the family is `avoided` (host ruling 2026-09-24; outcome `compile`, manifest `corrupts`). The construct matters: plain `range(0, K, 0)` does NOT refuse -- it lowers to `scf.for ... step 0` and HANGS on device (probe_lb F / probe_step0_run: launch succeeds, `cudaDeviceSynchronize` never returns) -- so the `avoided` realisation uses `static_range`. REALISED 8/8 on `mutants/loop_bound.py` families 40..47 (M4.5), all CompilationError."
+    },
+    "M4-g": {
+      "ceiling": 8,
+      "kind": "unchecked",
+      "basis": "degenerate pad: the padded extent is a source value -- the loop bound is derived from the pad (`ext = N + 2*PAD - KERNEL + 1`), so a pad that drives `ext` negative (M4.7) or to zero (M4.8) is stateable in Triton source and LEGAL: `range(0, ext)` iterates emptily and the kernel runs to completion with its output untouched (pad_bound probe, 2026-09-24: all 8 families run=ok out=diff, oracle=diff, manifest=corrupts). Triton emits no `LoopBound` obligation, so the state is silently accepted: `unchecked`, NOT `u` -- the family's realisations M4.7/M4.8 are `rt-check` in choreo, and a mutation-only kernel may carry the state on a lane whose surface authors no padded extent (channels/README.md). REALISED 8/8 on `mutants/pad_bound.py` families 1..8 (four loop shapes x two pad degeneracies; 1..4 negpad -> M4.7, 5..8 emptypad -> M4.8)."
     }
   }
 }

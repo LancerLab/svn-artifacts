@@ -17,18 +17,18 @@ ONE COMPOSITION MODEL, for every lane. `N_per_family = 8`, so
   planned(lane, class) = 8 x (families of that class in scope for that lane)
 which is `method_taxonomy.target()` -- check-enforced against `target` below.
 A lane's class cell differs from the declared cell for exactly two reasons:
-  (1) the class's family count -- M4 declares 7 families, so its cell is 56
-      in every lane, not 64;
+  (1) the class's family count -- M4 declares 7 testable families, so its cell
+      is 56 in every lane, not 64;
   (2) that lane's `lane_scope` carve-outs -- each removes one family, worth
-      exactly 8. choreo has none; triton drops M3-b/M3-g (M3 64 -> 48);
-      iree drops M2-e/f/g/h (M2 64 -> 32).
+      exactly 8. No lane carries a carve-out today; a whole-class absence is
+      `in_scope_lanes` instead (triton has no M2, mlir-low no M2/M3).
 The five lanes sum to `targets.total` exactly (choreo 64+64+64+56 = 248,
-triton 64+48+56 = 168, mlir-low 64+56 = 120, mlir-linalg 64+56 = 120,
-iree 32+56 = 88; total 744). Reproduce that sum and the model is right.
+triton 64+64+56 = 184, mlir-low 64+56 = 120, mlir-linalg 64 = 64,
+iree 64 = 64; total 680). Reproduce that sum and the model is right.
 
 SEPARATE AND WEAKER: `class-axis.json` `n_target_per_class = 40`. That is the
 mlir collectors' own internal per-class gate, NOT a budget -- mlir-low clears it
-(48 >= 40) while still sitting under its M1 cell of 64. Never use it as a
+(64 >= 40) while still sitting under its M1 cell of 64. Never use it as a
 coverage denominator. The mlir lanes are additionally not distributed across
 their class's 8 families (mlir-low's M1 work lands on 4 categories), which is
 why section 4 prints them as raw counts rather than /8.
@@ -146,9 +146,10 @@ def planned(lane, family):
     cls = FAM_CLASS.get(family)
     if not cls or lane not in IN_SCOPE.get(cls, []):
         return 0
-    # `prohibition: "absent"` is a FAMILY declaration (M4-g): no lane can carry
-    # it, so it leaves every lane's cell. Distinct from a lane_scope carve-out,
-    # which is per (lane, family).
+    # `prohibition: "absent"` is a FAMILY declaration: no lane can carry it, so
+    # it leaves every lane's cell. Distinct from a lane_scope carve-out, which
+    # is per (lane, family). No family uses it today (M4-g was restored
+    # 2026-09-24); kept for a future withdrawal.
     if FAMILIES.get(family, {}).get("prohibition") == "absent":
         return 0
     if LANE_SCOPE.get(lane, {}).get(family) in ("derived", "absent"):
@@ -281,12 +282,13 @@ def main():
       "and it is check-enforced. The five lanes sum to %d." %
       TARGETS.get("total", 0))
     w(">")
+    _m4_b = BUDGET.get("classes", {}).get("M4", {})
     w("> A lane's class cell differs from the declared cell for exactly two "
       "reasons, and only two: **(1)** the class's own testable family count "
-      "(M4 has 6 -- `M4-g` is declared absent -- so M4's cell is 48 "
-      "everywhere, not 64), and "
+      "(M4 declares %d testable families, so M4's cell is %d, not 64), and "
       "**(2)** that lane's `lane_scope` carve-outs, each worth exactly 8. "
-      "With no carve-outs an in-scope cell is the full declared cell.")
+      "With no carve-outs an in-scope cell is the full declared cell." %
+      (_m4_b.get("families", 7), _m4_b.get("cell", 56)))
     w(">")
     w("> **Separate and weaker: `n_target_per_class = 40`** "
       "(`class-axis.json`). That is the mlir collectors' own internal "
@@ -393,7 +395,7 @@ def main():
                 cells.append(mark(fam_lane_cls[lane].get(cls, 0), plan))
         w("| **%s** | %d | %s |" % (cls, cell, " | ".join(cells)))
     w("")
-    _m4_cell = BUDGET.get("classes", {}).get("M4", {}).get("cell", 48)
+    _m4_cell = BUDGET.get("classes", {}).get("M4", {}).get("cell", 56)
 
     def _cls_count(lane, cls):
         if lane == "choreo":
@@ -404,12 +406,13 @@ def main():
 
     _m4_lanes = [l for l in LANES if l in IN_SCOPE.get("M4", [])]
     w("**Bottom line: M4 is measured only where the program authors a loop "
-      "bound** \u2014 `%s`. `M4-g` is declared absent (nothing can forbid the "
-      "degenerate pad), so the M4 cell is 6 \u00d7 8 = %d, not 56; and "
-      "`mlir-linalg`/`iree` derive their iteration bound from the operand "
-      "domain, so M4 is `uncompared` there (`derived`) and the column shows "
-      "`n/a`. Current M4 instances: %s." % (
-          "`, `".join(_m4_lanes), _m4_cell,
+      "bound** \u2014 `%s`. M4 declares %d testable families, so its cell is "
+      "%d; and `mlir-linalg`/`iree` derive their iteration bound from the "
+      "operand domain, so M4 is `uncompared` there (`derived`) and the column "
+      "shows `n/a`. Current M4 instances: %s." % (
+          "`, `".join(_m4_lanes),
+          BUDGET.get("classes", {}).get("M4", {}).get("families", 7),
+          _m4_cell,
           ", ".join("`%s` %d/%d" % (l, _cls_count(l, "M4"), _m4_cell)
                     for l in _m4_lanes)))
     w("")
@@ -420,10 +423,11 @@ def main():
       "in any lane carrying `M1.6` or `M1.7`.")
     w("")
     w("`cell` is from `method-taxonomy.json` `budget` (8 families \u00d7 8; M4 "
-      "is 6 \u00d7 8 = 48, since `M4-g` is declared absent) and is the "
+      "declares %d testable families, so its cell is %d) and is the "
       "denominator for **every** lane. `lane_scope` carve-outs are cleared, so "
       "where a lane shows less than the cell it is a real shortfall, not a "
-      "pre-excluded family.")
+      "pre-excluded family." %
+      (BUDGET.get("classes", {}).get("M4", {}).get("families", 7), _m4_cell))
     w("")
 
     # ------------------------------------------------------------- 4. families

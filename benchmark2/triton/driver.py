@@ -255,6 +255,10 @@ MUTANTS = {
     # negative bound, run-time-zero bound, empty space (extent 0), reversed
     # bound, zero step (static_range refusal).
     "loop_bound": ("loop_bound", "M4", "stride", list(range(1, 48))),
+    # mutation-only padded-extent surface: M4-g (M4.7/M4.8), families 1..8 in
+    # two pad-degeneracy groups (mutants/pad_bound.py): negative padded extent,
+    # empty padded extent.
+    "pad_bound": ("pad_bound", "M4", "stride", list(range(1, 9))),
     "conv2d": ("conv2d", "M3", "hw", []),
     # carrier-only categories: M1.19 is a generator setting (huge extent), not a
     # source edit, so these hold only family 19 and are not re-run by `minimal`.
@@ -387,6 +391,10 @@ SPEC_ID = {
     **{(("loop_bound", f)): "M4.4" for f in range(25, 32)},
     **{(("loop_bound", f)): "M1.7" for f in range(32, 40)},
     **{(("loop_bound", f)): "M4.5" for f in range(40, 48)},
+    # pad_bound: M4-g (degenerate pad) over families 1..8, four shapes x two
+    # pad degeneracies; 1..4 negpad -> M4.7, 5..8 emptypad -> M4.8.
+    **{(("pad_bound", f)): ("M4.7" if f <= 4 else "M4.8")
+       for f in range(1, 9)},
     ("relu", 141): "M1.14",   # second M1.14 realisation (dest tile coord)
     ("softmax", 141): "M1.14",  # second M1.14 realisation (source tile coord)
     ("transpose", 141): "M1.14",  # second M1.14 realisation (dest tile coord)

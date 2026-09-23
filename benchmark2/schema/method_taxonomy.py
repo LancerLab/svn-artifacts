@@ -39,8 +39,10 @@ body of gates `families.partition` and `families.no-shared-instance` of
 
 `spec_ids: []` is legal only for a family declared `prohibition: "absent"`:
 it has no realisation the model can forbid, so it is withdrawn from the cell
-rather than reported as work (M4-g). R_f == 0 on a family that is NOT declared
-absent is still reported, never hidden.
+rather than reported as work. No family carries that declaration today (M4-g,
+the former case, was restored 2026-09-24), but the mechanism is kept for a
+future withdrawal. R_f == 0 on a family that is NOT declared absent is still
+reported, never hidden.
 """
 from __future__ import annotations
 
@@ -133,12 +135,14 @@ def is_absent(family: str) -> bool:
     forbid the state, so NO operator it could carry may ever enter a
     denominator. It is a declaration, not work.
 
-    M4-g (degenerate pad) is the only such family. Its trigger (M2.12) is
-    `avoided`/repaired and no re-realisation exists, so the family is withdrawn
-    by `prohibition: "absent"`. An absent family is excluded from its class cell
-    and from every lane's target -- reporting it as an 0/8 shortfall would send
-    the reader after instances that cannot be a test (method_taxonomy --check
-    owns the arithmetic; `m4.md` section 6 owns the decision).
+    No family is declared absent today: M4-g (degenerate pad) was the only one,
+    and it was restored to the cell on 2026-09-24 (its realisations M4.7/M4.8
+    are `rt-check`, and a mutation-only kernel may carry the state). The
+    mechanism is kept for a future withdrawal. An absent family is excluded
+    from its class cell and from every lane's target -- reporting it as an 0/8
+    shortfall would send the reader after instances that cannot be a test
+    (method_taxonomy --check owns the arithmetic; `m4.md` section 6 owns the
+    decision).
     """
     return _FAM[family].get("prohibition") == "absent"
 
@@ -281,7 +285,7 @@ def summary(registry: dict) -> dict[str, list[str]]:
 
     Four groups need four different actions and must not be merged:
 
-      no_declaration  the family declares no spec at all -- invent one (M4-g)
+      no_declaration  the family declares no spec at all -- invent one
       unrealisable_as_declared
                       every declared spec is on AVOIDED, so the compiler refuses the
                       state: a NEW realisation is needed, not the declared one

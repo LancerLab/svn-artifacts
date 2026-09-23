@@ -1509,7 +1509,8 @@ def family_instances(family: str) -> list[str]:
     if T.is_absent(family):
         # A family declared `prohibition: absent` has no prohibition and no
         # realisation, so no lane carries an instance requirement for it. It
-        # is not "0 of 8": it is out of every cell (M4-g).
+        # is not "0 of 8": it is out of every cell. No family carries that
+        # declaration today (M4-g was restored 2026-09-24).
         return []
     cls = T._FAM[family]["class"]
     n = T.N_PER_FAMILY
@@ -1569,7 +1570,8 @@ def class_instances(cls: str) -> list[str]:
     g = gid(cls, "instances")
     fams = T.families_of(cls)
     # An absent family is declared, not work: it carries no instance
-    # requirement and is not in the cell (M4-g).
+    # requirement and is not in the cell. No family is absent today (M4-g was
+    # restored 2026-09-24).
     live = [f for f in fams if not T.is_absent(f)]
     cell = len(live) * T.N_PER_FAMILY
     bad: list[str] = []

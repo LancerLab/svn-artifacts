@@ -66,7 +66,7 @@ def fams_all(rows):
     """Every family the taxonomy declares -- the plan's domain.
 
     Deliberately not `{r['family'] for r in rows}`: a family missing from the
-    worklist because *no* lane has a row for it (M4-g) must still appear, or its
+    worklist because *no* lane has a row for it must still appear, or its
     absence reads as "nothing to do".
     """
     return list(GD.FAMILIES)

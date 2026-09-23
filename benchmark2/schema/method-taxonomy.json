@@ -16,7 +16,7 @@
     "kernel_component": 4,
     "realisation_component": 2,
     "admissible_floor_per_class": 35,
-    "floor_rationale": "A class cell is 8 families x 8 = 64 (M4: 6 testable families x 8 = 48; M4-g is declared absent and is not in the cell). 64 absorbs a 45% noop attrition and still clears 35 admissible. A family with N = 4 would put the cell at 32 and fail the floor, which is why N is not lowered to fit the current R_f.",
+    "floor_rationale": "A class cell is 8 families x 8 = 64 (M4: 7 testable families x 8 = 56; M4-g is restored to the cell as of 2026-09-24). 64 absorbs a 45% noop attrition and still clears 35 admissible. A family with N = 4 would put the cell at 32 and fail the floor, which is why N is not lowered to fit the current R_f.",
     "classes": {
       "M1": {
         "families": 8,
@@ -31,8 +31,8 @@
         "cell": 64
       },
       "M4": {
-        "families": 6,
-        "cell": 48
+        "families": 7,
+        "cell": 56
       }
     }
   },
@@ -57,7 +57,7 @@
       "mlir-low"
     ]
   },
-  "lane_scope_note": "Scope is PER (class x lane x FAMILY), not per (class x lane). in_scope_lanes says which classes a lane runs AT ALL -- that is where a whole-class absence belongs, and it is deliberately NOT restated here. lane_scope says only which individual families INSIDE an in-scope class the lane's surface cannot express; a family listed there is n/a with the prohibition named and is excluded from the lane's denominator. Omitting a family means it is in scope. Decision 2026-09-22: carve-outs are CLEARED -- every in-scope family is targeted at N_PER_FAMILY (8), matching choreo, and no family is excluded from a lane's denominator as derived/absent. A family that cannot in practice be realised is reported as short with its blocker, not pre-excluded. (This restores triton M3 to 8 families and iree M2 to 8: triton 112->128, iree 32->64, total 520->568.) Decision 2026-09-23: M4 is no longer choreo-only -- in_scope_lanes.M4 names all five lanes, so every lane targets M4's 6 testable families. M4-g is withdrawn by `prohibition: \"absent\"` (nothing can forbid the degenerate pad; M2.12 is `avoided`/repaired) and leaves the cell, so the M4 cell is 6x8=48, not 56, in every lane: choreo 248->240, triton 128->176, mlir-low 64->112, mlir-linalg 64->112, iree 64->112, total 568->752.) Decision 2026-09-23 (same day, revised): M4 is NOT enabled on mlir-linalg/iree. A `linalg.generic`/IREE structured op derives its iteration bound from the operand domain, so the program authors no bound value and M4's detection families (zero/negative/reversed bound, zero step) are inexpressible there -- the prohibition is `derived`. Those lanes hold M4 at `uncompared` and emit no cell; the class is measured only on the program-authored-loop lanes choreo, triton, mlir-low. in_scope_lanes.M4 is therefore the three of them, and mlir-linalg/iree return to their M2-only target: mlir-linalg 112->64, iree 112->64, total 752->656.)",
+  "lane_scope_note": "Scope is PER (class x lane x FAMILY), not per (class x lane). in_scope_lanes says which classes a lane runs AT ALL -- that is where a whole-class absence belongs, and it is deliberately NOT restated here. lane_scope says only which individual families INSIDE an in-scope class the lane's surface cannot express; a family listed there is n/a with the prohibition named and is excluded from the lane's denominator. Omitting a family means it is in scope. Decision 2026-09-22: carve-outs are CLEARED -- every in-scope family is targeted at N_PER_FAMILY (8), matching choreo, and no family is excluded from a lane's denominator as derived/absent. A family that cannot in practice be realised is reported as short with its blocker, not pre-excluded. (This restores triton M3 to 8 families and iree M2 to 8: triton 112->128, iree 32->64, total 520->568.) Decision 2026-09-23: M4 is no longer choreo-only -- in_scope_lanes.M4 names all five lanes, so every lane targets M4's 6 testable families. M4-g is withdrawn by `prohibition: \"absent\"` (nothing can forbid the degenerate pad; M2.12 is `avoided`/repaired) and leaves the cell, so the M4 cell is 6x8=48, not 56, in every lane: choreo 248->240, triton 128->176, mlir-low 64->112, mlir-linalg 64->112, iree 64->112, total 568->752.) Decision 2026-09-23 (same day, revised): M4 is NOT enabled on mlir-linalg/iree. A `linalg.generic`/IREE structured op derives its iteration bound from the operand domain, so the program authors no bound value and M4's detection families (zero/negative/reversed bound, zero step) are inexpressible there -- the prohibition is `derived`. Those lanes hold M4 at `uncompared` and emit no cell; the class is measured only on the program-authored-loop lanes choreo, triton, mlir-low. in_scope_lanes.M4 is therefore the three of them, and mlir-linalg/iree return to their M2-only target: mlir-linalg 112->64, iree 112->64, total 752->656.) Decision 2026-09-24: M4-g (degenerate pad) is RESTORED to the cell. The withdrawal above is reversed: the family carries R_f=2/R_a=2 (choreo M4.7 `negpad` / M4.8 `emptypad`, both `rt-check`), and a new mutation-only kernel is always allowed (channels/README.md), so a lane whose surface does not author a padded extent may still state the degenerate-pad state on its own surface. M4-g therefore leaves the absent set and enters the cell, so the M4 cell is 7x8=56, not 48: choreo 240->248, triton 176->184, mlir-low 112->120, total 656->680.",
   "lane_scope": {
     "choreo": {},
     "triton": {},
@@ -76,12 +76,12 @@
   },
   "targets_note": "Planned total per lane = N x (number of families in scope for that lane). Generated by method_taxonomy.target(); do not hand-edit -- method_taxonomy --check fails if these disagree with the scope model.",
   "targets": {
-    "choreo": 240,
-    "triton": 176,
-    "mlir-low": 112,
+    "choreo": 248,
+    "triton": 184,
+    "mlir-low": 120,
     "mlir-linalg": 64,
     "iree": 64,
-    "total": 656
+    "total": 680
   },
   "outcomes": {
     "avoided": "the model derives/restores the invariant, or routes around the state. No legal mutant.",
@@ -433,7 +433,6 @@
       "name": "degenerate pad",
       "edit": "A padded extent goes negative or empty -- the negative-padding trigger named by the torch.compile study",
       "view": false,
-      "prohibition": "absent",
       "spec_ids": [
         "M4.7",
         "M4.8"
@@ -454,7 +453,7 @@
     "M2.12": {
       "from": "M2-c",
       "to": null,
-      "why": "Rank mismatch through .pad is `avoided` / prohibition `repaired`, so it is NEVER generated and cannot be a realisation. Its negative-padding trigger was re-realised as M4-g; M4-g is now withdrawn (`prohibition: \"absent\"`) because the model declares no prohibition for a degenerate pad, so the trigger can produce no admissible test."
+      "why": "Rank mismatch through .pad is `avoided` / prohibition `repaired`, so it is NEVER generated and cannot be a realisation. Its negative-padding trigger was re-realised as M4-g. M4-g was briefly withdrawn (`prohibition: \"absent\"`, 2026-09-23) on the reading that no prohibition forbids a degenerate pad; that withdrawal was REVERSED 2026-09-24 -- M4-g's own realisations M4.7/M4.8 are `rt-check`, and a new mutation-only kernel is always allowed, so the trigger is a live, testable family."
     }
   },
   "split": {

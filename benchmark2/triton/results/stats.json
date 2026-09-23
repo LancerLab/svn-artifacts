@@ -9,10 +9,10 @@
    "n_na": 0
   },
   "M4": {
-   "n_injected": 48,
+   "n_injected": 56,
    "n_compile": 8,
    "n_runtime": 0,
-   "n_never": 40,
+   "n_never": 48,
    "n_na": 0
   },
   "M3": {
