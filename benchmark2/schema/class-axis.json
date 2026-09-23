@@ -379,12 +379,12 @@
     "cutlass": {
       "display": "CUTLASS/CuTe",
       "status": {
-        "M1": "not_ready",
-        "M2": "not_ready",
-        "M3": "not_ready",
-        "M4": "not_ready"
+        "M1": "uncompared",
+        "M2": "uncompared",
+        "M3": "measured",
+        "M4": "measured"
       },
-      "stats_key": null,
+      "stats_key": "S1_detection",
       "stats_paths": [
         "results/cutlass/stats.json"
       ],
@@ -417,7 +417,7 @@
             ]
           }
         ],
-        "note": "Candidate lane held at `not_ready`. `results/cutlass/stats.json` is a dev-host (sm_86, not the manifest sm_120 pin) vertical slice with `lane_phase: vertical-slice` and `complete: false`; the raw corpora (`cutlass/records*.jsonl`) are committed as v2.1 mutant records, so a fresh clone reproduces `stats.json` without a GPU and `cutlass/run.sh verify` re-derives S1 from them. `S1_detection` carries the M3/M4 mutation classes only; the `L` path class is reported under `S1_path_class` and M1/M2 are declared under `S1_declared_uncompared`. Promote to `ready` only after the slice is re-run on the manifest pin and family manifests are emitted."
+        "note": "CUTLASS/CuTe lane, PROMOTED on the sm_86 dev host: 15 operators gated against CPU references plus a launch-time M4/L battery and a compile-only M3 probe battery, all emitted as v2.1 mutant records by cutlass/mutrec.py. M3/M4 are `measured`; M1 (element access) and M2 (shape contract) are `uncompared` -- the CuTe surface can express them, so they are NOT `n/a`; they are out of this lane's M3/M4 remit and carry no S1 cell (declared in `S1_declared_uncompared`). The M3 outcomes are COMPILE-ONLY (sm_90a TMA/GMMA probes were compiled, not run, on sm_86); the manifest pin is 2xH800 sm_120, so an sm_120 re-run is pending and the lane keeps `complete: false` in its own stats."
       },
       "owns": [
         "S1",
@@ -425,7 +425,7 @@
         "S9",
         "S12"
       ],
-      "ready": false
+      "ready": true
     }
   },
   "na_reasons": {

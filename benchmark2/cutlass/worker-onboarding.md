@@ -63,12 +63,18 @@ deferred to a post-deadline extension.
 5. **R-CUT5 (cost):** nvcc + CuTe compile times are seconds-to-minutes per
    mutant; the 16-category × mutation grid must be parallelized.
 
-## 4. Questions for the coordinator
+## 4. Questions for the coordinator (answered 2026-09-23)
 
 - **Q1:** confirm M3/M4-only remit for this lane, and that a surface that
   "does not detain" a constraint is reported `unchecked`/`avoided` (never a miss).
+  **Answered:** yes — M3/M4-only remit. M1/M2 are `uncompared` (the CuTe surface
+  *can* express them, so they are **not** `n/a`); they carry no S1 cell and are
+  declared in `S1_declared_uncompared`.
 - **Q2:** confirm the arch disclosure wording for `sm_86` vs the `sm_90` final
   host, and whether TMA-family cells may be reported `unexpressible (arch)`.
+  **Answered:** `sm_86` is acceptable for this slice and `sm_120` will be
+  enabled; the `sm_90` box is down, so the `sm_90a` probe pairs are
+  **compile-only** — make them pass compilation, do not wait to run them.
 
 ## 5. Immediate next actions
 
@@ -78,6 +84,11 @@ deferred to a post-deadline extension.
 3. M3 + M4 mutation batteries → raw → collect → stats.
 
 ## 6. Status — vertical slice (2026-09-23)
+
+**Axis:** promoted to `ready` — M3/M4 `measured`, M1/M2 `uncompared` (out of the
+lane's M3/M4 remit; expressible on this surface, so not `n/a`), `stats_key`
+`S1_detection`, both corpus paths declared at release `v2.1`. `complete: false`
+stays until the `sm_120` re-run.
 
 **Done and verified:**
 

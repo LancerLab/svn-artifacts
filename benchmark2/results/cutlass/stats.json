@@ -36,17 +36,20 @@
     }
   },
   "S1_declared_uncompared": {
-    "classes": [],
+    "classes": [
+      "M1",
+      "M2"
+    ],
     "reason": "The CuTe surface can express element-access (M1) and shape-contract (M2) mutations, but this candidate lane has only been run against M3/M4. M1 and M2 are unmeasured, not inexpressible: they carry no S1 cell."
   },
   "S1_class_axis": {
     "source": "schema/class-axis.json",
     "axis_version": "v2.1",
     "status": {
-      "M1": "not_ready",
-      "M2": "not_ready",
-      "M3": "not_ready",
-      "M4": "not_ready"
+      "M1": "uncompared",
+      "M2": "uncompared",
+      "M3": "measured",
+      "M4": "measured"
     },
     "sampled": {
       "M1": false,

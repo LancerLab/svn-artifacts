@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """collect.py — fold lane.py records into results/stats.json (spec §8 shape).
 
-This lane is a VERTICAL SLICE: only the realizable mutation battery has been
-run. `complete` is therefore false and the lane is held at `not_ready` in the
-class axis; downstream renderers must not read these cells as a finished
-measurement.
+This lane is an sm_86 vertical slice: only the realizable mutation battery has
+been run and the arch-pinned M3 probes are compile-only, so `complete` is false.
+It is `ready` in the class axis with M3/M4 `measured` and M1/M2 `uncompared`.
 
 Input records are the v2.1 shape written by mutrec.py: `outcome` is
 `compile|runtime|never|n/a`, `class` is the mutation class (M3/M4) and
@@ -96,9 +95,8 @@ def main(records_path, out_dir):
             "source": "schema/class-axis.json",
             "axis_version": "v2.1",
             # legal axis vocabulary only (measured|n/a|uncompared|not_ready):
-            # the lane is held at not_ready in the axis until it is promoted.
-            "status": {"M1": "not_ready", "M2": "not_ready",
-                       "M3": "not_ready", "M4": "not_ready"},
+            # read from the axis so the lane-local copy cannot drift from it.
+            "status": AX.lane_status(LANE),
             # lane-local phase detail; `S1_detection` holds the only M3/M4 cells.
             "sampled": {"M1": False, "M2": False, "M3": True, "M4": True},
         },
