@@ -8,8 +8,28 @@ renderers must not read these cells as a finished measurement.
 
 import json
 import os
+import sys
 
 SPEC_VERSION = "v2.1"
+
+# The mutation-class axis is the ONE definition (`schema/class-axis.json`), not a
+# literal here. `axis.no-restated-tuples` forbids restating the class sequence
+# outside `schema/`; the uncompared declaration is read from the axis so it
+# follows the lane's status instead of drifting from it.
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # benchmark2/
+if ROOT not in sys.path:
+    sys.path.insert(0, ROOT)
+from schema import class_axis as AX                              # noqa: E402
+
+LANE = "cutlass"
+
+# M1 (element access) and M2 (shape contract) are expressible on the CuTe
+# surface but this candidate lane has never been run against them: when the axis
+# marks them `uncompared` they are declared here, NOT reported as `n/a`. The
+# distinction is load-bearing (`check_class_axis` g6): an unmeasured class must
+# be absent from S1 and declared here, while an inexpressible class would be
+# reported as `n/a` with a note.
+UNCOMPARED_CLASSES = AX.uncompared_classes(LANE)
 
 
 def class_of(spec_id):
@@ -34,23 +54,29 @@ def main(records_path, out_dir):
     classes = {"M3": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
                           n_discarded_noop=0),
                "M4": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
-                          n_discarded_noop=0),
-               "L": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
-                         n_discarded_noop=0)}
+                          n_discarded_noop=0)}
+    # `L` is a path class, not a mutation class: it must not appear in
+    # `S1_detection` (which is keyed by M1..M4 only). It is reported separately.
+    path_classes = {"L": dict(n_injected=0, n_compile=0, n_runtime=0,
+                              n_never=0, n_discarded_noop=0)}
     for r in recs:
         c = class_of(r["spec_id"])
-        classes.setdefault(c, dict(n_injected=0, n_compile=0, n_runtime=0,
-                                   n_never=0, n_discarded_noop=0))
-        classes[c]["n_injected"] += 1
+        if c == "L":
+            bucket = path_classes["L"]
+        else:
+            classes.setdefault(c, dict(n_injected=0, n_compile=0, n_runtime=0,
+                                       n_never=0, n_discarded_noop=0))
+            bucket = classes[c]
+        bucket["n_injected"] += 1
         o = r["outcome"]
         if o == "ct-check":
-            classes[c]["n_compile"] += 1
+            bucket["n_compile"] += 1
         elif o == "rt-check":
-            classes[c]["n_runtime"] += 1
+            bucket["n_runtime"] += 1
         elif o == "unchecked":
-            classes[c]["n_never"] += 1
+            bucket["n_never"] += 1
         elif o == "noop":
-            classes[c]["n_discarded_noop"] += 1
+            bucket["n_discarded_noop"] += 1
 
     stats = {
         "toolchain": "cutlass",
@@ -61,11 +87,23 @@ def main(records_path, out_dir):
                  "cutlass": "v4.2.1",
                  "note": "dev host; manifest.md §2 pins 2xH800 sm_120"},
         "S1_detection": classes,
+        "S1_path_class": path_classes,
+        "S1_declared_uncompared": {
+            "classes": UNCOMPARED_CLASSES,
+            "reason": ("The CuTe surface can express element-access (M1) and "
+                       "shape-contract (M2) mutations, but this candidate lane "
+                       "has only been run against M3/M4. M1 and M2 are "
+                       "unmeasured, not inexpressible: they carry no S1 cell."),
+        },
         "S1_class_axis": {
             "source": "schema/class-axis.json",
             "axis_version": "v2.1",
-            "status": {"M1": "n/a", "M2": "uncompared", "M3": "partial",
-                       "M4": "partial"},
+            # legal axis vocabulary only (measured|n/a|uncompared|not_ready):
+            # the lane is held at not_ready in the axis until it is promoted.
+            "status": {"M1": "not_ready", "M2": "not_ready",
+                       "M3": "not_ready", "M4": "not_ready"},
+            # lane-local phase detail; `S1_detection` holds the only M3/M4 cells.
+            "sampled": {"M1": False, "M2": False, "M3": True, "M4": True},
         },
         "notes": [
             "vertical slice: launch-time M4/L battery + compile-only M3 probe battery",
@@ -91,6 +129,10 @@ def main(records_path, out_dir):
             "M3.16 (symbolic leading dim) is unexpressible: make_tma_copy "
             "requires static box shapes",
             "n_discarded_noop counts admissible noop controls (e.g. M4.4)",
+            "`L` (launch-status) is a path class, not a mutation class: its "
+            "cells live under `S1_path_class`, never in `S1_detection`",
+            "M1/M2 are declared uncompared in `S1_declared_uncompared`; they "
+            "carry no S1 cell because the lane was never run against them",
         ],
         "records": len(recs),
     }
@@ -99,7 +141,7 @@ def main(records_path, out_dir):
     with open(path, "w") as f:
         json.dump(stats, f, indent=2)
     print(f"[collect] wrote {path}  ({len(recs)} records)")
-    for c, v in classes.items():
+    for c, v in list(classes.items()) + list(path_classes.items()):
         print(f"[collect] {c}: injected={v['n_injected']} "
               f"compile={v['n_compile']} runtime={v['n_runtime']} "
               f"never={v['n_never']} noop={v['n_discarded_noop']}")
