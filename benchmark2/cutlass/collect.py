@@ -3,10 +3,10 @@
 
 This lane is an sm_86 vertical slice: only the realizable mutation battery has
 been run and the arch-pinned M3 probes are compile-only, so `complete` is false.
-It is `ready` in the class axis with M3/M4 `measured` and M1/M2 `uncompared`.
+It is `ready` in the class axis with M1/M3/M4 `measured` and M2 `uncompared`.
 
 Input records are the v2.1 shape written by mutrec.py: `outcome` is
-`compile|runtime|never|n/a`, `class` is the mutation class (M3/M4) and
+`compile|runtime|never|n/a`, `class` is the mutation class (M1/M3/M4) and
 `path_class` says how the defect was met. `L` is a path class, not a mutation
 class, so those records are routed to `S1_path_class`, never `S1_detection`.
 """
@@ -28,27 +28,31 @@ from schema import class_axis as AX                              # noqa: E402
 
 LANE = "cutlass"
 
-# M1 (element access) and M2 (shape contract) are expressible on the CuTe
-# surface but this candidate lane has never been run against them: when the axis
-# marks them `uncompared` they are declared here, NOT reported as `n/a`. The
-# distinction is load-bearing (`check_class_axis` g6): an unmeasured class must
-# be absent from S1 and declared here, while an inexpressible class would be
-# reported as `n/a` with a note.
+# M2 (shape contract) is expressible on the CuTe surface but this candidate lane
+# has never been run against it: when the axis marks it `uncompared` it is
+# declared here, NOT reported as `n/a`. The distinction is load-bearing
+# (`check_class_axis` g6): an unmeasured class must be absent from S1 and
+# declared here, while an inexpressible class would be reported as `n/a` with a
+# note.
 UNCOMPARED_CLASSES = AX.uncompared_classes(LANE)
 
 
 def main(records_path, out_dir):
     recs = []
     paths = [records_path]
-    m3 = os.path.join(os.path.dirname(os.path.abspath(records_path)), "records_m3.jsonl")
-    if m3 not in paths:
-        paths.append(m3)
+    base = os.path.dirname(os.path.abspath(records_path))
+    for extra in ("records_m3.jsonl", "records_m1.jsonl"):
+        p = os.path.join(base, extra)
+        if p not in paths:
+            paths.append(p)
     for p in paths:
         if os.path.exists(p):
             with open(p) as f:
                 recs += [json.loads(l) for l in f if l.strip()]
 
-    classes = {"M3": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
+    classes = {"M1": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
+                          n_discarded_noop=0),
+               "M3": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
                           n_discarded_noop=0),
                "M4": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
                           n_discarded_noop=0)}
@@ -86,10 +90,10 @@ def main(records_path, out_dir):
         "S1_path_class": path_classes,
         "S1_declared_uncompared": {
             "classes": UNCOMPARED_CLASSES,
-            "reason": ("The CuTe surface can express element-access (M1) and "
-                       "shape-contract (M2) mutations, but this candidate lane "
-                       "has only been run against M3/M4. M1 and M2 are "
-                       "unmeasured, not inexpressible: they carry no S1 cell."),
+            "reason": ("The CuTe surface can express shape-contract (M2) "
+                       "mutations, but this candidate lane has only been run "
+                       "against M1/M3/M4. M2 is unmeasured, not inexpressible: "
+                       "it carries no S1 cell."),
         },
         "S1_class_axis": {
             "source": "schema/class-axis.json",
@@ -97,8 +101,8 @@ def main(records_path, out_dir):
             # legal axis vocabulary only (measured|n/a|uncompared|not_ready):
             # read from the axis so the lane-local copy cannot drift from it.
             "status": AX.lane_status(LANE),
-            # lane-local phase detail; `S1_detection` holds the only M3/M4 cells.
-            "sampled": {"M1": False, "M2": False, "M3": True, "M4": True},
+            # lane-local phase detail; `S1_detection` holds the only cells.
+            "sampled": {"M1": True, "M2": False, "M3": True, "M4": True},
         },
         "notes": [
             "vertical slice: launch-time M4/L battery + compile-only M3 probe battery",
@@ -124,16 +128,24 @@ def main(records_path, out_dir):
             "not the kernel author",
             "M3.16 (symbolic leading dim) is unexpressible: make_tma_copy "
             "requires static box shapes",
+            "M1 is a ONE-PER-FAMILY PROBE SLICE (M1-a..M1-h), COMPILE-ONLY: on a "
+            "hand-written CuTe kernel the index/stride/bound arithmetic is the "
+            "author's own, so the surface emits nothing for 7 of 8 families; "
+            "only M1-g (index >= rank) is statically detained, by CuTe's tuple "
+            "`get` static_assert",
+            "M1 outcome: M1.15 ct-check (rank/arity); M1.2/M1.4/M1.9/M1.12/"
+            "M1.14/M1.19/M1.11 never (unchecked) -- the permissive-surface "
+            "control, not a competing M1 baseline",
             "n_discarded_noop counts the inapplicable launch-status control "
             "(L1 on matmul: the static-smem override is not used, so the "
             "mutation has no effect -> `n/a`, applicable=false)",
             "`L` (launch-status) is a path class, not a mutation class: its "
             "cells live under `S1_path_class`, never in `S1_detection`",
-            "M1/M2 are declared uncompared in `S1_declared_uncompared`; they "
-            "carry no S1 cell because the lane was never run against them",
+            "M2 is declared uncompared in `S1_declared_uncompared`; it carries "
+            "no S1 cell because the lane was never run against it",
             "records are v2.1 mutant records (see cutlass/mutrec.py): outcome "
-            "compile|runtime|never|n/a, class M3/M4, path_class carries the L "
-            "distinction",
+            "compile|runtime|never|n/a, class M1/M3/M4, path_class carries the "
+            "L distinction",
         ],
         "records": len(recs),
     }

@@ -35,6 +35,8 @@ cmd_minimal() {
 cmd_e2() {
   # expressibility sweep: base kernels already gate all spec-required operators.
   echo "[$TOOLCHAIN] e2: see 'base' stage in lane.py (15 operators gated)"
+  # M1 element-access probe slice (one realizable spec per family a..h).
+  "$PY" "$HERE/probes.py" "$RAW/probes_m1" "$HERE/records_m1.jsonl" m1
 }
 
 cmd_e3() {

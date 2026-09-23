@@ -30,6 +30,7 @@ INCLUDES = ["-I", os.path.join(CUTLASS, "include"),
             "-I", os.path.join(CUTLASS, "tools", "util", "include"),
             "-I", os.path.join(ROOT, "kernels")]
 SRC = os.path.join(ROOT, "kernels", "probe_m3.cu")
+SRC_M1 = os.path.join(ROOT, "kernels", "probe_m1.cu")
 
 # spec_id, control, mutant, arch, note
 PROBES = [
@@ -59,12 +60,36 @@ PROBES = [
      "linear copy dim: 4096 vs 2^24 (no check on the linear-copy path)"),
 ]
 
+# M1 (element access) probe slice: one realizable spec per family (a..h). On a
+# hand-written CuTe kernel the index arithmetic is the author's, so every pair
+# is expected to compile (unchecked) except M1-g, where CuTe's tuple `get`
+# carries an "Index out of range" static_assert. This is the evidence that the
+# surface detains rank/arity but none of the bound/stride/offset/tile axes.
+M1_PROBES = [
+    ("M1.2", 10, 11, "sm_86",
+     "M1-a bound: p#n off-by-one reads one past the extent"),
+    ("M1.4", 20, 21, "sm_86",
+     "M1-b stride: transposed/non-contiguous stride, extents intact"),
+    ("M1.9", 30, 31, "sm_86",
+     "M1-c origin: base displaced 8 elements without shrinking the extent"),
+    ("M1.12", 40, 41, "sm_86",
+     "M1-d index: dimension addressed with the wrong loop variable"),
+    ("M1.14", 50, 51, "sm_86",
+     "M1-e tile coordinate: block/tile coords swapped, in-tile index legal"),
+    ("M1.19", 60, 61, "sm_86",
+     "M1-f carrier: 32-bit index cannot name a legal element of a 2^33 tensor"),
+    ("M1.15", 70, 71, "sm_86",
+     "M1-g rank: get<2> on a rank-2 shape (CuTe static_assert)"),
+    ("M1.11", 80, 81, "sm_86",
+     "M1-h overlap: two live tiles share 8 of 16 slots"),
+]
 
-def compile_probe(pid, arch, objdir):
+
+def compile_probe(pid, arch, objdir, src=SRC):
     out = os.path.join(objdir, f"probe_{pid}.o")
     err = os.path.join(objdir, f"probe_{pid}.err")
     cmd = [CUDA, "-std=c++17", f"-arch={arch}", "-O2"] + INCLUDES + \
-          [f"-DPROBE={pid}", "-c", SRC, "-o", out]
+          [f"-DPROBE={pid}", "-c", src, "-o", out]
     p = subprocess.run(cmd, capture_output=True, text=True)
     with open(err, "w") as f:
         f.write(p.stderr)
@@ -86,15 +111,14 @@ def classify(spec_id, control_ok, mutant_ok, err):
     return "unchecked", "control and mutant both compile"
 
 
-def main(objdir=None, records_path=None):
-    objdir = objdir or os.path.join(ROOT, "raw", "probes")
+def run_battery(probes, src, tag, objdir, records_path):
     os.makedirs(objdir, exist_ok=True)
-    with open(SRC, "rb") as f:
+    with open(src, "rb") as f:
         probe_hash = hashlib.sha256(f.read()).hexdigest()[:16]
     recs = []
-    for spec_id, cid, mid, arch, note in PROBES:
-        cok, cerr = compile_probe(cid, arch, objdir)
-        mok, merr = compile_probe(mid, arch, objdir)
+    for spec_id, cid, mid, arch, note in probes:
+        cok, cerr = compile_probe(cid, arch, objdir, src)
+        mok, merr = compile_probe(mid, arch, objdir, src)
         outcome, detail = classify(spec_id, cok, mok, merr if not mok else cerr)
         if outcome == "generator-defect":
             # A control that does not compile is a defect in the probe, not in
@@ -107,7 +131,7 @@ def main(objdir=None, records_path=None):
             mutation={"control": cid, "mutant": mid},
             outcome=outcome, path_class=path_class, manifest="undecidable",
             prohibition="" if outcome == "ct-check" else "absent",
-            applicable=True, mutant_id=f"cutlass-m3probe-{spec_id}-{mid}",
+            applicable=True, mutant_id=f"cutlass-{tag}probe-{spec_id}-{mid}",
             detail=detail, kernel_hash=probe_hash,
             settings_hash=f"probe{cid}->{mid}", arch=arch, note=note)
         recs.append(r)
@@ -120,7 +144,26 @@ def main(objdir=None, records_path=None):
     return recs
 
 
+def main(objdir=None, records_path=None):
+    return run_battery(
+        PROBES, SRC, "m3",
+        objdir or os.path.join(ROOT, "raw", "probes"),
+        records_path or os.path.join(ROOT, "records_m3.jsonl"))
+
+
+def main_m1(objdir=None, records_path=None):
+    return run_battery(
+        M1_PROBES, SRC_M1, "m1",
+        objdir or os.path.join(ROOT, "raw", "probes_m1"),
+        records_path or os.path.join(ROOT, "records_m1.jsonl"))
+
+
 if __name__ == "__main__":
     import sys
-    main(sys.argv[1] if len(sys.argv) > 1 else None,
-         sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "records_m3.jsonl"))
+    which = sys.argv[3] if len(sys.argv) > 3 else "m3"
+    objdir = sys.argv[1] if len(sys.argv) > 1 else None
+    rec = sys.argv[2] if len(sys.argv) > 2 else None
+    if which == "m1":
+        main_m1(objdir, rec)
+    else:
+        main(objdir, rec)

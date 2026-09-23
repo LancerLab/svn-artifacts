@@ -69,6 +69,21 @@ PAPER_CATEGORY = {
 M4_PAPER = "stride"
 L_PAPER = "hw"
 
+# M1 (element access) maps to the published {oob, stride, wrong-shape} (see
+# class-axis.json's `published_taxonomy` note): a bound/offset/tile-coordinate
+# overshoot is `oob`, a step defect is `stride`, and an index that names the
+# wrong dimension/arity is `wrong-shape`.
+M1_PAPER = {
+    "M1.2": "oob",           # p#n off-by-one
+    "M1.4": "stride",        # transposed / non-contiguous stride
+    "M1.9": "oob",           # base offset without shrinking the extent
+    "M1.11": "wrong-shape",  # read-after-write aliasing overlap
+    "M1.12": "wrong-shape",  # wrong loop variable for a dimension
+    "M1.14": "oob",          # tile coordinate over/underflow
+    "M1.15": "wrong-shape",  # index >= rank
+    "M1.19": "oob",          # narrow index carrier
+}
+
 
 def class_of(spec_id):
     """The mutation class of a spec id. `L` is a path class of M3, not a class
@@ -78,12 +93,18 @@ def class_of(spec_id):
         return "M4"
     if spec_id.startswith("M3") or spec_id.startswith("L"):
         return "M3"
+    if spec_id.startswith("M1"):
+        return "M1"
+    if spec_id.startswith("M2"):
+        return "M2"
     raise ValueError(f"unclassifiable spec id {spec_id!r}")
 
 
 def paper_category(spec_id):
     if spec_id in PAPER_CATEGORY:
         return PAPER_CATEGORY[spec_id]
+    if spec_id in M1_PAPER:
+        return M1_PAPER[spec_id]
     if spec_id.startswith("M4"):
         return M4_PAPER
     if spec_id.startswith("L"):

@@ -21,9 +21,10 @@ deferred to a post-deadline extension.
   **12.9.86** (`/usr/local/cuda-12.9`), arch `sm_86` (dev host RTX 3070 8 GB).
   Final-host arch differs (manifest §2: H800 sm_90) — every record carries the
   arch, and TMA/GMMA families are arch-gated on `sm_86`.
-- **E1 mutations:** M3 `hw-constraint` and M4 `loop` (iteration-validity). M1/M2
-  are not this lane's remit; where a mutation is genuinely M1/M2 it is recorded
-  but not counted toward the M3/M4 denominators.
+- **E1 mutations:** M3 `hw-constraint`, M4 `loop` (iteration-validity), plus an
+  M1 element-access probe slice (one realizable spec per family, `a`..`h`).
+  M2 is not this lane's remit; where a mutation is genuinely M2 it is recorded
+  but not counted toward the M1/M3/M4 denominators.
 - **E2 expressibility (S8):** measured per category × obligation class.
 - **Outcome mapping (§9.6):** `ct-check` = nvcc/CuTe `static_assert` or compile
   error caused by the injected state; `rt-check` = a CUDA runtime fault at launch
@@ -67,9 +68,11 @@ deferred to a post-deadline extension.
 
 - **Q1:** confirm M3/M4-only remit for this lane, and that a surface that
   "does not detain" a constraint is reported `unchecked`/`avoided` (never a miss).
-  **Answered:** yes — M3/M4-only remit. M1/M2 are `uncompared` (the CuTe surface
+  **Answered:** yes — M3/M4-only remit. M1/M2 start `uncompared` (the CuTe surface
   *can* express them, so they are **not** `n/a`); they carry no S1 cell and are
-  declared in `S1_declared_uncompared`.
+  declared in `S1_declared_uncompared`. **Later (same day):** a one-per-family
+  M1 probe slice was added on request, so M1 is now `measured`; M2 stays
+  `uncompared`.
 - **Q2:** confirm the arch disclosure wording for `sm_86` vs the `sm_90` final
   host, and whether TMA-family cells may be reported `unexpressible (arch)`.
   **Answered:** `sm_86` is acceptable for this slice and `sm_120` will be
@@ -85,10 +88,11 @@ deferred to a post-deadline extension.
 
 ## 6. Status — vertical slice (2026-09-23)
 
-**Axis:** promoted to `ready` — M3/M4 `measured`, M1/M2 `uncompared` (out of the
-lane's M3/M4 remit; expressible on this surface, so not `n/a`), `stats_key`
-`S1_detection`, both corpus paths declared at release `v2.1`. `complete: false`
-stays until the `sm_120` re-run.
+**Axis:** promoted to `ready` — M1/M3/M4 `measured`, M2 `uncompared` (out of the
+lane's remit; expressible on this surface, so not `n/a`), `stats_key`
+`S1_detection`, all three corpus paths declared at release `v2.1`. The M1 cell is
+a compile-only one-per-family probe slice. `complete: false` stays until the
+`sm_120` re-run.
 
 **Done and verified:**
 
@@ -124,8 +128,8 @@ stays until the `sm_120` re-run.
   `schema.records.stage_for` and every record validated before it is written.
   Lane outcome words map to the canonical vocabulary: `ct-check→compile`,
   `rt-check→runtime`, `unchecked→never`, `noop→n/a`. The corpus
-  (`records.jsonl` 23, `records_m3.jsonl` 12) is committed, so a clone
-  reproduces `stats.json` with no GPU.
+  (`records.jsonl` 23, `records_m3.jsonl` 12, `records_m1.jsonl` 8) is
+  committed, so a clone reproduces `stats.json` with no GPU.
 - **`verify.py`** (also `run.sh verify`): re-validates every committed record
   against `record-schema.json`, checks `mutant_id` uniqueness, re-derives the
   S1 blocks from the records alone, and asserts axis agreement (no `L` in
@@ -159,11 +163,33 @@ stays until the `sm_120` re-run.
     both tile-to-shape variants compile; the mismatch is not statically detained.
   - **`M3.14` linear copy dim ≥ 2²⁴ → `unchecked`** — a `DefaultCopy` over
     2²⁴ elements compiles (no check on the linear-copy path).
+- **Compile-only M1 probe slice** (`probes.py` + `kernels/probe_m1.cu`), 8
+  control/mutant pairs (one per family `M1-a`..`M1-h`) compiled with `nvcc -c`,
+  never run. The finding is the *shape*: a hand-written CuTe kernel owns its
+  index arithmetic, so the surface emits nothing for 7 of the 8 families.
+  - **`M1.15` index ≥ rank → `ct-check`** — `get<2>` on a rank-2 shape trips
+    CuTe's "Index out of range" `static_assert` (`cute/container/tuple.hpp:238`);
+    `get<1>` compiles.
+  - **`M1.2` bound off-by-one → `unchecked`** — `t(i,0)` with `i <= 16` on a
+    16-extent compiles (no bound check on `operator()`).
+  - **`M1.4` transposed stride → `unchecked`** — a stride-`(1,16)` layout where
+    `(16,1)` is intended compiles.
+  - **`M1.9` offset without shrinking the extent → `unchecked`** — `gmem_ptr + 8`
+    with the original 16×16 layout compiles.
+  - **`M1.12` wrong loop variable → `unchecked`** — `t(i,i)` in place of `t(i,j)`
+    compiles.
+  - **`M1.14` swapped tile coordinate → `unchecked`** — `local_tile(..., (bx,by))`
+    compiles.
+  - **`M1.19` narrow carrier → `unchecked`** — a 32-bit index into a 2³³-element
+    tensor compiles.
+  - **`M1.11` tile overlap → `unchecked`** — two live views sharing 8 of 16 slots
+    compile.
 - **Harness:** `lane.py` (base+mutants+collect), `probes.py`, `reference.py`
   (bit-exact `fill` + refs + tolerance gate), `collect.py` (spec-§8-shaped
-  `stats.json`, merges both record streams), `mutrec.py`, `verify.py`, `run.sh`
-  (setup/minimal/e2/e3/collect/stats/verify/all).
-  `results/cutlass/stats.json`: M3 = 12 injected / 3 `compile` / 9 `never`;
+  `stats.json`, merges the three record streams), `mutrec.py`, `verify.py`,
+  `run.sh` (setup/minimal/e2/e3/collect/stats/verify/all).
+  `results/cutlass/stats.json`: M1 = 8 injected / 1 `compile` / 7 `never`;
+  M3 = 12 injected / 3 `compile` / 9 `never`;
   M4 = 21 `never`; L = 1 `runtime` / 1 `n/a`. Flagged
   `lane_phase: vertical-slice`, `complete: false`.
 

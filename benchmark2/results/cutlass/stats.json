@@ -11,6 +11,13 @@
     "note": "dev host; manifest.md \u00a72 pins 2xH800 sm_120"
   },
   "S1_detection": {
+    "M1": {
+      "n_injected": 8,
+      "n_compile": 1,
+      "n_runtime": 0,
+      "n_never": 7,
+      "n_discarded_noop": 0
+    },
     "M3": {
       "n_injected": 12,
       "n_compile": 3,
@@ -37,22 +44,21 @@
   },
   "S1_declared_uncompared": {
     "classes": [
-      "M1",
       "M2"
     ],
-    "reason": "The CuTe surface can express element-access (M1) and shape-contract (M2) mutations, but this candidate lane has only been run against M3/M4. M1 and M2 are unmeasured, not inexpressible: they carry no S1 cell."
+    "reason": "The CuTe surface can express shape-contract (M2) mutations, but this candidate lane has only been run against M1/M3/M4. M2 is unmeasured, not inexpressible: it carries no S1 cell."
   },
   "S1_class_axis": {
     "source": "schema/class-axis.json",
     "axis_version": "v2.1",
     "status": {
-      "M1": "uncompared",
+      "M1": "measured",
       "M2": "uncompared",
       "M3": "measured",
       "M4": "measured"
     },
     "sampled": {
-      "M1": false,
+      "M1": true,
       "M2": false,
       "M3": true,
       "M4": true
@@ -69,10 +75,12 @@
     "M3 never (compile) probes: M3.1/M3.2/M3.3/M3.4/M3.7/M3.11/M3.12/M3.13/M3.14; TMA/GMMA pairs target sm_90a, static-smem sm_86",
     "M3.9/M3.10 (TMA pad-field) and M3.15 (pad path) are unexpressible on CuTe: the descriptor/pad fields are authored by the library, not the kernel author",
     "M3.16 (symbolic leading dim) is unexpressible: make_tma_copy requires static box shapes",
+    "M1 is a ONE-PER-FAMILY PROBE SLICE (M1-a..M1-h), COMPILE-ONLY: on a hand-written CuTe kernel the index/stride/bound arithmetic is the author's own, so the surface emits nothing for 7 of 8 families; only M1-g (index >= rank) is statically detained, by CuTe's tuple `get` static_assert",
+    "M1 outcome: M1.15 ct-check (rank/arity); M1.2/M1.4/M1.9/M1.12/M1.14/M1.19/M1.11 never (unchecked) -- the permissive-surface control, not a competing M1 baseline",
     "n_discarded_noop counts the inapplicable launch-status control (L1 on matmul: the static-smem override is not used, so the mutation has no effect -> `n/a`, applicable=false)",
     "`L` (launch-status) is a path class, not a mutation class: its cells live under `S1_path_class`, never in `S1_detection`",
-    "M1/M2 are declared uncompared in `S1_declared_uncompared`; they carry no S1 cell because the lane was never run against them",
-    "records are v2.1 mutant records (see cutlass/mutrec.py): outcome compile|runtime|never|n/a, class M3/M4, path_class carries the L distinction"
+    "M2 is declared uncompared in `S1_declared_uncompared`; it carries no S1 cell because the lane was never run against it",
+    "records are v2.1 mutant records (see cutlass/mutrec.py): outcome compile|runtime|never|n/a, class M1/M3/M4, path_class carries the L distinction"
   ],
-  "records": 35
+  "records": 43
 }

@@ -30,7 +30,8 @@ from schema import class_axis as AX                              # noqa: E402
 
 LANE = "cutlass"
 RECORDS = [os.path.join(HERE, "records.jsonl"),
-           os.path.join(HERE, "records_m3.jsonl")]
+           os.path.join(HERE, "records_m3.jsonl"),
+           os.path.join(HERE, "records_m1.jsonl")]
 STATS = os.path.join(BENCH2, "results", LANE, "stats.json")
 
 
