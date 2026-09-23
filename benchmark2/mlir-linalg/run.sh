@@ -10,13 +10,16 @@
 # Surface: tensor/linalg — the level at which a SOTA MLIR user writes a kernel,
 # before any bufferization. Assigned mutation class: M2 (shape contract), which
 # mutation-specs.md §4 calls this surface's PRIMARY target. M1 is n/a here (no
-# addressable memory before lowering) and M3 is n/a (CPU JIT, no device
-# contract) — see mlir-shared/lane.py SURFACES["linalg"]["na_classes"].
+# addressable memory before lowering) and M3 is n/a (no device contract at the
+# tensor level) — see mlir-shared/lane.py SURFACES["linalg"]["na_classes"].
 #
-# DEVICE is accepted for template compatibility but IGNORED: this lane is a
-# CPU JIT on the host, so there is no GPU, no .gpu-lock and no exclusive run.
-# S12 therefore uses LLVM AddressSanitizer on a natively linked binary rather
-# than compute-sanitizer, which needs a CUDA device.
+# Device: the lane executes on the GPU (CUDA backend, MLIR cuda runner), the
+# same substrate as the `low` lane. DEVICE is accepted for template
+# compatibility; the actual backend is `MLIR_LINALG_BACKEND` (default `cuda`).
+# S12 therefore uses `compute-sanitizer --tool memcheck` over the lowered cubin,
+# the checker that shares the device execution model; a host ASan binary cannot
+# observe a device access. Set MLIR_LINALG_BACKEND=cpu to reproduce the old
+# host-ASan baseline.
 #
 # All logic lives in ../mlir-shared/lane.py so the two MLIR lanes cannot drift
 # apart; this file is the §12.1 contract surface only.
@@ -87,7 +90,7 @@ cmd_all() {
 
 usage() {
   echo "usage: $0 {setup|minimal[--level2]|e2|e3|s12|e4|e5|collect|stats|all} [--small|--full] [--device i]"
-  echo "  note: --device is accepted but ignored (CPU JIT; no GPU dependency)"
+  echo "  note: --device is accepted but ignored; the backend is MLIR_LINALG_BACKEND (default cuda, GPU)"
 }
 
 SUB="${1:-}"; shift || true

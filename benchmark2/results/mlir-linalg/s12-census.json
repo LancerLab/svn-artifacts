@@ -12,58 +12,58 @@
   "unflagged_by_spec": {
     "M2.10/dynamic": {
       "n": 2,
-      "instrumented_min": 16,
-      "instrumented_max": 16
+      "instrumented_min": 1,
+      "instrumented_max": 1
     },
     "M2.13/dynamic": {
       "n": 3,
-      "instrumented_min": 20,
-      "instrumented_max": 23
+      "instrumented_min": 3,
+      "instrumented_max": 4
     },
     "M2.13/static": {
       "n": 3,
-      "instrumented_min": 22,
-      "instrumented_max": 41
+      "instrumented_min": 3,
+      "instrumented_max": 13
     },
     "M2.15/dynamic": {
       "n": 4,
-      "instrumented_min": 19,
-      "instrumented_max": 21
+      "instrumented_min": 3,
+      "instrumented_max": 3
     },
     "M2.15/static": {
       "n": 4,
-      "instrumented_min": 19,
-      "instrumented_max": 21
+      "instrumented_min": 3,
+      "instrumented_max": 3
     },
     "M2.17/dynamic": {
       "n": 4,
-      "instrumented_min": 18,
-      "instrumented_max": 18
+      "instrumented_min": 1,
+      "instrumented_max": 1
     },
     "M2.18/dynamic": {
       "n": 4,
-      "instrumented_min": 18,
-      "instrumented_max": 18
+      "instrumented_min": 1,
+      "instrumented_max": 1
     },
     "M2.21/dynamic": {
       "n": 4,
-      "instrumented_min": 20,
-      "instrumented_max": 20
+      "instrumented_min": 3,
+      "instrumented_max": 3
     },
     "M2.5/dynamic": {
       "n": 5,
-      "instrumented_min": 23,
-      "instrumented_max": 44
+      "instrumented_min": 3,
+      "instrumented_max": 13
     },
     "M2.5/static": {
       "n": 3,
-      "instrumented_min": 23,
-      "instrumented_max": 42
+      "instrumented_min": 3,
+      "instrumented_max": 13
     },
     "M2.8/dynamic": {
       "n": 4,
-      "instrumented_min": 20,
-      "instrumented_max": 20
+      "instrumented_min": 3,
+      "instrumented_max": 3
     }
   },
   "problems": []

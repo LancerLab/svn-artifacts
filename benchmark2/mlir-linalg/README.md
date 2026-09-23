@@ -6,8 +6,9 @@ bufferized. This is the higher of the two MLIR surfaces — the one a user actua
 writes — and it is the row the paper compares `choreo` against.
 
 All recorded numbers live in `results/mlir-linalg/*.jsonl` + `stats.json`. They are
-**generated**, never hand-edited. To re-derive every number (CPU only — this lane
-JITs on the host and has **no GPU dependency**, unlike `iree`/`triton`):
+**generated**, never hand-edited. To re-derive every number (this lane executes on
+the GPU through the MLIR CUDA runner, like `mlir-low`; set
+`MLIR_LINALG_BACKEND=cpu` to reproduce the host baseline):
 
 ```bash
 # 0. pinned toolchain: LLVM 21.1.0 at $MLIR_LLVM_ROOT
@@ -26,7 +27,7 @@ benchmark2/mlir-linalg/run.sh e2 --full
 #   run.sh minimal [--level2] [--small|--full]  E1 mutants  -> raw/mutants.jsonl
 #   run.sh e2      [--small|--full]             kernel gate -> raw/kernels.jsonl
 #   run.sh e3      [--small|--full]             expressibility + remainder
-#   run.sh s12     [--small|--full]             ASan        -> raw/sanitizer.jsonl
+#   run.sh s12     [--small|--full]             compute-sanitizer -> raw/sanitizer.jsonl
 #   run.sh collect                              raw/*.jsonl -> results/mlir-linalg/
 #   run.sh stats                                            -> results/mlir-linalg/stats.json
 ```
@@ -58,7 +59,8 @@ than by provenance note.
 
 M1 and M3 are `n/a` on this surface (`n_na: 40` each): M1's specs are memref/affine
 index-and-stride defects, which do not exist at tensor level, and M3 is
-hardware-specific with no GPU here. S1 therefore reports **M2 only** for this lane.
+hardware-specific (the lane executes on the GPU, but a `linalg.generic` authors no
+device contract at tensor level). S1 therefore reports **M2 only** for this lane.
 
 `minimal` checks its own census against a **pinned literal** (`expected_injected`),
 not against a value derived from the categories it iterated. An earlier revision
@@ -72,16 +74,16 @@ and therefore cannot protect anything.**
 
 | statistic | value |
 |---|---|
-| kernel gate | **28/28 green** (14 small + 14 full), 0 gate failures |
-| S1 M2 | `n_injected: 50, n_compile: 34, n_runtime: 0, n_never: 10, n_na: 6` |
-| S8 | `elem {yes:7}`, `shape {yes:5, no:2}`, `loop {no:7}`, `hw {no:7}` |
-| S9 | **150** kernel guards (concat 36, elemwise_add 10, layer_normalization 48, matmul 14, relu 6, softmax 30, transpose 6) |
-| S12 M2 | `flagged_and_exercised: 0` of 54 — 34 rejected before run, 20 ran clean |
+| kernel gate | **84/84 green** (42 small + 42 full), 0 gate failures |
+| S1 M2 | `n_injected: 64, n_compile: 24, n_runtime: 0, n_never: 40, n_na: 0` |
+| S8 | `elem {yes:21}`, `shape {yes:14, no:7}`, `loop {no:21}`, `hw {no:21}` |
+| S9 | **364** kernel guards |
+| S12 M2 | `flagged_and_exercised: 0` of 64 — 24 rejected before run, 40 ran clean under compute-sanitizer |
 
-**M2 detection is entirely at the verifier.** 34 of 50 injections never reach a
+**M2 detection is entirely at the verifier.** 24 of 64 injections never reach a
 binary: the linalg verifier rejects the shape contract at lowering. RTV adds
 nothing at all — the RTV-off and RTV-on censuses are byte-identical
-(`compile:34, never:20, n/a:6` both ways). That is itself the finding, and it is the
+(`compile:24, never:40, n/a:0` both ways). That is itself the finding, and it is the
 exact opposite of the `mlir-low` lane, where RTV moves 35 records from undetected to
 caught. Both columns are required by manifest §5.1; reporting either alone would
 misrepresent one of the two surfaces.
@@ -91,28 +93,35 @@ access count is fixed by its indexing maps, not by tensor rank. (The `mlir-low`
 lane's S9 is *not* size-invariant, because its kernels are hand-tiled — see that
 lane's README.)
 
-## S12 — external sanitizer (real ASan)
+## S12 — external sanitizer (real compute-sanitizer)
 
-Owner ruling: a **real measurement**, not `n/a`. ASan is applied natively on the host
-CPU via `mlir-opt | mlir-translate | opt -passes=asan | clang -fsanitize=address`,
-with RTV **off** (RTV's own `cf.assert` would abort before the faulty access and make
-the sanitizer silent). The chain, its four LLVM-21 defects, and the false-negative
-gate are documented in `../mlir-shared/README.md`.
+Owner ruling: a **real measurement**, not `n/a`. The lane executes on the GPU
+(MLIR CUDA runner), so S12 uses `compute-sanitizer --tool memcheck` over the same
+lowered cubin S1 runs — the checker that shares the execution model. A host ASan
+binary cannot observe a device access, so it would report the mutant clean for the
+wrong reason. RTV is **off** (RTV's own `cf.assert` fires on the device before the
+faulty access and would make memcheck silent). The false-negative gate counts the
+lowered module's device launches; 0 launches is `stage=instrument`, never a "clean"
+verdict. The host-ASan chain is retained only for the `MLIR_LINALG_BACKEND=cpu`
+override and is documented in `../mlir-shared/README.md`.
 
-Result: **0 of 54 flagged.** This is not a null result and not a failure — it splits
+Result: **0 of 64 flagged.** This is not a null result and not a failure — it splits
 into two structurally different halves:
 
-* **34 rejected before run.** The verifier killed the shape contract at lowering, so
-  no binary ever existed and there was nothing to instrument. Recorded as
+* **24 rejected before run.** The verifier killed the shape contract at lowering, so
+  no cubin ever existed and there was nothing to instrument. Recorded as
   `rejected_before_run`, *not* as `not_instrumented` — conflating the two would
-  report 34 false negatives where there are none.
-* **20 ran clean under real coverage.** All are M2.5 (partial-write /
-  duplicate-write), `instrumented` 23–44 sites each. The output is genuinely wrong
+  report 24 false negatives where there are none.
+* **40 ran clean under real device coverage.** Each records `instrumented > 0`
+  (device launches under memcheck). The output is genuinely wrong
   (`outcome=never, manifest=corrupts`) but **every access stays inside its
   allocation**, so no memory checker can see it.
 
-That 20 is the S12 residue the paper reports: shape faults are not memory faults. It
-is the ledger-minus-sanitizer gap, and it matches what `iree` shows.
+That 40 is the S12 residue the paper reports: shape faults are not memory faults. It
+is the ledger-minus-sanitizer gap, and it matches what `iree` shows. The host-ASan
+run produced the same aggregate (0 flagged, 40 exercised, 24 rejected), so the device
+substrate does not change the residue — but only the memcheck run measures the
+execution the lane actually performs.
 
 ## Breadth gap — FLAGGED FOLLOW-UP for the coordinator
 

@@ -56,18 +56,22 @@ S12: A REAL SANITIZER MEASUREMENT, NOT `n/a`
 Each surface measures S12 with the external checker that shares its execution
 model, so the `flagged ∧ exercised` number means what it says:
 
-* `low` runs on the GPU, so S12 is `compute-sanitizer --tool memcheck` over the
-  same lowered cubin S1 runs. `mlirbench.run_sanitizer_gpu()` lowers with the
-  bare (RTV-off) GPU pipeline and counts the device launches actually under
-  memcheck; zero launches is a harness failure, not a clean result.
-* `linalg` measures S12 with a native AddressSanitizer binary. `run_asan()`
-  lowers the bare pipeline to LLVM IR and builds it; that path exists because the
-  obvious route is silently broken in four separate ways. See the long comment
-  above `run_asan` in mlirbench.py: clang does not instrument `.ll` inputs,
-  LLVM's ASan pass skips functions lacking the `sanitize_address` attribute,
-  `mlir-translate` emits no target triple (wrong shadow offset, real overflow
-  reported as a bogus SEGV), and a native link needs the runner utils the JIT
-  resolves dynamically.
+* both `linalg` and `low` run on the GPU, so S12 is
+  `compute-sanitizer --tool memcheck` over the same lowered cubin S1 runs.
+  `mlirbench.run_sanitizer_gpu()` lowers with the bare (RTV-off) GPU pipeline and
+  counts the device launches actually under memcheck; zero launches is a harness
+  failure, not a clean result.
+* The host AddressSanitizer path (`run_asan()`) is retained only for the
+  `MLIR_{LINALG,LOW}_BACKEND=cpu` override, where the kernel really does run on
+  the host CPU and a native binary is the matching checker. It is not the
+  committed `linalg` measurement: a host binary cannot observe a device access,
+  so it would report the mutant clean for the wrong reason. That path exists
+  because the obvious route is silently broken in four separate ways. See the
+  long comment above `run_asan` in mlirbench.py: clang does not instrument `.ll`
+  inputs, LLVM's ASan pass skips functions lacking the `sanitize_address`
+  attribute, `mlir-translate` emits no target triple (wrong shadow offset, real
+  overflow reported as a bogus SEGV), and a native link needs the runner utils
+  the JIT resolves dynamically.
 
 Because every one of those failures *looks like success*, both checkers count
 their instrumentation/coverage and refuse a "clean" verdict when it is zero. A
@@ -190,11 +194,15 @@ SURFACES = {
         # count legitimately sits below this Cartesian product.
         "expected_injected": {"1": 54, "2": 90},
         "klass": "M2",
-        # S12 tool: the linalg surface lowers to LLVM and builds a native ASan
-        # binary (see the S12 note at the top of this file). It is not switched to
-        # compute-sanitizer with the S1 backend because its S12 measurement is
-        # already committed and is a separate question from where the kernels run.
-        "sanitizer": "asan",
+        # S12 tool: the linalg surface now executes on the device (S1 backend
+        # `cuda`), so S12 must use the checker that shares that execution model --
+        # `compute-sanitizer --tool memcheck` over the lowered cubin. ASan
+        # instruments a natively-linked host binary and cannot observe a device
+        # access, so it would report the mutant clean for the wrong reason. The
+        # runtime dispatch is on `self.backend`, so `MLIR_LINALG_BACKEND=cpu`
+        # still reproduces the old host-ASan baseline; this field names the
+        # committed default.
+        "sanitizer": "compute-sanitizer",
         "specs": C.M2_SPECS,
         "spec_ids": C.M2_SPEC_IDS,
         "level_of": C.LEVEL_OF,
@@ -956,9 +964,8 @@ class Lane:
                         work.mkdir(parents=True, exist_ok=True)
                         f = work / "m.mlir"
                         f.write_text(src)
-                        r = (B.run_sanitizer_gpu(f, work, self.surface, rtv=False)
-                             if self.cfg.get("sanitizer") == "compute-sanitizer"
-                             else B.run_asan(f, work, self.surface, rtv=False))
+                        r = B.run_sanitizer(f, work, self.surface, rtv=False,
+                                            backend=self.backend)
                         rec = r.as_record(self.toolchain, cat, klass,
                                           f"{self.toolchain}-{cat}-{shape}-"
                                           f"{mut.mutant_id}-off")
@@ -1590,7 +1597,7 @@ class Lane:
                                      "observe the access; memcheck is the "
                                      "checker that shares the execution model"),
                 }
-                if self.cfg.get("sanitizer") == "compute-sanitizer" else
+                if self.backend == "cuda" else
                 {
                     "tool": "LLVM AddressSanitizer (native, host CPU)",
                     "chain": ("mlir-opt <bare pipeline> | mlir-translate "

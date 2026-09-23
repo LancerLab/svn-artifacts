@@ -130,58 +130,58 @@
       "misses": {
         "M2.10/dynamic": {
           "n": 2,
-          "instrumented_min": 16,
-          "instrumented_max": 16
+          "instrumented_min": 1,
+          "instrumented_max": 1
         },
         "M2.13/dynamic": {
           "n": 3,
-          "instrumented_min": 20,
-          "instrumented_max": 23
+          "instrumented_min": 3,
+          "instrumented_max": 4
         },
         "M2.13/static": {
           "n": 3,
-          "instrumented_min": 22,
-          "instrumented_max": 41
+          "instrumented_min": 3,
+          "instrumented_max": 13
         },
         "M2.15/dynamic": {
           "n": 4,
-          "instrumented_min": 19,
-          "instrumented_max": 21
+          "instrumented_min": 3,
+          "instrumented_max": 3
         },
         "M2.15/static": {
           "n": 4,
-          "instrumented_min": 19,
-          "instrumented_max": 21
+          "instrumented_min": 3,
+          "instrumented_max": 3
         },
         "M2.17/dynamic": {
           "n": 4,
-          "instrumented_min": 18,
-          "instrumented_max": 18
+          "instrumented_min": 1,
+          "instrumented_max": 1
         },
         "M2.18/dynamic": {
           "n": 4,
-          "instrumented_min": 18,
-          "instrumented_max": 18
+          "instrumented_min": 1,
+          "instrumented_max": 1
         },
         "M2.21/dynamic": {
           "n": 4,
-          "instrumented_min": 20,
-          "instrumented_max": 20
+          "instrumented_min": 3,
+          "instrumented_max": 3
         },
         "M2.5/dynamic": {
           "n": 5,
-          "instrumented_min": 23,
-          "instrumented_max": 44
+          "instrumented_min": 3,
+          "instrumented_max": 13
         },
         "M2.5/static": {
           "n": 3,
-          "instrumented_min": 23,
-          "instrumented_max": 42
+          "instrumented_min": 3,
+          "instrumented_max": 13
         },
         "M2.8/dynamic": {
           "n": 4,
-          "instrumented_min": 20,
-          "instrumented_max": 20
+          "instrumented_min": 3,
+          "instrumented_max": 3
         }
       },
       "miss_note": "each of these ran with real sanitizer coverage (instrumented > 0) and still produced no report: the injected defect corrupts the result WITHOUT any access leaving its allocation, so no memory checker can see it. This residue \u2014 not the flagged count \u2014 is what S12 measures."
@@ -206,11 +206,11 @@
     }
   },
   "S12_method": {
-    "tool": "LLVM AddressSanitizer (native, host CPU)",
-    "chain": "mlir-opt <bare pipeline> | mlir-translate --mlir-to-llvmir | patch sanitize_address + target triple/datalayout | opt -passes=asan | clang -fsanitize=address",
-    "rtv": "off (RTV's own cf.assert would abort before the faulty access and make ASan silent)",
-    "asan_options": "detect_leaks=0:exitcode=86:abort_on_error=0",
-    "false_negative_gate": "every binary's __asan_report_* call sites are counted; 0 sites => stage=instrument and never a 'clean' verdict"
+    "tool": "compute-sanitizer --tool memcheck (CUDA)",
+    "chain": "mlir-opt <bare GPU pipeline: lower-affine, then gpu-lower-to-nvvm-pipeline> | compute-sanitizer --tool memcheck --error-exitcode 99 mlir-runner",
+    "rtv": "off (RTV's own cf.assert fires on the device before the faulty access and would make memcheck silent)",
+    "false_negative_gate": "the lowered module's device launch count is recorded; 0 launches => stage=instrument and never a 'clean' verdict",
+    "why_not_asan": "the kernel runs on the device, so a natively-linked host ASan binary cannot observe the access; memcheck is the checker that shares the execution model"
   },
   "kernel_gate": {
     "broadcast": {

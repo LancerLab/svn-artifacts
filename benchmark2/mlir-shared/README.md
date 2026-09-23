@@ -368,15 +368,16 @@ characterization is honestly reported as a sample.
 
 ## S12 — external sanitizer supplement (measured)
 
-**Two checkers, one per execution model.** `mlir-linalg` runs on the host CPU, so
-its S12 uses natively-linked **ASan**; `mlir-low` was retargeted (2026-09-23) to run
-on a CUDA GPU, so its S12 uses `compute-sanitizer --tool memcheck`. The chain below
-is the **ASan** chain and applies to `mlir-linalg`; the `mlir-low` method is recorded
-in its own `stats.json` (`S12_method`) and in `mlir-low/README.md`. A host-ASan
-binary cannot observe a device access, so each surface is checked by the tool that
-shares its model.
+**One checker per execution model.** Both MLIR surfaces execute on the GPU
+(`mlir-linalg` was retargeted 2026-09-23, matching `mlir-low`), so both use
+`compute-sanitizer --tool memcheck` over the lowered cubin. The natively-linked
+**ASan** chain below is retained only for the `MLIR_{LINALG,LOW}_BACKEND=cpu`
+override, where the kernel really does run on the host CPU. A host-ASan binary
+cannot observe a device access, so it would report a device-executing mutant clean
+for the wrong reason; the checker must share the execution model. Each surface's
+method is recorded in its own `stats.json` (`S12_method`).
 
-Owner ruling: S12 is a **real measurement**, not `n/a`. The chain is
+Owner ruling: S12 is a **real measurement**, not `n/a`. The host-override chain is
 
 ```
 mlir-opt <bare pipeline> | mlir-translate --mlir-to-llvmir
@@ -409,24 +410,24 @@ nothing was instrumented. `stats` refuses to report a run containing such a reco
 a zero-coverage record is split by stage into `rejected_before_run` (legitimate —
 the verifier killed it, no binary ever existed) or `not_instrumented` (hard failure
 — the chain is broken and the run is not green). Measured coverage on the mutants
-that did run: 23–44 sites on `linalg`; on `low` the count is **device launches**
-(1 per kernel) rather than instrumented host sites, since the checker is memcheck.
+that did run is the **device launch count** under memcheck (`1–13` launches on
+`linalg`, `1` per kernel on `low`); the ASan path (cpu override) instead counts
+instrumented host sites (23–44 on `linalg`).
 
 ### Measured results
 
 | lane | class | checker | flagged ∧ exercised | total | split |
 |---|---|---|---|---|---|
 | `mlir-low` | M1 | compute-sanitizer memcheck | **46** | 64 | 46 flagged, 18 genuine misses |
-| `mlir-linalg` | M2 | ASan | **0** | 54 | 34 rejected before run, 20 ran clean |
+| `mlir-linalg` | M2 | compute-sanitizer memcheck | **0** | 64 | 24 rejected before run, 40 ran clean |
 
 The two rows are the whole point of S12 and they must not be averaged. On `low` the
 injected defects are **memory** faults — an out-of-bounds index really does leave
 the allocation — so the device checker sees 46 of 64. On `linalg` they are
-**shape** faults: 34 of 54 never reach a binary at all because the verifier rejects
-the type contract at lowering, and the 20 that do run are all M2.5
-(partial-write / duplicate-write), which produce a wrong *result* while every
-access stays inside its allocation. A memory checker is structurally blind to those.
-That is the ledger-minus-sanitizer gap, and it matches what `iree` shows.
+**shape** faults: 24 of 64 never reach a cubin at all because the verifier rejects
+the type contract at lowering, and the 40 that do run produce a wrong *result* while
+every access stays inside its allocation. A memory checker is structurally blind to
+those. That is the ledger-minus-sanitizer gap, and it matches what `iree` shows.
 
 ### The 18 `low` misses, audited individually
 
