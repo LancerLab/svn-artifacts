@@ -52,6 +52,31 @@
       "ceiling": 8,
       "kind": "avoided",
       "basis": "on-chip capacity: Triton block sizes are `constexpr`, so an oversized tile is refused at compile time -- the M3.12 realisation is `avoided` (a created, non-inert mutant whose outcome is a compile refusal). A mutation-only kernel may host it on further kernels, so the family is NOT `u`; the runtime-shaped extent (M3.27/M3.28) is unavailable because the tile extent is never symbolic (it must be constexpr), which is the one genuinely capped pair. Realised once (matmul-f2); the remaining slots are owed authoring on mutation-only kernels (channels/triton.md, batch 7)."
+    },
+    "M4-a": {
+      "ceiling": 8,
+      "kind": "unchecked",
+      "basis": "zero bound: Triton authors every loop with Python `range`, so a zero extent (`range(0, 0)`) is a source value and LEGAL -- the loop performs zero iterations and the kernel runs to completion with its output untouched (probe_lb A, 2026-09-24: run=ok out=diff, oracle=diff, manifest=corrupts). The lane emits no `LoopBound` obligation (the bound is the programmer's), so the state is silently accepted: `unchecked`, NOT `u` -- a legal program states it (channels/README.md new-kernel rule). REALISED 8/8 on `mutants/loop_bound.py` families 1..8 (M4.1/M4.2; four loop shapes x two block sizes)."
+    },
+    "M4-b": {
+      "ceiling": 8,
+      "kind": "unchecked",
+      "basis": "negative bound: `range(0, -1)` is legal Python and yields an EMPTY range, not an error (probe_lb B: run=ok out=diff). Triton lowers it to `scf.for 0 to -1 step 1` -- zero trips -- and the kernel runs normally. Host ruling (2026-09-24): a legal-empty program that runs silently, with no mechanism that diagnoses it, is `unchecked` ('we care about the mechanism to catch them'); the negative bound is therefore a CREATED mutant whose oracle expectation is a miss. REALISED 8/8 on `mutants/loop_bound.py` families 9..16 (M4.6)."
+    },
+    "M4-c": {
+      "ceiling": 8,
+      "kind": "unchecked",
+      "basis": "run-time-zero bound: the loop bound is a runtime argument (`for k in range(0, niter)`), so it is symbolic at trace and 0 only at launch (probe_lb C: run=ok out=diff). Triton accepts the zero trip count and runs the kernel to completion -- nothing asserts a non-zero iteration space. `unchecked`. REALISED 8/8 on `mutants/loop_bound.py` families 17..24 (M4.3)."
+    },
+    "M4-e": {
+      "ceiling": 8,
+      "kind": "unchecked",
+      "basis": "reversed bound: `range(BLOCK, 0)` (upper < lower) is legal Python and yields an empty range (probe_lb E: run=ok out=diff). On this surface a reversed bound cannot overrun -- Python `range` simply iterates emptily -- so the manifestation is the same silent empty result as M4-a/M4-b, not M1.7's choreo overrun. `unchecked`, a created mutant with a miss expected. REALISED 8/8 on `mutants/loop_bound.py` families 32..39 (M1.7)."
+    },
+    "M4-f": {
+      "ceiling": 8,
+      "kind": "avoided",
+      "basis": "zero step: a step of 0 is stateable as `tl.static_range(0, BLOCK, 0)`, which the frontend evaluates eagerly and REFUSES at trace -- `CompilationError: ValueError('range() arg 3 must not be zero')` (probe_step0b, 2026-09-24). That is a created, non-inert mutant whose outcome is a compile refusal, so the family is `avoided` (host ruling 2026-09-24; outcome `compile`, manifest `corrupts`). The construct matters: plain `range(0, K, 0)` does NOT refuse -- it lowers to `scf.for ... step 0` and HANGS on device (probe_lb F / probe_step0_run: launch succeeds, `cudaDeviceSynchronize` never returns) -- so the `avoided` realisation uses `static_range`. REALISED 8/8 on `mutants/loop_bound.py` families 40..47 (M4.5), all CompilationError."
     }
   }
 }

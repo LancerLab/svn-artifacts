@@ -250,6 +250,11 @@ MUTANTS = {
     # mutation-only rank/arity surface: M1-g (M1.15/16/17/20), rank/axis/arity
     # arguments out of domain; frontend refuses (mutants/rank_arity.py).
     "rank_arity": ("rank_arity", "M1", "oob", [1, 2, 3, 4, 5, 6, 7, 8]),
+    # mutation-only iteration-space surface: M4 (M4-a/b/c/d/e/f), families 1..47
+    # in six contiguous defect groups (mutants/loop_bound.py): zero bound,
+    # negative bound, run-time-zero bound, empty space (extent 0), reversed
+    # bound, zero step (static_range refusal).
+    "loop_bound": ("loop_bound", "M4", "stride", list(range(1, 48))),
     "conv2d": ("conv2d", "M3", "hw", []),
     # carrier-only categories: M1.19 is a generator setting (huge extent), not a
     # source edit, so these hold only family 19 and are not re-run by `minimal`.
@@ -368,6 +373,20 @@ SPEC_ID = {
     ("rank_arity", 6): "M1.15",
     ("rank_arity", 7): "M1.16",
     ("rank_arity", 8): "M1.16",
+    # loop_bound: six M4 defect groups over families 1..47
+    #   A 1..8   zero bound        -> M4-a (M4.1/M4.2, control pair)
+    #   B 9..16  negative bound    -> M4-b (M4.6)
+    #   C 17..24 run-time-zero     -> M4-c (M4.3)
+    #   D 25..31 empty space       -> M4-d (M4.4; M1.6 already holds one)
+    #   E 32..39 reversed bound    -> M4-e (M1.7)
+    #   F 40..47 zero step         -> M4-f (M4.5)
+    **{(("loop_bound", f)): ("M4.1" if f % 2 else "M4.2")
+       for f in range(1, 9)},
+    **{(("loop_bound", f)): "M4.6" for f in range(9, 17)},
+    **{(("loop_bound", f)): "M4.3" for f in range(17, 25)},
+    **{(("loop_bound", f)): "M4.4" for f in range(25, 32)},
+    **{(("loop_bound", f)): "M1.7" for f in range(32, 40)},
+    **{(("loop_bound", f)): "M4.5" for f in range(40, 48)},
     ("relu", 141): "M1.14",   # second M1.14 realisation (dest tile coord)
     ("softmax", 141): "M1.14",  # second M1.14 realisation (source tile coord)
     ("transpose", 141): "M1.14",  # second M1.14 realisation (dest tile coord)
