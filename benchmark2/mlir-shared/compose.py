@@ -472,6 +472,46 @@ M1_CARRIER_CATS: tuple[str, ...] = (
     "layer_normalization_carrier",
 )
 
+# M4 -- iteration-space invalidity (obligation `LoopBound`), the low surface's
+# second measured class (schema/class-axis.json: mlir-low owns S1/S8/S9/S12 for
+# M4). The memref/affine surface authors its own loop bounds, so every M4
+# *detection* family is realisable by editing that bound -- no shape change is
+# involved, which is what makes M4 the control for M1 rather than a shape class.
+# One spec per family, so the low M4 cell lands at 7 families x 8 = 56:
+#
+#   M4-a zero bound          -> M4.1  (literal 0 bound, empty loop)
+#   M4-b negative bound      -> M4.6  (literal -1 bound, empty loop)
+#   M4-c runtime-zero bound  -> M4.3  (bound is a 0-valued SSA value at runtime)
+#   M4-d empty space         -> M1.6  (already realised; the taxonomy re-homes
+#                                     M1.6 to family M4-d, so it is NOT repeated)
+#   M4-e reversed bound      -> M1.7  (`to` < `from`, empty loop)
+#   M4-f zero step           -> M4.5  (`step 0`, a non-terminating loop)
+#   M4-g degenerate pad      -> M4.8  (extent read from a 0-length view -> bound 0)
+#
+# The value here is the *detection* family, not the spec: the four families with
+# several specs (M4-a: M4.1/M4.2) realise one, exactly as the M1 battery holds
+# family M1-a to M1.1. M4.4 is a noop by construction and is excluded from the
+# denominator (mutation-specs-v2.md §9.1), so it is not injected either.
+M4_LOW_SPECS: list[Mutation] = [
+    Mutation("M4", 1, "zero-loop-bound", "stride",
+             detail="loop upper bound is 0: the body runs zero times and the "
+                    "output is silently left unwritten"),
+    Mutation("M4", 6, "negative-loop-bound", "stride",
+             detail="loop upper bound is negative: an empty iteration space, "
+                    "silent"),
+    Mutation("M4", 3, "runtime-zero-loop-bound", "stride",
+             detail="loop bound is an SSA value that is 0 only at runtime: an "
+                    "empty iteration space, silent"),
+    Mutation("M1", 7, "reversed-loop-bound", "stride",
+             detail="loop lower bound exceeds the upper: an empty iteration "
+                    "space, silent (spec re-homed to family M4-e)"),
+    Mutation("M4", 5, "zero-step-loop", "stride",
+             detail="loop step is 0: the loop never terminates (device hang)"),
+    Mutation("M4", 8, "degenerate-empty-pad", "stride",
+             detail="the extent is read from a 0-length view, so the loop bound "
+                    "is 0: an empty iteration space, silent"),
+]
+
 
 def base_category(category: str) -> str:
     """The operator a carrier category hosts (`transpose_carrier` -> `transpose`).

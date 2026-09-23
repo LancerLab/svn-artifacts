@@ -267,7 +267,10 @@ def _perturb(e: Emitter, idx: list[str], st: Structural | None, axis: int) -> li
     induction variable that does not exist yet -- a use-before-def the verifier
     rejects.
     """
-    if st is None or st.kind in ("drop-mask", "overlap-write", "subview-symbolic"):
+    if (st is None or st.kind.startswith("m4-")
+            or st.kind in ("drop-mask", "overlap-write", "subview-symbolic")):
+        # M4 is a loop-bound class, not an index perturbation: `_m4_triple`
+        # rewrites the bound at the loop site and the read index stays clean.
         return idx
     k = st.axis
     if st.kind == "off-by-one":
@@ -441,7 +444,8 @@ def _guarded_axis_loop(
     defect *is* the removal.
     """
     j = e.new("j")
-    e.emit(f"scf.for {j} = {tx} to {bound} step {nblock} {{")
+    lo, hi, step = _m4_triple(e, st, tx, bound, nblock, ext)
+    e.emit(f"scf.for {j} = {lo} to {hi} step {step} {{")
     e.indent += 1
     guarded = guarded_needed(st)
     if guarded:
@@ -487,8 +491,9 @@ def _block_reduce(
     j = e.new("j")
     acc = e.new("a")
     res = e.new("r")
+    lo, hi, step = _m4_triple(e, st, tx, bound, nblock, ext)
     e.emit(
-        f"{res} = scf.for {j} = {tx} to {bound} step {nblock} "
+        f"{res} = scf.for {j} = {lo} to {hi} step {step} "
         f"iter_args({acc} = {init}) -> (f32) {{"
     )
     e.indent += 1
@@ -768,6 +773,166 @@ def _device_in(
     return d, t
 
 
+# --------------------------------------------------------------------------
+# M4 -- loop-bound invalidity (class `LoopBound`, families M4-a..M4-g)
+# --------------------------------------------------------------------------
+#
+# M4 is the control for M1: it is *not* a shape class. Every family makes the
+# iteration space of an otherwise-clean kernel empty (or non-terminating), so the
+# body simply never executes and the output is silently unwritten. The memref
+# surface authors its own `scf.for` bounds, so each family is realised by editing
+# the bound at the one place the loop is emitted (`_m4_triple`); M4-g instead
+# derives the extent from a 0-length view so the clean bound rule already yields
+# 0. This mirrors triton, which realises M4 in its generator rather than through
+# `mutate.apply` -- M4 is not an index perturbation.
+
+_M4_KINDS: dict[str, str] = {
+    "M4.1": "m4-zero-bound",
+    "M4.6": "m4-negative-bound",
+    "M4.3": "m4-runtime-zero-bound",
+    "M1.7": "m4-reversed-bound",
+    "M4.5": "m4-zero-step",
+    "M4.8": "m4-degenerate-pad",
+}
+
+
+def m4_structural(case: C.Case, mut: C.Mutation) -> Structural:
+    """Structural directive for an M4 loop-bound spec on the memref surface.
+
+    `spec_id` (not `spec`) keys the table because M1.7 is re-homed to family M4-e
+    by the taxonomy and has to route here, while its M1 siblings stay in
+    `mutate._m1_structural`. The axis is always the trailing one: every M4 defect
+    is on the boundary loop of the last axis.
+    """
+    kind = _M4_KINDS.get(mut.spec_id)
+    if kind is None:
+        raise KeyError(f"no M4 realisation for spec {mut.spec_id!r}")
+    name = "inp" if "inp" in case.dims else "lhs"
+    return Structural(kind=kind, axis=len(case.dims[name]) - 1)
+
+
+def _m4_runtime_zero(e: Emitter) -> str:
+    """An `index` that is 0 only at runtime (family M4-c / spec M4.3).
+
+    Loaded from a device buffer the prologue seeded with 0. A live SSA value --
+    rather than the literal 0 of M4-a -- is what keeps the empty iteration space
+    a *runtime* property: neither the verifier nor `canonicalize` can prove the
+    loop empty, so the mutant lowers and runs, silently writing nothing.
+    `memref.dim` of a static memref folds to a constant, and `x - x` folds to 0,
+    so neither can carry this family; a device load has no such fold.
+    """
+    buf = getattr(e, "_m4_zero_buf", None)
+    if buf is None:
+        raise NotExpressible(
+            "runtime-zero bound needs the M4 prologue: call "
+            "`_m4_zero_prologue(e, st, tok)` before the launch")
+    c0 = _cidx(e, 0)
+    v = e.new("z")
+    e.emit(f"{v} = memref.load {buf}[{c0}] : memref<1xi64>")
+    r = e.new("z")
+    e.emit(f"{r} = arith.index_cast {v} : i64 to index")
+    return r
+
+
+def _m4_zero_prologue(e: Emitter, st: Structural | None, tok: str) -> str:
+    """Seed the device buffer M4-c loads its bound from; returns the new token.
+
+    A no-op for every other directive. The buffer is one `i64` in device memory
+    (not a host/managed allocation, which compute-sanitizer cannot see), copied
+    in from a zeroed host constant, so the value the kernel loads is 0.
+    """
+    if st is None or st.kind != "m4-runtime-zero-bound":
+        return tok
+    if getattr(e, "_m4_zero_buf", None) is not None:
+        return tok
+    dims, resolved = (1,), (1,)
+    # `_alloc` derives an f32 memref; M4-c's carrier is an `i64`, so the host
+    # buffer is spelled directly. Device allocation/memcpy still go through the
+    # shared helpers, which take the element type explicitly.
+    mtype = C.memref_type(dims, dtype="i64")
+    host = e.new("zbuf")
+    e.emit(f"{host} = memref.alloc() : {mtype}")
+    z = e.new("c")
+    e.emit(f"{z} = arith.constant 0 : i64")
+    c0 = e.new("c")
+    e.emit(f"{c0} = arith.constant 0 : index")
+    e.emit(f"memref.store {z}, {host}[{c0}] : {mtype}")
+    dev, tok = _device_in(e, dims, resolved, mtype, host, tok, "dzero")
+    e._m4_zero_buf = dev
+    return tok
+
+
+def _m4_degenerate_view(
+    e: Emitter, buf: str, buf_t: str, dims: Sequence[int | None], axis: int
+) -> tuple[str, str]:
+    """A rank-preserving subview of `buf` whose `axis` extent is 0 (family M4-g).
+
+    Every other size is the parent's true extent, so the descriptor is legal; the
+    defect is that the caller reads its loop extent from this view, whose `axis`
+    size is 0, and the loop body therefore never runs. Unlike M1's
+    symbolic-offset subview this one is not an out-of-bounds descriptor -- it is
+    exactly 0 long -- so the mutant stays silent instead of tripping RTV.
+
+    The degenerate axis also takes `stride 0`. RTV's subview check asserts
+    `0 <= offset + (size - 1) * stride < dim`; with `size = 0` and a nonzero
+    stride the `(size - 1) * stride` term is `-stride` and the check fails on a
+    *legal* empty slice (`RuntimeOpVerification.cpp:290`). Neutralising the
+    stride keeps the last-position term equal to the in-bounds offset, so the
+    empty view verifies. The stride is immaterial to an empty range -- the extent
+    read from the view is what carries the mutation -- so this does not change
+    the defect.
+    """
+    nd = len(dims)
+    c0 = e.new("c")
+    e.emit(f"{c0} = arith.constant 0 : index")
+    c1 = e.new("c")
+    e.emit(f"{c1} = arith.constant 1 : index")
+    offsets = [c0] * nd
+    sizes = [_dim(e, buf, buf_t, k) for k in range(nd)]
+    sizes[axis] = c0
+    strides = [c1] * nd
+    strides[axis] = c0
+    vt = _view_type(nd)
+    sv = e.new("sv")
+    e.emit(
+        f"{sv} = memref.subview {buf}[{', '.join(offsets)}] "
+        f"[{', '.join(sizes)}] [{', '.join(strides)}] : {buf_t} to {vt}"
+    )
+    return sv, vt
+
+
+def _m4_triple(
+    e: Emitter, st: Structural | None, lo: str, hi: str, step: str, ext: str
+) -> tuple[str, str, str]:
+    """Override a loop's `(lower, upper, step)` to realise an M4 defect.
+
+    The clean triple passes through untouched for every non-M4 directive, so the
+    M1 perturbations are unaffected. `m4-degenerate-pad` is deliberately absent:
+    its empty iteration space comes from `ext` being 0 (the extent is read from a
+    0-length view), and `_round_up(0, tile)` is already 0, so the clean triple is
+    itself empty.
+
+    `m4-reversed-bound` reads `lo = ext, hi = 0` -- an upper bound strictly below
+    the lower -- rather than keeping `lo` and zeroing `hi`. Both are empty for the
+    battery's extents, but `lo = ext, hi = 0` stays empty even when the block's
+    starting thread `tx` exceeds the bound, which the reversed spelling states
+    directly.
+    """
+    if st is None or not st.kind.startswith("m4-"):
+        return lo, hi, step
+    if st.kind == "m4-zero-bound":
+        return lo, _cidx(e, 0), step
+    if st.kind == "m4-negative-bound":
+        return lo, _cidx(e, -1), step
+    if st.kind == "m4-runtime-zero-bound":
+        return lo, _m4_runtime_zero(e), step
+    if st.kind == "m4-reversed-bound":
+        return ext, _cidx(e, 0), step
+    if st.kind == "m4-zero-step":
+        return lo, hi, _cidx(e, 0)
+    return lo, hi, step
+
+
 def _low_relu(e: Emitter, case: C.Case, st: Structural | None):
     inp_dims, out_dims = case.dims["inp"], case.dims["out"]
     inp_r = concrete(inp_dims, case.dyn, "inp")
@@ -783,7 +948,10 @@ def _low_relu(e: Emitter, case: C.Case, st: Structural | None):
     # Extents and the rounded-up bound are read off the *host* buffer and captured
     # by the launch as index operands, so the kernel body never needs `affine` and
     # the guard compares against a live extent rather than a literal.
-    ext = _dim(e, inp, inp_t, axis)
+    ext_src, ext_t = inp, inp_t
+    if st is not None and st.kind == "m4-degenerate-pad":
+        ext_src, ext_t = _m4_degenerate_view(e, inp, inp_t, inp_dims, axis)
+    ext = _dim(e, ext_src, ext_t, axis)
     bound = _round_up(e, ext, _tile_for(inp_r[axis]))
     obounds = [_dim(e, inp, inp_t, k) for k in range(axis)]
 
@@ -791,6 +959,7 @@ def _low_relu(e: Emitter, case: C.Case, st: Structural | None):
     e.emit(f"{tok} = gpu.wait async")
     d_inp, tok = _device_in(e, inp_dims, inp_r, inp_t, inp, tok, "dinp")
     d_out, tok = _device_in(e, out_dims, out_r, out_t, out, tok, "dout")
+    tok = _m4_zero_prologue(e, st, tok)
 
     nblock = _cidx(e, _GPU_BLOCK)
     grid = _prod(e, obounds)
@@ -828,7 +997,10 @@ def _low_transpose(e: Emitter, case: C.Case, st: Structural | None):
     out, out_t = _alloc(e, out_dims, out_r, "out")
     _zero_fill(e, out, out_t, nd)
 
-    ext = _dim(e, inp, inp_t, axis)
+    ext_src, ext_t = inp, inp_t
+    if st is not None and st.kind == "m4-degenerate-pad":
+        ext_src, ext_t = _m4_degenerate_view(e, inp, inp_t, inp_dims, axis)
+    ext = _dim(e, ext_src, ext_t, axis)
     bound = _round_up(e, ext, _tile_for(inp_r[axis]))
     obounds = [_dim(e, inp, inp_t, k) for k in range(axis)]
 
@@ -836,6 +1008,7 @@ def _low_transpose(e: Emitter, case: C.Case, st: Structural | None):
     e.emit(f"{tok} = gpu.wait async")
     d_inp, tok = _device_in(e, inp_dims, inp_r, inp_t, inp, tok, "dinp")
     d_out, tok = _device_in(e, out_dims, out_r, out_t, out, tok, "dout")
+    tok = _m4_zero_prologue(e, st, tok)
 
     nblock = _cidx(e, _GPU_BLOCK)
     grid = _prod(e, obounds)
@@ -876,7 +1049,10 @@ def _low_softmax(e: Emitter, case: C.Case, st: Structural | None):
     out, out_t = _alloc(e, out_dims, out_r, "out")
     _zero_fill(e, out, out_t, nd)
 
-    ext = _dim(e, inp, inp_t, axis)
+    ext_src, ext_t = inp, inp_t
+    if st is not None and st.kind == "m4-degenerate-pad":
+        ext_src, ext_t = _m4_degenerate_view(e, inp, inp_t, inp_dims, axis)
+    ext = _dim(e, ext_src, ext_t, axis)
     bound = _round_up(e, ext, _tile_for(inp_r[axis]))
     obounds = [_dim(e, inp, inp_t, k) for k in range(axis)]
 
@@ -889,6 +1065,7 @@ def _low_softmax(e: Emitter, case: C.Case, st: Structural | None):
     e.emit(f"{tok} = gpu.wait async")
     d_inp, tok = _device_in(e, inp_dims, inp_r, inp_t, inp, tok, "dinp")
     d_out, tok = _device_in(e, out_dims, out_r, out_t, out, tok, "dout")
+    tok = _m4_zero_prologue(e, st, tok)
 
     nblock = _cidx(e, _GPU_BLOCK)
     grid = _prod(e, obounds)
@@ -937,7 +1114,8 @@ def _low_softmax(e: Emitter, case: C.Case, st: Structural | None):
 
         # --- pass 3: normalize (unguarded; walks the true extent) ------------
         k = e.new("k")
-        e.emit(f"scf.for {k} = {tx} to {ext} step {nblock} {{")
+        lo3, hi3, st3 = _m4_triple(e, st, tx, ext, nblock, ext)
+        e.emit(f"scf.for {k} = {lo3} to {hi3} step {st3} {{")
         e.indent += 1
         widx3 = _write_perturb(e, list(outer) + [k], st, axis)
         ev = e.new("v")
@@ -980,7 +1158,10 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
     out, out_t = _alloc(e, out_dims, out_r, "out")
     _zero_fill(e, out, out_t, nd)
 
-    ext = _dim(e, lhs, lhs_t, axis)
+    ext_src, ext_t = lhs, lhs_t
+    if st is not None and st.kind == "m4-degenerate-pad":
+        ext_src, ext_t = _m4_degenerate_view(e, lhs, lhs_t, lhs_dims, axis)
+    ext = _dim(e, ext_src, ext_t, axis)
     bound = _round_up(e, ext, _tile_for(lhs_r[axis]))
     obounds = [_dim(e, lhs, lhs_t, k) for k in range(axis)]
 
@@ -998,6 +1179,7 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
     d_scale, tok = _device_in(e, sc_dims, sc_r, scale_t, scale, tok, "dscale")
     d_bias, tok = _device_in(e, bi_dims, bi_r, bias_t, bias, tok, "dbias")
     d_out, tok = _device_in(e, out_dims, out_r, out_t, out, tok, "dout")
+    tok = _m4_zero_prologue(e, st, tok)
 
     nblock = _cidx(e, _GPU_BLOCK)
     grid = _prod(e, obounds)
@@ -1049,7 +1231,8 @@ def _low_layer_norm(e: Emitter, case: C.Case, st: Structural | None):
 
         # --- normalize + affine (unguarded; walks the true extent) -----------
         k = e.new("k")
-        e.emit(f"scf.for {k} = {tx} to {ext} step {nblock} {{")
+        lo3, hi3, st3 = _m4_triple(e, st, tx, ext, nblock, ext)
+        e.emit(f"scf.for {k} = {lo3} to {hi3} step {st3} {{")
         e.indent += 1
         ridx_k = _perturb(e, list(outer) + [k], st, axis)
         xv = _read(e, rd, rd_t, ridx_k, st)

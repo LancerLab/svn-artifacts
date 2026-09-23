@@ -230,18 +230,16 @@ SURFACES = {
         # contract beyond the narrow-carrier mutant they exist to host. See
         # `m1_cell` for the pairing rule.
         "battery_cats": list(L.LOW_CATS) + list(C.M1_CARRIER_CATS),
-        # Pinned, NOT derived from the specs being iterated. v1 §5.1 was 6 specs
-        # x 4 cats x 2 shapes = 48; the v2.1 additions the memref surface can
-        # realise (M1.11 family M1-h, M1.12 family M1-d, M1.14 family M1-e) add
-        # 3 specs x 4 x 2 = 24. Family M1-a is then trimmed from its 3 realising
-        # specs (M1.1/2/3, 24) to one (M1.1, 8) so it matches the single-spec
-        # budget every other family holds, and M1.20 (family M1-g) and M1.19
-        # (family M1-f) are added as one spec each. `m1_cell` pairs M1.19 only
-        # with the four carrier hosts and every other spec only with the four
-        # operator categories, so the battery is 8 specs x 4 cats x 2 shapes
-        # (operator categories, 64) + 1 spec x 4 carrier hosts x 2 shapes (8)
-        # = 72. Every M1 record is level-1.
-        "expected_injected": {"1": 72},
+        # Pinned, NOT derived from the specs being iterated. The M1 battery is
+        # 9 specs x 4 operator cats x 2 shapes (64) + spec M1.19 x 4 carrier hosts
+        # x 2 shapes (8) = 72, with `m1_cell` pairing M1.19 only with the carriers
+        # and every other spec only with the four operator categories. M4 adds its
+        # six loop-bound families (M4.1/M4.3/M4.5/M4.6/M4.8 plus M1.7, which the
+        # taxonomy re-homes to M4-e) x 4 cats x 2 shapes = 48. Family M4-d is
+        # already carried by M1.6 above, so it is not repeated. The low battery is
+        # therefore 72 + 48 = 120 injections and the M4 cell is 8 (M4-d) + 48 = 56
+        # = 7 families x 8. Every record is level-1.
+        "expected_injected": {"1": 120},
         "klass": "M1",
         # The kernel now executes on the device, so S12 must use the checker that
         # shares that execution model: `compute-sanitizer --tool memcheck` over
@@ -250,12 +248,13 @@ SURFACES = {
         # so it would report every mutant clean -- a false negative, not a
         # measurement.
         "sanitizer": "compute-sanitizer",
-        "specs": C.M1_LOW_SPECS,
-        "spec_ids": [m.spec_id for m in C.M1_LOW_SPECS],
+        "specs": C.M1_LOW_SPECS + C.M4_LOW_SPECS,
+        "spec_ids": [m.spec_id for m in C.M1_LOW_SPECS + C.M4_LOW_SPECS],
         # mutation-specs.md §5's M1 minimal set is exactly the four categories
-        # this lane composes, so every M1 record is level-1. The §5 level-2 M1
-        # additions (max_pool2d, conv2d, embedding, batch_norm) have no
-        # low-level emitter yet — see the breadth note in stats.json.
+        # this lane composes, and the M4 loop-bound families are realised on the
+        # same four, so every record (M1 and M4) is level-1. The §5 level-2 M1
+        # additions (max_pool2d, conv2d, embedding, batch_norm) have no low-level
+        # emitter yet — see the breadth note in stats.json.
         "level_of": {c: "1" for c in list(L.LOW_CATS) + list(C.M1_CARRIER_CATS)},
         # n/a reasons come from the axis here too; see the note on the linalg
         # surface above.
@@ -580,6 +579,19 @@ class Lane:
         return self.cfg["emitter"](mcase, ref_case=clean,
                                    structural=structural)
 
+    def _mutation(self, clean: C.Case, mut: C.Mutation):
+        """Apply `mut`, realising the M4 loop-bound class on this surface.
+
+        M4 is authored where the loop is: triton realises it in its generator and
+        the memref surface does the same in `emit_low`, rather than through the
+        shared `mutate.apply`, whose structural kinds are M1 index/stride
+        perturbations. Spec M1.7 is re-homed to family M4-e by the taxonomy, so it
+        takes this path too.
+        """
+        if mut.klass == "M4" or mut.spec_id == "M1.7":
+            return clean, L.m4_structural(clean, mut)
+        return M.apply(clean, mut)
+
     def cmd_e2(self, size: str = "small") -> int:
         """Compose and gate every clean kernel this surface expresses.
 
@@ -743,7 +755,7 @@ class Lane:
                             continue
                         ikey = (cat, shape, mut.spec_id)
                         try:
-                            mcase, structural = M.apply(clean, mut)
+                            mcase, structural = self._mutation(clean, mut)
                             # Emit inside the same try: NotExpressible is raised
                             # by the EMITTER, not by apply(). The Case
                             # perturbation is well-formed, but this surface
@@ -798,15 +810,24 @@ class Lane:
                         f.write_text(src)
                         khash = B.short(B.sha1_text(src))
 
+                        # M4-f (`step 0`) is a guaranteed hang, so each repeat
+                        # burns the whole `RUN_TIMEOUT` and repeating it 16x adds
+                        # no information (the hang is deterministic). One run
+                        # records the verdict; `n_repeat` is written down so the
+                        # reduced count is explicit in the census.
+                        n_eff = (1 if structural is not None
+                                 and structural.kind == "m4-zero-step"
+                                 else n_repeat)
+
                         for rtv in (False, True):
                             verdicts = B.classify_repeat(
-                                f, tmp, self.surface, rtv, n=n_repeat,
+                                f, tmp, self.surface, rtv, n=n_eff,
                                 run_timeout=RUN_TIMEOUT)
                             c, census = B.reduce_verdicts(verdicts)
                             rec = self._mutant_rec(cat, lv, shape, mut, rtv, c)
                             rec["kernel_hash"] = khash
-                            if n_repeat > 1:
-                                rec["n_repeat"] = str(n_repeat)
+                            if n_repeat > 1 or n_eff != n_repeat:
+                                rec["n_repeat"] = str(n_eff)
                                 rec["distribution"] = ", ".join(
                                     f"{n}x {o}/{m}" for (o, m), n
                                     in sorted(census.items()))
@@ -1077,7 +1098,7 @@ class Lane:
                         if mut is not variant.get((cat, shape, mut.spec_id), mut):
                             continue
                         try:
-                            mcase, structural = M.apply(clean, mut)
+                            mcase, structural = self._mutation(clean, mut)
                             src = self._emit_mutant(mcase, clean, structural)
                             if src == clean_src:
                                 raise AssertionError(
@@ -1099,7 +1120,14 @@ class Lane:
                         work.mkdir(parents=True, exist_ok=True)
                         f = work / "m.mlir"
                         f.write_text(src)
+                        # M4-f (`step 0`) hangs, so sanitizing it would burn the
+                        # full 300s timeout per kernel for a run that can never
+                        # finish. A short timeout still produces the honest
+                        # `flagged=false, exercised=false` record.
+                        s12_to = (20 if structural is not None
+                                  and structural.kind == "m4-zero-step" else 300)
                         r = B.run_sanitizer(f, work, self.surface, rtv=False,
+                                            timeout=s12_to,
                                             backend=self.backend)
                         rec = r.as_record(self.toolchain, cat, klass,
                                           f"{self.toolchain}-{cat}-{shape}-"
@@ -1126,8 +1154,11 @@ class Lane:
                         # toolchain caught it before any memory access. The
                         # misses that matter are the ones that ran clean under
                         # real ASan coverage — the defects a memory checker
-                        # structurally cannot see.
-                        if rec["flagged"] != "true" and r.instrumented > 0:
+                        # structurally cannot see. `exercised` must also be true:
+                        # M4-f (`step 0`) is instrumented but hangs, so no
+                        # completed body was ever there for the checker to miss.
+                        if (rec["flagged"] != "true" and r.instrumented > 0
+                                and rec["exercised"] == "true"):
                             unflagged[(mut.spec_id, shape)] += 1
                             uinstr[(mut.spec_id, shape)].append(r.instrumented)
                         log(f"  {cat:22s} {shape:8s} {mut.mutant_id:16s} "

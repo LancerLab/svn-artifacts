@@ -5,28 +5,28 @@
   "device": "cuda (sm_86; kernels JIT-compiled to a cubin and run on the device)",
   "S1_detection": {
     "M1": {
-      "n_injected": 64,
+      "n_injected": 62,
       "n_compile": 0,
-      "n_runtime": 46,
+      "n_runtime": 44,
       "n_never": 18,
       "n_na": 0,
       "by_rtv": {
         "off": {
-          "n_injected": 64,
+          "n_injected": 62,
           "n_compile": 0,
           "n_runtime": 0,
-          "n_never": 64,
+          "n_never": 62,
           "n_na": 0
         },
         "on": {
-          "n_injected": 64,
+          "n_injected": 62,
           "n_compile": 0,
-          "n_runtime": 46,
+          "n_runtime": 44,
           "n_never": 18,
           "n_na": 0
         }
       },
-      "note": "measured on the low surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: the whole lane's 144 mutant records reduce to 64 M1 injections."
+      "note": "measured on the low surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: the whole lane's 236 mutant records reduce to 62 M1 injections."
     },
     "M2": {
       "n_injected": 0,
@@ -45,28 +45,28 @@
       "note": "no expressible M3 mutant on this surface; all spec N=40 mutants => n/a. hardware-constraint defects have no expressible form on the plain memref/affine kernel surface: it authors no mma/tma/alignment construct, and lowering it to a device launch does not add one; launch-geometry (M3.17-M3.26) is outside this lane's M1 mandate (mutation-specs-v2.md 5, measured)"
     },
     "M4": {
-      "n_injected": 8,
+      "n_injected": 56,
       "n_compile": 0,
-      "n_runtime": 0,
-      "n_never": 8,
+      "n_runtime": 8,
+      "n_never": 48,
       "n_na": 0,
       "by_rtv": {
         "off": {
-          "n_injected": 8,
+          "n_injected": 56,
           "n_compile": 0,
-          "n_runtime": 0,
-          "n_never": 8,
+          "n_runtime": 8,
+          "n_never": 48,
           "n_na": 0
         },
         "on": {
-          "n_injected": 8,
+          "n_injected": 56,
           "n_compile": 0,
-          "n_runtime": 0,
-          "n_never": 8,
+          "n_runtime": 8,
+          "n_never": 48,
           "n_na": 0
         }
       },
-      "note": "measured on the low surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: the whole lane's 144 mutant records reduce to 8 M4 injections."
+      "note": "measured on the low surface. Top-level counts are RTV-on (generate-runtime-verification enabled), because a detection matrix asks what the toolchain can catch and RTV is part of MLIR; `by_rtv.off` is the bare pipeline, which is the baseline S12's delta is computed against. The two modes are separate measurements and are never merged (manifest \u00a75.1). n_injected counts INJECTIONS (spec level), not records: the whole lane's 236 mutant records reduce to 56 M4 injections."
     }
   },
   "S1_declared_uncompared": {},
@@ -163,15 +163,65 @@
           "n": 4,
           "instrumented_min": 1,
           "instrumented_max": 1
+        },
+        "M1.7/dynamic": {
+          "n": 4,
+          "instrumented_min": 1,
+          "instrumented_max": 1
+        },
+        "M1.7/static": {
+          "n": 4,
+          "instrumented_min": 1,
+          "instrumented_max": 1
+        },
+        "M4.1/dynamic": {
+          "n": 4,
+          "instrumented_min": 1,
+          "instrumented_max": 1
+        },
+        "M4.1/static": {
+          "n": 4,
+          "instrumented_min": 1,
+          "instrumented_max": 1
+        },
+        "M4.3/dynamic": {
+          "n": 4,
+          "instrumented_min": 1,
+          "instrumented_max": 1
+        },
+        "M4.3/static": {
+          "n": 4,
+          "instrumented_min": 1,
+          "instrumented_max": 1
+        },
+        "M4.6/dynamic": {
+          "n": 4,
+          "instrumented_min": 1,
+          "instrumented_max": 1
+        },
+        "M4.6/static": {
+          "n": 4,
+          "instrumented_min": 1,
+          "instrumented_max": 1
+        },
+        "M4.8/dynamic": {
+          "n": 4,
+          "instrumented_min": 1,
+          "instrumented_max": 1
+        },
+        "M4.8/static": {
+          "n": 4,
+          "instrumented_min": 1,
+          "instrumented_max": 1
         }
       },
       "miss_note": "each of these ran with real sanitizer coverage (instrumented > 0) and still produced no report: the injected defect corrupts the result WITHOUT any access leaving its allocation, so no memory checker can see it. This residue \u2014 not the flagged count \u2014 is what S12 measures."
     },
     "M4": {
-      "flagged_and_exercised": 0,
-      "total": 8,
-      "flagged": 0,
-      "exercised": 8,
+      "flagged_and_exercised": 4,
+      "total": 56,
+      "flagged": 4,
+      "exercised": 52,
       "not_instrumented": 0,
       "rejected_before_run": 0
     },
@@ -273,25 +323,26 @@
     "compiled": 16,
     "ran_ok": 16,
     "ref_pass": 16,
-    "mutant_records": 144,
-    "sanitizer_records": 72,
+    "mutant_records": 236,
+    "sanitizer_records": 120,
     "expressibility_records": 16,
     "gate_failures": 0
   },
   "census": {
     "class": "M1",
-    "n_injected": 72,
-    "expected_injected": 72,
-    "n_records": 144,
+    "n_injected": 120,
+    "expected_injected": 120,
+    "n_records": 240,
     "n_target_per_class": 40,
-    "delta_vs_target": 32,
+    "delta_vs_target": 80,
     "by_rtv": {
       "off": {
-        "never": 72
+        "never": 112,
+        "runtime": 8
       },
       "on": {
-        "never": 26,
-        "runtime": 46
+        "never": 66,
+        "runtime": 54
       }
     },
     "battery_size": "small",

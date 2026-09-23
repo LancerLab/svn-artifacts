@@ -1,13 +1,14 @@
 {
   "class": "M1",
   "size": "small",
-  "n_sanitized": 72,
+  "n_sanitized": 120,
   "n_not_expressible": 0,
-  "n_mutants_rtv_off": 72,
+  "n_mutants_rtv_off": 118,
   "reconciled": true,
   "tally": {
-    "flagged=false/fault=none/exercised=true": 26,
-    "flagged=true/fault=oob/exercised=true": 46
+    "flagged=false/fault=none/exercised=false": 4,
+    "flagged=false/fault=none/exercised=true": 66,
+    "flagged=true/fault=oob/exercised=true": 50
   },
   "unflagged_by_spec": {
     "M1.11/dynamic": {
@@ -41,6 +42,56 @@
       "instrumented_max": 1
     },
     "M1.6/static": {
+      "n": 4,
+      "instrumented_min": 1,
+      "instrumented_max": 1
+    },
+    "M1.7/dynamic": {
+      "n": 4,
+      "instrumented_min": 1,
+      "instrumented_max": 1
+    },
+    "M1.7/static": {
+      "n": 4,
+      "instrumented_min": 1,
+      "instrumented_max": 1
+    },
+    "M4.1/dynamic": {
+      "n": 4,
+      "instrumented_min": 1,
+      "instrumented_max": 1
+    },
+    "M4.1/static": {
+      "n": 4,
+      "instrumented_min": 1,
+      "instrumented_max": 1
+    },
+    "M4.3/dynamic": {
+      "n": 4,
+      "instrumented_min": 1,
+      "instrumented_max": 1
+    },
+    "M4.3/static": {
+      "n": 4,
+      "instrumented_min": 1,
+      "instrumented_max": 1
+    },
+    "M4.6/dynamic": {
+      "n": 4,
+      "instrumented_min": 1,
+      "instrumented_max": 1
+    },
+    "M4.6/static": {
+      "n": 4,
+      "instrumented_min": 1,
+      "instrumented_max": 1
+    },
+    "M4.8/dynamic": {
+      "n": 4,
+      "instrumented_min": 1,
+      "instrumented_max": 1
+    },
+    "M4.8/static": {
       "n": 4,
       "instrumented_min": 1,
       "instrumented_max": 1
