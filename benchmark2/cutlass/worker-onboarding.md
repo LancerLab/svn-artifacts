@@ -99,11 +99,26 @@ deferred to a post-deadline extension.
   - `M4.5` zero K-tile stride (`-DSTEP=0`) → **`unchecked`** on `matmul`,
     `conv2d`.
   - `L1` dynamic shared over cap (`-DSMEM_ELT=32768`, 128 KB) →
-    **`rt-check`** (`CUDA error: invalid argument`) on `elemwise_add`; `noop`
-    on `matmul` (that kernel sizes smem from its tiles, so the knob is inert).
+    **`rt-check`** (`CUDA error: invalid argument`) on `elemwise_add`, recorded
+    with the **`L`** path class (the limit is held by the driver, so
+    `applicable=false`); `noop` on `matmul` (that kernel sizes smem from its
+    tiles, so the knob is inert — the one discarded `n/a` control).
   - `M4.2` (parallelby 0/negative) overlaps the loop-extent knob; the negative
-    variant is not representable here. `M4.4` is a harness **noop control**
-    (exercised by the `noop` outcome above), excluded from the denominator.
+    variant is not representable here. `M4.4` (harness noop control) is not run
+    in this slice.
+- **v2.1-conforming records** (`mutrec.py`, the single writer): every record
+  carries the base set (`toolchain, category, class, paper_category, mutant_id,
+  level, outcome, stage, manifest`) plus the ported set (`spec_id, path_class,
+  prohibition, applicable, spec_version`), with `stage` derived by
+  `schema.records.stage_for` and every record validated before it is written.
+  Lane outcome words map to the canonical vocabulary: `ct-check→compile`,
+  `rt-check→runtime`, `unchecked→never`, `noop→n/a`. The corpus
+  (`records.jsonl` 23, `records_m3.jsonl` 12) is committed, so a clone
+  reproduces `stats.json` with no GPU.
+- **`verify.py`** (also `run.sh verify`): re-validates every committed record
+  against `record-schema.json`, checks `mutant_id` uniqueness, re-derives the
+  S1 blocks from the records alone, and asserts axis agreement (no `L` in
+  `S1_detection`; `S1_declared_uncompared` matches the axis).
 - **Compile-only M3 probe battery** (`probes.py` + `kernels/probe_m3.cu`),
   12 control/mutant pairs compiled with `nvcc -c` (TMA/GMMA/vector pairs target
   `sm_90a`, the static-smem pair `sm_86`; never linked or run):
@@ -135,11 +150,11 @@ deferred to a post-deadline extension.
     2²⁴ elements compiles (no check on the linear-copy path).
 - **Harness:** `lane.py` (base+mutants+collect), `probes.py`, `reference.py`
   (bit-exact `fill` + refs + tolerance gate), `collect.py` (spec-§8-shaped
-  `stats.json`, merges both record streams), `run.sh`
-  (setup/minimal/e2/e3/collect/stats/all). `results/cutlass/stats.json`:
-  M3 = 12 injected / 3 ct-check / 9 unchecked; M4 = 21 unchecked;
-  L = 1 rt-check / 1 noop. Flagged `lane_phase: vertical-slice`,
-  `complete: false`.
+  `stats.json`, merges both record streams), `mutrec.py`, `verify.py`, `run.sh`
+  (setup/minimal/e2/e3/collect/stats/verify/all).
+  `results/cutlass/stats.json`: M3 = 12 injected / 3 `compile` / 9 `never`;
+  M4 = 21 `never`; L = 1 `runtime` / 1 `n/a`. Flagged
+  `lane_phase: vertical-slice`, `complete: false`.
 
 **Not expressible on this surface (not probe cells):**
 
@@ -159,3 +174,9 @@ deferred to a post-deadline extension.
 - The 9 non-required categories are deferred.
 
 **Repro:** `PY=/home/gxf/.tools/iree-dev-20260908-venv/bin/python bash run.sh all`
+(runs base + battery + probes + collect + verify; ~12 min on the dev host).
+
+**Canonical-vocabulary note:** §9.6 words used above are the lane's internal
+outcome names; the committed records use the schema vocabulary
+(`compile|runtime|never|n/a`) with `path_class` (`ct-check|rt-check|unchecked|
+avoided|L`) and `prohibition` (`absent|observation|harness-owned|...`).

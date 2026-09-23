@@ -44,10 +44,11 @@ cmd_e3() {
 
 cmd_collect() { "$PY" "$HERE/lane.py" collect --records "$RECORDS" --collect-out "$RESULTS"; }
 cmd_stats()   { cmd_collect; }
+cmd_verify()  { "$PY" "$HERE/verify.py"; }
 
-cmd_all() { cmd_setup; cmd_minimal; cmd_e2; cmd_e3; cmd_collect; }
+cmd_all() { cmd_setup; cmd_minimal; cmd_e2; cmd_e3; cmd_collect; cmd_verify; }
 
-usage() { echo "usage: $0 {setup|minimal|e2|e3|collect|stats|all} [--small|--full] [--device i]"; }
+usage() { echo "usage: $0 {setup|minimal|e2|e3|collect|stats|verify|all} [--small|--full] [--device i]"; }
 
 SUB="${1:-}"; shift || true
 SIZE="small"; DEVICE="${DEVICE:-${CUDA_VISIBLE_DEVICES:-0}}"
@@ -61,6 +62,6 @@ done
 mkdir -p "$RAW" "$RESULTS"
 case "$SUB" in
   setup) cmd_setup;; minimal) cmd_minimal;; e2) cmd_e2;; e3) cmd_e3;;
-  collect) cmd_collect;; stats) cmd_stats;; all) cmd_all;;
+  collect) cmd_collect;; stats) cmd_stats;; verify) cmd_verify;; all) cmd_all;;
   *) usage; exit 1;;
 esac

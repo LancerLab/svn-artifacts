@@ -13,11 +13,16 @@ claimed to be wrong at runtime — that is a separate launch-time question and i
 recorded as `unchecked` (compile-time) with the caveat in the note.
 """
 
+import hashlib
 import json
 import os
 import subprocess
+import sys
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, ROOT)
+import mutrec                                                   # noqa: E402
+
 CUDA = "/usr/local/cuda-12.9/bin/nvcc"
 CUTLASS = os.path.abspath(os.path.join(
     ROOT, "..", "..", "croqtile", "extern", "cutlass"))
@@ -84,15 +89,30 @@ def classify(spec_id, control_ok, mutant_ok, err):
 def main(objdir=None, records_path=None):
     objdir = objdir or os.path.join(ROOT, "raw", "probes")
     os.makedirs(objdir, exist_ok=True)
+    with open(SRC, "rb") as f:
+        probe_hash = hashlib.sha256(f.read()).hexdigest()[:16]
     recs = []
     for spec_id, cid, mid, arch, note in PROBES:
         cok, cerr = compile_probe(cid, arch, objdir)
         mok, merr = compile_probe(mid, arch, objdir)
         outcome, detail = classify(spec_id, cok, mok, merr if not mok else cerr)
-        r = {"spec_id": spec_id, "category": "probe", "mutation": {"control": cid, "mutant": mid},
-             "arch": arch, "outcome": outcome, "detail": detail, "note": note}
+        if outcome == "generator-defect":
+            # A control that does not compile is a defect in the probe, not in
+            # the surface: excluded from the corpus (§9.6), fixed and re-run.
+            print(f"[probe] {spec_id:6s} GENERATOR-DEFECT (excluded): {detail}")
+            continue
+        path_class = "ct-check" if outcome == "ct-check" else "unchecked"
+        r = mutrec.make_record(
+            spec_id=spec_id, category="probe",
+            mutation={"control": cid, "mutant": mid},
+            outcome=outcome, path_class=path_class, manifest="undecidable",
+            prohibition="" if outcome == "ct-check" else "absent",
+            applicable=True, mutant_id=f"cutlass-m3probe-{spec_id}-{mid}",
+            detail=detail, kernel_hash=probe_hash,
+            settings_hash=f"probe{cid}->{mid}", arch=arch, note=note)
         recs.append(r)
-        print(f"[probe] {spec_id:6s} ctrl={cok!s:5s} mut={mok!s:5s} -> {outcome:16s} {note}")
+        print(f"[probe] {spec_id:6s} ctrl={cok!s:5s} mut={mok!s:5s} -> "
+              f"{outcome:9s} {note}")
     if records_path:
         with open(records_path, "w") as f:
             for r in recs:

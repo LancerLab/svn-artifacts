@@ -389,10 +389,35 @@
         "results/cutlass/stats.json"
       ],
       "spec_version": {
-        "port": "CUTLASS/CuTe is a candidate lane carrying a vertical slice, not a promoted corpus: 15 operators gated against CPU references, a launch-time M4/L battery, and a compile-only M3 probe battery. It is not covered by the v2.1 port until a promotable corpus and a conforming S1 block exist.",
+        "port": "CUTLASS/CuTe candidate lane: 15 operators gated against CPU references, a launch-time M4/L battery and a compile-only M3 probe battery, all emitted as v2.1 mutant records (cutlass/mutrec.py). It is not covered by the v2.1 port (no family manifests, M1/M2 uncompared) until a promotable corpus and a conforming S1 block exist.",
         "corpus": "v2.1",
-        "corpus_paths": [],
-        "note": "Candidate lane held at `not_ready`. `results/cutlass/stats.json` is a dev-host (sm_86, not the manifest sm_120 pin) vertical slice with `lane_phase: vertical-slice` and `complete: false`; the raw corpora (`cutlass/records*.jsonl`) are now committed, so a fresh clone reproduces `stats.json` without a GPU. `S1_detection` carries the M3/M4 mutation classes only; the `L` path class is reported under `S1_path_class` and M1/M2 are declared under `S1_declared_uncompared`. Promote to `ready` only after the slice is re-run on the manifest pin."
+        "corpus_paths": [
+          {
+            "path": "cutlass/records.jsonl",
+            "kind": "records",
+            "release": "v2.1",
+            "v21_fields_present": [
+              "spec_id",
+              "path_class",
+              "prohibition",
+              "applicable",
+              "spec_version"
+            ]
+          },
+          {
+            "path": "cutlass/records_m3.jsonl",
+            "kind": "records",
+            "release": "v2.1",
+            "v21_fields_present": [
+              "spec_id",
+              "path_class",
+              "prohibition",
+              "applicable",
+              "spec_version"
+            ]
+          }
+        ],
+        "note": "Candidate lane held at `not_ready`. `results/cutlass/stats.json` is a dev-host (sm_86, not the manifest sm_120 pin) vertical slice with `lane_phase: vertical-slice` and `complete: false`; the raw corpora (`cutlass/records*.jsonl`) are committed as v2.1 mutant records, so a fresh clone reproduces `stats.json` without a GPU and `cutlass/run.sh verify` re-derives S1 from them. `S1_detection` carries the M3/M4 mutation classes only; the `L` path class is reported under `S1_path_class` and M1/M2 are declared under `S1_declared_uncompared`. Promote to `ready` only after the slice is re-run on the manifest pin and family manifests are emitted."
       },
       "owns": [
         "S1",

@@ -40,6 +40,7 @@ INCLUDES = ["-I", os.path.join(CUTLASS, "include"),
 sys.path.insert(0, ROOT)
 import reference as R          # noqa: E402
 import sizes                   # noqa: E402
+import mutrec                  # noqa: E402
 
 # spec-required operators for M3/M4 (mutation-specs-v2 §5/§6)
 M3_OPS = ["matmul", "conv2d", "batch_norm", "max_pool2d"]
@@ -113,9 +114,53 @@ def sha(path):
     return h.hexdigest()[:16]
 
 
-def record(spec_id, cat, mut, outcome, detail=""):
-    return {"spec_id": spec_id, "category": cat, "mutation": mut,
-            "outcome": outcome, "detail": detail}
+def src_hash(cat):
+    with open(os.path.join(ROOT, SRC[cat]), "rb") as f:
+        return hashlib.sha256(f.read()).hexdigest()[:16]
+
+
+def settings_hash(cat, shape):
+    blob = json.dumps({"cat": cat, "shape": list(shape), "arch": ARCH},
+                      sort_keys=True).encode()
+    return hashlib.sha256(blob).hexdigest()[:16]
+
+
+def classify_record(spec_id, cat, mut, outcome, detail, kernel_hash,
+                    settings_hash_v):
+    """Map the lane's §9.6 outcome onto a v2.1 record (see mutrec.py)."""
+    tag = f"{cat}.{spec_id.replace('.', '_')}." + \
+          "_".join(f"{k}{v}" for k, v in sorted((mut or {}).items()))
+    mutid = f"cutlass-{tag}"
+    common = dict(spec_id=spec_id, category=cat, mutation=mut, outcome=outcome,
+                  mutant_id=mutid, detail=detail, kernel_hash=kernel_hash,
+                  settings_hash=settings_hash_v, arch=ARCH)
+    if spec_id.startswith("L"):
+        # launch-status path class: the limit is held by the driver, so the
+        # lane observes it rather than detaining it (applicable=false).
+        manifest = "noop" if outcome == "noop" else "undecidable"
+        return mutrec.make_record(path_class="L", manifest=manifest,
+                                  prohibition="observation", applicable=False,
+                                  **common)
+    if outcome == "ct-check":
+        return mutrec.make_record(path_class="ct-check", manifest="corrupts",
+                                  prohibition="", applicable=True, **common)
+    if outcome == "rt-check":
+        return mutrec.make_record(path_class="rt-check", manifest="corrupts",
+                                  prohibition="absent", applicable=True,
+                                  **common)
+    if outcome == "unchecked":
+        # M3 is compile-only here: the defect compiled, but we did not run it,
+        # so whether it corrupts is undecidable. M4 is launched and the output
+        # differs, so it corrupts.
+        manifest = "undecidable" if spec_id.startswith("M3") else "corrupts"
+        return mutrec.make_record(path_class="unchecked", manifest=manifest,
+                                  prohibition="absent", applicable=True,
+                                  **common)
+    if outcome == "noop":
+        return mutrec.make_record(path_class="avoided", manifest="noop",
+                                  prohibition="absent", applicable=False,
+                                  **common)
+    raise ValueError(f"unknown outcome {outcome!r}")
 
 
 def base_pass(outdir):
@@ -175,8 +220,11 @@ BATTERY = [
 
 def mutants_pass(base, outdir, records_path):
     recs = []
+    kh = {cat: src_hash(cat) for cat in SRC}
+    sh = {cat: settings_hash(cat, base[cat]["shape"]) for cat in SRC}
     for spec_id, cat, mut, env in BATTERY:
         shape = base[cat]["shape"]
+        allmut = dict(mut or {}, **(env or {}))
         tag = f"{cat}.{spec_id.replace('.', '_')}." + \
               "_".join(f"{k}{v}" for k, v in sorted((mut or {}).items()))
         if env:
@@ -185,21 +233,24 @@ def mutants_pass(base, outdir, records_path):
         outp = os.path.join(outdir, tag + ".bin")
         rc, err = build(cat, shape, mut, binp)
         if rc != 0:
-            r = record(spec_id, cat, dict(mut or {}, **(env or {})),
-                       "ct-check", err.strip().split("\n")[-1])
+            r = classify_record(spec_id, cat, allmut, "ct-check",
+                                err.strip().split("\n")[-1], kh[cat], sh[cat])
         else:
             rc2, err2 = run_bin(binp, outp, env)
             if rc2 != 0:
-                r = record(spec_id, cat, dict(mut or {}, **(env or {})),
-                           "rt-check", err2.strip()[-200:])
+                r = classify_record(spec_id, cat, allmut, "rt-check",
+                                    err2.strip()[-200:], kh[cat], sh[cat])
             elif not os.path.exists(outp) or sha(outp) == base[cat]["sha"]:
-                r = record(spec_id, cat, dict(mut or {}, **(env or {})), "noop")
+                r = classify_record(spec_id, cat, allmut, "noop", "",
+                                    kh[cat], sh[cat])
             else:
                 got = R.read_bin(outp)
-                r = record(spec_id, cat, dict(mut or {}, **(env or {})), "unchecked",
-                           f"n={got.size} vs base n={int(os.path.getsize(base[cat]['out']) // 4)}")
+                r = classify_record(spec_id, cat, allmut, "unchecked",
+                                    f"n={got.size} vs base n={int(os.path.getsize(base[cat]['out']) // 4)}",
+                                    kh[cat], sh[cat])
         recs.append(r)
-        print(f"[mut] {spec_id:6s} {cat:22s} -> {r['outcome']:9s} {r['detail']}")
+        print(f"[mut] {spec_id:6s} {cat:22s} -> {r['outcome']:8s} "
+              f"{r['path_class']:9s} {r['detail']}")
     if records_path:
         with open(records_path, "w") as f:
             for r in recs:
