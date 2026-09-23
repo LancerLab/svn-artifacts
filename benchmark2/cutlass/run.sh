@@ -29,6 +29,7 @@ cmd_setup() {
 cmd_minimal() {
   mkdir -p "$RAW"
   "$PY" "$HERE/lane.py" all --out "$RAW" --records "$RECORDS"
+  "$PY" "$HERE/probes.py" "$RAW/probes" "$HERE/records_m3.jsonl"
 }
 
 cmd_e2() {
@@ -37,8 +38,8 @@ cmd_e2() {
 }
 
 cmd_e3() {
-  echo "[$TOOLCHAIN] e3: unconditional-guard remainder not yet implemented"
-  echo "[$TOOLCHAIN]     (descriptor/TMA M3 families -> probes.py, pending)"
+  # unconditional-guard remainder: M3 descriptor/TMA/atom probe battery.
+  "$PY" "$HERE/probes.py" "$RAW/probes" "$HERE/records_m3.jsonl"
 }
 
 cmd_collect() { "$PY" "$HERE/lane.py" collect --records "$RECORDS" --collect-out "$RESULTS"; }

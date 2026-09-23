@@ -93,18 +93,40 @@ deferred to a post-deadline extension.
   - `L1` dynamic shared over cap (`-DSMEM_ELT=32768`, 128 KB) →
     **`rt-check`** (`CUDA error: invalid argument`) on `elemwise_add`; `noop`
     on `matmul` (that kernel sizes smem from its tiles, so the knob is inert).
-- **Harness:** `lane.py` (base+mutants+collect), `reference.py` (bit-exact
-  `fill` + refs + tolerance gate), `collect.py` (spec-§8-shaped `stats.json`),
-  `run.sh` (setup/minimal/e2/e3/collect/stats/all). `results/stats.json` emitted
-  with `lane_phase: vertical-slice`, `complete: false`.
+- **Compile-only M3 probe battery** (`probes.py` + `kernels/probe_m3.cu`),
+  each a control/mutant pair compiled with `nvcc -c` (TMA/GMMA pairs target
+  `sm_90`, never run):
+  - **`M3.5` swizzle-incompatible box shape → `ct-check`** — `Swizzle<7,4,3>`
+    trips `cute/swizzle.hpp:63` "Unsupported layout swizzle"; the legal control
+    compiles. The one clean compile-time detection found so far.
+  - **`M3.1` atom-M divisibility → `unchecked`** — `partition_A` accepts a
+    24-row tiling with a 16-wide atom; no `static_assert` (confirms F3).
+  - **`M3.2` descriptor dim ≥ 2²⁴ → `unchecked`** — a 2²⁴-extent TMA tensor
+    compiles (driver would check at runtime).
+  - **`M3.4` footprint ≥ 4 GB → `unchecked`** — a 2³²-byte product compiles.
+  - **`M3.12` static shared over cap → `unchecked` (compile)** — 128 KB static
+    shared compiles on `sm_86`; the limit is a launch-time (driver) check.
+  - `M3.8` (GMMA rank) probe excluded as a **generator defect** (control did
+    not compile); `M3.6` (vectorization) has **no clean control/mutant pair**
+    (`copy_atom.hpp:111` fires for the control too). Neither emits a cell.
+- **Harness:** `lane.py` (base+mutants+collect), `probes.py`, `reference.py`
+  (bit-exact `fill` + refs + tolerance gate), `collect.py` (spec-§8-shaped
+  `stats.json`, merges both record streams), `run.sh`
+  (setup/minimal/e2/e3/collect/stats/all). `results/cutlass/stats.json`:
+  M3 = 5 injected / 1 ct-check / 4 unchecked; M4 = 9 unchecked;
+  L = 1 rt-check / 1 noop. Flagged `lane_phase: vertical-slice`,
+  `complete: false`.
 
 **Not yet done (the M3 hard remainder):**
 
-- Descriptor/TMA/atom M3 families **M3.1–M3.16** need a type-level probe battery
-  (`probes.py`) with control/mutant pairs; `M3.1` is expected `unchecked`
-  (F3). No `ct-check` pair has been cleanly demonstrated yet (F4).
-- `unchecked` vs `rt-check` for the large-dim/index-width families (M3.2/M3.4)
-  is unmeasured.
+- **M3.6** needs a clean vectorization control/mutant pair; the only
+  `static_assert` found (`copy_atom.hpp:111`) also fires for the intended
+  control, so it is presently a generator defect, not a detection.
+- **M3.3 / M3.7 / M3.8 / M3.9–M3.11 / M3.13 / M3.16** descriptor/TMA geometry
+  probes are not yet built (the 4-arg `make_tma_copy` tiler and the
+  `cute::SM90::GMMA` namespace need a working pattern).
+- The large-dim/index-width families are compile-only `unchecked`; whether the
+  driver detains them at launch is unmeasured (needs the final host).
 - The 9 non-required categories are deferred.
 
 **Repro:** `PY=/home/gxf/.tools/iree-dev-20260908-venv/bin/python bash run.sh all`

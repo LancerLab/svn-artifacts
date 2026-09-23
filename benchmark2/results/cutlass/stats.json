@@ -12,10 +12,10 @@
   },
   "S1_detection": {
     "M3": {
-      "n_injected": 0,
-      "n_compile": 0,
+      "n_injected": 5,
+      "n_compile": 1,
       "n_runtime": 0,
-      "n_never": 0,
+      "n_never": 4,
       "n_discarded_noop": 0
     },
     "M4": {
@@ -44,9 +44,12 @@
     }
   },
   "notes": [
-    "vertical slice: realizable M4 loop-bound + L launch-status battery only",
-    "M3 descriptor/TMA families (M3.2-M3.16) pending probes.py",
+    "vertical slice: launch-time M4/L battery + compile-only M3 probe battery",
+    "M3 outcomes are COMPILE-ONLY: `unchecked` means nvcc/CuTe did not detain the defect at compile time; runtime behaviour is unmeasured",
+    "M3.8 GMMA-rank probe excluded as a generator defect (\u00a79.6 rule 1)",
+    "M3.6 vectorization: no clean control/mutant pair; no cell emitted",
+    "arch-gated TMA probes compiled for sm_90 (compile-only)",
     "n_discarded_noop counts admissible noop controls (e.g. M4.4)"
   ],
-  "records": 11
+  "records": 16
 }

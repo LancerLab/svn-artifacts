@@ -22,9 +22,14 @@ def class_of(spec_id):
 
 def main(records_path, out_dir):
     recs = []
-    if os.path.exists(records_path):
-        with open(records_path) as f:
-            recs = [json.loads(l) for l in f if l.strip()]
+    paths = [records_path]
+    m3 = os.path.join(os.path.dirname(os.path.abspath(records_path)), "records_m3.jsonl")
+    if m3 not in paths:
+        paths.append(m3)
+    for p in paths:
+        if os.path.exists(p):
+            with open(p) as f:
+                recs += [json.loads(l) for l in f if l.strip()]
 
     classes = {"M3": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
                           n_discarded_noop=0),
@@ -63,8 +68,12 @@ def main(records_path, out_dir):
                        "M4": "partial"},
         },
         "notes": [
-            "vertical slice: realizable M4 loop-bound + L launch-status battery only",
-            "M3 descriptor/TMA families (M3.2-M3.16) pending probes.py",
+            "vertical slice: launch-time M4/L battery + compile-only M3 probe battery",
+            "M3 outcomes are COMPILE-ONLY: `unchecked` means nvcc/CuTe did not "
+            "detain the defect at compile time; runtime behaviour is unmeasured",
+            "M3.8 GMMA-rank probe excluded as a generator defect (§9.6 rule 1)",
+            "M3.6 vectorization: no clean control/mutant pair; no cell emitted",
+            "arch-gated TMA probes compiled for sm_90 (compile-only)",
             "n_discarded_noop counts admissible noop controls (e.g. M4.4)",
         ],
         "records": len(recs),

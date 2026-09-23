@@ -6,7 +6,8 @@ raw/
 __pycache__/
 # mutant sources are regenerated from the mutation table
 mutants/
-# intermediate record stream; folded into results/cutlass/stats.json
+# intermediate record streams; folded into benchmark2/results/cutlass/stats.json
 records.jsonl
+records_m3.jsonl
 # lane-local results dir; canonical output is benchmark2/results/cutlass/
 results/
