@@ -184,7 +184,7 @@
           "instrumented_max": 20
         }
       },
-      "miss_note": "each of these ran with real ASan coverage (instrumented > 0) and still produced no report: the injected defect corrupts the result WITHOUT any access leaving its allocation, so no memory checker can see it. This residue \u2014 not the flagged count \u2014 is what S12 measures."
+      "miss_note": "each of these ran with real sanitizer coverage (instrumented > 0) and still produced no report: the injected defect corrupts the result WITHOUT any access leaving its allocation, so no memory checker can see it. This residue \u2014 not the flagged count \u2014 is what S12 measures."
     },
     "M1": {
       "flagged_and_exercised": 0,

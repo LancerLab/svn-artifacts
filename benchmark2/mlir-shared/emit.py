@@ -691,7 +691,7 @@ def _emit_softmax(e: Emitter, case: C.Case, st: Structural | None) -> tuple[str,
     row_t = C.tensor_type(row_dims)
 
     dims = ",".join(f"d{i}" for i in range(nd))
-    outdims = ",".join(f"d{i}" for i in range(nd - 1)) + ",0"
+    outdims = ",".join([f"d{i}" for i in range(nd - 1)] + ["0"])
     inmap = f"affine_map<({dims}) -> ({dims})>"
     outmap = f"affine_map<({dims}) -> ({outdims})>"
 
@@ -809,7 +809,7 @@ def _emit_layer_norm(e: Emitter, case: C.Case, st: Structural | None) -> tuple[s
     row_t = C.tensor_type(row_dims)
 
     dims = ",".join(f"d{i}" for i in range(nd))
-    outdims = ",".join(f"d{i}" for i in range(nd - 1)) + ",0"
+    outdims = ",".join([f"d{i}" for i in range(nd - 1)] + ["0"])
     inmap = f"affine_map<({dims}) -> ({dims})>"
     outmap = f"affine_map<({dims}) -> ({outdims})>"
     kmap = f"affine_map<({dims}) -> (d{nd - 1})>"

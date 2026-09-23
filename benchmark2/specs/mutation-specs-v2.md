@@ -58,9 +58,9 @@ serves as the experiment's control. Counts are from the 25 ledgers in
 
 **Target: ≥ 35 admissible mutants per `(class × surface)` cell, goal 40.**
 
-`admissible = injected ∧ ¬noop ∧ oracle-confirmed corruption` (see §7). Because
-admissible is always below injected, §6 gives per-surface injection budgets, not
-target counts.
+`admissible = injected ∧ ¬noop ∧ ¬undecidable ∧ oracle-confirmed corruption`
+(see §7). Because admissible is always below injected, §6 gives per-surface
+injection budgets, not target counts.
 
 **Why 35.** A cell at n=12 moves 8.3 pp per mutant; a cell at n=2 moves 50 pp.
 Neither can support the rate comparison the paper makes. v1's `N = 40` assumed a
@@ -414,8 +414,11 @@ intentional, and all must be recorded in `stats.json`:
 
 ## §7 Outcome taxonomy and oracle (unchanged)
 
-Per mutant: `{compile, runtime, never, n/a}`, plus `noop` for a mutant the oracle
-finds value-identical to the reference.
+Per mutant the DETECTION outcome is `{compile, runtime, never, n/a}`. `noop` is
+NOT one of these: it is the *manifest* (ground-truth) verdict, `{corrupts, noop,
+undecidable}`, recorded on a separate axis. A mutant the oracle finds
+value-identical to the reference is `noop`; a mutant whose **unmutated base**
+fails its own §7 reference is `undecidable`.
 
 **The oracle is mandatory and value-based.** A mutant is admissible only if the
 three-checksum oracle (see `mlir-shared/README.md`; `_W_MOD = 127`,
@@ -423,9 +426,22 @@ three-checksum oracle (see `mlir-shared/README.md`; `_W_MOD = 127`,
 has no checksum oracle, a byte-exact comparison against the reference output is
 required.
 
-The `manifest ∈ {corrupts, noop}` field is recorded per mutant. `noop` mutants are
-**retained in the corpus and in `stats.json`**, and **excluded** from the
-admissible denominator.
+The `manifest ∈ {corrupts, noop, undecidable}` field is recorded per mutant.
+
+- `corrupts` — the mutation changes the output (or the oracle rejects it):
+  admissible ground truth.
+- `noop` — the mutation was injected into a base that passes its own §7 reference
+  and the oracle still passes: the edit is **inert**. This is a *measurement*, not
+  a failure to detect, and it is **not** the same as `outcome=never`.
+- `undecidable` — the **unmutated** base fails its own §7 reference, so no
+  manifest verdict can be trusted; the mutant is created but **unjudged** until
+  the base reference is repaired. It is an infrastructure state, not a property
+  of the mutation, and must never be read as inert.
+
+`noop` and `undecidable` mutants are **retained in the corpus and in
+`stats.json`**, and **excluded** from the admissible denominator. The two are
+counted separately (`n_discarded_noop`, `n_undecidable`) so that a broken base is
+not hidden inside the inert tally.
 
 **Why the oracle must stay value-based.** Relaxing it to admit resource-only
 violations would make M3's numbers rise while making the paper's claim weaker —
@@ -441,8 +457,9 @@ Every `stats.json` must record:
 spec_version       : "v2.1"
 spec_ids_used      : e.g. ["M1.1", ..., "M1.18"]
 n_injected         : total generated
-n_discarded_noop   : oracle-value-identical
-n_admissible       : n_injected - n_discarded_noop - n_na
+n_discarded_noop   : oracle-value-identical (inert)
+n_undecidable      : unmutated base fails its own §7 reference (unjudged)
+n_admissible       : n_injected - n_discarded_noop - n_undecidable - n_na
 n_na               : class not expressible on this surface
 ```
 
@@ -820,6 +837,77 @@ gap specs M1.15/M1.17 and behind the whole `view`/`subspan` family in §9.6.2.
 every discarded v1 M3 spec was either resource-only (*no observable effect*), `avoided`
 (the invariant is derived), or a state the compiler refuses statically (`ct-check`).
 Naming the outcome would have predicted the entire discard population before any injection.
+
+### §9.6.1b Measured-outcome vocabulary (normative for every lane)
+
+Added 2026-09-23. The §9.6.1 table names the *design* outcome a spec is expected to have;
+this subsection fixes the vocabulary a lane records for a *measured* mutant, so no two lanes
+count the same evidence differently. A mutant's measured outcome is exactly one of:
+
+| Measured outcome | The mutated code is… | What stops it | Counted as |
+|---|---|---|---|
+| `avoid` | not expressible — no legal program states the defect | never generated | n/a — not a gap |
+| `corrupt` | **illegal** — our mutation emitted code that violates the language/model's syntax or claimed semantics | the compiler rejects the mutation's *own* illegality | **generator defect — excluded; the emitter/base must be fixed** |
+| `ct-check` | legal and well-formed | a compile-time diagnostic about the bug (error **or** warning) | detection (before execution) |
+| `rt-check` | legal and well-formed | an explicit runtime check the toolchain emits for the bug (e.g. RTV) fires | detection (at runtime) |
+| `never` | legal and well-formed | nothing: it runs to a wrong result, or hangs/aborts without any emitted check | miss |
+
+Four rules:
+
+1. **`corrupt` is not `ct-check`.** A compile failure is `corrupt` only when it comes from an
+   emitter/base artifact **unrelated to the injected defect** — a syntax/parse error, an
+   undefined symbol, a crash or an ICE. A **shape/rank/type inconsistency that the injected
+   defect itself creates is `ct-check`**: the mutated program is a syntactically valid
+   statement of the wrong shape, and the type checker rejecting it *is* the compiler catching
+   the bug. Do not relabel the injected defect as "our malformedness". (An earlier revision of
+   this rule listed "inconsistent operand shapes" as `corrupt`; that was read too broadly — a
+   shape spec's entire point is an inconsistent operand shape, so the inconsistency is the
+   detection, not a generator defect.)
+2. **`ct-check` requires a well-formed mutant and a real diagnostic.** The compiler catches a
+   semantic bug and reports it (error or warning). An internal compiler error is not a
+   `ct-check`; prefer a diagnostic, and treat an ICE as an infrastructure/`corrupt` state.
+3. **`rt-check` is an *emitted* check.** A raw hang, segfault, or abort that is not an
+   explicit check the toolchain emitted is `never`, not `rt-check`.
+4. **`avoid` produces no record** and enters no denominator (`unexpressible`/`avoided` in
+   §9.6.1).
+
+**Terminology collision (resolve before counting).** The §7 ground-truth manifest value
+`corrupts` means "the mutation changes the output" — an oracle property, *orthogonal* to the
+measured outcome. It is **not** the `corrupt` outcome above. The two must not share a name;
+the manifest value should be renamed (e.g. `value-changing`) so a `manifest: corrupts` row is
+never mistaken for "our mutation code was illegal."
+
+**Mapping to the currently recorded fields.** `mlirbench` still records the v1
+`outcome ∈ {compile, runtime, never, n/a}` plus `manifest ∈ {corrupts, noop, undecidable}`.
+Under this vocabulary that field conflates `corrupt` with `ct-check` (both `compile`) and
+`never` with `rt-check` (both `runtime`, for a hang vs an emitted assert). Until the field is
+split, a `compile` row must be audited for whether the mutated program is well-formed
+(`ct-check`) or malformed (`corrupt`), and a hang/crash `runtime` row counted as `never`.
+
+**Audit result — `mlir-linalg` M2, 2026-09-23 (the 24 `compile` injections are `ct-check`).**
+The committed `mlir-linalg` battery records 48 `compile` rows = 24 injections x 2 RTV modes
+(`results/mlir-linalg/mutants.jsonl`). Regenerating each injection's source and probing it
+shows every failure is a shape/rank/type diagnostic **about the injected defect**, not a
+generator artifact:
+
+* All 24 are a shape/rank mismatch on the mutated operand or its dependent
+  (`inferred input/output operand #N has shape's dimension #D to be X`, `expected operand
+  rank (R)`, `static concatenation size mismatch`, `rank of concatenated inputs must match`,
+  `result type ... does not match`). The mutated program is a syntactically valid statement
+  of the wrong shape, so the type checker catching it is `ct-check`. Nine are rejected only
+  after a pipeline pass folds a contradictory `arith.constant` (the pass-free verify passes
+  because every extent is `?`); the outcome is unchanged — the compiler still catches the bug.
+* Two of the 24 additionally tripped a genuine emitter bug: the trailing-reduction affine map
+  was built as `affine_map<(d0) -> (,0)>` when the mutation dropped the rank to 1
+  (softmax/layer_norm M2.7/M2.16). Fixed in `emit.py`; with the fix the two mutants emit a
+  valid rank-1 op and fail with the same `expected operand rank` diagnostic as the rest —
+  still `ct-check`.
+
+Specs affected: M2.1 (2), M2.2 (4), M2.3 (1), M2.4 (2), M2.6 (7), M2.7 (4), M2.9 (1), M2.16 (4).
+M2 tally **unchanged: ct-check 24, rt-check 0, never 40, corrupt 0**. The S1 `n_compile 24`
+is correct; **no re-expression is required**. An earlier revision of this addendum mislabelled
+the 24 as `corrupt` by reading rule 1's "inconsistent operand shapes" as covering the injected
+defect itself; that reading was wrong and is retracted here.
 
 ### §9.6.2 Verified additions
 
