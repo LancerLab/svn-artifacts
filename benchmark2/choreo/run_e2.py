@@ -99,6 +99,7 @@ import sys
 import time
 
 import toolchain                                            # noqa: E402
+import local_caps                                           # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))          # benchmark2/choreo
 B2 = os.path.dirname(HERE)                                 # benchmark2/
@@ -112,8 +113,9 @@ OUT = os.path.join(RAW, "e2_ledger.json")
 TOOLCHAIN = "choreo"
 
 # Pinned ledger invocation, manifest §3. Verbatim — reviewers re-run this.
-LEDGER_FLAGS = ["-gs", "--stats", "-es",
-                "--max-local-mem-capacity=2000000", "-t", "cute"]
+# Local-memory caps are per-kernel (local-to-shared-migration W2): run_ledger
+# appends the kernel's raw/local_cap.json entry, if any, via local_caps.
+LEDGER_FLAGS = ["-gs", "--stats", "-es", "-t", "cute"]
 
 T_LEDGER = 120
 
@@ -192,8 +194,9 @@ def run_ledger(src, ledger_path, out_sh, logpath):
     reports "The input file ... does not exist" (rc=1).
     """
     import subprocess
-    cmd = ["stdbuf", "-o0", "-e0", CHOREO, "-kt", src,
-           f"--dump-ledger={ledger_path}", "-o", out_sh] + LEDGER_FLAGS
+    cmd = (["stdbuf", "-o0", "-e0", CHOREO, "-kt", src,
+            f"--dump-ledger={ledger_path}", "-o", out_sh] + LEDGER_FLAGS +
+           local_caps.flags_for(local_caps.kernel_id_from_path(src)))
     with open(logpath, "wb") as lf:
         try:
             p = subprocess.run(cmd, cwd=REPO, stdout=lf, stderr=subprocess.STDOUT,
@@ -731,6 +734,7 @@ def main():
                    "produced_by": "e2", "elapsed_s": elapsed,
                    "gpu_device": str(a.device), "exclusive": False,
                    "pinned_flags": LEDGER_FLAGS,
+                   "local_cap_overrides": "raw/local_cap.json",
                    "kernels": results}, f, indent=1)
     print(f"\nwrote {os.path.relpath(a.out, REPO)}  ({elapsed}s)")
 

@@ -92,6 +92,8 @@ import subprocess
 import sys
 import tempfile
 
+import local_caps
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 B2 = os.path.dirname(HERE)
 REPO = os.path.dirname(B2)
@@ -114,9 +116,10 @@ PROBE_RAW_DIR = None
 MUTANTS = os.path.join(HERE, "mutants")
 CHOREO = os.path.join(REPO, "croqtile", "build-release", "choreo")
 
-CAP = "--max-local-mem-capacity=2000000"
-LEDGER_FLAGS = ["-gs", "--stats", "-es", CAP, "-t", "cute"]
-EXEC_FLAGS = ["-gs", "-t", "cute", "-kt", CAP, "-rtc=all"]
+# Local-memory caps are per-kernel (local-to-shared-migration W2): each
+# invocation appends the base's raw/local_cap.json entry, if any, via local_caps.
+LEDGER_FLAGS = ["-gs", "--stats", "-es", "-t", "cute"]
+EXEC_FLAGS = ["-gs", "-t", "cute", "-kt", "-rtc=all"]
 
 # ---------------------------------------------------------------------------
 # THREE sources of assertion output, split across TWO prefixes and TWO streams.
@@ -297,9 +300,10 @@ def run_ledger(src):
     try:
         lp = os.path.join(t, "l.json")
         p = subprocess.run(
-            [CHOREO] + LEDGER_FLAGS + [f"--dump-ledger={lp}",
-                                       os.path.join(t, "k.co"),
-                                       "-o", os.path.join(t, "k.sh")],
+            [CHOREO] + LEDGER_FLAGS + local_caps.flags_for(
+                local_caps.kernel_id_from_path(src))
+            + [f"--dump-ledger={lp}", os.path.join(t, "k.co"),
+               "-o", os.path.join(t, "k.sh")],
             capture_output=True, text=True, cwd=REPO)
         if not os.path.exists(lp):
             return None, f"no ledger emitted (rc={p.returncode})"
@@ -320,7 +324,9 @@ def run_execute(src, extra_flags):
     try:
         sh = os.path.join(t, "k.sh")
         p = subprocess.run(
-            [CHOREO] + EXEC_FLAGS + extra_flags + [os.path.join(t, "k.co"), "-o", sh],
+            [CHOREO] + EXEC_FLAGS + local_caps.flags_for(
+                local_caps.kernel_id_from_path(src))
+            + extra_flags + [os.path.join(t, "k.co"), "-o", sh],
             capture_output=True, text=True, cwd=REPO)
         if p.returncode != 0 or not os.path.exists(sh):
             return None, f"choreo rc={p.returncode}: {(p.stderr or p.stdout)[-300:]}"

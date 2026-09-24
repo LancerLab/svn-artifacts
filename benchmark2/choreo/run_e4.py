@@ -92,6 +92,7 @@ REPO = os.path.dirname(B2)                                 # svn-artifacts/
 sys.path.insert(0, HERE)
 import run_e2                                               # noqa: E402
 import gpuinfo                                              # noqa: E402
+import local_caps                                           # noqa: E402
 
 RAW = os.path.join(HERE, "raw")
 OUT = os.path.join(RAW, "e4_compile_cost.json")
@@ -101,11 +102,12 @@ TOOLCHAIN = "choreo"
 CHOREO = os.path.join(REPO, "croqtile", "build-release", "choreo")
 SUITE = os.path.join(REPO, "benchmark", "choreo")
 
-CAP = "--max-local-mem-capacity=2000000"
+# Local-memory caps are per-kernel (local-to-shared-migration W2): the kernel's
+# raw/local_cap.json entry is appended at each invocation via local_caps.
 # Front-end only: -es emits the target source and skips nvcc entirely.
-FE_FLAGS = ["-gs", "-t", "cute", "-kt", CAP, "-es"]
+FE_FLAGS = ["-gs", "-t", "cute", "-kt", "-es"]
 # Full script generation (no -es) so --compile-link can then run nvcc.
-GEN_FLAGS = ["-gs", "-t", "cute", "-kt", CAP]
+GEN_FLAGS = ["-gs", "-t", "cute", "-kt"]
 
 T_FRONTEND = 120
 T_NVCC = 1800
@@ -162,14 +164,14 @@ def prep(category, case, workdir):
     return d, None
 
 
-def time_frontend(d, reps):
+def time_frontend(d, reps, kernel_id=None):
     """choreo front-end only (-es): parse + assess + emit, no nvcc."""
     out = os.path.join(d, "k_fe.sh")
     samples = []
     for _ in range(reps):
         t = time.perf_counter()
-        r = subprocess.run([CHOREO] + FE_FLAGS + [os.path.join(d, "k.co"),
-                                                  "-o", out],
+        r = subprocess.run([CHOREO] + FE_FLAGS + local_caps.flags_for(kernel_id)
+                           + [os.path.join(d, "k.co"), "-o", out],
                            capture_output=True, timeout=T_FRONTEND, cwd=REPO)
         samples.append(time.perf_counter() - t)
         if r.returncode != 0:
@@ -177,11 +179,11 @@ def time_frontend(d, reps):
     return statistics.median(samples), samples, 0, None
 
 
-def time_nvcc(d, reps):
+def time_nvcc(d, reps, kernel_id=None):
     """The generated script's own --compile-link: choreo's exact nvcc flags."""
     out = os.path.join(d, "k.sh")
-    r = subprocess.run([CHOREO] + GEN_FLAGS + [os.path.join(d, "k.co"),
-                                               "-o", out],
+    r = subprocess.run([CHOREO] + GEN_FLAGS + local_caps.flags_for(kernel_id)
+                       + [os.path.join(d, "k.co"), "-o", out],
                        capture_output=True, timeout=T_FRONTEND, cwd=REPO)
     if r.returncode != 0 or not os.path.exists(out):
         return None, [], r.returncode, "script generation failed"
@@ -213,14 +215,15 @@ def measure_one(category, case, workdir, fe_reps, nvcc_reps):
         rec["error"] = err
         return rec
 
-    fe, fe_s, rc, msg = time_frontend(d, fe_reps)
+    kid = f"{category}/{case}"
+    fe, fe_s, rc, msg = time_frontend(d, fe_reps, kernel_id=kid)
     rec["frontend_s_samples"] = [round(x, 5) for x in fe_s]
     if fe is None:
         rec["ok"] = False
         rec["error"] = f"frontend rc={rc}: {msg}"
         return rec
 
-    nv, nv_s, rc, msg = time_nvcc(d, nvcc_reps)
+    nv, nv_s, rc, msg = time_nvcc(d, nvcc_reps, kernel_id=kid)
     rec["nvcc_s_samples"] = [round(x, 3) for x in nv_s]
     if nv is None:
         rec["ok"] = False

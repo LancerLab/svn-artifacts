@@ -906,8 +906,10 @@ def s10(costs):
 # that no timing statistic can detect from its own numbers: a rejected kernel
 # launch "does not raise anything at the call site ... the kernel silently never
 # ran ... the harness still printed an 'Execution time', and the process exited
-# 0". The trigger is this lane's own pinned `--max-local-mem-capacity=2000000`,
-# which makes the dynamic-shape path reserve capacity * maxThreadsPerSM * numSMs
+# 0". The trigger is the local-memory cap: `--max-local-mem-capacity=2000000`
+# (formerly lane-wide; since local-to-shared-migration W2 it is the per-kernel
+# override for dynamic-shape kernels in raw/local_cap.json, which kept those at
+# 2000000), which makes the dynamic-shape path reserve capacity * maxThreadsPerSM * numSMs
 # = 466.9 GB against 85 GB of device memory, so cudaLaunchKernel returns
 # cudaErrorInvalidValue. 36 of 153 dynamic benchmark cases were affected and ALL
 # reported success.
@@ -1112,7 +1114,8 @@ def s13(residue, latency, present):
                     "note": (
                         "The driver REFUSED cudaLaunchKernel, so no device work "
                         "happened and the wall time is not a measurement of "
-                        "anything. With --max-local-mem-capacity=2000000 the "
+                        "anything. With the kernel's 2000000-byte local cap "
+                        "(raw/local_cap.json) the "
                         "dynamic-shape path reserves capacity * maxThreadsPerSM "
                         "* numSMs (466.9 GB on an H800 PCIe, 114 SMs x 2048) "
                         "against 85 GB of device memory. Post-croqtile-1fa4719 "

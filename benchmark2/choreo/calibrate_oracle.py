@@ -101,7 +101,8 @@ def calibrate_one(category, case, workdir):
 
     sh = os.path.join(d, "base.sh")
     ok, rc, ctext = E1.compile_stage(local, E1.ORACLE_FLAGS, sh,
-                                     os.path.join(d, "base.compile.log"))
+                                     os.path.join(d, "base.compile.log"),
+                                     kernel_id=f"{category}/{case}")
     res["base_compile"] = ok
     res["base_compile_rc"] = rc
     if not ok:

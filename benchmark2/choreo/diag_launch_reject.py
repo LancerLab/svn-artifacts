@@ -78,7 +78,7 @@ def main():
             print(f"{cat}/{case[:40]:<42} PREP FAIL: {err}")
             results.append({"kernel": f"{cat}/{case}", "prep_error": err})
             continue
-        script, err = run_e5.build(d, FLAGS, "on")
+        script, err = run_e5.build(d, FLAGS, "on", kernel_id=f"{cat}/{case}")
         if err:
             print(f"{cat}/{case[:40]:<42} BUILD FAIL: {err[:120]}")
             results.append({"kernel": f"{cat}/{case}", "build_error": err[:300]})

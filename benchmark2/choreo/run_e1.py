@@ -124,6 +124,7 @@ import sys
 import time
 
 import toolchain                                           # noqa: E402
+import local_caps                                          # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))          # benchmark2/choreo
 B2 = os.path.dirname(HERE)                                 # benchmark2/
@@ -134,25 +135,26 @@ RAW = os.path.join(HERE, "raw")
 ORACLE_POLICY = os.path.join(RAW, "oracle_policy.json")
 
 TOOLCHAIN = "choreo"
-# Pinned suite invocation (manifest §3): --stats -es --max-local-mem-capacity=2000000 -t cute.
+# Pinned suite invocation: -gs -t cute -kt, per-kernel local caps.
 #
-# The cap is NOT optional for E1. Measured: the UNMUTATED matmul base kernel
-# fails to compile at the 2048-byte default (exit=4, "Used: 98304 bytes,
-# Limit: 2048 bytes") and compiles cleanly at 2000000. Classifying correct code
-# as "compile-detected" would be nonsense, so E1 uses the pinned cap for both
-# builds. Consequence, recorded for the manifest: M3 spec-3 mutants are measured
-# against a 2,000,000-byte local-memory budget and against the shared-memory
-# device limit (48 KB default / 98304 B with the dynamic attribute), not against
-# the 2048-byte default.
-CAP = "--max-local-mem-capacity=2000000"
+# Local-memory caps are PER-KERNEL (local-to-shared-migration W2), not
+# lane-wide: compile_stage appends the kernel's entry from raw/local_cap.json
+# (via local_caps.flags_for) to both builds. Measured 2026-09-24 (default-cap
+# probe of all 317 bases + 170 mutants): exactly 34 bases exceed the compiler
+# default -- large per-thread softmax row staging, conv2d/max_pool2d
+# accumulators, and dynamic-shape kernels whose symbolic local usage is not
+# statically bounded (those keep the former 2000000 lane cap). Every other
+# kernel compiles at the default, so a mutant that pushes LOCAL usage past its
+# base's entry is now compile-detected instead of hidden under a lane-wide
+# budget. The applied cap is stamped per record as `local_cap_bytes`.
 # The DETECTOR arm runs at the highest check level, `-rtc=all` (= `high`). The
 # default `-rtc=entry` emits only host-entry obligations, so an assessment that
 # choreo DID create can be absent from the build and the mutant is charged as a
 # miss. Running the assessor at `-rtc=all` is the fair test of what choreo can
 # detect, and it is what the S2 ceiling figure is measured at. Override with
 # `--rtc <level>`; the level is always replaced, never appended twice.
-COMPILE_FLAGS = ["-gs", "-t", "cute", "-kt", CAP, "-rtc=all"]
-ORACLE_FLAGS = ["-gs", "-t", "cute", "-kt", CAP, "-rtc=none"]
+COMPILE_FLAGS = ["-gs", "-t", "cute", "-kt", "-rtc=all"]
+ORACLE_FLAGS = ["-gs", "-t", "cute", "-kt", "-rtc=none"]
 
 # Categories whose reference check is compiled out unless -D__CHECK__ is given
 # (their common.h/common.hpp wraps the cpu_* comparison in `#ifdef __CHECK__`).
@@ -286,6 +288,18 @@ RE_ASSESSMENT = re.compile(
 # suite it is the commonest detection of all: 10 of the 16 source-A log lines.
 RE_SHAPE_CHECK = re.compile(
     r"choreo runtime check failed: shape inconsistent on the \w+ parameter \("
+)
+# A THIRD source-A family, also carrying NO location suffix. When a dynamic
+# shape makes the JIT co-allocate several spm buffers, codegen emits a host
+# `runtime_check(<simulated heap size> <= <capacity>, "In the memory reuse of
+# dynamic shapes, the size of the initial <store> spm should not exceed the
+# memory usage limit <capacity> bytes.")` at cute_codegen.cpp:10198. It is
+# emitted only when runtime checks are enabled, so it is an assessor verdict on
+# the mutated access pattern -- source A, not a library sanity check. Measured:
+# M3.15.cv10.pad2p24, M3.27.cv1.symshared and M4.5.cv1.alt fire it in the -rtc=all
+# arm and nowhere in the -rtc=none arm, and were being surfaced as `unattributed`.
+RE_MEM_REUSE = re.compile(
+    r"choreo runtime check failed: In the memory reuse of dynamic shapes"
 )
 # UNGATED LIBRARY SANITY CHECKS. These share source A's host prefix
 # ("choreo runtime check failed: ") but are NOT assessments: they live in
@@ -426,8 +440,11 @@ def run(cmd, timeout, logpath, env=None):
     return rc, text
 
 
-def compile_stage(src, flags, out_sh, logpath):
-    cmd = [CHOREO] + flags + [src, "-o", out_sh]
+def compile_stage(src, flags, out_sh, logpath, kernel_id=None):
+    # kernel_id = base id "category/name"; appends the per-kernel local cap
+    # from raw/local_cap.json when one exists (default otherwise).
+    cmd = ([CHOREO] + flags + local_caps.flags_for(kernel_id) +
+           [src, "-o", out_sh])
     rc, text = run(cmd, T_COMPILE, logpath)
     ok = rc == 0 and os.path.exists(out_sh) and os.path.getsize(out_sh) > 0
     return ok, rc, text
@@ -464,9 +481,10 @@ def classify_log(text, rc):
       none            nothing fired
 
     Order matters, and the reason is that the sources share prefixes:
-      1. Source A is matched FIRST and POSITIVELY (location suffix, or the
-         `shape inconsistent` template). It must precede RE_RTC's bare prefix
-         because A-host and the ungated library checks share that prefix.
+      1. Source A is matched FIRST and POSITIVELY (location suffix, or one of the
+         location-less `shape inconsistent` / `memory reuse of dynamic shapes`
+         templates). It must precede RE_RTC's bare prefix because A-host and the
+         ungated library checks share that prefix.
       2. The library sanity checks are matched before the bare prefix, so an
          allocation failure is not credited to the assessor.
       3. Source B is anchored to end-of-line so it cannot match A's longer
@@ -478,6 +496,7 @@ def classify_log(text, rc):
     """
     assessment = bool(RE_ASSESSMENT.search(text))
     shape = bool(RE_SHAPE_CHECK.search(text))
+    mem_reuse = bool(RE_MEM_REUSE.search(text))
     lib = bool(RE_LIB_SANITY.search(text))
     rtc = bool(RE_RTC.search(text))
     rtlib = bool(RE_RUNTIME_LIB.search(text))
@@ -485,7 +504,7 @@ def classify_log(text, rc):
     any_assert = bool(RE_ASSERT.search(text))
     passed = bool(RE_PASSED.search(text))
 
-    if assessment or shape:
+    if assessment or shape or mem_reuse:
         # Source A. A guard firing means the access or the shape was wrong, so
         # the run cannot also have passed; if both markers are present the
         # assessment wins because it is the more specific evidence.
@@ -563,16 +582,20 @@ def classify_one(rec, workdir, keep_logs=True, policy=None):
     xenv = {"EXTRA_TARGET_CFLAGS": "-D__CHECK__"} if gated else None
 
     # ---- 1. detector compile -------------------------------------------
+    base_id = f"{rec['category']}/{rec['case']}"
     det_sh = os.path.join(d, "det.sh")
-    ok, rc, _ = compile_stage(src, COMPILE_FLAGS, det_sh, os.path.join(d, "det.compile.log"))
+    ok, rc, _ = compile_stage(src, COMPILE_FLAGS, det_sh, os.path.join(d, "det.compile.log"),
+                              kernel_id=base_id)
     out["compile_rc"] = rc
+    out["local_cap_bytes"] = local_caps.cap_bytes_for(base_id)
 
     # ---- 2. oracle build (specs §7 manifest check) ----------------------
     # Done before the detector execute so that a compile-detected mutant still
     # gets a manifest verdict.
     off_sh = os.path.join(d, "off.sh")
     off_ok, off_rc, _ = compile_stage(src, ORACLE_FLAGS, off_sh,
-                                      os.path.join(d, "off.compile.log"))
+                                      os.path.join(d, "off.compile.log"),
+                                      kernel_id=base_id)
     out["oracle_compile_rc"] = off_rc
 
     manifest = "noop"

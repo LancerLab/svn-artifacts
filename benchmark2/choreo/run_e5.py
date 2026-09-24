@@ -98,6 +98,7 @@ sys.path.insert(0, HERE)
 import run_e2                                               # noqa: E402
 import gpuinfo                                              # noqa: E402
 import toolchain                                            # noqa: E402
+import local_caps                                           # noqa: E402
 
 RAW = os.path.join(HERE, "raw")
 OUT = os.path.join(RAW, "e5_runtime.json")
@@ -114,8 +115,9 @@ LOCK = os.path.join(B2, ".gpu-lock")
 
 SANITIZER = "/usr/local/cuda/bin/compute-sanitizer"
 
-CAP = "--max-local-mem-capacity=2000000"
-BASE_FLAGS = ["-gs", "-t", "cute", "-kt", CAP]
+# Local-memory caps are per-kernel (local-to-shared-migration W2): build()
+# appends the kernel's raw/local_cap.json entry, if any, via local_caps.
+BASE_FLAGS = ["-gs", "-t", "cute", "-kt"]
 # checks ON  = choreo's default (== -rtc=entry == -rtc=low, measured above)
 FLAGS_ON = BASE_FLAGS
 # checks OFF = the plan's `--runtime-checks off` (manifest §3).
@@ -279,10 +281,11 @@ def prep(category, case, workdir, src_override=None):
     return d, None
 
 
-def build(d, flags, tag):
+def build(d, flags, tag, kernel_id=None):
     """Generate the script for one arm. Returns (script_path, error)."""
     out = os.path.join(d, f"k_{tag}.sh")
-    r = subprocess.run([CHOREO] + flags + [os.path.join(d, "k.co"), "-o", out],
+    r = subprocess.run([CHOREO] + flags + local_caps.flags_for(kernel_id)
+                       + [os.path.join(d, "k.co"), "-o", out],
                        capture_output=True, timeout=T_COMPILE, cwd=REPO)
     if r.returncode != 0 or not os.path.exists(out) or os.path.getsize(out) == 0:
         return None, (f"choreo rc={r.returncode}: "
@@ -374,7 +377,9 @@ def timing_ms(stdout, wall_s):
 #    kernel silently never ran: the output buffer kept its initial contents, the
 #    harness still printed an 'Execution time', and the process exited 0."
 #
-# The trigger is this lane's own pinned flag. `--max-local-mem-capacity=2000000`
+# The trigger is the local-memory cap. `--max-local-mem-capacity=2000000`
+# (formerly lane-wide, now the per-kernel override for dynamic-shape kernels in
+# raw/local_cap.json -- local-to-shared-migration W2 kept those at 2000000)
 # makes the dynamic-shape path size the per-thread local arena to the full
 # capacity (lib/mem_reuse.cpp:430-434); backing every RESIDENT thread then needs
 # capacity * maxThreadsPerSM * numSMs = 466.9 GB on an H800 PCIe (114 SMs x 2048)
@@ -669,7 +674,7 @@ def e5a_one(category, case, shape_class, workdir, reps, device, excl):
     # measurement.
     scripts = {}
     for tag, flags in (("on", FLAGS_ON), ("off", FLAGS_OFF)):
-        script, err = build(d, flags, tag)
+        script, err = build(d, flags, tag, kernel_id=f"{category}/{case}")
         if script is None:
             base["ok"] = False
             base["error"] = f"build[{tag}]: {err}"
@@ -764,8 +769,9 @@ def e5a_one(category, case, shape_class, workdir, reps, device, excl):
                          f"{first.get('rejection_text') or first.get('reason')}")
         base["note"] = (
             "The kernel launch was REFUSED by the driver, so no device work "
-            "happened and the millisecond value is not a measurement. With "
-            "--max-local-mem-capacity=2000000 the dynamic-shape path reserves "
+            "happened and the millisecond value is not a measurement. With the "
+            "kernel's 2000000-byte local cap (raw/local_cap.json) the "
+            "dynamic-shape path reserves "
             "capacity * maxThreadsPerSM * numSMs of local memory (466.9 GB on "
             "an H800 PCIe vs 85 GB present), so cudaLaunchKernel returns "
             "cudaErrorInvalidValue. Post-croqtile-1fa4719 this aborts loudly "
@@ -1040,7 +1046,7 @@ def e5b_one(mut, workdir, device, excl, manifest_paths=None):
     out_recs = []
 
     # ---- arm (i): choreo's own check, default -rtc -------------------------
-    script, err = build(d, FLAGS_ON, "on")
+    script, err = build(d, FLAGS_ON, "on", kernel_id=local_caps.kernel_id_from_path(src))
     if script is None:
         rec["ok"] = False
         rec["error"] = f"build[choreo-entry]: {err}"
@@ -1117,7 +1123,8 @@ def e5b_one(mut, workdir, device, excl, manifest_paths=None):
         })
 
     # ---- arm (ii): compute-sanitizer as SOLE detector, -rtc=none -----------
-    script2, err = build(d, FLAGS_SANITIZER, "san")
+    script2, err = build(d, FLAGS_SANITIZER, "san",
+                         kernel_id=local_caps.kernel_id_from_path(src))
     if script2 is None:
         rec["ok"] = False
         rec["error"] = f"build[sanitizer]: {err}"

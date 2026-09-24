@@ -117,18 +117,34 @@ highest-value targets in this spec: they are currently invisible to E2/E3
 (absent from the 310-kernel scan), so landing them also closes the
 317-vs-310 suite/scan gap the paper must reconcile at the final number sync.
 
-### W2 — Replace the lane-wide cap with per-kernel caps
+### W2 — Replace the lane-wide cap with per-kernel caps — DONE 2026-09-24
 
-- Drop `--max-local-mem-capacity=2000000` from `run.sh` `CAP`,
-  `run_e1.py` `COMPILE_FLAGS`/`ORACLE_FLAGS`, and any E4/E5 flag sets.
-- Lane default returns to the compiler default (340 B/thread on sm_120).
-- Kernels that still legitimately exceed it (expected: the softmax
-  per-thread-row family, possibly a few conv2d accumulators) get a
-  **per-kernel** override recorded in a new `choreo/raw/local_cap.json`:
-  `{kernel_id: cap_bytes, reason}`; the harness applies the override only
-  for that kernel and stamps it into the record's provenance (settings_hash
-  input). `raw/toolchain.json` `pinned_flags` must reflect the actual
-  invocations (byte-identical discipline, manifest §5).
+- Dropped `--max-local-mem-capacity=2000000` from every flag set:
+  `run.sh` `LEDGER_FLAGS`, `run_e1.py` `COMPILE_FLAGS`/`ORACLE_FLAGS`,
+  `run_e2.py` `LEDGER_FLAGS`, `run_e4.py` `FE_FLAGS`/`GEN_FLAGS`,
+  `run_e5.py` `BASE_FLAGS`, `analyze_never.py` `LEDGER_FLAGS`/`EXEC_FLAGS`,
+  `arch_sweep.py` `LEDGER_FLAGS`, `arch_e5_probe.py` `BASE_FLAGS`.
+- Lane default returns to the compiler default.
+- **Default-cap probe (2026-09-24, all 317 bases + 170 mutants,
+  `/tmp/probe_w2.jsonl`):** exactly 34 bases exceed the default — 10 softmax
+  (per-thread row staging), 16 conv2d (per-thread accumulators; the
+  dynamic-shape ones keep the former 2000000 lane cap because symbolic local
+  usage is not statically bounded), 5 matmul (4 dynamic + 2 small static),
+  3 max_pool2d. All 283 other bases pass at the default; the fail set equals
+  the exception set, nothing else. Usage measured invariant across the
+  ledger/detector/oracle flag arms on the failing set.
+- Overrides live in `choreo/raw/local_cap.json` (34 entries, exact measured
+  `cap_bytes` + reason) and are applied per-kernel via `local_caps.py`
+  (`flags_for(kernel_id)`; mutants inherit their base's entry — the 6 capped
+  mutants all resolve to capped bases, measured usage identical).
+  `run_e1.py` stamps `local_cap_bytes` into every E1 record's provenance;
+  `run.sh`'s `toolchain.json` writer records `local_cap_overrides:
+  raw/local_cap.json` with cap-free `pinned_flags` (re-pinned in W3).
+  Stale provenance strings in `run_e5.py`/`stats.py` updated.
+- Verified: capped kernels compile via the override and fail without it
+  (softmax/19 rc=11 at default); uncapped bases compile at the default;
+  `basecheck.py` (shared tooling) threads `kernel_id` and passes
+  softmax/19 end-to-end (`--check`, both arms earlier).
 
 ### W3 — Re-probe and full pipeline
 

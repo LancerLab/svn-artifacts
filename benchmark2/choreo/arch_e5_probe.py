@@ -81,6 +81,7 @@ import sys
 import time
 
 import gpuinfo
+import local_caps
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -90,8 +91,9 @@ SUITE = os.path.join(REPO, "benchmark", "choreo")
 LOCK = os.path.join(B2, ".gpu-lock")
 DEVICE = os.environ.get("CUDA_VISIBLE_DEVICES", "0")
 
-CAP = "--max-local-mem-capacity=2000000"
-BASE_FLAGS = ["-gs", "-t", "cute", "-kt", CAP]
+# Local-memory caps are per-kernel (local-to-shared-migration W2): build()
+# appends the kernel's raw/local_cap.json entry, if any, via local_caps.
+BASE_FLAGS = ["-gs", "-t", "cute", "-kt"]
 FLAGS_ON = BASE_FLAGS
 FLAGS_OFF = BASE_FLAGS + ["--disable-runtime-check"]
 
@@ -126,9 +128,10 @@ def prep(category, case, tag):
     return d, None
 
 
-def build(d, flags, arch, arm):
+def build(d, flags, arch, arm, kernel_id=None):
     out = os.path.join(d, f"k_{arm}_{arch}.sh")
-    cmd = [CHOREO] + flags + ([f"-arch={arch}"] if arch != "default" else []) \
+    cmd = [CHOREO] + flags + local_caps.flags_for(kernel_id) \
+        + ([f"-arch={arch}"] if arch != "default" else []) \
         + [os.path.join(d, "k.co"), "-o", out]
     r = subprocess.run(cmd, capture_output=True, timeout=T_COMPILE, cwd=REPO)
     if r.returncode != 0 or not os.path.exists(out):
@@ -184,7 +187,8 @@ def one_kernel(category, case, reps, rounds):
     built = {}
     for arch in ("default", "native"):
         for arm, flags in (("on", FLAGS_ON), ("off", FLAGS_OFF)):
-            script, nv_arch, berr = build(d, flags, arch, arm)
+            script, nv_arch, berr = build(d, flags, arch, arm,
+                                          kernel_id=f"{category}/{case}")
             if berr:
                 rec["error"] = f"build {arch}/{arm}: {berr}"
                 return rec

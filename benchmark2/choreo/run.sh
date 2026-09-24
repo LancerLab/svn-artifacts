@@ -42,11 +42,13 @@ CHOREO="$REPO/croqtile/build-release/choreo"
 CROQTILE="$REPO/croqtile"
 
 # Pinned suite invocation (manifest §3):
-#   --stats -es --max-local-mem-capacity=2000000 -t cute
-# The cap is required even for UNMUTATED kernels: matmul/1_bert fails to compile
-# at the 2048-byte default (exit=4) and compiles cleanly at 2000000.
-CAP="--max-local-mem-capacity=2000000"
-LEDGER_FLAGS=(--stats -es "$CAP" -t cute)
+#   --stats -es -t cute
+# Local-memory caps are PER-KERNEL (local-to-shared-migration W2): kernels that
+# exceed the compiler default carry an entry in raw/local_cap.json, applied via
+# local_caps.py at each invocation. Measured 2026-09-24: exactly 34 of 317
+# bases need an override; the rest compile at the default. The lane-wide
+# 2000000 cap is retired (it hid every local-memory regression from the check).
+LEDGER_FLAGS=(--stats -es -t cute)
 
 PY="${PYTHON:-python3}"
 
@@ -138,9 +140,9 @@ cmd_setup() {
   # HERE is passed explicitly: `python3 -` reads the program from stdin, so it has
   # no __file__ and its cwd is wherever run.sh was invoked from. Without this the
   # `import toolchain` below fails depending on the caller's directory.
-  $PY - "$RAW/toolchain.json" "$cuda" "$nvcc" "$CAP" "$TOOLCHAIN" "$CHOREO" "$SUITE" "$REPO" "$HERE" <<'PYEOF'
+  $PY - "$RAW/toolchain.json" "$cuda" "$nvcc" "$TOOLCHAIN" "$CHOREO" "$SUITE" "$REPO" "$HERE" <<'PYEOF'
 import json, sys, os, datetime
-out_path, cuda, nvcc, cap, toolchain, choreo, suite, repo, here = sys.argv[1:10]
+out_path, cuda, nvcc, toolchain, choreo, suite, repo, here = sys.argv[1:9]
 sys.path.insert(0, here)
 import toolchain as tc
 
@@ -171,9 +173,12 @@ out = {
   # is byte-identical to `-rtc=none` (verified on layer_normalization/3_attention:
   # 0 differing normalized lines, 0 runtime_check sites); `-zero-cost` is NOT
   # equivalent (it also drops the CUDA env check). See run_e5.py FLAGS_OFF.
-  "pinned_flags": {"ledger":  ["--stats", "-es", cap, "-t", "cute"],
-                   "compile": ["-gs", "-t", "cute", "-kt", cap],
-                   "oracle":  ["-gs", "-t", "cute", "-kt", cap, "--disable-runtime-check"]},
+  "pinned_flags": {"ledger":  ["--stats", "-es", "-t", "cute"],
+                   "compile": ["-gs", "-t", "cute", "-kt"],
+                   "oracle":  ["-gs", "-t", "cute", "-kt", "--disable-runtime-check"]},
+  # Per-kernel --max-local-mem-capacity overrides live in raw/local_cap.json
+  # (local-to-shared-migration W2); no lane-wide cap is applied.
+  "local_cap_overrides": "raw/local_cap.json",
   "suite": rel(suite),
   "recorded_at": datetime.datetime.now().isoformat(timespec="seconds"),
 }

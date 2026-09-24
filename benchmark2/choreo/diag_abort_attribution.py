@@ -128,7 +128,8 @@ def main():
         if perr:
             print(f"  {mid}: prep failed: {perr}")
             continue
-        script, berr = run_e5.build(d, run_e5.FLAGS_SANITIZER, "san")
+        script, berr = run_e5.build(d, run_e5.FLAGS_SANITIZER, "san",
+                                    kernel_id=run_e5.local_caps.kernel_id_from_path(src))
         if berr:
             print(f"  {mid}: build failed: {berr[:200]}")
             continue

@@ -45,6 +45,8 @@ import re
 import subprocess
 import sys
 import tempfile
+
+import local_caps
 from collections import Counter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -52,9 +54,10 @@ REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
 CHOREO = os.path.join(REPO, "croqtile", "build-release", "choreo")
 BENCH = os.path.join(REPO, "benchmark", "choreo")
 
-CAP = "--max-local-mem-capacity=2000000"
 # Match run_e2.py's LEDGER_FLAGS: static analysis only, no nvcc, no GPU.
-LEDGER_FLAGS = ["-gs", "--stats", "-es", CAP, "-t", "cute"]
+# Local-memory caps are per-kernel (local-to-shared-migration W2): dump_ledger
+# appends the kernel's raw/local_cap.json entry, if any, via local_caps.
+LEDGER_FLAGS = ["-gs", "--stats", "-es", "-t", "cute"]
 
 # "On SM_86," / "On SM_90A," -- the only place the arch name reaches the ledger.
 RE_ARCH_LABEL = re.compile(r"\bSM_\d+[A-Z]?\b")
@@ -67,7 +70,8 @@ KEY_FIELDS = ("function", "loc", "outcome", "usage", "dependence", "mechanism",
 
 def dump_ledger(src: str, arch: str | None) -> tuple[list | None, str]:
     """Return (obligations, error). arch=None means choreo's default."""
-    flags = list(LEDGER_FLAGS)
+    flags = list(LEDGER_FLAGS) + local_caps.flags_for(
+        local_caps.kernel_id_from_path(src))
     if arch:
         flags.append(f"-arch={arch}")
     with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tf:
