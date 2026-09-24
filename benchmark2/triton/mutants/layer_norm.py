@@ -148,8 +148,11 @@ def ln_idxsub_load(x_ptr, s_ptr, b_ptr, y_ptr, n_cols, eps,
     row = tl.program_id(axis=0)
     cols = tl.arange(0, BLOCK)
     mask = cols < n_cols
-    x = tl.load(x_ptr + cols * n_cols + row, mask=mask,
-                other=0.0)                                    # M1.12
+    # M1.12: the row loop variable -- whose extent (rows) is the larger one --
+    # is used for the column dimension as well. The address is materialised as a
+    # block so the whole row reads the single (out-of-range) row-scale offset.
+    base = row * n_cols + row + tl.zeros([BLOCK], tl.int32)
+    x = tl.load(x_ptr + base, mask=mask, other=0.0)           # M1.12
     mean = tl.sum(x, axis=0) / n_cols
     d = tl.where(mask, x - mean, 0.0)
     rstd = 1.0 / tl.sqrt(tl.sum(d * d, axis=0) / n_cols + eps)
@@ -170,8 +173,9 @@ def ln_idxsub_store(x_ptr, s_ptr, b_ptr, y_ptr, n_cols, eps,
     rstd = 1.0 / tl.sqrt(tl.sum(d * d, axis=0) / n_cols + eps)
     s = tl.load(s_ptr + cols, mask=mask, other=0.0)
     b = tl.load(b_ptr + cols, mask=mask, other=0.0)
-    tl.store(y_ptr + cols * n_cols + row, d * rstd * s + b,        # M1.12
-             mask=mask)
+    # M1.12: same wrong-dimension reuse on the store (see `ln_idxsub_load`).
+    base = row * n_cols + row + tl.zeros([BLOCK], tl.int32)
+    tl.store(y_ptr + base, d * rstd * s + b, mask=mask)       # M1.12
 
 
 @triton.jit

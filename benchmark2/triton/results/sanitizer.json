@@ -247,10 +247,10 @@
   "class": "M1",
   "spec_id": "M1.12",
   "mutant_id": "layer_norm-f12",
-  "flagged": "false",
-  "fault": "none",
+  "flagged": "true",
+  "fault": "oob",
   "exercised": "true",
-  "detail": "clean"
+  "detail": "sanitizer: ========= Invalid __global__ read of size 4 bytes"
  },
  {
   "toolchain": "triton",
@@ -258,10 +258,10 @@
   "class": "M1",
   "spec_id": "M1.12",
   "mutant_id": "layer_norm-f121",
-  "flagged": "false",
-  "fault": "none",
+  "flagged": "true",
+  "fault": "oob",
   "exercised": "true",
-  "detail": "clean"
+  "detail": "sanitizer: ========= Invalid __global__ write of size 4 bytes"
  },
  {
   "toolchain": "triton",
@@ -368,10 +368,10 @@
   "class": "M1",
   "spec_id": "M1.12",
   "mutant_id": "softmax-f12",
-  "flagged": "false",
-  "fault": "none",
+  "flagged": "true",
+  "fault": "oob",
   "exercised": "true",
-  "detail": "clean"
+  "detail": "sanitizer: ========= Invalid __global__ read of size 4 bytes"
  },
  {
   "toolchain": "triton",
@@ -379,10 +379,10 @@
   "class": "M1",
   "spec_id": "M1.12",
   "mutant_id": "softmax-f121",
-  "flagged": "false",
-  "fault": "none",
+  "flagged": "true",
+  "fault": "oob",
   "exercised": "true",
-  "detail": "clean"
+  "detail": "sanitizer: ========= Invalid __global__ write of size 4 bytes"
  },
  {
   "toolchain": "triton",
@@ -599,10 +599,10 @@
   "class": "M1",
   "spec_id": "M1.12",
   "mutant_id": "transpose-f121",
-  "flagged": "false",
-  "fault": "none",
+  "flagged": "true",
+  "fault": "oob",
   "exercised": "true",
-  "detail": "clean"
+  "detail": "sanitizer: ========= Invalid __global__ write of size 16 bytes"
  },
  {
   "toolchain": "triton",
@@ -1934,5 +1934,71 @@
   "fault": "none",
   "exercised": "true",
   "detail": "clean"
+ },
+ {
+  "toolchain": "triton",
+  "category": "conv2d",
+  "class": "M1",
+  "spec_id": "M1.1",
+  "mutant_id": "conv2d-f1",
+  "flagged": "false",
+  "fault": "none",
+  "exercised": "true",
+  "detail": "clean"
+ },
+ {
+  "toolchain": "triton",
+  "category": "batch_norm",
+  "class": "M1",
+  "spec_id": "M1.2",
+  "mutant_id": "batch_norm-f1",
+  "flagged": "true",
+  "fault": "oob",
+  "exercised": "true",
+  "detail": "sanitizer: ========= Invalid __global__ read of size 4 bytes"
+ },
+ {
+  "toolchain": "triton",
+  "category": "max_pool2d",
+  "class": "M1",
+  "spec_id": "M1.1",
+  "mutant_id": "max_pool2d-f1",
+  "flagged": "true",
+  "fault": "oob",
+  "exercised": "true",
+  "detail": "sanitizer: ========= Invalid __global__ read of size 4 bytes"
+ },
+ {
+  "toolchain": "triton",
+  "category": "max_pool2d",
+  "class": "M1",
+  "spec_id": "M1.2",
+  "mutant_id": "max_pool2d-f2",
+  "flagged": "false",
+  "fault": "none",
+  "exercised": "true",
+  "detail": "clean"
+ },
+ {
+  "toolchain": "triton",
+  "category": "embedding",
+  "class": "M1",
+  "spec_id": "M1.13",
+  "mutant_id": "embedding-f1",
+  "flagged": "true",
+  "fault": "oob",
+  "exercised": "true",
+  "detail": "sanitizer: ========= Invalid __global__ read of size 16 bytes"
+ },
+ {
+  "toolchain": "triton",
+  "category": "embedding",
+  "class": "M1",
+  "spec_id": "M1.3",
+  "mutant_id": "embedding-f2",
+  "flagged": "true",
+  "fault": "oob",
+  "exercised": "true",
+  "detail": "sanitizer: ========= Invalid __global__ read of size 16 bytes"
  }
 ]

@@ -129,8 +129,8 @@ def tr_idxsub_store(x_ptr, y_ptr, M, N, BM: tl.constexpr, BN: tl.constexpr):
     m = (om[:, None] < M) & (on[None, :] < N)
     t = tl.load(x_ptr + om[:, None] * N + on[None, :], mask=m)
     mo = (on[:, None] < N) & (om[None, :] < M)
-    # M1.12: the column loop variable is reused for both store dimensions.
-    tl.store(y_ptr + on[:, None] * M + on[None, :], tl.trans(t), mask=mo)
+    # M1.12: the row loop variable is reused for both store dimensions.
+    tl.store(y_ptr + om[:, None] * M + om[None, :], tl.trans(t), mask=mo)
 
 
 FAMILIES = {1: tr_nomask, 2: tr_offbyone, 3: tr_negidx, 4: tr_badstride,

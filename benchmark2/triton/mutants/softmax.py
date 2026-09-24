@@ -128,8 +128,11 @@ def sm_idxsub_load(x_ptr, y_ptr, n_cols, BLOCK: tl.constexpr):
     row = tl.program_id(axis=0)
     cols = tl.arange(0, BLOCK)
     mask = cols < n_cols
-    x = tl.load(x_ptr + cols * n_cols + row, mask=mask,
-                other=float("-inf"))                              # M1.12
+    # M1.12: the row loop variable (extent rows > cols) is reused for the
+    # column dimension; the address is block-materialised so the whole row
+    # reads the single out-of-range row-scale offset.
+    base = row * n_cols + row + tl.zeros([BLOCK], tl.int32)
+    x = tl.load(x_ptr + base, mask=mask, other=float("-inf"))     # M1.12
     x = x - tl.max(x, axis=0)
     e = tl.exp(x)
     s = tl.sum(tl.where(mask, e, 0.0), axis=0)
@@ -146,7 +149,9 @@ def sm_idxsub_store(x_ptr, y_ptr, n_cols, BLOCK: tl.constexpr):
     x = x - tl.max(x, axis=0)
     e = tl.exp(x)
     s = tl.sum(tl.where(mask, e, 0.0), axis=0)
-    tl.store(y_ptr + cols * n_cols + row, e / s, mask=mask)        # M1.12
+    # M1.12: same wrong-dimension reuse on the store (see `sm_idxsub_load`).
+    base = row * n_cols + row + tl.zeros([BLOCK], tl.int32)
+    tl.store(y_ptr + base, e / s, mask=mask)                      # M1.12
 
 
 @triton.jit
