@@ -2214,11 +2214,41 @@ M3 += [
        "box<->swizzle byte size is not a legal swizzle, so the parser refuses "
        "it (SwizMode ladder)",
        ("swiz<128>", "swiz<48>"), spec_id="M3.29"),
+    _m("M3.29.ln.swizladder", "M3", 29, "dim-mismatch", "layer_normalization",
+       "lnswiz",
+       "swizzle width off the legal byte ladder {32,64,128} on the "
+       "normalization staging path",
+       ("swiz<128>", "swiz<48>"), spec_id="M3.29"),
+    _m("M3.29.bn.swizladder", "M3", 29, "dim-mismatch", "batch_norm",
+       "bnswiz",
+       "swizzle width off the legal byte ladder {32,64,128} on the "
+       "batch-norm staging path",
+       ("swiz<128>", "swiz<48>"), spec_id="M3.29"),
+    _m("M3.29.mp.swizladder", "M3", 29, "dim-mismatch", "max_pool2d",
+       "mpswiz",
+       "swizzle width off the legal byte ladder {32,64,128} on the "
+       "pooling staging path",
+       ("swiz<128>", "swiz<48>"), spec_id="M3.29"),
     _m("M3.30.dma5.promoteladder", "M3", 30, "dim-mismatch", "dma_rank5",
        "r5swiz",
        "L2 promote byte size off the legal ladder {64,128,256}: the DMA "
        "descriptor's promote granularity is not a legal L2 sector, so the "
        "parser refuses it (promote_value ladder)",
+       ("promote<128>", "promote<999>"), spec_id="M3.30"),
+    _m("M3.30.ln.promoteladder", "M3", 30, "dim-mismatch", "layer_normalization",
+       "lnswiz",
+       "L2 promote byte size off the legal ladder {64,128,256} on the "
+       "normalization staging path",
+       ("promote<128>", "promote<999>"), spec_id="M3.30"),
+    _m("M3.30.bn.promoteladder", "M3", 30, "dim-mismatch", "batch_norm",
+       "bnswiz",
+       "L2 promote byte size off the legal ladder {64,128,256} on the "
+       "batch-norm staging path",
+       ("promote<128>", "promote<999>"), spec_id="M3.30"),
+    _m("M3.30.mp.promoteladder", "M3", 30, "dim-mismatch", "max_pool2d",
+       "mpswiz",
+       "L2 promote byte size off the legal ladder {64,128,256} on the "
+       "pooling staging path",
        ("promote<128>", "promote<999>"), spec_id="M3.30"),
 ]
 

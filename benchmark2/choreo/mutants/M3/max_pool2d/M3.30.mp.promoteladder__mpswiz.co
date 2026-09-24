@@ -1,0 +1,42 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+
+// The byte/swizzle-box surface (method family M3-c) on this category's staging
+// path. As in `dma_rank5`/r5swiz, the shared tile is reached with EXPLICIT dma
+// descriptor byte modes -- a swizzle width (`swiz<128>`) and an L2 promote
+// granularity (`promote<999>`) -- so the two arch-independent byte ladders the
+// family is about are source-expressible here. On a non-warpgroup target the
+// swizzled write is read back linearly, so the identity holds and the base is a
+// correct program; the point of the case is the descriptor, not the MMA read.
+__co__ auto mpswiz(f32 [16, 16] input) {
+  f32 [input.span(0), input.span(1)] output;
+  parallel p by 1 : block
+    parallel q by 32 : thread {
+      s = dma.copy.swiz<128>.promote<999> input.chunkat(_, _) => shared;
+      dma.copy s => output.chunkat(_, _);
+    }
+  return output;
+}
+
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(16, 16);
+  a.fill_random(-1.0, 1.0);
+
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto r = mpswiz(a.view());
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+  for (size_t i = 0; i < 16; ++i)
+    for (size_t j = 0; j < 16; ++j)
+      if (a[i][j] != r[i][j]) {
+        std::cout << i << "," << j << ": " << a[i][j] << " != " << r[i][j]
+                  << "\n";
+        choreo::choreo_assert(false, "values are not equal.");
+      }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " microseconds\n";
+  return 0;
+}
