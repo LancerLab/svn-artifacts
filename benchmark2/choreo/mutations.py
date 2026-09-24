@@ -1652,6 +1652,32 @@ M2 += [
        ("f32 [I, J1, K, L] a,", "f32 [J1, I, K, L] a,")),
 ]
 
+# ---- M2-b / M2-c second-category realisations ------------------------------
+# The `dim-mismatch` defects of these families recur on the tensor kernels that
+# write a multi-extent declaration. Adding the pair on softmax, relu and
+# transpose fills the family's category budget without inventing a new defect.
+M2 += [
+    _m("M2.6.sm1.extswap", "M2", 6, "dim-mismatch", "softmax",
+       "1_bert_32x512x768_32x512x768",
+       "two leading extents transposed in the softmax output declaration",
+       ("f32 [input.span(0), input.span(1), input.span(2)] output;",
+        "f32 [input.span(1), input.span(0), input.span(2)] output;")),
+    _m("M2.9.tp1.batchswap", "M2", 9, "dim-mismatch", "transpose",
+       "1_bert_32x512x768_32x768x512",
+       "batch/group dimension swapped on the transpose input",
+       ("f32 [32, 512, 768] i)", "f32 [512, 32, 768] i)")),
+    _m("M2.7.rl1.rank", "M2", 7, "dim-mismatch", "relu",
+       "1_bert_32x512x768_32x512x768",
+       "reduced-rank view: the output declaration drops its trailing extent",
+       ("f32 [inp.span] out;",
+        "f32 [inp.span(0), inp.span(1), inp.span(2)] out;")),
+    _m("M2.7.tp1.rank", "M2", 7, "dim-mismatch", "transpose",
+       "1_bert_32x512x768_32x768x512",
+       "reduced-rank view on the transpose output declaration",
+       ("f32 [i.span(0), i.span(2), i.span(1)] o;",
+        "f32 [i.span(0), i.span(1)] o;")),
+]
+
 # ---- M2.10 transpose permutation on a SQUARE operand ----------------------
 # extents stay equal, so semacheck.cpp:1073's extent-only comparison passes;
 # the memory order changes anyway. The M2 flagship of the view family.
@@ -2435,6 +2461,21 @@ M2 += [
        "device unchecked",
        ("shared f32 [1, 1, 64, 1] inp_s, out_s;",
         "shared f32 [2, 1, 64, 1] inp_s, out_s;")),
+]
+
+# ---- M2.21 MSB broadcast on the transpose staging buffer -------------------
+# Same trailing-only walk: the staged tile's leading extent is raised above the
+# source chunk's, on both the static and the symbolic transpose kernel.
+M2 += [
+    _m("M2.21.tp1.msbbcast", "M2", 21, "dim-mismatch", "transpose",
+       "1_bert_32x512x768_32x768x512",
+       "MSB broadcast extent neither 1 nor equal on the transpose output tile, "
+       "so the store overshoots its destination chunk",
+       ("shared f32 [1, 64, 1] os;", "shared f32 [2, 64, 1] os;")),
+    _m("M2.21.tp11.msbbcast", "M2", 21, "dim-mismatch", "transpose",
+       "11_dynamic_32xSx768_32x768xS",
+       "MSB broadcast disagreement on the symbolic transpose output tile",
+       ("shared f32 [1, 64, 1] os;", "shared f32 [2, 64, 1] os;")),
 ]
 
 # ---- M3.17-M3.26 target limits: inadmissible by construction -------------
