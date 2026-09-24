@@ -913,6 +913,10 @@ def main():
     plan = compose(a.level2, n_per_family=a.n_per_family,
                    n_realisations=a.n_realisations, lane=a.lane)
     records, skipped = emit(plan, a.out, dry_run=a.dry_run)
+    # Reporting-only re-home, AFTER selection: see `mutations.REHOME_SPEC`.
+    # It changes the spec the manifest attributes a chosen specimen to, not
+    # which specimens are chosen (the ids and `needs_rtc_curve` already ran).
+    M.apply_rehome(records)
     summary = M.registry_summary()
     n_specs = write_spec_registry(SPEC_REGISTRY_OUT)
     report(plan, records, skipped, rtc=a.rtc, n_per_family=a.n_per_family,

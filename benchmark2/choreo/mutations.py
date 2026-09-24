@@ -187,10 +187,59 @@ NOOP_BY_CONSTRUCTION = ("M1.6", "M4.4")
 
 
 def _spec(cls, path, desc, admissible=True, prohibition="", status="pending",
-          note=""):
+          note="", curve=None):
+    """A spec's registry entry.
+
+    `path` is the REPORTED outcome class -- what the tables classify the spec
+    as. `curve` overrides the SELECTION decision (`needs_rtc_curve`), which is
+    otherwise derived as `path == "rt-check"`. They are the same thing for
+    every spec except the three (M2.6, M2.10, M2.13) whose path was corrected
+    AFTER the E1 corpus was measured: their reported class is `ct-check` /
+    `unchecked`, but pinning `curve=True` keeps the frozen specimen set -- a
+    path relabel must not silently re-select the corpus (specs §9.6.1). Use it
+    only to record such a correction, never to widen a corpus.
+    """
     return {"cls": cls, "path": path, "admissible": admissible,
             "prohibition": prohibition, "status": status, "desc": desc,
-            "note": note}
+            "note": note, "curve": curve}
+
+
+# Reporting-only re-home: a selected mutant whose DISTINGUISHING outcome is
+# another spec's mechanism is reported under that spec, without changing
+# selection (the id/`spec` still drive `select()`). Applied after selection in
+# `gen_mutants.py`, so the corpus is byte-identical while the register and the
+# per-spec tables attribute the specimen to the spec it actually exercises.
+#   M2.6.mm1.alt       symbolic output extent -> the M2.17/M2.19 symbolic-skip
+#                      family (the tiling check folds only on a static extent)
+#   M2.10.mm1.square   non-square output -> a real two-extent mismatch, i.e.
+#                      the M2.6 defect, not an equal-extent M2.10 permutation
+REHOME_SPEC = {
+    "M2.6.mm1.alt": "M2.19",
+    "M2.10.mm1.square": "M2.6",
+}
+
+
+def apply_rehome(recs):
+    """Rewrite the REPORTED v2.1 attribution of re-homed records.
+
+    Selection already happened, so this only changes what the manifest and the
+    register say about a specimen -- not which specimens exist and not the
+    decision curve they were run under. Keys not in `REHOME_SPEC` are left
+    untouched. Mutates in place.
+    """
+    for r in recs:
+        rid = REHOME_SPEC.get(r.get("mutant_id"))
+        if not rid or rid == r.get("spec_id"):
+            continue
+        m = SPEC_REGISTRY[rid]
+        r["spec_id"] = rid
+        r["spec"] = int(rid.split(".")[1])
+        r["path_class"] = m["path"]
+        r["prohibition"] = m["prohibition"]
+        r["spec_admissible"] = bool(m["admissible"])
+        r["admissible"] = bool(m["admissible"]
+                               and rid not in NOOP_BY_CONSTRUCTION)
+    return recs
 
 
 SPEC_REGISTRY = {
@@ -295,6 +344,7 @@ SPEC_REGISTRY = {
     "M2.5": _spec("M2", "rt-check", "partial write (omitted tail tile) / duplicate "
                               "write (overlapping tile)", status="implemented"),
     "M2.6": _spec("M2", "ct-check", "two extents transposed",
+                  curve=True,
                   note="every realized specimen is a shape/rank inconsistency "
                        "the injected defect itself creates, so the type checker "
                        "rejects it: ct-check, not rt-check (specs 9.6.1 rule 2). "
@@ -309,6 +359,7 @@ SPEC_REGISTRY = {
     "M2.9": _spec("M2", "rt-check", "batch/group dimension swapped"),
     "M2.10": _spec("M2", "unchecked", "transpose permutation on a SQUARE operand "
                                "(extents equal, memory order changes)",
+                   curve=True,
                    note="view/metadata family -- best-attested class in both "
                         "empirical corpora; report as its own sub-table. "
                         "unchecked, not rt-check (specs 9.5.4): the obligation "
@@ -328,6 +379,7 @@ SPEC_REGISTRY = {
                         "ledger row -- not applicable (specs §2.1)"),
     "M2.13": _spec("M2", "unchecked", "shape-equal / layout-unequal (every extent "
                                "agrees, the affine map does not)",
+                   curve=True,
                    note="view/metadata family. unchecked, not rt-check (specs "
                         "9.5.4): every extent agrees, so the extent-only "
                         "comparison at semacheck.cpp:1073 has nothing to refute "
@@ -752,7 +804,7 @@ class Mut:
 
     def __init__(self, mid, cls, spec, paper_category, category, case, desc,
                  edits, spec_id=None, path_class=None, prohibition=None,
-                 admissible=None, level=1):
+                 admissible=None, level=1, curve=None):
         self.id = mid
         self.cls = cls
         self.spec = spec
@@ -779,6 +831,10 @@ class Mut:
                 "mutation %r names spec_id %r, which is not in SPEC_REGISTRY; "
                 "add it (specs v2.1 §1-§4) before generating" % (mid, sid))
         self.path_class = path_class or meta["path"]
+        # Selection curve: normally `path_class == "rt-check"`, but a spec
+        # whose reported path was corrected after the E1 corpus was frozen
+        # pins it explicitly (see `_spec`), so the relabel cannot re-select.
+        self._curve = curve if curve is not None else meta.get("curve")
         self.prohibition = (meta["prohibition"] if prohibition is None
                             else prohibition)
         self.spec_admissible = meta["admissible"]
@@ -800,8 +856,15 @@ class Mut:
 
     @property
     def needs_rtc_curve(self):
-        """`rt-check` is the only outcome a threshold can reach
-        (specs §9.6.1)."""
+        """Does selection put this spec on the decision-curve (2 realisations)?
+
+        `rt-check` is the only outcome a threshold can reach (specs §9.6.1),
+        so this is `path_class == "rt-check"` -- except for a spec that pins
+        `curve` (see `_spec`), whose frozen E1 corpus predates a reporting-only
+        path correction.
+        """
+        if self._curve is not None:
+            return bool(self._curve)
         return self.path_class == "rt-check"
 
     def as_meta(self):

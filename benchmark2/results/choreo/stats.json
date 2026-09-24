@@ -1,24 +1,25 @@
 {
  "toolchain": "choreo",
- "toolchain_version": "a7d2abac25886243907b2661f969af195d7c7a61",
+ "toolchain_version": "2b8a937669991480b42b9f3ec45d9a2167aad08f",
  "toolchain_identity": {
   "toolchain": "choreo",
-  "version": "a7d2abac25886243907b2661f969af195d7c7a61",
-  "version_basis": "mtime<=commit-date",
+  "version": "2b8a937669991480b42b9f3ec45d9a2167aad08f",
+  "version_basis": "binary-newer-than-head",
   "checkout_head": "2b8a937669991480b42b9f3ec45d9a2167aad08f",
   "checkout_branch": "ledger-artifacts",
   "checkout_dirty_source_files": [
    "ib/Target/GPU/gpu_adapt.hpp",
-   "lib/semacheck.cpp"
+   "lib/semacheck.cpp",
+   "lib/semacheck.hpp"
   ],
   "binary": "croqtile/build-release/choreo",
-  "binary_sha1_12": "9c15f8d7c7bf",
-  "binary_mtime": 1790259879.868007,
-  "binary_stale_vs_checkout": true,
+  "binary_sha1_12": "e8b5611103d5",
+  "binary_mtime": 1790264310.6020553,
+  "binary_stale_vs_checkout": false,
   "binary_stale_basis": "source-mtime",
-  "binary_predates_source": true,
-  "binary_newest_source_mtime": 1790260284.4418812,
-  "version_label_disagrees_with_head": true
+  "binary_predates_source": false,
+  "binary_newest_source_mtime": 1790264286.053243,
+  "version_label_disagrees_with_head": false
  },
  "produced_by": "stats.py",
  "inputs": {
@@ -2340,40 +2341,42 @@
     "n_never_share_of_misses": null
    },
    "ct-check": {
-    "n_admissible": 20,
-    "n_cells": 20,
-    "n_compile": 20,
-    "n_detected": 20,
-    "n_detected_admissible": 20,
-    "n_detected_pct": 100.0,
-    "n_injected": 20,
-    "n_never_share_of_misses": null
+    "n_admissible": 24,
+    "n_cells": 24,
+    "n_compile": 23,
+    "n_detected": 23,
+    "n_detected_admissible": 23,
+    "n_detected_pct": 95.8333,
+    "n_injected": 24,
+    "n_never": 1,
+    "n_never_admissible": 1,
+    "n_never_share_of_misses": 100.0
    },
    "rt-check": {
-    "n_admissible": 170,
-    "n_cells": 187,
-    "n_compile": 108,
-    "n_detected": 141,
-    "n_detected_admissible": 134,
-    "n_detected_pct": 78.8235,
+    "n_admissible": 158,
+    "n_cells": 175,
+    "n_compile": 104,
+    "n_detected": 137,
+    "n_detected_admissible": 130,
+    "n_detected_pct": 82.2785,
     "n_discarded_noop": 4,
-    "n_injected": 179,
-    "n_never": 38,
-    "n_never_admissible": 36,
+    "n_injected": 167,
+    "n_never": 30,
+    "n_never_admissible": 28,
     "n_never_share_of_misses": 100.0,
     "n_runtime": 33,
     "n_undecidable": 4
    },
    "unchecked": {
-    "n_admissible": 34,
-    "n_cells": 34,
-    "n_compile": 20,
-    "n_detected": 27,
-    "n_detected_admissible": 27,
-    "n_detected_pct": 79.4118,
-    "n_injected": 34,
-    "n_never": 7,
-    "n_never_admissible": 7,
+    "n_admissible": 42,
+    "n_cells": 42,
+    "n_compile": 21,
+    "n_detected": 28,
+    "n_detected_admissible": 28,
+    "n_detected_pct": 66.6667,
+    "n_injected": 42,
+    "n_never": 14,
+    "n_never_admissible": 14,
     "n_never_share_of_misses": 100.0,
     "n_runtime": 7
    }
@@ -2601,7 +2604,7 @@
     "n_injected": 4,
     "n_never": 3,
     "n_never_admissible": 3,
-    "path_class": "rt-check",
+    "path_class": "unchecked",
     "prohibition": ""
    },
    "M2.11": {
@@ -2622,7 +2625,7 @@
     "n_injected": 4,
     "n_never": 4,
     "n_never_admissible": 4,
-    "path_class": "rt-check",
+    "path_class": "unchecked",
     "prohibition": ""
    },
    "M2.15": {
@@ -2748,7 +2751,7 @@
     "n_injected": 4,
     "n_never": 1,
     "n_never_admissible": 1,
-    "path_class": "rt-check",
+    "path_class": "ct-check",
     "prohibition": ""
    },
    "M2.7": {
@@ -3271,6 +3274,5 @@
   "S9": "SOTA remainder (triton/mlir-linalg/mlir-low/iree)",
   "S11": "integrity register (coordinator)",
   "S12": "sanitizer supplement (SOTA toolchains)"
- },
- "toolchain_warning": "binary predates checkout: records say a7d2abac25886243907b2661f969af195d7c7a61 (what the binary was built from), checkout HEAD is 2b8a937669991480b42b9f3ec45d9a2167aad08f. Rebuild and re-run before pinning this version in manifest \u00a75."
+ }
 }
