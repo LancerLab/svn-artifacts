@@ -121,11 +121,11 @@ __co__ auto ele_relu(f32 [I, J, K, L] inp) {
   f32 [inp.span] out;
   parallel p by NUM_BLOCK : block {
     foreach {i, j, k} in [I / #p, J, 12] {
-      shared f32 [1, 1, 32, 1] inp_s, out_s;
+      shared f32 [1, 1, 64, 1] inp_s, out_s;
       ifs = dma.copy.async inp.chunkat(p#i, j, k, _) => inp_s;
       wait ifs;
       parallel q by 64
-        out_s.at(0, 0, q, 0) = (inp_s.at(0, 0, q, 0) > 0.0f) ? inp_s.at(0, 0, q, 0) : 0.0f;
+        out_s.at(0, 0, q % 32, 0) = (inp_s.at(0, 0, q, 0) > 0.0f) ? inp_s.at(0, 0, q, 0) : 0.0f;
       dma.copy out_s => out.chunkat(p#i, j, k, _);
     }
   }

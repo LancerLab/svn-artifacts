@@ -961,12 +961,12 @@ M1 = [
        ('lhs.at(p#n, j, k)', 'lhs.at(p#n, j, k + K)', None)),
     _m("M1.11.rl1.alt", 'M1', 11, 'stride', 'relu',
        '11_dynamic_32xSx768_32xSx768',
-       "read-after-write aliasing: the shared tile is shrunk below the `parallel q by 64` fan-out, so threads overwrite each other's region",
-       ('shared f32 [1, 1, 64, 1] inp_s, out_s;', 'shared f32 [1, 1, 32, 1] inp_s, out_s;', None)),
+       "read-after-write aliasing: the `parallel q by 64` write index folds modulo the tile extent (`q % 32`), so thread pairs (q, q+32) concurrently write the same live slot; the index stays statically in range, so the front end cannot reject it (unlike the tile shrink)",
+       ('out_s.at(0, 0, q, 0) =', 'out_s.at(0, 0, q % 32, 0) =', None)),
     _m("M1.11.tp1.alt", 'M1', 11, 'stride', 'transpose',
        '11_dynamic_32xSx768_32x768xS',
-       'read-after-write aliasing on the transpose source tile',
-       ('shared f32 [1, 1, 64] is;', 'shared f32 [1, 1, 32] is;', None)),
+       'read-after-write aliasing on the transpose destination tile: the fan-out index folds modulo the tile extent so thread pairs collide',
+       ('os.at(0, q, 0) =', 'os.at(0, q % 32, 0) =', None)),
     # ---- dma_rank5 / r5at (rank-5, elementwise) -------------------------
     # A rank-5 view exists (r5at), so the "5th-index access" spec is no longer
     # a missing surface. The edit is an off-by-one on the OUTERMOST index only:
@@ -1488,14 +1488,38 @@ M1 += [
 M1 += [
     _m("M1.11.rl1.alias", "M1", 11, "stride", "relu",
        "1_bert_32x512x768_32x512x768",
-       "read-after-write aliasing: the shared tile is shrunk below the "
-       "`parallel q by 64` fan-out, so threads overwrite each other's region",
-       ("shared f32 [1, 1, 64, 1] inp_s, out_s;",
-        "shared f32 [1, 1, 32, 1] inp_s, out_s;")),
+       "read-after-write aliasing: the `parallel q by 64` write index folds "
+       "modulo the tile extent (`q % 32`), so thread pairs (q, q+32) "
+       "concurrently write the same live slot; the index stays statically in "
+       "range, so the front end cannot reject it (unlike the tile shrink)",
+       ("out_s.at(0, 0, q, 0) =", "out_s.at(0, 0, q % 32, 0) =")),
     _m("M1.11.tp1.alias", "M1", 11, "stride", "transpose",
        "1_bert_32x512x768_32x768x512",
-       "read-after-write aliasing on the transpose source tile",
-       ("shared f32 [1, 1, 64] is;", "shared f32 [1, 1, 32] is;")),
+       "read-after-write aliasing on the transpose destination tile: the "
+       "fan-out index folds modulo the tile extent so thread pairs collide",
+       ("os.at(0, q, 0) =", "os.at(0, q % 32, 0) =")),
+    _m("M1.11.gl1.alias", "M1", 11, "stride", "gelu",
+       "1_bert_32x512x768",
+       "read-after-write aliasing: the `parallel q by 64` write index folds "
+       "modulo the tile extent (`q % 32`), so thread pairs (q, q+32) "
+       "concurrently write the same live slot",
+       ("os.at(0, 0, q) =", "os.at(0, 0, q % 32) =")),
+    _m("M1.11.gl11.alias", "M1", 11, "stride", "gelu",
+       "11_dynamic_32xSx768",
+       "read-after-write aliasing in the GELU tail: the fan-out index folds "
+       "modulo the tile extent so thread pairs collide",
+       ("os.at(0, 0, q) =", "os.at(0, 0, q % 32) =")),
+    _m("M1.11.sg1.alias", "M1", 11, "stride", "sigmoid",
+       "1_bert_32x512x768",
+       "read-after-write aliasing: the `parallel q by 64` write index folds "
+       "modulo the tile extent (`q % 32`), so thread pairs (q, q+32) "
+       "concurrently write the same live slot",
+       ("out_s.at(0, 0, q) =", "out_s.at(0, 0, q % 32) =")),
+    _m("M1.11.sg11.alias", "M1", 11, "stride", "sigmoid",
+       "11_dynamic_32xSx768",
+       "read-after-write aliasing in the sigmoid tail: the fan-out index folds "
+       "modulo the tile extent so thread pairs collide",
+       ("out_s.at(0, 0, q) =", "out_s.at(0, 0, q % 32) =")),
 ]
 
 # ---- M1.12 wrong loop variable for a dimension (broadcast index reuse) ----

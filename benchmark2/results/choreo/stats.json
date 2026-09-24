@@ -26,7 +26,7 @@
   "expressibility": 0,
   "kernel": 310,
   "latency": 32,
-  "mutant": 200,
+  "mutant": 204,
   "obligation": 17353,
   "remainder": 0,
   "residue": 28,
@@ -50,12 +50,12 @@
   "feeds": "E1 detection matrix (\u00a75.2 \u00b62; replaces tab:rq2-bugs)",
   "per_class": {
    "M1": {
-    "n_compile": 40,
-    "n_injected": 47,
-    "n_never": 1,
+    "n_compile": 36,
+    "n_injected": 51,
+    "n_never": 9,
     "n_runtime": 6,
-    "stage_compile": 40,
-    "stage_runtime": 7,
+    "stage_compile": 36,
+    "stage_runtime": 15,
     "n_n/a": 0
    },
    "M2": {
@@ -90,15 +90,15 @@
    }
   },
   "totals": {
-   "n_compile": 126,
+   "n_compile": 122,
    "n_discarded_noop": 4,
-   "n_injected": 191,
+   "n_injected": 195,
    "n_n/a": 0,
-   "n_never": 28,
+   "n_never": 36,
    "n_runtime": 37,
    "n_undecidable": 5,
-   "stage_compile": 126,
-   "stage_runtime": 65
+   "stage_compile": 122,
+   "stage_runtime": 73
   },
   "undecidable_manifest_mutants": [
    "M3.4.dma5dyn.footprint",
@@ -130,20 +130,20 @@
  "S2_before_device": {
   "status": "ok",
   "feeds": "E1 detection matrix (\u00a75.2 \u00b62) \u2014 the \"210/210\" headline is DROPPED (R-D2); criterion is now \"no unattributed never\"",
-  "n_injected": 191,
-  "n_before_device": 163,
-  "n_compile": 126,
+  "n_injected": 195,
+  "n_before_device": 159,
+  "n_compile": 122,
   "n_runtime": 37,
-  "n_never": 28,
+  "n_never": 36,
   "n_na": 0,
   "n_discarded_noop": 4,
   "n_undecidable": 5,
   "undecidable_means": "the unmutated base fails its own reference check, so no manifest verdict exists for this cell. Excluded from n_injected like a noop, but NOT evidence that the mutation does not corrupt output -- it is unmeasured. Never add it to n_discarded_noop: that would report a measurement failure as a clean negative.",
-  "pct_before_device": 85.3403,
+  "pct_before_device": 81.5385,
   "never_is_zero": false,
   "never_is_zero_status": "RETIRED (R-D2, 2026-09-10) \u2014 a non-zero `never` is no longer a failure; an UNATTRIBUTED one is. Do not report this as pass/fail.",
   "per_class_before_device": {
-   "M1": 46,
+   "M1": 42,
    "M2": 51,
    "M3": 23,
    "M4": 43
@@ -151,9 +151,9 @@
   "control_classes": [
    "M4"
   ],
-  "n_injected_excluding_control": 138,
-  "n_before_device_excluding_control": 120,
-  "pct_before_device_excluding_control": 86.9565,
+  "n_injected_excluding_control": 142,
+  "n_before_device_excluding_control": 116,
+  "pct_before_device_excluding_control": 81.6901,
   "settings_hash": [
    "1f5436bfab1f",
    "28fee96c8330",
@@ -176,8 +176,16 @@
   "never_attribution": {
    "criterion": "no unattributed `never` (R-D2, 2026-09-10; replaces the retired `never = 0`)",
    "no_unattributed_never": false,
-   "n_unattributed": 12,
+   "n_unattributed": 20,
    "unattributed_mutants": [
+    "M1.11.gl1.alias",
+    "M1.11.gl11.alias",
+    "M1.11.rl1.alias",
+    "M1.11.rl1.alt",
+    "M1.11.sg1.alias",
+    "M1.11.sg11.alias",
+    "M1.11.tp1.alias",
+    "M1.11.tp1.alt",
     "M1.s6.ln1.zerostride",
     "M1.s6.sm1.zerostride",
     "M2.10.rl24.square",
@@ -200,7 +208,7 @@
    "n_toolchain_or_config": 7,
    "flag_matrix_ablation": {
     "status": "R-D2b \u2014 report as sensitivity, pinned default is the headline",
-    "at_pinned_default": "163/191 = 85.3403%",
+    "at_pinned_default": "159/195 = 81.5385%",
     "with_rtc_all_and_hoist_disabled": "43/72 = 59.72%",
     "recovered_by_flags": 8,
     "source": "raw/c2_probe_groundtruth.json (s2_implication)"
@@ -210,7 +218,7 @@
     "C3_LOWER_BOUND_OMITTED": "only one of the index's two bounds was generated \u2014 croqtile soundness bug."
    }
   },
-  "never_note": "28 mutant(s) reached outcome=never. Under R-D2 this is NOT a failure provided every one is attributed: 12 unattributed. 9 are out-of-scope or not-assessed-by-construction and 7 are attributable to a hoisting defect plus cost-filter/lower-bound configuration.",
+  "never_note": "36 mutant(s) reached outcome=never. Under R-D2 this is NOT a failure provided every one is attributed: 20 unattributed. 9 are out-of-scope or not-assessed-by-construction and 7 are attributable to a hoisting defect plus cost-filter/lower-bound configuration.",
   "never_mutants": [
    {
     "mutant_id": "M1.s4.tp1.tile",
@@ -220,6 +228,86 @@
     "manifest": "corrupts",
     "never_cause": "C4_NOT_ASSESSED",
     "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+    "note": null
+   },
+   {
+    "mutant_id": "M1.11.rl1.alt",
+    "class": "M1",
+    "category": "relu",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "never_cause": null,
+    "never_cause_reason": null,
+    "note": null
+   },
+   {
+    "mutant_id": "M1.11.tp1.alt",
+    "class": "M1",
+    "category": "transpose",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "never_cause": null,
+    "never_cause_reason": null,
+    "note": null
+   },
+   {
+    "mutant_id": "M1.11.rl1.alias",
+    "class": "M1",
+    "category": "relu",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "never_cause": null,
+    "never_cause_reason": null,
+    "note": null
+   },
+   {
+    "mutant_id": "M1.11.tp1.alias",
+    "class": "M1",
+    "category": "transpose",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "never_cause": null,
+    "never_cause_reason": null,
+    "note": null
+   },
+   {
+    "mutant_id": "M1.11.gl1.alias",
+    "class": "M1",
+    "category": "gelu",
+    "detector": "crash",
+    "manifest": "corrupts",
+    "never_cause": null,
+    "never_cause_reason": null,
+    "note": null
+   },
+   {
+    "mutant_id": "M1.11.gl11.alias",
+    "class": "M1",
+    "category": "gelu",
+    "detector": "crash",
+    "manifest": "corrupts",
+    "never_cause": null,
+    "never_cause_reason": null,
+    "note": null
+   },
+   {
+    "mutant_id": "M1.11.sg1.alias",
+    "class": "M1",
+    "category": "sigmoid",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "never_cause": null,
+    "never_cause_reason": null,
+    "note": null
+   },
+   {
+    "mutant_id": "M1.11.sg11.alias",
+    "class": "M1",
+    "category": "sigmoid",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "never_cause": null,
+    "never_cause_reason": null,
     "note": null
    },
    {
@@ -2169,16 +2257,16 @@
     "n_undecidable": 1
    },
    "rt-check": {
-    "n_admissible": 157,
-    "n_cells": 176,
-    "n_compile": 109,
-    "n_detected": 142,
-    "n_detected_admissible": 133,
-    "n_detected_pct": 84.7134,
+    "n_admissible": 161,
+    "n_cells": 180,
+    "n_compile": 105,
+    "n_detected": 138,
+    "n_detected_admissible": 129,
+    "n_detected_pct": 80.1242,
     "n_discarded_noop": 4,
-    "n_injected": 168,
-    "n_never": 26,
-    "n_never_admissible": 24,
+    "n_injected": 172,
+    "n_never": 34,
+    "n_never_admissible": 32,
     "n_never_share_of_misses": 100.0,
     "n_runtime": 33,
     "n_undecidable": 4
@@ -2222,12 +2310,11 @@
    },
    "M1.11": {
     "class": "M1",
-    "n_admissible": 4,
-    "n_cells": 4,
-    "n_compile": 4,
-    "n_detected": 4,
-    "n_detected_admissible": 4,
-    "n_injected": 4,
+    "n_admissible": 8,
+    "n_cells": 8,
+    "n_injected": 8,
+    "n_never": 8,
+    "n_never_admissible": 8,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -2888,17 +2975,17 @@
   },
   "reconciliation": {
    "against": "S1_detection_matrix / S2_before_device",
-   "n_cells": 200,
+   "n_cells": 204,
    "n_cells_non_detection": 0,
-   "n_cells_compared": 200,
-   "n_injected": 191,
+   "n_cells_compared": 204,
+   "n_injected": 195,
    "n_discarded_noop": 4,
    "n_undecidable": 5,
-   "n_never": 28,
-   "n_detected_all_paths": 163,
-   "admissible_injected": 176,
-   "admissible_detected": 151,
-   "admissible_pct": 85.7955,
+   "n_never": 36,
+   "n_detected_all_paths": 159,
+   "admissible_injected": 180,
+   "admissible_detected": 147,
+   "admissible_pct": 81.6667,
    "inadmissible_injected": 15,
    "inadmissible_detected": 12,
    "matches_S1S2": true,
@@ -2906,8 +2993,8 @@
    "n_cells_unaccounted": 0,
    "checks": {
     "n_injected": {
-     "s14": 191,
-     "s1s2": 191
+     "s14": 195,
+     "s1s2": 195
     },
     "n_discarded_noop": {
      "s14": 4,
@@ -2918,12 +3005,12 @@
      "s1s2": 5
     },
     "n_never": {
-     "s14": 28,
-     "s1s2": 28
+     "s14": 36,
+     "s1s2": 36
     },
     "n_detected_all_paths": {
-     "s14": 163,
-     "s1s2": 163
+     "s14": 159,
+     "s1s2": 159
     }
    }
   },
@@ -2992,14 +3079,14 @@
    "steepest_class": "elem",
    "cost_filter_note": "Enabling every obligation costs 1151/675 = 1.71x the default, and the growth is not uniform: elem goes 58 -> 534 while the other classes are flat. That is the thesis's shape, measured from the ledger.",
    "n_detected": {
-    "entry": 163,
+    "entry": 159,
     "low": null,
     "medium": null,
     "high": null,
     "high (rtc=all arm)": 37
    },
    "n_detected_note": "`enabled` is a ledger property and is exact at every level; `n_detected` needs a full E1 run per level, so only `entry` is measured here. The rtc=all arm exists (see rtc_all_arm) and is reported separately rather than interpolated.",
-   "denominator_us": "163/192 at entry (pinned default)",
+   "denominator_us": "159/196 at entry (pinned default)",
    "rtc_all_arm": {
     "source": "choreo/raw/e1_mutant_records_rtc_all.json",
     "pinned_flags": [
