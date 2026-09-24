@@ -394,7 +394,8 @@ def mutated_accesses(diff):
     Returns (at_sites, other_sites) where at_sites is [(array, [changed index
     expressions])] and other_sites is a sorted list of non-`.at` surface names
     (dma.copy chunk destinations, tile counts, output declarations, caller
-    extents) — the surfaces choreo's assessor does not model (cause C4).
+    extents, host-side scalar extents) — the surfaces choreo's assessor does not
+    model (cause C4).
 
     WHY THIS IS DIFF-AWARE RATHER THAN `+`-LINE-ONLY. The first cut collected
     every `.at(...)` on a `+` line. A mutation changes one index inside a whole
@@ -476,6 +477,18 @@ def mutated_accesses(diff):
                 # claim about this parser rather than about choreo.
                 (r"call \w+\([^;]*", "call-arg"),
                 (r"foreach \w+ in \[([^\]]*)\]", "loop-bound"),
+                # A bare scalar extent derivation -- a padded extent that later
+                # becomes a loop bound or DMA span: `Hpad = H + 2 * padding;` ->
+                # `Hpad = 2 * padding - H - 1;`. The assessor has no obligation
+                # for a host-side extent, so without naming the assignment a diff
+                # like this yields NO surface and the mutant is filed UNRESOLVED
+                # ("this parser found nothing", which is a claim about the parser,
+                # not about choreo). Naming it lets the honest C4 fall out -- the
+                # negative-padding corner of spec M4.7, where the padded extent
+                # goes negative and the with-in zero check (`dim != 0`) does not
+                # fire. The `[+\-]` in the RHS keeps the pattern off plain copies
+                # (`x = y;`) and off declarations.
+                (r"\b(\w+)\s*=\s*[^=;]*[+\-][^=;]*;", None),
                 (r"make_spandata<[^>]*>\([^;]*", "caller")):
             for m in re.finditer(pat, pline):
                 if mline and m.group(0) in mline:
@@ -825,7 +838,8 @@ def classify(rec, man, execute=False):
                "was nothing to suppress and nothing to hoist. A coverage gap in "
                "the assessor's model of these surfaces (dma.copy chunk "
                "destinations, `with index` tile counts, output declarations, "
-               "caller-side extents) — not a lost verdict.",
+               "caller-side extents, host-side scalar extents such as `Hpad`) "
+               "— not a lost verdict.",
         arrays_with_no_obligation=missing,
     )
     if execute:
@@ -994,9 +1008,30 @@ def main():
     byid = {m["mutant_id"]: m for m in man_rows}
 
     only = {x.strip() for x in a.only.split(",") if x.strip()}
+
+    def applicable(r):
+        """Is this mutant in the admissible denominator?
+
+        E1's denominator is the manifest's per-mutant `admissible` verdict
+        (serialized as `applicable` on the records; run_e1.py:887-928), NOT
+        `manifest == "corrupts"`. The two disagree: `M3.20.cv1.block3` corrupts
+        but is an inadmissible launch-limit observation, and the two M1.6
+        zero-stride mutants are inadmissible value errors. Keying the population
+        on `manifest` alone pulled all three into the miss count. Only an
+        explicit False excludes; a missing field keeps the row, so an older
+        record schema does not silently empty the report.
+        """
+        v = r.get("applicable")
+        if v is None:
+            v = r.get("admissible")
+        if v is None:
+            v = byid.get(r.get("mutant_id"), {}).get("admissible")
+        return v is not False
+
     targets = [r for r in rows
                if r.get("outcome") == "never"
                and r.get("manifest") != "undecidable"
+               and applicable(r)
                and (a.include_noop or r.get("manifest") == "corrupts")
                and (not only or r.get("mutant_id") in only)]
 
@@ -1025,8 +1060,10 @@ def main():
         "produced_by": "analyze_never.py",
         "n_never_analysed": len(results),
         "population": ("all `never` mutants" if a.include_noop
-                       else "`manifest=corrupts` only (the admissible population; "
-                            "`noop` mutants are discarded per specs §11.1)"),
+                       else "admissible `manifest=corrupts` only (per-mutant "
+                            "`admissible`/`applicable` verdict, matching E1's "
+                            "denominator; inadmissible rows and `noop` mutants "
+                            "are discarded per specs §11.1)"),
         "execute_probe": a.execute,
         # Only meaningful when the probe actually ran. Reporting the directory
         # on a ledger-only run implies raw evidence backs this artifact, when in
