@@ -1,0 +1,8 @@
+RESULT run=crash out=none
+EXC CompilationError: at 4:11:
+def f_split(x_ptr, out_ptr):
+    a = tl.load(x_ptr + tl.arange(0, 256))
+    a = tl.reshape(a, (64, 4))
+    p, q = tl.split(a)
+           ^
+expected last dimension to be 2 for split, got 4

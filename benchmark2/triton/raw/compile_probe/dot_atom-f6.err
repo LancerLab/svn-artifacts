@@ -1,0 +1,11 @@
+RESULT run=crash out=none
+EXC CompilationError: at 7:8:
+def dotk(a_ptr, b_ptr, c_ptr, M: tl.constexpr, N: tl.constexpr, K: tl.constexpr):
+    rm = tl.arange(0, M)
+    rn = tl.arange(0, N)
+    rk = tl.arange(0, K)
+    a = tl.load(a_ptr + rm[:, None] * K + rk[None, :])
+    b = tl.load(b_ptr + rk[:, None] * N + rn[None, :])
+    c = tl.dot(a, b)
+        ^
+Input shapes should have M >= 1, N >= 1 and K >= 16

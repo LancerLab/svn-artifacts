@@ -47,6 +47,7 @@ MUTATIONS = ROOT / "choreo" / "mutations.py"
 GEN_MUTANTS = ROOT / "choreo" / "gen_mutants.py"
 RENDER = ROOT / "render.py"
 TRITON = ROOT / "triton" / "collect.py"
+CUTLASS_STATS = ROOT / "results" / "cutlass" / "stats.json"
 PATCH = ROOT / "schema" / "PATCH-v2.1.md"
 # The plans live beside the artifacts tree, not inside it:
 #   <svn>/eurosys27/plan/  and  <svn>/svn-artifacts/benchmark2/schema/
@@ -223,6 +224,17 @@ def m_bad_class_enum(doc):
         raise AssertionError("no class enum in record-schema.json")
 
 
+def m_stale_s1(doc):
+    """A stats.json cell whose number no longer matches its records.
+
+    Flips one count in `cutlass`'s committed `S1_detection`: the shape stays
+    legal (so `lanes.stats-conformance` still passes) and only the NUMBER is
+    wrong, which is what `lanes.stats-rederive` exists to catch.
+    """
+    cell = doc["S1_detection"]["M1"]
+    cell["n_never"] = cell.get("n_never", 0) + 1
+
+
 def _all_declared(doc) -> list[str]:
     out: list[str] = []
     for d in doc["families"].values():
@@ -336,6 +348,11 @@ CASES = [
      "a lane that stopped reading the axis for its class set",
      ("text", TRITON, t_lane_stops_reading_the_axis),
      "does not import schema.class_axis"),
+
+    ("lanes.stats-rederive",
+     "a stats.json whose number no longer matches its records",
+     ("json", CUTLASS_STATS, m_stale_s1),
+     "re-derive"),
 
     ("docs.no-superseded-claim",
      "a document still presenting `L` as a mutation class",

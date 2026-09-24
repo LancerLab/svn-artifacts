@@ -1,0 +1,7 @@
+RESULT run=crash out=none
+EXC CompilationError: at 4:8:
+def f_sum_neg(x_ptr, out_ptr):
+    a = tl.load(x_ptr + tl.arange(0, 256))
+    a = tl.reshape(a, (16, 16))
+    b = tl.sum(a, axis=-3)
+        ^

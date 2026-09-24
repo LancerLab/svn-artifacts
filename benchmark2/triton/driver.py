@@ -423,8 +423,26 @@ def spec_id_for(category: str, cls: str, family) -> str:
     return SPEC_ID.get((category, family), f"{cls}.{family}")
 
 
-COMPILE_ERR_MARKERS = ("OutOfResources", "CompilationError",
-                       "Input shapes should have", "MLIR", "frontend error")
+# A ct-check needs a real emitted compile diagnostic (§9.6.1b rule 2). Triton's
+# frontend raises a named exception for these, so anchor on the exception header
+# rather than on loose substrings: the old list also matched bare "MLIR" and
+# "frontend error", which appear in this lane's own sources/comments and could
+# have promoted an infrastructure crash to a ct-check. Every ct-check this lane
+# reports was re-run and carries its raw output under raw/compile_probe/.
+COMPILE_ERR_MARKERS = ("EXC CompilationError", "EXC OutOfResources",
+                       "Input shapes should have")
+
+
+def _diag_text(out: str) -> str:
+    """The emitted compile diagnostic: the Triton exception header plus the
+    trailing message line, minus the child's own RESULT marker."""
+    lines = [l.strip() for l in out.splitlines()
+             if l.strip() and "RESULT " not in l]
+    if not lines:
+        return ""
+    exc = next((l for l in lines if re.match(r"^EXC \w+", l)), lines[0])
+    msg = lines[-1]
+    return (f"{exc} {msg}" if msg != exc else exc)[:200]
 
 
 CURRENT_TABLE = MUTANTS
@@ -450,8 +468,7 @@ def run_mutant(category: str, family: int, raw: Path, size: str = "full"):
         # crashed before printing: classify by error class
         if any(k in out for k in COMPILE_ERR_MARKERS):
             return mutant_record(category, cls, pcat, mid, 1, "compile",
-                                 "value-changing",
-                                 "jit: " + out.strip().splitlines()[-1][:140])
+                                 "value-changing", "jit: " + _diag_text(out))
         # §9.6.1b rule 3: a raw launch crash is `never`, not a detection.
         return mutant_record(category, cls, pcat, mid, 1, "never",
                              "value-changing",
@@ -461,7 +478,7 @@ def run_mutant(category: str, family: int, raw: Path, size: str = "full"):
         # error text sits above the RESULT line in the child output
         if any(k in out for k in COMPILE_ERR_MARKERS):
             return mutant_record(category, cls, pcat, mid, 1, "compile",
-                                 "value-changing", "jit: child reported crash")
+                                 "value-changing", "jit: " + _diag_text(out))
         # §9.6.1b rule 3: a raw child crash is `never`, not a detection.
         return mutant_record(category, cls, pcat, mid, 1, "never",
                              "value-changing", "child crash")

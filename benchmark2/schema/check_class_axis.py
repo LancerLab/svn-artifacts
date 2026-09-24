@@ -39,6 +39,9 @@ this file -- `axis.self-consistency`, `m3.cell`, `choreo.stats`,
                            exactly the classes the axis says it has, with `n/a`
                            cells carrying `n_na == n_target` and `uncompared`
                            classes carrying no cell at all.
+  lanes.stats-rederive     each measured S1 cell re-derives from the lane's
+                           committed records, so a stale `stats.json` fails
+                           instead of only failing a shape check.
   docs.no-superseded-claim the docs carry no superseded claim about the axis.
   corpus.declared-files    every declared corpus file exists, can be read, and
                            carries the release and the v2.1 field set the axis
@@ -592,6 +595,133 @@ def g6_outputs() -> list[str]:
             if want_uncmp and not str(decl.get("reason", "")).strip():
                 bad.append(f"{drel} ({lane}): {AX.uncompared_key()} carries no "
                            f"reason for {want_uncmp}")
+    return bad
+
+
+# ---------------------------------------------------------------------------
+# lanes.stats-rederive -- the committed stats.json's numbers, not just its shape
+# ---------------------------------------------------------------------------
+# `lanes.stats-conformance` checks that a lane's stats.json HAS the classes the
+# axis says and the right `n/a` cells. It does not check the NUMBERS, so a
+# stats.json generated from a corpus that has since changed passes while its
+# detection table goes stale -- exactly how `results/cutlass/stats.json` came to
+# describe a 35-record slice after the lane held 250 records (2026-09-25 audit).
+# This guard re-derives each MEASURED cell from the lane's committed results
+# records and requires the committed stats.json to agree.
+#
+# The re-derivation mirrors the lanes' own aggregation (`mlir-shared/lane.py`
+# `cmd_stats`): group records by injection identity (the mutant id, with a
+# trailing `-off`/`-on` folded in), file each under the class its `spec_id`
+# resolves to through the taxonomy (NOT the stamped `class`: a re-homed spec such
+# as M1.6 -> M4-d carries the old stamp), and reduce an injection's variants to
+# the most-detected outcome (compile > runtime > never; all-`n/a` stays `n/a`).
+# Path-class `L` rows are not S1 injections and are excluded.
+#
+# `n/a` cells are declared by the axis, never derived from records, so they are
+# owned by `lanes.stats-conformance` and skipped here.
+RESULT_RECORDS = {
+    "cutlass": ["cutlass/records.jsonl"],
+    "iree": ["results/iree/mutants.jsonl"],
+    "mlir-linalg": ["results/mlir-linalg/mutants.jsonl"],
+    "mlir-low": ["results/mlir-low/mutants.jsonl"],
+    "triton": ["triton/results/mutants.json"],
+}
+_S1_STRENGTH = {"compile": 3, "runtime": 2, "never": 1, "n/a": 0}
+_S1_FIELDS = (("n_compile", "compile"), ("n_runtime", "runtime"),
+              ("n_never", "never"), ("n_na", "n/a"))
+
+
+def _results_records(lane: str):
+    """The lane's committed results records, or (None, path, why).
+
+    Two shapes are read: JSON Lines (the SOTA lanes) and a bare JSON array
+    (`triton/results/mutants.json`). A missing file is not drift -- it is a lane
+    with no committed results to re-derive from -- so the caller skips it.
+    """
+    for rel in RESULT_RECORDS.get(lane, []):
+        path = os.path.join(B2, rel)
+        if not os.path.exists(path):
+            continue
+        text = _read(path)
+        try:
+            if rel.endswith(".json"):
+                doc = json.loads(text)
+                if not isinstance(doc, list):
+                    return None, rel, "is a JSON object, not a record list"
+                rows = doc
+            else:
+                rows = [json.loads(l) for l in text.splitlines() if l.strip()]
+        except (json.JSONDecodeError, ValueError):
+            return None, rel, "does not parse"
+        return rows, rel, None
+    return None, RESULT_RECORDS.get(lane, ["<no results records>"])[0], "not present"
+
+
+def _derive_s1(rows: list, taxonomy) -> dict:
+    """Per-class outcome counts, re-derived from records (see the note above)."""
+    from collections import Counter, defaultdict
+    inj: dict = defaultdict(list)
+    for r in rows:
+        if r.get("path_class") == "L":
+            continue
+        cls = r.get("class", "")
+        spec = r.get("spec_id")
+        if spec:
+            fam = taxonomy.family_of(spec)
+            if fam:
+                cls = taxonomy._FAM[fam]["class"]
+        mid = r.get("mutant_id", "")
+        for suf in ("-off", "-on"):
+            if mid.endswith(suf):
+                mid = mid[: -len(suf)]
+        inj[(cls, mid or spec or "")].append(r.get("outcome", ""))
+    per: dict = defaultdict(Counter)
+    for (cls, _key), outs in inj.items():
+        live = [o for o in outs if o != "n/a"]
+        outcome = "n/a" if not live else max(
+            live, key=lambda o: _S1_STRENGTH.get(o, 0))
+        per[cls][outcome] += 1
+    return per
+
+
+def g6b_rederive() -> list[str]:
+    bad: list[str] = []
+    from schema import method_taxonomy as T
+    for lane in AX.lanes():
+        status = AX.lane_status(lane)
+        measured = [c for c in CLASSES if status.get(c) == "measured"]
+        if not measured:
+            continue
+        cells, srel, _err = _load_s1(lane)
+        if cells is None:
+            continue          # lanes.stats-conformance already reports the shape
+        rows, rrel, rerr = _results_records(lane)
+        if rows is None:
+            if rerr == "not present":
+                continue      # no committed results for this lane: not drift
+            bad.append(f"{rrel} ({lane}): {rerr}; cannot re-derive its stats")
+            continue
+        per = _derive_s1(rows, T)
+        for cls in measured:
+            cell = cells.get(cls)
+            if not isinstance(cell, dict):
+                continue      # shape is lanes.stats-conformance's finding
+            got = per.get(cls, {})
+            for field, outcome in _S1_FIELDS:
+                want = cell.get(field, 0)
+                have = got.get(outcome, 0)
+                if want != have:
+                    bad.append(
+                        f"{srel} ({lane}): {cls}.{field} = {want}, but the "
+                        f"committed records in {rrel} re-derive {have}. "
+                        f"Regenerate the lane's stats; do not hand-edit.")
+            n_got = sum(got.values())
+            if cell.get("n_injected") != n_got:
+                bad.append(
+                    f"{srel} ({lane}): {cls}.n_injected = "
+                    f"{cell.get('n_injected')}, but {rrel} holds {n_got} "
+                    f"injections. Regenerate the lane's stats; do not "
+                    f"hand-edit.")
     return bad
 
 
@@ -1863,6 +1993,8 @@ CHECKS = [
      "n/a and uncompared lanes carry their reason", g5_declarations),
     (gid("lanes", "stats-conformance"),
      "committed stats.json agrees with the axis", g6_outputs),
+    (gid("lanes", "stats-rederive"),
+     "committed stats.json re-derives from the lane's records", g6b_rederive),
     (gid("docs", "no-superseded-claim"),
      "the docs carry no superseded claim about the axis", g7_docs),
     (gid("corpus", "declared-files"),

@@ -1,0 +1,8 @@
+RESULT run=crash out=none
+EXC CompilationError: at 4:8:
+def f_permute_arity(x_ptr, out_ptr):
+    a = tl.load(x_ptr + tl.arange(0, 256))
+    a = tl.reshape(a, (16, 16))
+    b = tl.permute(a, (0, 1, 2))
+        ^
+permute dims must have the same length as input shape, got 2 and 3

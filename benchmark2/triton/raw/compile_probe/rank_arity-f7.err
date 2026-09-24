@@ -1,0 +1,7 @@
+RESULT run=crash out=none
+EXC CompilationError: at 3:8:
+def f_trans1(x_ptr, out_ptr):
+    a = tl.load(x_ptr + tl.arange(0, 256))
+    b = tl.trans(a)
+        ^
+tl.trans invoked with a 0- or 1-dimensional tensor

@@ -1,0 +1,16 @@
+RESULT run=crash out=none
+EXC CompilationError: at 13:14:
+             BM: tl.constexpr, BN: tl.constexpr, BK: tl.constexpr):
+    pid_m = tl.program_id(0); pid_n = tl.program_id(1)
+    om = pid_m * BM + tl.arange(0, BM)
+    on = pid_n * BN + tl.arange(0, BN)
+    ok = tl.arange(0, BK)
+    ap = a_ptr + om[:, None] * K + ok[None, :]
+    bp = b_ptr + ok[:, None] * N + on[None, :]
+    acc = tl.zeros((BM, BN), dtype=tl.float32)
+    for _ in range(0, tl.cdiv(K, BK)):
+        a = tl.load(ap, mask=(om[:, None] < M) & (ok[None, :] < K), other=0.0)
+        b = tl.load(bp, mask=(ok[:, None] < K) & (on[None, :] < N), other=0.0)
+        acc = tl.dot(a, b, acc, input_precision="ieee")
+              ^
+Input shapes should have M >= 1, N >= 1 and K >= 16

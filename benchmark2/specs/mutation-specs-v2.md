@@ -909,6 +909,59 @@ is correct; **no re-expression is required**. An earlier revision of this addend
 the 24 as `corrupt` by reading rule 1's "inconsistent operand shapes" as covering the injected
 defect itself; that reading was wrong and is retracted here.
 
+**Audit result — `cutlass`, 2026-09-25 (12 `compile` injections are `ct-check`;
+28 `n/a` rows are `avoid`).** Source `cutlass/records.jsonl` (250 records: 248 S1
+injections over M1 64 / M2 64 / M3 64 / M4 56, plus the 2 `L` path-class rows).
+Every mutant was launched on the sm_86 host and compared against the same-extent
+base. The 12 `compile` rows are all `ct-check`: 8 on M1.15 (rank `get<2>` on the
+wrong operand) and 4 on M4.8 (empty padded extent), each a CuTe `static_assert`
+about the mutated layout/atom, recorded under `cutlass/raw/probes/*.err`. M2 and
+M3 are 128/128 `never` — a hand-written CuTe kernel owns its index arithmetic and
+emits no library check for those defects. The 28 `n/a` rows (`prohibition:
+absent`, `applicable: false`) are `avoid`: the neutral controls M4.4/M1.6 (empty
+iteration space), M1.7 (reversed bound), M4.5/M4.7 on the operators that cannot
+state them, M1.19 (32-bit carrier on the three operators with no such carrier),
+and the L1 launch-status control. They enter no denominator. Tally: **ct-check
+12, rt-check 0, never 208, avoid 28** (plus `L`: 1 `never`, 1 `avoid`). This
+surface emits no runtime check, so there is no RTV arm; `complete = false` until
+the manifest-pinned sm_120 re-run.
+
+**Audit result — `iree`, 2026-09-25 (24 `runtime` injections are `rt-check`).**
+Source `iree/raw/mutants.jsonl` (64 M2 injections). The 24 `runtime` rows each
+fail the `hal.buffer_view.assert` entry check with `INVALID_ARGUMENT: shape
+dimension/rank mismatch` (`buffer_diagnostics.c:214/225`), an explicit check the
+compiler emitted for the shape contract — `rt-check`; the raw log per mutant is
+under `iree/raw/_mut_*.log`. The other 40 run to a wrong result with no emitted
+check (`never`); none is a hang or a raw crash. M1 and M3 are `n/a` (no
+addressable interior before lowering; no device contract in a CPU JIT). Tally:
+**ct-check 0, rt-check 24, never 40, avoid 0**.
+
+**Audit result — `mlir-low`, 2026-09-25 (56 `runtime` injections are
+`rt-check`).** Source `mlir-low/raw/mutants.jsonl` (240 records = 120 injections
+x {RTV off, on}; both modes agree). M1 holds 64 injections: 56 `runtime` with
+`detected_by: gpu-assert` (an emitted RTV assert) and 8 `never` (symbolic/extent
+escapes). M4 holds 56 `never` — wrong results with no emitted check. Four M1 rows
+are `manifest: noop` under RTV off (`M1.1-off` on relu/transpose, static and
+dynamic): §7.1 discards, not misses. M2 and M3 are `n/a`. Tally: **ct-check 0,
+rt-check 56, never 64, avoid 0** (+ M2/M3 `n/a`).
+
+**Audit result — `triton`, 2026-09-25 (56 `compile` injections are `ct-check`,
+re-derived with the raw child output now stored).** Source
+`triton/raw/mutants.jsonl` (176 injections: M1 64 / M3 56 / M4 56; M2 is `n/a`).
+All 56 `compile` rows were re-run on the sm_86 host and every one raises a named
+Triton frontend exception about the mutation, not an ICE: `M3` shape/descriptor/
+resource diagnostics (`Input shapes should have M >= 1, N >= 1 and K >= 16`;
+`EXC OutOfResources: out of resource: shared memory`; `Expected 1 <= ndim <= 5
+but got 6 dimensions`; `Descriptor block shape must have at least 16 bytes in the
+last dimension`), `M1` rank/arity (`permute dims must be a permutation of 0, 1,
+..., n-1`), and `M4.5` zero step (`range() arg 3 must not be zero`). Raw output
+per mutant is under `triton/raw/compile_probe/`; `triton/driver.py` now records
+the diagnostic instead of the constant "child reported crash", and its marker set
+is anchored on the exception header rather than the loose `MLIR` / `frontend
+error` substrings that could have promoted an infrastructure crash. The 120
+`never` rows (M1 56, M3 16, M4 48) run to a wrong result. Tally: **ct-check 56,
+rt-check 0, never 120, avoid 0** (+ M2 `n/a`).
+
 **Per-lane audit record — normative (added 2026-09-24).** Every lane appends an
 `**Audit result — <lane>, <date>**` block here before its numbers are read into
 the paper. The block names the source file, the injected population, the verdict
@@ -918,20 +971,21 @@ plus `undecidable`) are **not** this vocabulary: until a lane audits them, a
 `compile` row is `ct-check` or `corrupt`, and a `runtime` row is `rt-check` or
 `never`. The procedure is `HANDOFF.md` §8.2.
 
-Measured state, 2026-09-24 (committed `results/*/stats.json`; `†` = provisional
+Measured state, 2026-09-25 (committed `results/*/stats.json`; `†` = provisional
 raw-field mapping, not yet audited):
 
 | lane | class(es) | injections | ct-check | rt-check | never | n/a | audit |
 |---|---|---|---|---|---|---|---|
-| `choreo` | M1–M4 | 123 | 4† | 24† | 36 | 2 | raw (v1 fields; 37 `undecidable`, 4 discarded-noop) |
-| `cutlass` | M1, M3, M4 | 41 | 1† | 0 | 37 | 0 | raw; lane `complete = false` |
-| `iree` | M2 | 64 | 0† | 24† | 40 | 0 | raw |
+| `choreo` | M1–M4 | 123 | 4† | 24† | 36 | 2 | raw (v1 fields; host WIP) |
+| `cutlass` | M1–M4 (+L) | 248 | **12** | 0 | **208** | 28 | audited (above) |
+| `iree` | M2 | 64 | 0 | **24** | **40** | 0 | audited (above) |
 | `mlir-linalg` | M2 | 64 | **24** | 0 | **40** | 0 | audited (above) |
-| `mlir-low` | M1, M4 | 118 | 0 | **44** | **74** | 0 | audited |
-| `triton` | — | — | — | — | — | — | no committed results in this checkout |
+| `mlir-low` | M1, M4 | 120 | 0 | **56** | **64** | 0 | audited (above) |
+| `triton` | M1, M3, M4 | 176 | **56** | 0 | **120** | 0 (+M2 40) | audited (above) |
 
-Two flags for the owner. `mlir-low` records an `M4` cell although `U-1` places
-`M4` out of scope beyond `choreo`. And the S8 denominators differ by lane
+`U-1` (M4 scope) was superseded 2026-09-23: `mlir-low` and `triton` now measure
+M4 (program-authored loops) and `mlir-linalg`/`iree` keep it `uncompared`. One
+flag remains for the owner: the S8 denominators differ by lane
 (`mlir-linalg` over 21 composed categories, `mlir-low` over 4, `iree` over 15), so
 their `yes` / `no` columns are not yet comparable.
 

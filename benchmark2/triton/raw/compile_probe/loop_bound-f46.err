@@ -1,0 +1,16 @@
+RESULT run=crash out=none
+EXC CompilationError: at 18:8:
+    r = tl.arange(0, BLOCK)
+    if SHAPE == 1:
+        for k in tl.static_range(0, BLOCK, 0):
+            offs = base + k * BLOCK + r
+            _work(x_ptr, y_ptr, offs, offs < N)
+    elif SHAPE == 2:
+        for i in tl.static_range(0, 2):
+            for k in tl.static_range(0, BLOCK, 0):
+                offs = base + (i * 2 + k) * BLOCK + r
+                _work(x_ptr, y_ptr, offs, offs < N)
+    elif SHAPE == 3:
+        for k in tl.static_range(0, BLOCK, 0):
+        ^
+ValueError('range() arg 3 must not be zero')

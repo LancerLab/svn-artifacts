@@ -1,0 +1,2 @@
+RESULT run=crash out=none
+EXC OutOfResources: out of resource: shared memory, Required: 262144, Hardware limit: 101376. Reducing block sizes or `num_stages` may help.

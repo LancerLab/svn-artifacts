@@ -1,0 +1,13 @@
+RESULT run=crash out=none
+EXC CompilationError: at 9:8:
+def lb_step0(x_ptr, y_ptr, N, SHAPE: tl.constexpr, BLOCK: tl.constexpr):
+    """Defect F: a step of 0 in an unrolled iteration.  `tl.static_range` is
+    evaluated eagerly by the frontend, so Python raises `range() arg 3 must not
+    be zero` and Triton wraps it in a `CompilationError`."""
+    pid = tl.program_id(0)
+    base = pid * BLOCK
+    r = tl.arange(0, BLOCK)
+    if SHAPE == 1:
+        for k in tl.static_range(0, BLOCK, 0):
+        ^
+ValueError('range() arg 3 must not be zero')

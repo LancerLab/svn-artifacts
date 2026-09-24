@@ -1,0 +1,6 @@
+RESULT run=crash out=none
+EXC CompilationError: at 2:8:
+def box_align(x_ptr, out_ptr, B0: tl.constexpr, B1: tl.constexpr):
+    d = tl.make_tensor_descriptor(x_ptr, shape=[64, 256], strides=[256, 1],
+        ^
+Descriptor block shape must have at least 16 bytes in the last dimension, but got 2 * 2 = 4 bytes

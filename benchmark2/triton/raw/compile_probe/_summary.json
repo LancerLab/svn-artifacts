@@ -1,0 +1,338 @@
+[
+  [
+    "box_align-f1",
+    "M3.7",
+    "compile",
+    "EXC CompilationError: at 2:8: Descriptor block shape must have at least 16 bytes in the last dimension, but got 1 * 4 = 4 bytes"
+  ],
+  [
+    "box_align-f2",
+    "M3.7",
+    "compile",
+    "EXC CompilationError: at 2:8: Descriptor block shape must have at least 16 bytes in the last dimension, but got 2 * 4 = 8 bytes"
+  ],
+  [
+    "box_align-f3",
+    "M3.7",
+    "compile",
+    "EXC CompilationError: at 2:8: Descriptor block shape must have at least 16 bytes in the last dimension, but got 1 * 4 = 4 bytes"
+  ],
+  [
+    "box_align-f4",
+    "M3.7",
+    "compile",
+    "EXC CompilationError: at 2:8: Descriptor block shape must have at least 16 bytes in the last dimension, but got 1 * 4 = 4 bytes"
+  ],
+  [
+    "box_align-f5",
+    "M3.7",
+    "compile",
+    "EXC CompilationError: at 2:8: Descriptor block shape must have at least 16 bytes in the last dimension, but got 1 * 2 = 2 bytes"
+  ],
+  [
+    "box_align-f6",
+    "M3.7",
+    "compile",
+    "EXC CompilationError: at 2:8: Descriptor block shape must have at least 16 bytes in the last dimension, but got 2 * 2 = 4 bytes"
+  ],
+  [
+    "box_align-f7",
+    "M3.7",
+    "compile",
+    "EXC CompilationError: at 2:8: Descriptor block shape must have at least 16 bytes in the last dimension, but got 1 * 2 = 2 bytes"
+  ],
+  [
+    "box_align-f8",
+    "M3.7",
+    "compile",
+    "EXC CompilationError: at 2:8: Descriptor block shape must have at least 16 bytes in the last dimension, but got 2 * 2 = 4 bytes"
+  ],
+  [
+    "box_swizzle-f1",
+    "M3.5",
+    "compile",
+    "EXC CompilationError: at 2:8: Shape element 1 must be a power of 2"
+  ],
+  [
+    "box_swizzle-f2",
+    "M3.5",
+    "compile",
+    "EXC CompilationError: at 2:8: Shape element 1 must be a power of 2"
+  ],
+  [
+    "box_swizzle-f3",
+    "M3.5",
+    "compile",
+    "EXC CompilationError: at 2:8: Shape element 1 must be a power of 2"
+  ],
+  [
+    "box_swizzle-f4",
+    "M3.5",
+    "compile",
+    "EXC CompilationError: at 2:8: Shape element 1 must be a power of 2"
+  ],
+  [
+    "box_swizzle-f5",
+    "M3.5",
+    "compile",
+    "EXC CompilationError: at 2:8: Shape element 1 must be a power of 2"
+  ],
+  [
+    "box_swizzle-f6",
+    "M3.3",
+    "compile",
+    "EXC CompilationError: at 2:8: numel (8388608) exceeds triton maximum tensor numel (1048576)"
+  ],
+  [
+    "box_swizzle-f7",
+    "M3.3",
+    "compile",
+    "EXC CompilationError: at 2:8: numel (4194304) exceeds triton maximum tensor numel (1048576)"
+  ],
+  [
+    "box_swizzle-f8",
+    "M3.3",
+    "compile",
+    "EXC CompilationError: at 2:8: numel (2097152) exceeds triton maximum tensor numel (1048576)"
+  ],
+  [
+    "desc_rank-f1",
+    "M3.8",
+    "compile",
+    "EXC CompilationError: at 2:8: Expected 1 <= ndim <= 5 but got 6 dimensions"
+  ],
+  [
+    "desc_rank-f2",
+    "M3.8",
+    "compile",
+    "EXC CompilationError: at 2:8: Expected 1 <= ndim <= 5 but got 0 dimensions"
+  ],
+  [
+    "desc_rank-f3",
+    "M3.8",
+    "compile",
+    "EXC CompilationError: at 2:8: Expected 1 <= ndim <= 5 but got 6 dimensions"
+  ],
+  [
+    "desc_rank-f4",
+    "M3.8",
+    "compile",
+    "EXC CompilationError: at 2:8: Expected 1 <= ndim <= 5 but got 0 dimensions"
+  ],
+  [
+    "desc_rank-f5",
+    "M3.8",
+    "compile",
+    "EXC CompilationError: at 2:8: Expected 1 <= ndim <= 5 but got 6 dimensions"
+  ],
+  [
+    "desc_rank-f6",
+    "M3.8",
+    "compile",
+    "EXC CompilationError: at 2:8: Expected 1 <= ndim <= 5 but got 0 dimensions"
+  ],
+  [
+    "desc_rank-f7",
+    "M3.8",
+    "compile",
+    "EXC CompilationError: at 2:8: Expected 1 <= ndim <= 5 but got 6 dimensions"
+  ],
+  [
+    "desc_rank-f8",
+    "M3.8",
+    "compile",
+    "EXC CompilationError: at 2:8: Expected 1 <= ndim <= 5 but got 0 dimensions"
+  ],
+  [
+    "dot_atom-f1",
+    "M3.1",
+    "compile",
+    "EXC CompilationError: at 7:8: Input shapes should have M >= 1, N >= 1 and K >= 16"
+  ],
+  [
+    "dot_atom-f2",
+    "M3.1",
+    "compile",
+    "EXC CompilationError: at 7:8: Input shapes should have M >= 1, N >= 1 and K >= 16"
+  ],
+  [
+    "dot_atom-f3",
+    "M3.1",
+    "compile",
+    "EXC CompilationError: at 7:8: Input shapes should have M >= 1, N >= 1 and K >= 16"
+  ],
+  [
+    "dot_atom-f4",
+    "M3.1",
+    "compile",
+    "EXC CompilationError: at 7:8: Input shapes should have M >= 1, N >= 1 and K >= 16"
+  ],
+  [
+    "dot_atom-f5",
+    "M3.1",
+    "compile",
+    "EXC CompilationError: at 7:8: Input shapes should have M >= 1, N >= 1 and K >= 16"
+  ],
+  [
+    "dot_atom-f6",
+    "M3.1",
+    "compile",
+    "EXC CompilationError: at 7:8: Input shapes should have M >= 1, N >= 1 and K >= 16"
+  ],
+  [
+    "dot_atom-f7",
+    "M3.1",
+    "compile",
+    "EXC CompilationError: at 7:8: Input shapes should have M >= 1, N >= 1 and K >= 16"
+  ],
+  [
+    "loop_bound-f40",
+    "M4.5",
+    "compile",
+    "EXC CompilationError: at 9:8: ValueError('range() arg 3 must not be zero')"
+  ],
+  [
+    "loop_bound-f41",
+    "M4.5",
+    "compile",
+    "EXC CompilationError: at 14:12: ValueError('range() arg 3 must not be zero')"
+  ],
+  [
+    "loop_bound-f42",
+    "M4.5",
+    "compile",
+    "EXC CompilationError: at 18:8: ValueError('range() arg 3 must not be zero')"
+  ],
+  [
+    "loop_bound-f43",
+    "M4.5",
+    "compile",
+    "EXC CompilationError: at 24:8: ValueError('range() arg 3 must not be zero')"
+  ],
+  [
+    "loop_bound-f44",
+    "M4.5",
+    "compile",
+    "EXC CompilationError: at 9:8: ValueError('range() arg 3 must not be zero')"
+  ],
+  [
+    "loop_bound-f45",
+    "M4.5",
+    "compile",
+    "EXC CompilationError: at 14:12: ValueError('range() arg 3 must not be zero')"
+  ],
+  [
+    "loop_bound-f46",
+    "M4.5",
+    "compile",
+    "EXC CompilationError: at 18:8: ValueError('range() arg 3 must not be zero')"
+  ],
+  [
+    "loop_bound-f47",
+    "M4.5",
+    "compile",
+    "EXC CompilationError: at 24:8: ValueError('range() arg 3 must not be zero')"
+  ],
+  [
+    "matmul-f1",
+    "M3.1",
+    "compile",
+    "EXC CompilationError: at 13:14: Input shapes should have M >= 1, N >= 1 and K >= 16"
+  ],
+  [
+    "matmul-f2",
+    "M3.12",
+    "compile",
+    "EXC OutOfResources: out of resource: shared memory, Required: 262144, Hardware limit: 101376. Reducing block sizes or `num_stages` may help."
+  ],
+  [
+    "rank_arity-f1",
+    "M1.20",
+    "compile",
+    "EXC CompilationError: at 4:8: permute dims must have the same length as input shape, got 2 and 3"
+  ],
+  [
+    "rank_arity-f2",
+    "M1.15",
+    "compile",
+    "EXC CompilationError: at 4:8: permute dims must be a permutation of 0, 1, ..., n-1, but were ['0', '0']"
+  ],
+  [
+    "rank_arity-f3",
+    "M1.17",
+    "compile",
+    "EXC CompilationError: at 4:8: ^"
+  ],
+  [
+    "rank_arity-f4",
+    "M1.17",
+    "compile",
+    "EXC CompilationError: at 4:8: ^"
+  ],
+  [
+    "rank_arity-f5",
+    "M1.20",
+    "compile",
+    "EXC CompilationError: at 3:8: reshape() cannot change total number of elements in tensor"
+  ],
+  [
+    "rank_arity-f6",
+    "M1.15",
+    "compile",
+    "EXC CompilationError: at 3:8: invalid axis 2. Expected -2 <= axis < 2"
+  ],
+  [
+    "rank_arity-f7",
+    "M1.16",
+    "compile",
+    "EXC CompilationError: at 3:8: tl.trans invoked with a 0- or 1-dimensional tensor"
+  ],
+  [
+    "rank_arity-f8",
+    "M1.16",
+    "compile",
+    "EXC CompilationError: at 4:11: expected last dimension to be 2 for split, got 4"
+  ],
+  [
+    "smem_cap-f1",
+    "M3.12",
+    "compile",
+    "EXC OutOfResources: out of resource: shared memory, Required: 131072, Hardware limit: 101376. Reducing block sizes or `num_stages` may help."
+  ],
+  [
+    "smem_cap-f2",
+    "M3.12",
+    "compile",
+    "EXC OutOfResources: out of resource: shared memory, Required: 262144, Hardware limit: 101376. Reducing block sizes or `num_stages` may help."
+  ],
+  [
+    "smem_cap-f3",
+    "M3.12",
+    "compile",
+    "EXC OutOfResources: out of resource: shared memory, Required: 131072, Hardware limit: 101376. Reducing block sizes or `num_stages` may help."
+  ],
+  [
+    "smem_cap-f4",
+    "M3.12",
+    "compile",
+    "EXC OutOfResources: out of resource: shared memory, Required: 262144, Hardware limit: 101376. Reducing block sizes or `num_stages` may help."
+  ],
+  [
+    "smem_cap-f5",
+    "M3.12",
+    "compile",
+    "EXC OutOfResources: out of resource: shared memory, Required: 131072, Hardware limit: 101376. Reducing block sizes or `num_stages` may help."
+  ],
+  [
+    "smem_cap-f6",
+    "M3.12",
+    "compile",
+    "EXC OutOfResources: out of resource: shared memory, Required: 262144, Hardware limit: 101376. Reducing block sizes or `num_stages` may help."
+  ],
+  [
+    "smem_cap-f7",
+    "M3.12",
+    "compile",
+    "EXC OutOfResources: out of resource: shared memory, Required: 131072, Hardware limit: 101376. Reducing block sizes or `num_stages` may help."
+  ]
+]
