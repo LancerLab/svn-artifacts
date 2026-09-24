@@ -4,8 +4,8 @@
  "summary": {
   "n_specs": 78,
   "status_counts": {
-   "implemented": 58,
-   "pending": 20
+   "implemented": 57,
+   "pending": 21
   },
   "admissible_counts": {
    "true": 53,
@@ -62,7 +62,6 @@
    "M2.8",
    "M2.9",
    "M3.1",
-   "M3.10",
    "M3.14",
    "M3.15",
    "M3.16",
@@ -138,13 +137,16 @@
    "M4.7",
    "M4.8"
   ],
-  "pending": [],
+  "pending": [
+   "M3.10"
+  ],
   "unwritten": [
    "M1.15",
    "M1.16",
    "M1.18",
    "M2.12",
    "M2.18",
+   "M3.10",
    "M3.11",
    "M3.12",
    "M3.13",
@@ -224,7 +226,7 @@
   "n_operators": {
    "M1": 77,
    "M2": 97,
-   "M3": 63,
+   "M3": 67,
    "M4": 80
   }
  },
@@ -665,7 +667,7 @@
    "path": "rt-check",
    "admissible": true,
    "prohibition": "",
-   "status": "implemented",
+   "status": "pending",
    "desc": "last-dim / rank-5 mid-padding violates padding_mid[rank-1] == 0",
    "note": ""
   },

@@ -1,0 +1,55 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+#include <cmath>
+#define I 32
+#define J 8
+#define K 16
+#define L 16
+
+/* Mutation-only host (M3-g): the input plane is brought in through a `dma.pad`
+   descriptor whose pad fields are derived at run time. padding=0 leaves the op
+   identical to a plain relu, which keeps the base oracle usable. */
+__co__ auto relu_dma_pad(f32 [I, J, K, L] inp, int padding) {
+  H = inp.span(2);
+  W = inp.span(3);
+  Hpad = H + 2 * padding;
+  Wpad = W + 2 * padding;
+  f32 [I, J, Hpad, Wpad] out;
+
+  parallel p by I : block {
+    foreach j in [J] {
+      il = dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, {0, 0, 0, 0}, 0.0f> inp.chunkat(p, j, _, _) => shared;
+      foreach {h, w} in [Hpad, Wpad] {
+        f32 v = il.data.at(0, 0, h, w);
+        out.at(p, j, h, w) = v > 0.0f ? v : 0.0f;
+      }
+    }
+  }
+  return out;
+}
+
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(I, J, K, L);
+  a.fill_random(-1.0, 1.0);
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto r  = relu_dma_pad(a.view(), 0);
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+  for (size_t i = 0; i < r.shape()[0]; ++i)
+    for (size_t j = 0; j < r.shape()[1]; ++j)
+      for (size_t k = 0; k < r.shape()[2]; ++k)
+        for (size_t l = 0; l < r.shape()[3]; ++l) {
+          float vin = a[i][j][k][l];
+          float ref = (vin > 0.0f) ? vin : 0.0f;
+          if (ref != r[i][j][k][l]) {
+            std::cout << "relu mismatch\n";
+            choreo::choreo_assert(false, "values are not equal.");
+          }
+        }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " microseconds\n";
+  return 0;
+}

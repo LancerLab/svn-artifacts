@@ -1928,40 +1928,68 @@ M3 += [
 # the *placement*, which is value-observable through the im2col index map.
 _PAD10 = ("il = dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, "
           "{0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => shared;")
+# The parenthesised range `[0, 2^11]` in gpu_adapt.hpp:378-388 is the assessed
+# path: a SYMBOLIC pad value emits `Assess(0 <= v <= 2^11)`, so a pad derived
+# from the runtime `padding` fires the assessor when it leaves that range. The
+# overrun is placed on `pad_low` (so the source also lands 4096 elements into
+# the tile) and is realised on the four categories that carry a `dma.pad`
+# descriptor -- conv2d plus the three dma.pad hosts authored for exactly this
+# surface (`relu/23`, `transpose/23`, `layer_normalization/13`).
+_PAD_LOW_H = ("dma.pad<{0, 0, padding, padding},",
+              "dma.pad<{0, 0, padding + 4096, padding},")
+_PAD_LOW_W = ("{0, 0, padding, padding}, {0, 0, padding, padding},",
+              "{0, 0, padding, padding + 4096}, {0, 0, padding, padding},")
 M3 += [
-    _m("M3.9.cv10.padhigh", "M3", 9, "dim-mismatch", "conv2d",
-       "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
-       "pad_high on the innermost dim exceeds the assessed range for that dim "
-       "by one element: every im2col window shifts by one column",
-       (_PAD10, _PAD10.replace("{0, 0, padding, padding}, {0, 0, 0, 0}",
-                               "{0, 0, padding, padding + 1}, {0, 0, 0, 0}"))),
     _m("M3.9.cv10.padlow", "M3", 9, "dim-mismatch", "conv2d",
        "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
-       "pad_low on the out-of-channel dim exceeds the assessed range by one "
-       "element: the padded rows shift, so the halo the stencil reads is the "
-       "wrong halo",
-       (_PAD10, _PAD10.replace("{0, 0, padding, padding},",
-                               "{0, 0, padding + 1, padding},", 1))),
+       "pad_low on the out-of-channel dim exceeds the assessed range "
+       "[0, 2^11]: the halo the stencil reads is the wrong halo",
+       _PAD_LOW_H),
+    _m("M3.9.cv10.padloww", "M3", 9, "dim-mismatch", "conv2d",
+       "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
+       "pad_low on the innermost dim exceeds the assessed range [0, 2^11]: "
+       "every im2col window shifts",
+       _PAD_LOW_W),
+    _m("M3.9.rl23.padlowh", "M3", 9, "dim-mismatch", "relu",
+       "23_dma_pad_extent_32x8x16x16",
+       "pad_low on the row dim exceeds the assessed range [0, 2^11]: the "
+       "padded plane the relu reads is shifted",
+       _PAD_LOW_H),
+    _m("M3.9.rl23.padloww", "M3", 9, "dim-mismatch", "relu",
+       "23_dma_pad_extent_32x8x16x16",
+       "pad_low on the column dim exceeds the assessed range [0, 2^11]: the "
+       "padded plane the relu reads is shifted",
+       _PAD_LOW_W),
+    _m("M3.9.tp23.padlowh", "M3", 9, "dim-mismatch", "transpose",
+       "23_dma_pad_extent_32x8x16x16",
+       "pad_low on the row dim exceeds the assessed range [0, 2^11]: the "
+       "transposed plane is shifted",
+       _PAD_LOW_H),
+    _m("M3.9.tp23.padloww", "M3", 9, "dim-mismatch", "transpose",
+       "23_dma_pad_extent_32x8x16x16",
+       "pad_low on the column dim exceeds the assessed range [0, 2^11]: the "
+       "transposed plane is shifted",
+       _PAD_LOW_W),
+    _m("M3.9.ln13.padlowh", "M3", 9, "dim-mismatch", "layer_normalization",
+       "13_dma_pad_extent_32x8x16x16_16_16",
+       "pad_low on the row dim exceeds the assessed range [0, 2^11]: the "
+       "affine input plane is shifted",
+       _PAD_LOW_H),
+    _m("M3.9.ln13.padloww", "M3", 9, "dim-mismatch", "layer_normalization",
+       "13_dma_pad_extent_32x8x16x16_16_16",
+       "pad_low on the column dim exceeds the assessed range [0, 2^11]: the "
+       "affine input plane is shifted",
+       _PAD_LOW_W),
 ]
 
 # ---- M3.10 mid-padding on a dim that must not carry it ------------------
-# `padding_mid[rank-1] == 0` is the obligation; a non-zero entry means the
-# hardware re-orders the tile against the compiler's own index map. The insert
-# is in-place (padding_mid repositions content, it does not grow the tile), so
-# this is the one M3 family that is value-observable at zero allocation cost.
-M3 += [
-    _m("M3.10.cv10.midlast", "M3", 10, "dim-mismatch", "conv2d",
-       "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
-       "padding_mid non-zero on the innermost dim, violating "
-       "padding_mid[rank-1] == 0: the tile arrives re-ordered",
-       (_PAD10, _PAD10.replace("{0, 0, 0, 0}, 0.0f>", "{0, 0, 0, 1}, 0.0f>"))),
-    _m("M3.10.cv10.midinner", "M3", 10, "dim-mismatch", "conv2d",
-       "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
-       "padding_mid non-zero on an interior dim: the mid-pad vector is "
-       "assessed but its entries are not constrained to be zero outside the "
-       "innermost position",
-       (_PAD10, _PAD10.replace("{0, 0, 0, 0}, 0.0f>", "{0, 0, 1, 0}, 0.0f>"))),
-]
+# Structurally unrealisable in this backend: `dma.pad` with a non-zero
+# `padding_mid` is REFUSED by the CuTe code generator
+# ("dma.pad with pad_mid is not supported for CuTe backend (must set pad_mid
+# to 0)"), on every host that carries a pad descriptor -- not just conv2d. A
+# mutation that cannot compile is not a test, so M3.10 is left with no operator
+# and the family's eight slots are filled by M3.9 instead. The spec's status
+# (structurally refused -> `avoided`) needs sign-off before it is filed.
 
 # ---- M3.27/M3.28 on-chip capacity with a SYMBOLIC extent -----------------
 # M3.12's scope note is exact: CheckCtMemUsage only refuses a tile whose byte
