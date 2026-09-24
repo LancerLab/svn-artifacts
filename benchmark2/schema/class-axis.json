@@ -389,7 +389,7 @@
         "results/cutlass/stats.json"
       ],
       "spec_version": {
-        "port": "CUTLASS/CuTe candidate lane: 15 operators gated against CPU references, plus launched M1/M2/M3/M4 batteries (one representative spec per family x 4 kernels x 2 extent realisations = 8 per family), all emitted as v2.1 mutant records (cutlass/mutrec.py). The manifest is not yet emitted, so the lane is not yet covered by the family-manifest port.",
+        "port": "CUTLASS/CuTe candidate lane: 15 operators gated against CPU references, plus launched M1/M2/M3/M4 batteries (one representative spec per family x 4 kernels x 2 extent realisations = 8 per family), all emitted as v2.1 mutant records (cutlass/mutrec.py). The family manifest is now emitted (cutlass/raw/mutant_manifest.json) and conforms: 248 selected instances over 31 families, every family exactly 8 deep, accounting closed.",
         "corpus": "v2.1",
         "corpus_paths": [
           {
@@ -405,7 +405,7 @@
             ]
           }
         ],
-        "note": "CUTLASS/CuTe lane, PROMOTED on the sm_86 dev host: 15 operators gated against CPU references plus launched M1/M2/M3/M4 batteries, all emitted as v2.1 mutant records by cutlass/mutrec.py. M1/M2/M3/M4 are all `measured`: each class is a conforming 8-family battery (one representative spec per family x 4 kernels x 2 extent realisations = 8 per family), launched and compared against the same-extent base. The M1/M3 defects are applied to the operator's own index arithmetic (a hand-written CuTe kernel owns its index/stride/bound arithmetic, so the surface emits no library check for most families); M2 is the shape-contract battery on the M2 minimal operator set. The manifest is not yet emitted, so the lane is not yet covered by the family-manifest port; the manifest pin is 2xH800 sm_120, so an sm_120 re-run is pending and the lane keeps `complete: false` in its own stats."
+        "note": "CUTLASS/CuTe lane, PROMOTED on the sm_86 dev host: 15 operators gated against CPU references plus launched M1/M2/M3/M4 batteries, all emitted as v2.1 mutant records by cutlass/mutrec.py. M1/M2/M3/M4 are all `measured`: each class is a conforming 8-family battery (one representative spec per family x 4 kernels x 2 extent realisations = 8 per family), launched and compared against the same-extent base. The M1/M3 defects are applied to the operator's own index arithmetic (a hand-written CuTe kernel owns its index/stride/bound arithmetic, so the surface emits no library check for most families); M2 is the shape-contract battery on the M2 minimal operator set. The family manifest is now emitted (cutlass/raw/mutant_manifest.json): 248 selected instances over 31 families, every family exactly 8 deep, accounting closed, so the lane is covered by the family-manifest port. The manifest pin is 2xH800 sm_120, so an sm_120 re-run is pending and the lane keeps `complete: false` in its own stats."
       },
       "owns": [
         "S1",
