@@ -1733,6 +1733,22 @@ M2 += [
        "square transpose on the dynamic operand pair",
        ("dma.copy l1_out => output.chunkat(p#q, m_tile, n_tile);",
         "dma.transp<1,0> l1_out => output.chunkat(p#q, n_tile, m_tile);")),
+    _m("M2.10.tp24.square", "M2", 10, "wrong-shape", "transpose",
+       "24_dma_transp_square_4x4x16x16",
+       "square transpose permutation on a non-matmul operand: the two equal "
+       "spatial axes are exchanged, so every extent agrees and only the memory "
+       "order is wrong",
+       ("dma.transp<0, 2, 3, 1>", "dma.transp<0, 3, 2, 1>")),
+    _m("M2.10.rl24.square", "M2", 10, "wrong-shape", "relu",
+       "24_dma_transp_square_4x4x16x16",
+       "square transpose permutation feeding an elementwise op: extents agree, "
+       "the values are transposed",
+       ("dma.transp<0, 2, 3, 1>", "dma.transp<0, 3, 2, 1>")),
+    _m("M2.10.sg23.square", "M2", 10, "wrong-shape", "sigmoid",
+       "23_dma_transp_square_4x4x16x16",
+       "square transpose permutation feeding an elementwise op: extents agree, "
+       "the values are transposed",
+       ("dma.transp<0, 2, 3, 1>", "dma.transp<0, 3, 2, 1>")),
 ]
 
 # ---- M2.11 DMA to-buffer element-count undersize --------------------------
@@ -1768,6 +1784,21 @@ M2 += [
        "shape-equal / layout-unequal on the dynamic operand pair",
        ("l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => shared;",
         "l1_b = dma.transp<1,0> rhs.chunkat(n_tile, k_tile) => shared;")),
+    _m("M2.13.tp24.affine", "M2", 13, "wrong-shape", "transpose",
+       "24_dma_transp_square_4x4x16x16",
+       "shape-equal / layout-unequal on a non-matmul view: two equal outer "
+       "extents are exchanged, so no extent disagrees",
+       ("inp.chunkat(p, j, _, _)", "inp.chunkat(j, p, _, _)")),
+    _m("M2.13.rl24.affine", "M2", 13, "wrong-shape", "relu",
+       "24_dma_transp_square_4x4x16x16",
+       "shape-equal / layout-unequal: the equal outer extents are exchanged, "
+       "every extent still agrees",
+       ("inp.chunkat(p, j, _, _)", "inp.chunkat(j, p, _, _)")),
+    _m("M2.13.sg23.affine", "M2", 13, "wrong-shape", "sigmoid",
+       "23_dma_transp_square_4x4x16x16",
+       "shape-equal / layout-unequal: the equal outer extents are exchanged, "
+       "every extent still agrees",
+       ("inp.chunkat(p, j, _, _)", "inp.chunkat(j, p, _, _)")),
 ]
 
 # ---- M2.14 contraction-dim mismatch masked by a square operand ------------

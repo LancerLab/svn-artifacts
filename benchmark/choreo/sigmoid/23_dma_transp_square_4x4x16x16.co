@@ -1,0 +1,51 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+#include <cmath>
+#define I 4
+#define J 4
+#define K 16
+#define L 16
+
+/* Mutation-only host (M2-e): the input plane is brought in through a square
+   `dma.transp` permutation (K == L), so every extent agrees and only the memory
+   order can be wrong. Outer extents are equal (I == J) for M2.13. */
+__co__ auto sigmoid_dma_transp(f32 [I, J, K, L] inp) {
+  f32 [I, K, L, J] out;
+
+  parallel p by I : block {
+    foreach j in [J] {
+      l = dma.transp<0, 2, 3, 1> inp.chunkat(p, j, _, _) => shared;
+      foreach {h, w} in [K, L] {
+        f32 v = l.data.at(0, h, w, 0);
+        f32 v2 = v * v;
+        out.at(p, h, w, j) = 0.5f + v * (0.25f + v2 * (-1.0f / 48.0f + v2 * (1.0f / 480.0f - v2 * (17.0f / 80640.0f))));
+      }
+    }
+  }
+  return out;
+}
+
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(I, J, K, L);
+  a.fill_random(-1.0, 1.0);
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto r  = sigmoid_dma_transp(a.view());
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+  for (size_t n = 0; n < r.shape()[0]; ++n)
+    for (size_t h = 0; h < r.shape()[1]; ++h)
+      for (size_t w = 0; w < r.shape()[2]; ++w)
+        for (size_t c = 0; c < r.shape()[3]; ++c) {
+          float ref = 1.0f / (1.0f + expf(0.0f - a[n][c][h][w]));
+          if (fabs(ref - r[n][h][w][c]) > 0.001f) {
+            std::cout << "sigmoid transpose mismatch\n";
+            choreo::choreo_assert(false, "values are not equal.");
+          }
+        }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " microseconds\n";
+  return 0;
+}

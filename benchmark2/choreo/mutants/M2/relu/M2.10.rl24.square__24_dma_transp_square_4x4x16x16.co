@@ -1,0 +1,52 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+#include <cmath>
+#define I 4
+#define J 4
+#define K 16
+#define L 16
+
+/* Mutation-only host (M2-e): the input plane is brought in through a square
+   `dma.transp` permutation (K == L), so every extent agrees and only the memory
+   order can be wrong. The relu is elementwise, which keeps the base oracle
+   usable. Outer extents are equal (I == J) for M2.13's coordinate swap. */
+__co__ auto relu_dma_transp(f32 [I, J, K, L] inp) {
+  f32 [I, K, L, J] out;
+
+  parallel p by I : block {
+    foreach j in [J] {
+      l = dma.transp<0, 3, 2, 1> inp.chunkat(p, j, _, _) => shared;
+      foreach {h, w} in [K, L] {
+        f32 v = l.data.at(0, h, w, 0);
+        out.at(p, h, w, j) = v > 0.0f ? v : 0.0f;
+      }
+    }
+  }
+  return out;
+}
+
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(I, J, K, L);
+  a.fill_random(-1.0, 1.0);
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto r  = relu_dma_transp(a.view());
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+  for (size_t n = 0; n < r.shape()[0]; ++n)
+    for (size_t h = 0; h < r.shape()[1]; ++h)
+      for (size_t w = 0; w < r.shape()[2]; ++w)
+        for (size_t c = 0; c < r.shape()[3]; ++c) {
+          float vin = a[n][c][h][w];
+          float ref = (vin > 0.0f) ? vin : 0.0f;
+          if (ref != r[n][h][w][c]) {
+            std::cout << "relu transpose mismatch\n";
+            choreo::choreo_assert(false, "values are not equal.");
+          }
+        }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " microseconds\n";
+  return 0;
+}

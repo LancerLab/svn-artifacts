@@ -1,0 +1,48 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+#include <cmath>
+#define I 4
+#define J 4
+#define K 16
+#define L 16
+
+/* Mutation-only host (M2-e): a square `dma.transp` permutation (K == L) makes
+   every extent agree, so only the memory order can be wrong. The outer extents
+   are equal (I == J), which is what M2.13's coordinate swap requires. */
+__co__ auto TRANSPOSE_SQ(f32 [I, J, K, L] inp) {
+  f32 [I, K, L, J] out;
+
+  parallel p by I : block {
+    foreach j in [J] {
+      l = dma.transp<0, 2, 3, 1> inp.chunkat(p, j, _, _) => shared;
+      foreach {h, w} in [K, L] {
+        out.at(p, h, w, j) = l.data.at(0, h, w, 0);
+      }
+    }
+  }
+  return out;
+}
+
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(I, J, K, L);
+  a.fill_random(-1.0, 1.0);
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto r  = TRANSPOSE_SQ(a.view());
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+  for (size_t n = 0; n < r.shape()[0]; ++n)
+    for (size_t h = 0; h < r.shape()[1]; ++h)
+      for (size_t w = 0; w < r.shape()[2]; ++w)
+        for (size_t c = 0; c < r.shape()[3]; ++c) {
+          if (a[n][c][h][w] != r[n][h][w][c]) {
+            std::cout << "transpose mismatch\n";
+            choreo::choreo_assert(false, "values are not equal.");
+          }
+        }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " microseconds\n";
+  return 0;
+}

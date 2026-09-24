@@ -642,6 +642,23 @@
       "oracle_usable": true,
       "reason": "built-in reference passes on unmutated code"
     },
+    "relu/24_dma_transp_square_4x4x16x16": {
+      "category": "relu",
+      "case": "24_dma_transp_square_4x4x16x16",
+      "gated": false,
+      "base_compile": true,
+      "base_compile_rc": 0,
+      "base_run_rc": 0,
+      "base_passed": true,
+      "base_detector": "none",
+      "base_infra": null,
+      "check_run_rc": 0,
+      "check_passed": true,
+      "check_detector": "none",
+      "use_check": false,
+      "oracle_usable": true,
+      "reason": "built-in reference passes on unmutated code"
+    },
     "relu/2_cnn_128x128x28x28_128x128x28x28": {
       "base_compile": true,
       "base_compile_rc": 0,
@@ -709,6 +726,23 @@
       "oracle_usable": true,
       "reason": "built-in reference passes on unmutated code",
       "use_check": false
+    },
+    "sigmoid/23_dma_transp_square_4x4x16x16": {
+      "category": "sigmoid",
+      "case": "23_dma_transp_square_4x4x16x16",
+      "gated": false,
+      "base_compile": true,
+      "base_compile_rc": 0,
+      "base_run_rc": 0,
+      "base_passed": true,
+      "base_detector": "none",
+      "base_infra": null,
+      "check_run_rc": 0,
+      "check_passed": true,
+      "check_detector": "none",
+      "use_check": false,
+      "oracle_usable": true,
+      "reason": "built-in reference passes on unmutated code"
     },
     "softmax/11_dynamic_32xSx768_32xSx768": {
       "base_compile": true,
@@ -849,6 +883,23 @@
     "transpose/23_dma_pad_extent_32x8x16x16": {
       "category": "transpose",
       "case": "23_dma_pad_extent_32x8x16x16",
+      "gated": false,
+      "base_compile": true,
+      "base_compile_rc": 0,
+      "base_run_rc": 0,
+      "base_passed": true,
+      "base_detector": "none",
+      "base_infra": null,
+      "check_run_rc": 0,
+      "check_passed": true,
+      "check_detector": "none",
+      "use_check": false,
+      "oracle_usable": true,
+      "reason": "built-in reference passes on unmutated code"
+    },
+    "transpose/24_dma_transp_square_4x4x16x16": {
+      "category": "transpose",
+      "case": "24_dma_transp_square_4x4x16x16",
       "gated": false,
       "base_compile": true,
       "base_compile_rc": 0,
