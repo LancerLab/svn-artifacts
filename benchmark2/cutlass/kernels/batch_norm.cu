@@ -15,7 +15,8 @@ __global__ void k_bn(const float* __restrict__ X, const float* __restrict__ G,
     const long off = (long)blockIdx.x * TILE + (long)it * STEP * stride;
     for (long i = off + threadIdx.x; i < off + TILE && i < n; i += blockDim.x) {
       const int c = (int)((i / HW) % C);
-      Y[i] = (X[i] - Mu[c]) * rsqrtf(Va[c] + 1e-5f) * G[c] + Bt[c];
+      const long xi = cut_m3_read(i, n);
+      Y[i] = (X[xi] - Mu[c]) * rsqrtf(Va[c] + 1e-5f) * G[c] + Bt[c];
     }
   }
   (void)smem;

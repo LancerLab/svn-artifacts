@@ -14,6 +14,7 @@ __global__ void k_conv2d(const float* __restrict__ X,
                          int B, int C, int H, int Wd, int CO, int KH, int KW) {
   const int OH = H - KH + 1, OW = Wd - KW + 1;
   const long total = (long)B * CO * OH * OW;
+  const long xn = (long)B * C * H * Wd;
   const int ncb = (C + CB - 1) / CB;
   const int nl = (LOOP < 0) ? ncb : LOOP;
   for (long idx = (long)blockIdx.x * blockDim.x + threadIdx.x; idx < total;
@@ -27,9 +28,11 @@ __global__ void k_conv2d(const float* __restrict__ X,
       const int c0 = it * STEP * CB;
       for (int c = c0; c < c0 + CB && c < C; ++c)
         for (int kh = 0; kh < KH; ++kh)
-          for (int kw = 0; kw < KW; ++kw)
-            acc += X[((long)b * C + c) * H * Wd + (oh + kh) * Wd + (ow + kw)] *
-                   W[((long)co * C + c) * KH * KW + kh * KW + kw];
+          for (int kw = 0; kw < KW; ++kw) {
+            const long xi = cut_m2_read(cut_m3_read(
+                ((long)b * C + c) * H * Wd + (oh + kh) * Wd + (ow + kw), xn), xn);
+            acc += X[xi] * W[((long)co * C + c) * KH * KW + kh * KW + kw];
+          }
     }
     Y[idx] = acc;
   }

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """collect.py — fold lane.py records into results/stats.json (spec §8 shape).
 
-This lane is an sm_86 vertical slice: only the realizable mutation battery has
-been run and the arch-pinned M3 probes are compile-only, so `complete` is false.
-It is `ready` in the class axis with M1/M3/M4 `measured` and M2 `uncompared`.
+This lane is an sm_86 vertical slice: the M1/M2/M3/M4 launched batteries and the
+L path-class control have been run, so `complete` reflects only the pending
+sm_120 re-run. It is `ready` in the class axis with M1/M2/M3/M4 all `measured`.
 
 Input records are the v2.1 shape written by mutrec.py: `outcome` is
-`compile|runtime|never|n/a`, `class` is the mutation class (M1/M3/M4) and
+`compile|runtime|never|n/a`, `class` is the mutation class (M1/M2/M3/M4) and
 `path_class` says how the defect was met. `L` is a path class, not a mutation
 class, so those records are routed to `S1_path_class`, never `S1_detection`.
 """
@@ -28,12 +28,10 @@ from schema import class_axis as AX                              # noqa: E402
 
 LANE = "cutlass"
 
-# M2 (shape contract) is expressible on the CuTe surface but this candidate lane
-# has never been run against it: when the axis marks it `uncompared` it is
-# declared here, NOT reported as `n/a`. The distinction is load-bearing
-# (`check_class_axis` g6): an unmeasured class must be absent from S1 and
-# declared here, while an inexpressible class would be reported as `n/a` with a
-# note.
+# A class the lane has never been run against is `uncompared` in the axis: it
+# must be absent from S1 and declared here, NOT reported as `n/a`. The
+# distinction is load-bearing (`check_class_axis` g6). All four classes are now
+# measured, so this is empty and follows the axis instead of drifting from it.
 UNCOMPARED_CLASSES = AX.uncompared_classes(LANE)
 
 
@@ -41,7 +39,10 @@ def main(records_path, out_dir):
     recs = []
     paths = [records_path]
     base = os.path.dirname(os.path.abspath(records_path))
-    for extra in ("records_m3.jsonl", "records_m1.jsonl"):
+    # M1 and M3 are now LAUNCHED batteries in records.jsonl (real operators x
+    # extents), so the old compile-only `records_m1.jsonl`/`records_m3.jsonl`
+    # probe slices are retired and not merged (kept on disk for provenance).
+    for extra in ():
         p = os.path.join(base, extra)
         if p not in paths:
             paths.append(p)
@@ -51,6 +52,8 @@ def main(records_path, out_dir):
                 recs += [json.loads(l) for l in f if l.strip()]
 
     classes = {"M1": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
+                          n_discarded_noop=0),
+               "M2": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
                           n_discarded_noop=0),
                "M3": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
                           n_discarded_noop=0),
@@ -90,10 +93,10 @@ def main(records_path, out_dir):
         "S1_path_class": path_classes,
         "S1_declared_uncompared": {
             "classes": UNCOMPARED_CLASSES,
-            "reason": ("The CuTe surface can express shape-contract (M2) "
-                       "mutations, but this candidate lane has only been run "
-                       "against M1/M3/M4. M2 is unmeasured, not inexpressible: "
-                       "it carries no S1 cell."),
+            "reason": ("" if not UNCOMPARED_CLASSES else
+                       "The CuTe surface can express these classes, but this "
+                       "candidate lane has not been run against them: they are "
+                       "unmeasured, not inexpressible, and carry no S1 cell."),
         },
         "S1_class_axis": {
             "source": "schema/class-axis.json",
@@ -102,10 +105,10 @@ def main(records_path, out_dir):
             # read from the axis so the lane-local copy cannot drift from it.
             "status": AX.lane_status(LANE),
             # lane-local phase detail; `S1_detection` holds the only cells.
-            "sampled": {"M1": True, "M2": False, "M3": True, "M4": True},
+            "sampled": {"M1": True, "M2": True, "M3": True, "M4": True},
         },
         "notes": [
-            "vertical slice: launch-time M4/L battery + compile-only M3 probe battery",
+            "vertical slice: launched M1/M2/M3/M4 batteries + L path-class control",
             "M4 is a CONFORMING 7-family battery of 56 instances (families "
             "M4-a..M4-g x 4 kernels x 2 realisations): the kernels are the "
             "spec-required M4_OPS (layer_normalization, softmax, matmul, "
@@ -125,35 +128,31 @@ def main(records_path, out_dir):
             "compile and launch with output differing silently (`never`); the "
             "M4.2 zero parallel-by, the neutral controls and the elemwise_add "
             "zero step are `n/a`",
-            "M3 outcomes are COMPILE-ONLY: `never` means nvcc/CuTe did not "
-            "detain the defect at compile time; runtime behaviour is unmeasured",
-            "M3 ct-check probes: M3.5 swizzle, M3.6 vector divisibility, "
-            "M3.8 GMMA descriptor rank",
-            "M3 never (compile) probes: M3.1/M3.2/M3.3/M3.4/M3.7/M3.11/"
-            "M3.12/M3.13/M3.14; TMA/GMMA pairs target sm_90a, static-smem sm_86",
-            "M3.9/M3.10 (TMA pad-field) and M3.15 (pad path) are unexpressible "
-            "on CuTe: the descriptor/pad fields are authored by the library, "
-            "not the kernel author",
-            "M3.16 (symbolic leading dim) is unexpressible: make_tma_copy "
-            "requires static box shapes",
-            "M1 is a ONE-PER-FAMILY PROBE SLICE (M1-a..M1-h), COMPILE-ONLY: on a "
-            "hand-written CuTe kernel the index/stride/bound arithmetic is the "
-            "author's own, so the surface emits nothing for 7 of 8 families; "
-            "only M1-g (index >= rank) is statically detained, by CuTe's tuple "
-            "`get` static_assert",
-            "M1 outcome: M1.15 ct-check (rank/arity); M1.2/M1.4/M1.9/M1.12/"
-            "M1.14/M1.19/M1.11 never (unchecked) -- the permissive-surface "
-            "control, not a competing M1 baseline",
+            "M3 is a CONFORMING 8-family battery of 64 instances (families "
+            "M3-a..M3-h x 4 kernels x 2 realisations): the kernels are the "
+            "spec-required M3_OPS (matmul, conv2d, batch_norm, max_pool2d) and "
+            "the two realisations are the small/alt extent grids in sizes.py; "
+            "one representative spec per family (M3.1/M3.2/M3.3/M3.4/M3.6/M3.8/"
+            "M3.9/M3.12), applied to the operator's own element index",
+            "M1 is a CONFORMING 8-family battery of 64 instances (families "
+            "M1-a..M1-h x 4 kernels x 2 realisations): the kernels are "
+            "MINIMAL_SET[\"M1\"] (layer_normalization, softmax, relu, "
+            "transpose) and the two realisations are the small/alt extent grids; "
+            "one representative spec per family (M1.2/M1.4/M1.9/M1.12/M1.14/"
+            "M1.19/M1.15/M1.11), applied to the operator's own index arithmetic",
+            "M2 is a CONFORMING 8-family battery of 64 instances (families "
+            "M2-a..M2-h x 4 kernels x 2 realisations): the kernels are "
+            "matmul, conv2d, layer_normalization, relu and the two realisations "
+            "are the small/alt extent grids; one representative spec per family "
+            "(M2.1/M2.6/M2.7/M2.8/M2.10/M2.5/M2.15/M2.17)",
             "n_discarded_noop counts the inapplicable launch-status control "
             "(L1 on matmul: the static-smem override is not used, so the "
             "mutation has no effect -> `n/a`, applicable=false)",
             "`L` (launch-status) is a path class, not a mutation class: its "
             "cells live under `S1_path_class`, never in `S1_detection`",
-            "M2 is declared uncompared in `S1_declared_uncompared`; it carries "
-            "no S1 cell because the lane was never run against it",
             "records are v2.1 mutant records (see cutlass/mutrec.py): outcome "
-            "compile|runtime|never|n/a, class M1/M3/M4, path_class carries the "
-            "L distinction",
+            "compile|runtime|never|n/a, class M1/M2/M3/M4, path_class carries "
+            "the L distinction",
         ],
         "records": len(recs),
     }

@@ -1,0 +1,927 @@
+{
+  "bases": [
+    {
+      "category": "batch_norm",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "batch_norm",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    },
+    {
+      "category": "concat",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "concat",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    },
+    {
+      "category": "conv2d",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "conv2d",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    },
+    {
+      "category": "elemwise_add",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "elemwise_add",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    },
+    {
+      "category": "embedding",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "embedding",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    },
+    {
+      "category": "gelu",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "gelu",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    },
+    {
+      "category": "max_pool2d",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "max_pool2d",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    },
+    {
+      "category": "reduce_mean",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "reduce_mean",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    },
+    {
+      "category": "relu",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "relu",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    },
+    {
+      "category": "reshape",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "reshape",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    },
+    {
+      "category": "sigmoid",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "sigmoid",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    },
+    {
+      "category": "softmax",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "softmax",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    },
+    {
+      "category": "transpose",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "rc": 0
+    },
+    {
+      "category": "transpose",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "rc": 0
+    }
+  ],
+  "classes": {
+    "M1": {
+      "n": 16,
+      "n_clean": 10,
+      "n_error": 4,
+      "n_unknown": 2
+    },
+    "M2": {
+      "n": 16,
+      "n_clean": 16,
+      "n_error": 0,
+      "n_unknown": 0
+    },
+    "M3": {
+      "n": 16,
+      "n_clean": 16,
+      "n_error": 0,
+      "n_unknown": 0
+    },
+    "M4": {
+      "n": 14,
+      "n_clean": 12,
+      "n_error": 1,
+      "n_unknown": 1
+    }
+  },
+  "host": {
+    "arch": "sm_86",
+    "cuda": "12.9",
+    "gpu": "RTX 3070"
+  },
+  "note": "The dynamic oracle is blind to most of the battery, but not all of it. Memcheck reports 0 errors for every M2 and M3 sample and for most M1/M4 samples: those index perturbations stay INSIDE the allocation (a wrong element of the right buffer), so a memory sanitizer cannot see them -- which is the lane's point. It DOES catch the samples whose index escapes the allocation: M1.2 and M1.9 (off-by-one / un-shrunk base offset) on layer_normalization, and M4.2 (zero parallel-by bound) on layer_normalization. A compile-time detention (ct-check) has no binary to run and is recorded `n/a`.",
+  "runs": [
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M4_1.LOOP0_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M4.1"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 2 errors",
+      "errors": 2,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M4_2.PBOUND0_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M4.2"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M4_6.NBOUND1_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M4.6"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M4_6.NBOUND1_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M4.6"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M4_3.CUT_LOOP_RT0_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M4.3"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M4_3.CUT_LOOP_RT0_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M4.3"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M4_4.EMPTY1_gridsmall",
+      "outcome": "n/a",
+      "rc": 0,
+      "spec_id": "M4.4"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_6.ZSTRIDE1_gridsmall",
+      "outcome": "n/a",
+      "rc": 0,
+      "spec_id": "M1.6"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_7.REVB1_gridsmall",
+      "outcome": "n/a",
+      "rc": 0,
+      "spec_id": "M1.7"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_7.REVB1_gridalt",
+      "outcome": "n/a",
+      "rc": 0,
+      "spec_id": "M1.7"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M4_5.STEP0_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M4.5"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M4_5.STEP0_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M4.5"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M4_7.PADEXT-2_gridsmall",
+      "outcome": "n/a",
+      "rc": 0,
+      "spec_id": "M4.7"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "n/a: compile-time detention (ct-check)",
+      "errors": null,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "outcome": "compile",
+      "spec_id": "M4.8"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 89 errors were not printed. Use --print-limit option to adjust the number of printed errors",
+      "errors": 189,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_2.M1DEF2_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M1.2"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 30 errors were not printed. Use --print-limit option to adjust the number of printed errors",
+      "errors": 130,
+      "grid": "alt",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_2.M1DEF2_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M1.2"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_4.M1DEF4_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M1.4"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_4.M1DEF4_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M1.4"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 77 errors were not printed. Use --print-limit option to adjust the number of printed errors",
+      "errors": 177,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_9.M1DEF9_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M1.9"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 30 errors were not printed. Use --print-limit option to adjust the number of printed errors",
+      "errors": 130,
+      "grid": "alt",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_9.M1DEF9_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M1.9"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_12.M1DEF12_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M1.12"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_12.M1DEF12_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M1.12"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_14.M1DEF14_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M1.14"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_14.M1DEF14_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M1.14"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_19.M1DEF19_gridsmall",
+      "outcome": "n/a",
+      "rc": 0,
+      "spec_id": "M1.19"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_19.M1DEF19_gridalt",
+      "outcome": "n/a",
+      "rc": 0,
+      "spec_id": "M1.19"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "n/a: compile-time detention (ct-check)",
+      "errors": null,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "outcome": "compile",
+      "spec_id": "M1.15"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "n/a: compile-time detention (ct-check)",
+      "errors": null,
+      "grid": "alt",
+      "kernel": "layer_normalization",
+      "outcome": "compile",
+      "spec_id": "M1.15"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_11.M1DEF11_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M1.11"
+    },
+    {
+      "category": "layer_normalization",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "layer_normalization",
+      "mutant_id": "cutlass-layer_normalization.M1_11.M1DEF11_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M1.11"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_1.M31_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.1"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_1.M31_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.1"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_2.M32_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.2"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_2.M32_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.2"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_3.M33_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.3"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_3.M33_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.3"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_4.M34_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.4"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_4.M34_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.4"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_6.M36_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.6"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_6.M36_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.6"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_8.M38_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.8"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_8.M38_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.8"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_9.M39_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.9"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_9.M39_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.9"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_12.M312_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.12"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M3_12.M312_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M3.12"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_1.M21_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.1"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_1.M21_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.1"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_6.M26_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.6"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_6.M26_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.6"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_7.M27_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.7"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_7.M27_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.7"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_8.M28_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.8"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_8.M28_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.8"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_10.M210_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.10"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_10.M210_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.10"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_5.M25_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.5"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_5.M25_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.5"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_15.M215_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.15"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_15.M215_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.15"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "small",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_17.M217_gridsmall",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.17"
+    },
+    {
+      "category": "matmul",
+      "detail": "========= ERROR SUMMARY: 0 errors",
+      "errors": 0,
+      "grid": "alt",
+      "kernel": "matmul",
+      "mutant_id": "cutlass-matmul.M2_17.M217_gridalt",
+      "outcome": "never",
+      "rc": 0,
+      "spec_id": "M2.17"
+    }
+  ],
+  "sampling": "one kernel per (spec, grid); every base kernel",
+  "tool": "compute-sanitizer --tool memcheck",
+  "toolchain": "cutlass"
+}

@@ -5,15 +5,20 @@ using namespace cute;
 
 __global__ void k_transpose(const float* __restrict__ A, float* __restrict__ C,
                             long M, long N) {
+  CutM1RankProbe<M1DEF>::run();
   const long total = M * N;
   const long gsz = (long)gridDim.x * blockDim.x;
   const int nl = (LOOP < 0) ? 1 : LOOP;
   for (int it = 0; it < nl; ++it) {
     for (long i = (long)blockIdx.x * blockDim.x + threadIdx.x +
                   (long)it * STEP * gsz;
-         i < total; i += gsz) {
-      const long m = i / N, n = i % N;
-      C[n * M + m] = A[i];
+         cut_m1_bound(i, total); i += gsz) {
+      const long ii = cut_m1_read(i, total);
+      long m = ii / N, n = ii % N;
+      if (M1DEF == 14) { long t = m; m = n; n = t; }   // swapped tile coordinate
+      const long dst = (M1DEF == 4) ? (m * N + n) : (n * M + m);  // M1.4 stride
+      const long src = (M1DEF == 11) ? dst : ii;       // M1.11 read/write overlap
+      C[dst] = A[src];
     }
   }
 }

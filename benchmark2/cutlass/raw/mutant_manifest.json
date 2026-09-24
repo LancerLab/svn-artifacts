@@ -1,0 +1,1819 @@
+{
+  "accounting": {
+    "attribution": 2,
+    "candidates": 250,
+    "dropped": 0,
+    "emitted": 250,
+    "na": 0,
+    "selected": 248,
+    "skipped": 0
+  },
+  "attribution": [
+    {
+      "attribution_only": true,
+      "category": "elemwise_add",
+      "family": null,
+      "mutant_id": "cutlass-elemwise_add.L1.SMEM_ELT32768_gridsmall",
+      "shape": "small",
+      "spec_id": "L1"
+    },
+    {
+      "attribution_only": true,
+      "category": "matmul",
+      "family": null,
+      "mutant_id": "cutlass-matmul.L1.SMEM_ELT32768_gridsmall",
+      "shape": "small",
+      "spec_id": "L1"
+    }
+  ],
+  "dropped": [],
+  "family_depth": {
+    "M1-a": 8,
+    "M1-b": 8,
+    "M1-c": 8,
+    "M1-d": 8,
+    "M1-e": 8,
+    "M1-f": 8,
+    "M1-g": 8,
+    "M1-h": 8,
+    "M2-a": 8,
+    "M2-b": 8,
+    "M2-c": 8,
+    "M2-d": 8,
+    "M2-e": 8,
+    "M2-f": 8,
+    "M2-g": 8,
+    "M2-h": 8,
+    "M3-a": 8,
+    "M3-b": 8,
+    "M3-c": 8,
+    "M3-d": 8,
+    "M3-e": 8,
+    "M3-f": 8,
+    "M3-g": 8,
+    "M3-h": 8,
+    "M4-a": 8,
+    "M4-b": 8,
+    "M4-c": 8,
+    "M4-d": 8,
+    "M4-e": 8,
+    "M4-f": 8,
+    "M4-g": 8
+  },
+  "family_short": {},
+  "lane": "cutlass",
+  "level2": true,
+  "mutants": [
+    {
+      "category": "layer_normalization",
+      "family": "M4-a",
+      "mutant_id": "cutlass-layer_normalization.M4_1.LOOP0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.1"
+    },
+    {
+      "category": "softmax",
+      "family": "M4-a",
+      "mutant_id": "cutlass-softmax.M4_1.LOOP0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.1"
+    },
+    {
+      "category": "matmul",
+      "family": "M4-a",
+      "mutant_id": "cutlass-matmul.M4_1.LOOP0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.1"
+    },
+    {
+      "category": "elemwise_add",
+      "family": "M4-a",
+      "mutant_id": "cutlass-elemwise_add.M4_1.LOOP0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.1"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M4-a",
+      "mutant_id": "cutlass-layer_normalization.M4_2.PBOUND0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.2"
+    },
+    {
+      "category": "softmax",
+      "family": "M4-a",
+      "mutant_id": "cutlass-softmax.M4_2.PBOUND0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.2"
+    },
+    {
+      "category": "matmul",
+      "family": "M4-a",
+      "mutant_id": "cutlass-matmul.M4_2.PBOUND0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.2"
+    },
+    {
+      "category": "elemwise_add",
+      "family": "M4-a",
+      "mutant_id": "cutlass-elemwise_add.M4_2.PBOUND0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.2"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M4-b",
+      "mutant_id": "cutlass-layer_normalization.M4_6.NBOUND1_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.6"
+    },
+    {
+      "category": "softmax",
+      "family": "M4-b",
+      "mutant_id": "cutlass-softmax.M4_6.NBOUND1_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.6"
+    },
+    {
+      "category": "matmul",
+      "family": "M4-b",
+      "mutant_id": "cutlass-matmul.M4_6.NBOUND1_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.6"
+    },
+    {
+      "category": "elemwise_add",
+      "family": "M4-b",
+      "mutant_id": "cutlass-elemwise_add.M4_6.NBOUND1_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.6"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M4-b",
+      "mutant_id": "cutlass-layer_normalization.M4_6.NBOUND1_gridalt",
+      "shape": "alt",
+      "spec_id": "M4.6"
+    },
+    {
+      "category": "softmax",
+      "family": "M4-b",
+      "mutant_id": "cutlass-softmax.M4_6.NBOUND1_gridalt",
+      "shape": "alt",
+      "spec_id": "M4.6"
+    },
+    {
+      "category": "matmul",
+      "family": "M4-b",
+      "mutant_id": "cutlass-matmul.M4_6.NBOUND1_gridalt",
+      "shape": "alt",
+      "spec_id": "M4.6"
+    },
+    {
+      "category": "elemwise_add",
+      "family": "M4-b",
+      "mutant_id": "cutlass-elemwise_add.M4_6.NBOUND1_gridalt",
+      "shape": "alt",
+      "spec_id": "M4.6"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M4-c",
+      "mutant_id": "cutlass-layer_normalization.M4_3.CUT_LOOP_RT0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.3"
+    },
+    {
+      "category": "softmax",
+      "family": "M4-c",
+      "mutant_id": "cutlass-softmax.M4_3.CUT_LOOP_RT0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.3"
+    },
+    {
+      "category": "matmul",
+      "family": "M4-c",
+      "mutant_id": "cutlass-matmul.M4_3.CUT_LOOP_RT0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.3"
+    },
+    {
+      "category": "elemwise_add",
+      "family": "M4-c",
+      "mutant_id": "cutlass-elemwise_add.M4_3.CUT_LOOP_RT0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.3"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M4-c",
+      "mutant_id": "cutlass-layer_normalization.M4_3.CUT_LOOP_RT0_gridalt",
+      "shape": "alt",
+      "spec_id": "M4.3"
+    },
+    {
+      "category": "softmax",
+      "family": "M4-c",
+      "mutant_id": "cutlass-softmax.M4_3.CUT_LOOP_RT0_gridalt",
+      "shape": "alt",
+      "spec_id": "M4.3"
+    },
+    {
+      "category": "matmul",
+      "family": "M4-c",
+      "mutant_id": "cutlass-matmul.M4_3.CUT_LOOP_RT0_gridalt",
+      "shape": "alt",
+      "spec_id": "M4.3"
+    },
+    {
+      "category": "elemwise_add",
+      "family": "M4-c",
+      "mutant_id": "cutlass-elemwise_add.M4_3.CUT_LOOP_RT0_gridalt",
+      "shape": "alt",
+      "spec_id": "M4.3"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M4-d",
+      "mutant_id": "cutlass-layer_normalization.M4_4.EMPTY1_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.4"
+    },
+    {
+      "category": "softmax",
+      "family": "M4-d",
+      "mutant_id": "cutlass-softmax.M4_4.EMPTY1_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.4"
+    },
+    {
+      "category": "matmul",
+      "family": "M4-d",
+      "mutant_id": "cutlass-matmul.M4_4.EMPTY1_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.4"
+    },
+    {
+      "category": "elemwise_add",
+      "family": "M4-d",
+      "mutant_id": "cutlass-elemwise_add.M4_4.EMPTY1_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.4"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M4-d",
+      "mutant_id": "cutlass-layer_normalization.M1_6.ZSTRIDE1_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.6"
+    },
+    {
+      "category": "softmax",
+      "family": "M4-d",
+      "mutant_id": "cutlass-softmax.M1_6.ZSTRIDE1_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.6"
+    },
+    {
+      "category": "matmul",
+      "family": "M4-d",
+      "mutant_id": "cutlass-matmul.M1_6.ZSTRIDE1_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.6"
+    },
+    {
+      "category": "elemwise_add",
+      "family": "M4-d",
+      "mutant_id": "cutlass-elemwise_add.M1_6.ZSTRIDE1_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.6"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M4-e",
+      "mutant_id": "cutlass-layer_normalization.M1_7.REVB1_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.7"
+    },
+    {
+      "category": "softmax",
+      "family": "M4-e",
+      "mutant_id": "cutlass-softmax.M1_7.REVB1_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.7"
+    },
+    {
+      "category": "matmul",
+      "family": "M4-e",
+      "mutant_id": "cutlass-matmul.M1_7.REVB1_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.7"
+    },
+    {
+      "category": "elemwise_add",
+      "family": "M4-e",
+      "mutant_id": "cutlass-elemwise_add.M1_7.REVB1_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.7"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M4-e",
+      "mutant_id": "cutlass-layer_normalization.M1_7.REVB1_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.7"
+    },
+    {
+      "category": "softmax",
+      "family": "M4-e",
+      "mutant_id": "cutlass-softmax.M1_7.REVB1_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.7"
+    },
+    {
+      "category": "matmul",
+      "family": "M4-e",
+      "mutant_id": "cutlass-matmul.M1_7.REVB1_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.7"
+    },
+    {
+      "category": "elemwise_add",
+      "family": "M4-e",
+      "mutant_id": "cutlass-elemwise_add.M1_7.REVB1_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.7"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M4-f",
+      "mutant_id": "cutlass-layer_normalization.M4_5.STEP0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.5"
+    },
+    {
+      "category": "softmax",
+      "family": "M4-f",
+      "mutant_id": "cutlass-softmax.M4_5.STEP0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.5"
+    },
+    {
+      "category": "matmul",
+      "family": "M4-f",
+      "mutant_id": "cutlass-matmul.M4_5.STEP0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.5"
+    },
+    {
+      "category": "elemwise_add",
+      "family": "M4-f",
+      "mutant_id": "cutlass-elemwise_add.M4_5.STEP0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.5"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M4-f",
+      "mutant_id": "cutlass-layer_normalization.M4_5.STEP0_gridalt",
+      "shape": "alt",
+      "spec_id": "M4.5"
+    },
+    {
+      "category": "softmax",
+      "family": "M4-f",
+      "mutant_id": "cutlass-softmax.M4_5.STEP0_gridalt",
+      "shape": "alt",
+      "spec_id": "M4.5"
+    },
+    {
+      "category": "matmul",
+      "family": "M4-f",
+      "mutant_id": "cutlass-matmul.M4_5.STEP0_gridalt",
+      "shape": "alt",
+      "spec_id": "M4.5"
+    },
+    {
+      "category": "elemwise_add",
+      "family": "M4-f",
+      "mutant_id": "cutlass-elemwise_add.M4_5.STEP0_gridalt",
+      "shape": "alt",
+      "spec_id": "M4.5"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M4-g",
+      "mutant_id": "cutlass-layer_normalization.M4_7.PADEXT-2_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.7"
+    },
+    {
+      "category": "softmax",
+      "family": "M4-g",
+      "mutant_id": "cutlass-softmax.M4_7.PADEXT-2_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.7"
+    },
+    {
+      "category": "matmul",
+      "family": "M4-g",
+      "mutant_id": "cutlass-matmul.M4_7.PADEXT-2_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.7"
+    },
+    {
+      "category": "elemwise_add",
+      "family": "M4-g",
+      "mutant_id": "cutlass-elemwise_add.M4_7.PADEXT-2_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.7"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M4-g",
+      "mutant_id": "cutlass-layer_normalization.M4_8.PADEXT0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.8"
+    },
+    {
+      "category": "softmax",
+      "family": "M4-g",
+      "mutant_id": "cutlass-softmax.M4_8.PADEXT0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.8"
+    },
+    {
+      "category": "matmul",
+      "family": "M4-g",
+      "mutant_id": "cutlass-matmul.M4_8.PADEXT0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.8"
+    },
+    {
+      "category": "elemwise_add",
+      "family": "M4-g",
+      "mutant_id": "cutlass-elemwise_add.M4_8.PADEXT0_gridsmall",
+      "shape": "small",
+      "spec_id": "M4.8"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-a",
+      "mutant_id": "cutlass-layer_normalization.M1_2.M1DEF2_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.2"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-a",
+      "mutant_id": "cutlass-softmax.M1_2.M1DEF2_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.2"
+    },
+    {
+      "category": "relu",
+      "family": "M1-a",
+      "mutant_id": "cutlass-relu.M1_2.M1DEF2_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.2"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-a",
+      "mutant_id": "cutlass-transpose.M1_2.M1DEF2_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.2"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-a",
+      "mutant_id": "cutlass-layer_normalization.M1_2.M1DEF2_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.2"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-a",
+      "mutant_id": "cutlass-softmax.M1_2.M1DEF2_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.2"
+    },
+    {
+      "category": "relu",
+      "family": "M1-a",
+      "mutant_id": "cutlass-relu.M1_2.M1DEF2_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.2"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-a",
+      "mutant_id": "cutlass-transpose.M1_2.M1DEF2_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.2"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-b",
+      "mutant_id": "cutlass-layer_normalization.M1_4.M1DEF4_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.4"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-b",
+      "mutant_id": "cutlass-softmax.M1_4.M1DEF4_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.4"
+    },
+    {
+      "category": "relu",
+      "family": "M1-b",
+      "mutant_id": "cutlass-relu.M1_4.M1DEF4_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.4"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-b",
+      "mutant_id": "cutlass-transpose.M1_4.M1DEF4_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.4"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-b",
+      "mutant_id": "cutlass-layer_normalization.M1_4.M1DEF4_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.4"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-b",
+      "mutant_id": "cutlass-softmax.M1_4.M1DEF4_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.4"
+    },
+    {
+      "category": "relu",
+      "family": "M1-b",
+      "mutant_id": "cutlass-relu.M1_4.M1DEF4_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.4"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-b",
+      "mutant_id": "cutlass-transpose.M1_4.M1DEF4_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.4"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-c",
+      "mutant_id": "cutlass-layer_normalization.M1_9.M1DEF9_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.9"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-c",
+      "mutant_id": "cutlass-softmax.M1_9.M1DEF9_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.9"
+    },
+    {
+      "category": "relu",
+      "family": "M1-c",
+      "mutant_id": "cutlass-relu.M1_9.M1DEF9_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.9"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-c",
+      "mutant_id": "cutlass-transpose.M1_9.M1DEF9_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.9"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-c",
+      "mutant_id": "cutlass-layer_normalization.M1_9.M1DEF9_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.9"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-c",
+      "mutant_id": "cutlass-softmax.M1_9.M1DEF9_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.9"
+    },
+    {
+      "category": "relu",
+      "family": "M1-c",
+      "mutant_id": "cutlass-relu.M1_9.M1DEF9_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.9"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-c",
+      "mutant_id": "cutlass-transpose.M1_9.M1DEF9_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.9"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-d",
+      "mutant_id": "cutlass-layer_normalization.M1_12.M1DEF12_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.12"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-d",
+      "mutant_id": "cutlass-softmax.M1_12.M1DEF12_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.12"
+    },
+    {
+      "category": "relu",
+      "family": "M1-d",
+      "mutant_id": "cutlass-relu.M1_12.M1DEF12_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.12"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-d",
+      "mutant_id": "cutlass-transpose.M1_12.M1DEF12_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.12"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-d",
+      "mutant_id": "cutlass-layer_normalization.M1_12.M1DEF12_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.12"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-d",
+      "mutant_id": "cutlass-softmax.M1_12.M1DEF12_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.12"
+    },
+    {
+      "category": "relu",
+      "family": "M1-d",
+      "mutant_id": "cutlass-relu.M1_12.M1DEF12_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.12"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-d",
+      "mutant_id": "cutlass-transpose.M1_12.M1DEF12_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.12"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-e",
+      "mutant_id": "cutlass-layer_normalization.M1_14.M1DEF14_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.14"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-e",
+      "mutant_id": "cutlass-softmax.M1_14.M1DEF14_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.14"
+    },
+    {
+      "category": "relu",
+      "family": "M1-e",
+      "mutant_id": "cutlass-relu.M1_14.M1DEF14_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.14"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-e",
+      "mutant_id": "cutlass-transpose.M1_14.M1DEF14_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.14"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-e",
+      "mutant_id": "cutlass-layer_normalization.M1_14.M1DEF14_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.14"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-e",
+      "mutant_id": "cutlass-softmax.M1_14.M1DEF14_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.14"
+    },
+    {
+      "category": "relu",
+      "family": "M1-e",
+      "mutant_id": "cutlass-relu.M1_14.M1DEF14_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.14"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-e",
+      "mutant_id": "cutlass-transpose.M1_14.M1DEF14_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.14"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-f",
+      "mutant_id": "cutlass-layer_normalization.M1_19.M1DEF19_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.19"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-f",
+      "mutant_id": "cutlass-softmax.M1_19.M1DEF19_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.19"
+    },
+    {
+      "category": "relu",
+      "family": "M1-f",
+      "mutant_id": "cutlass-relu.M1_19.M1DEF19_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.19"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-f",
+      "mutant_id": "cutlass-transpose.M1_19.M1DEF19_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.19"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-f",
+      "mutant_id": "cutlass-layer_normalization.M1_19.M1DEF19_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.19"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-f",
+      "mutant_id": "cutlass-softmax.M1_19.M1DEF19_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.19"
+    },
+    {
+      "category": "relu",
+      "family": "M1-f",
+      "mutant_id": "cutlass-relu.M1_19.M1DEF19_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.19"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-f",
+      "mutant_id": "cutlass-transpose.M1_19.M1DEF19_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.19"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-g",
+      "mutant_id": "cutlass-layer_normalization.M1_15.M1DEF15_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.15"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-g",
+      "mutant_id": "cutlass-softmax.M1_15.M1DEF15_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.15"
+    },
+    {
+      "category": "relu",
+      "family": "M1-g",
+      "mutant_id": "cutlass-relu.M1_15.M1DEF15_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.15"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-g",
+      "mutant_id": "cutlass-transpose.M1_15.M1DEF15_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.15"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-g",
+      "mutant_id": "cutlass-layer_normalization.M1_15.M1DEF15_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.15"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-g",
+      "mutant_id": "cutlass-softmax.M1_15.M1DEF15_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.15"
+    },
+    {
+      "category": "relu",
+      "family": "M1-g",
+      "mutant_id": "cutlass-relu.M1_15.M1DEF15_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.15"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-g",
+      "mutant_id": "cutlass-transpose.M1_15.M1DEF15_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.15"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-h",
+      "mutant_id": "cutlass-layer_normalization.M1_11.M1DEF11_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.11"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-h",
+      "mutant_id": "cutlass-softmax.M1_11.M1DEF11_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.11"
+    },
+    {
+      "category": "relu",
+      "family": "M1-h",
+      "mutant_id": "cutlass-relu.M1_11.M1DEF11_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.11"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-h",
+      "mutant_id": "cutlass-transpose.M1_11.M1DEF11_gridsmall",
+      "shape": "small",
+      "spec_id": "M1.11"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M1-h",
+      "mutant_id": "cutlass-layer_normalization.M1_11.M1DEF11_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.11"
+    },
+    {
+      "category": "softmax",
+      "family": "M1-h",
+      "mutant_id": "cutlass-softmax.M1_11.M1DEF11_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.11"
+    },
+    {
+      "category": "relu",
+      "family": "M1-h",
+      "mutant_id": "cutlass-relu.M1_11.M1DEF11_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.11"
+    },
+    {
+      "category": "transpose",
+      "family": "M1-h",
+      "mutant_id": "cutlass-transpose.M1_11.M1DEF11_gridalt",
+      "shape": "alt",
+      "spec_id": "M1.11"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-a",
+      "mutant_id": "cutlass-matmul.M3_1.M31_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.1"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-a",
+      "mutant_id": "cutlass-conv2d.M3_1.M31_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.1"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-a",
+      "mutant_id": "cutlass-batch_norm.M3_1.M31_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.1"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-a",
+      "mutant_id": "cutlass-max_pool2d.M3_1.M31_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.1"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-a",
+      "mutant_id": "cutlass-matmul.M3_1.M31_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.1"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-a",
+      "mutant_id": "cutlass-conv2d.M3_1.M31_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.1"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-a",
+      "mutant_id": "cutlass-batch_norm.M3_1.M31_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.1"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-a",
+      "mutant_id": "cutlass-max_pool2d.M3_1.M31_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.1"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-b",
+      "mutant_id": "cutlass-matmul.M3_2.M32_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.2"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-b",
+      "mutant_id": "cutlass-conv2d.M3_2.M32_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.2"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-b",
+      "mutant_id": "cutlass-batch_norm.M3_2.M32_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.2"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-b",
+      "mutant_id": "cutlass-max_pool2d.M3_2.M32_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.2"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-b",
+      "mutant_id": "cutlass-matmul.M3_2.M32_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.2"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-b",
+      "mutant_id": "cutlass-conv2d.M3_2.M32_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.2"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-b",
+      "mutant_id": "cutlass-batch_norm.M3_2.M32_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.2"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-b",
+      "mutant_id": "cutlass-max_pool2d.M3_2.M32_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.2"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-c",
+      "mutant_id": "cutlass-matmul.M3_3.M33_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.3"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-c",
+      "mutant_id": "cutlass-conv2d.M3_3.M33_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.3"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-c",
+      "mutant_id": "cutlass-batch_norm.M3_3.M33_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.3"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-c",
+      "mutant_id": "cutlass-max_pool2d.M3_3.M33_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.3"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-c",
+      "mutant_id": "cutlass-matmul.M3_3.M33_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.3"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-c",
+      "mutant_id": "cutlass-conv2d.M3_3.M33_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.3"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-c",
+      "mutant_id": "cutlass-batch_norm.M3_3.M33_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.3"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-c",
+      "mutant_id": "cutlass-max_pool2d.M3_3.M33_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.3"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-d",
+      "mutant_id": "cutlass-matmul.M3_4.M34_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.4"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-d",
+      "mutant_id": "cutlass-conv2d.M3_4.M34_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.4"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-d",
+      "mutant_id": "cutlass-batch_norm.M3_4.M34_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.4"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-d",
+      "mutant_id": "cutlass-max_pool2d.M3_4.M34_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.4"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-d",
+      "mutant_id": "cutlass-matmul.M3_4.M34_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.4"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-d",
+      "mutant_id": "cutlass-conv2d.M3_4.M34_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.4"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-d",
+      "mutant_id": "cutlass-batch_norm.M3_4.M34_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.4"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-d",
+      "mutant_id": "cutlass-max_pool2d.M3_4.M34_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.4"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-e",
+      "mutant_id": "cutlass-matmul.M3_6.M36_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.6"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-e",
+      "mutant_id": "cutlass-conv2d.M3_6.M36_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.6"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-e",
+      "mutant_id": "cutlass-batch_norm.M3_6.M36_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.6"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-e",
+      "mutant_id": "cutlass-max_pool2d.M3_6.M36_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.6"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-e",
+      "mutant_id": "cutlass-matmul.M3_6.M36_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.6"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-e",
+      "mutant_id": "cutlass-conv2d.M3_6.M36_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.6"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-e",
+      "mutant_id": "cutlass-batch_norm.M3_6.M36_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.6"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-e",
+      "mutant_id": "cutlass-max_pool2d.M3_6.M36_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.6"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-f",
+      "mutant_id": "cutlass-matmul.M3_8.M38_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.8"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-f",
+      "mutant_id": "cutlass-conv2d.M3_8.M38_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.8"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-f",
+      "mutant_id": "cutlass-batch_norm.M3_8.M38_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.8"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-f",
+      "mutant_id": "cutlass-max_pool2d.M3_8.M38_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.8"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-f",
+      "mutant_id": "cutlass-matmul.M3_8.M38_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.8"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-f",
+      "mutant_id": "cutlass-conv2d.M3_8.M38_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.8"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-f",
+      "mutant_id": "cutlass-batch_norm.M3_8.M38_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.8"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-f",
+      "mutant_id": "cutlass-max_pool2d.M3_8.M38_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.8"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-g",
+      "mutant_id": "cutlass-matmul.M3_9.M39_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.9"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-g",
+      "mutant_id": "cutlass-conv2d.M3_9.M39_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.9"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-g",
+      "mutant_id": "cutlass-batch_norm.M3_9.M39_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.9"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-g",
+      "mutant_id": "cutlass-max_pool2d.M3_9.M39_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.9"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-g",
+      "mutant_id": "cutlass-matmul.M3_9.M39_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.9"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-g",
+      "mutant_id": "cutlass-conv2d.M3_9.M39_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.9"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-g",
+      "mutant_id": "cutlass-batch_norm.M3_9.M39_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.9"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-g",
+      "mutant_id": "cutlass-max_pool2d.M3_9.M39_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.9"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-h",
+      "mutant_id": "cutlass-matmul.M3_12.M312_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.12"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-h",
+      "mutant_id": "cutlass-conv2d.M3_12.M312_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.12"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-h",
+      "mutant_id": "cutlass-batch_norm.M3_12.M312_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.12"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-h",
+      "mutant_id": "cutlass-max_pool2d.M3_12.M312_gridsmall",
+      "shape": "small",
+      "spec_id": "M3.12"
+    },
+    {
+      "category": "matmul",
+      "family": "M3-h",
+      "mutant_id": "cutlass-matmul.M3_12.M312_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.12"
+    },
+    {
+      "category": "conv2d",
+      "family": "M3-h",
+      "mutant_id": "cutlass-conv2d.M3_12.M312_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.12"
+    },
+    {
+      "category": "batch_norm",
+      "family": "M3-h",
+      "mutant_id": "cutlass-batch_norm.M3_12.M312_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.12"
+    },
+    {
+      "category": "max_pool2d",
+      "family": "M3-h",
+      "mutant_id": "cutlass-max_pool2d.M3_12.M312_gridalt",
+      "shape": "alt",
+      "spec_id": "M3.12"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-a",
+      "mutant_id": "cutlass-matmul.M2_1.M21_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.1"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-a",
+      "mutant_id": "cutlass-conv2d.M2_1.M21_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.1"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-a",
+      "mutant_id": "cutlass-layer_normalization.M2_1.M21_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.1"
+    },
+    {
+      "category": "relu",
+      "family": "M2-a",
+      "mutant_id": "cutlass-relu.M2_1.M21_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.1"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-a",
+      "mutant_id": "cutlass-matmul.M2_1.M21_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.1"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-a",
+      "mutant_id": "cutlass-conv2d.M2_1.M21_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.1"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-a",
+      "mutant_id": "cutlass-layer_normalization.M2_1.M21_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.1"
+    },
+    {
+      "category": "relu",
+      "family": "M2-a",
+      "mutant_id": "cutlass-relu.M2_1.M21_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.1"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-b",
+      "mutant_id": "cutlass-matmul.M2_6.M26_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.6"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-b",
+      "mutant_id": "cutlass-conv2d.M2_6.M26_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.6"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-b",
+      "mutant_id": "cutlass-layer_normalization.M2_6.M26_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.6"
+    },
+    {
+      "category": "relu",
+      "family": "M2-b",
+      "mutant_id": "cutlass-relu.M2_6.M26_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.6"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-b",
+      "mutant_id": "cutlass-matmul.M2_6.M26_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.6"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-b",
+      "mutant_id": "cutlass-conv2d.M2_6.M26_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.6"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-b",
+      "mutant_id": "cutlass-layer_normalization.M2_6.M26_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.6"
+    },
+    {
+      "category": "relu",
+      "family": "M2-b",
+      "mutant_id": "cutlass-relu.M2_6.M26_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.6"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-c",
+      "mutant_id": "cutlass-matmul.M2_7.M27_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.7"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-c",
+      "mutant_id": "cutlass-conv2d.M2_7.M27_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.7"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-c",
+      "mutant_id": "cutlass-layer_normalization.M2_7.M27_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.7"
+    },
+    {
+      "category": "relu",
+      "family": "M2-c",
+      "mutant_id": "cutlass-relu.M2_7.M27_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.7"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-c",
+      "mutant_id": "cutlass-matmul.M2_7.M27_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.7"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-c",
+      "mutant_id": "cutlass-conv2d.M2_7.M27_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.7"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-c",
+      "mutant_id": "cutlass-layer_normalization.M2_7.M27_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.7"
+    },
+    {
+      "category": "relu",
+      "family": "M2-c",
+      "mutant_id": "cutlass-relu.M2_7.M27_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.7"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-d",
+      "mutant_id": "cutlass-matmul.M2_8.M28_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.8"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-d",
+      "mutant_id": "cutlass-conv2d.M2_8.M28_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.8"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-d",
+      "mutant_id": "cutlass-layer_normalization.M2_8.M28_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.8"
+    },
+    {
+      "category": "relu",
+      "family": "M2-d",
+      "mutant_id": "cutlass-relu.M2_8.M28_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.8"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-d",
+      "mutant_id": "cutlass-matmul.M2_8.M28_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.8"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-d",
+      "mutant_id": "cutlass-conv2d.M2_8.M28_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.8"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-d",
+      "mutant_id": "cutlass-layer_normalization.M2_8.M28_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.8"
+    },
+    {
+      "category": "relu",
+      "family": "M2-d",
+      "mutant_id": "cutlass-relu.M2_8.M28_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.8"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-e",
+      "mutant_id": "cutlass-matmul.M2_10.M210_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.10"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-e",
+      "mutant_id": "cutlass-conv2d.M2_10.M210_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.10"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-e",
+      "mutant_id": "cutlass-layer_normalization.M2_10.M210_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.10"
+    },
+    {
+      "category": "relu",
+      "family": "M2-e",
+      "mutant_id": "cutlass-relu.M2_10.M210_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.10"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-e",
+      "mutant_id": "cutlass-matmul.M2_10.M210_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.10"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-e",
+      "mutant_id": "cutlass-conv2d.M2_10.M210_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.10"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-e",
+      "mutant_id": "cutlass-layer_normalization.M2_10.M210_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.10"
+    },
+    {
+      "category": "relu",
+      "family": "M2-e",
+      "mutant_id": "cutlass-relu.M2_10.M210_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.10"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-f",
+      "mutant_id": "cutlass-matmul.M2_5.M25_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.5"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-f",
+      "mutant_id": "cutlass-conv2d.M2_5.M25_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.5"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-f",
+      "mutant_id": "cutlass-layer_normalization.M2_5.M25_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.5"
+    },
+    {
+      "category": "relu",
+      "family": "M2-f",
+      "mutant_id": "cutlass-relu.M2_5.M25_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.5"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-f",
+      "mutant_id": "cutlass-matmul.M2_5.M25_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.5"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-f",
+      "mutant_id": "cutlass-conv2d.M2_5.M25_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.5"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-f",
+      "mutant_id": "cutlass-layer_normalization.M2_5.M25_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.5"
+    },
+    {
+      "category": "relu",
+      "family": "M2-f",
+      "mutant_id": "cutlass-relu.M2_5.M25_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.5"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-g",
+      "mutant_id": "cutlass-matmul.M2_15.M215_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.15"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-g",
+      "mutant_id": "cutlass-conv2d.M2_15.M215_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.15"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-g",
+      "mutant_id": "cutlass-layer_normalization.M2_15.M215_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.15"
+    },
+    {
+      "category": "relu",
+      "family": "M2-g",
+      "mutant_id": "cutlass-relu.M2_15.M215_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.15"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-g",
+      "mutant_id": "cutlass-matmul.M2_15.M215_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.15"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-g",
+      "mutant_id": "cutlass-conv2d.M2_15.M215_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.15"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-g",
+      "mutant_id": "cutlass-layer_normalization.M2_15.M215_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.15"
+    },
+    {
+      "category": "relu",
+      "family": "M2-g",
+      "mutant_id": "cutlass-relu.M2_15.M215_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.15"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-h",
+      "mutant_id": "cutlass-matmul.M2_17.M217_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.17"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-h",
+      "mutant_id": "cutlass-conv2d.M2_17.M217_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.17"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-h",
+      "mutant_id": "cutlass-layer_normalization.M2_17.M217_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.17"
+    },
+    {
+      "category": "relu",
+      "family": "M2-h",
+      "mutant_id": "cutlass-relu.M2_17.M217_gridsmall",
+      "shape": "small",
+      "spec_id": "M2.17"
+    },
+    {
+      "category": "matmul",
+      "family": "M2-h",
+      "mutant_id": "cutlass-matmul.M2_17.M217_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.17"
+    },
+    {
+      "category": "conv2d",
+      "family": "M2-h",
+      "mutant_id": "cutlass-conv2d.M2_17.M217_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.17"
+    },
+    {
+      "category": "layer_normalization",
+      "family": "M2-h",
+      "mutant_id": "cutlass-layer_normalization.M2_17.M217_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.17"
+    },
+    {
+      "category": "relu",
+      "family": "M2-h",
+      "mutant_id": "cutlass-relu.M2_17.M217_gridalt",
+      "shape": "alt",
+      "spec_id": "M2.17"
+    }
+  ],
+  "n_cells": 1,
+  "n_kernels": 4,
+  "n_per_family": 8,
+  "n_realisations": 2,
+  "na": [],
+  "registry": {},
+  "spec_version": "v2.1",
+  "target_instances": 248,
+  "toolchain": "cutlass",
+  "unrealised_specs": {
+    "M1": [],
+    "M2": [],
+    "M3": [],
+    "M4": []
+  }
+}

@@ -8,6 +8,7 @@ __global__ void k_maxpool(const float* __restrict__ X, float* __restrict__ Y,
                           int C, int H, int Wd, int K) {
   const int OH = H / K, OW = Wd / K;
   const long total = (long)C * OH * OW;
+  const long xn = (long)C * H * Wd;
   const int nl = (LOOP < 0) ? 1 : LOOP;
   for (long idx = (long)blockIdx.x * blockDim.x + threadIdx.x; idx < total;
        idx += (long)gridDim.x * blockDim.x) {
@@ -17,8 +18,11 @@ __global__ void k_maxpool(const float* __restrict__ X, float* __restrict__ Y,
     float m = -INFINITY;
     for (int it = 0; it < nl; ++it) {
       for (int kh = 0; kh < K; ++kh)
-        for (int kw = 0; kw < K; ++kw)
-          m = fmaxf(m, X[((long)c * H + oh * K + kh) * Wd + ow * K + kw]);
+        for (int kw = 0; kw < K; ++kw) {
+          const long xi = cut_m3_read(
+              ((long)c * H + oh * K + kh) * Wd + ow * K + kw, xn);
+          m = fmaxf(m, X[xi]);
+        }
     }
     Y[idx] = m;
   }

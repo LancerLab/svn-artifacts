@@ -32,17 +32,21 @@ __global__ void k_matmul(const float* __restrict__ A, const float* __restrict__ 
   if (REVB) nl = nl + 1;      // M1.7 reversed bound
   float acc = 0.f;
   for (int it = 0; it < nl; ++it) {
-    const int k0 = it * STEP * BK;
+    int k0 = it * STEP * BK;
     if (k0 >= K) break;
+    int kend = (k0 + BK < K) ? (k0 + BK) : K;
     for (int i = threadIdx.y; i < BM; i += blockDim.y)
       for (int k = threadIdx.x; k < BK; k += blockDim.x) {
         const int gr = row + i, gk = k0 + k;
-        sA[i * BK + k] = (gr < M && gk < K) ? A[gr * K + gk] : 0.f;
+        const long ai = cut_m2_read(
+            cut_m3_read((long)gr * K + gk, (long)M * K), (long)M * K);
+        sA[i * BK + k] = (gr < M && gk < kend) ? A[ai] : 0.f;
       }
     for (int k = threadIdx.y; k < BK; k += blockDim.y)
       for (int j = threadIdx.x; j < BN; j += blockDim.x) {
         const int gk = k0 + k, gc = col + j;
-        sB[k * BN + j] = (gk < K && gc < N) ? B[gk * N + gc] : 0.f;
+        const long bi = cut_m3_read((long)gk * N + gc, (long)K * N);
+        sB[k * BN + j] = (gk < kend && gc < N) ? B[bi] : 0.f;
       }
     __syncthreads();
     for (int i = threadIdx.y; i < BM; i += blockDim.y)

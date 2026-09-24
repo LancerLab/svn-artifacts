@@ -67,6 +67,8 @@ PAPER_CATEGORY = {
     "M3.6": "dim-mismatch",
     "M3.7": "dim-mismatch",
     "M3.8": "dim-mismatch",
+    "M3.9": "dim-mismatch",
+    "M3.10": "dim-mismatch",
     "M3.11": "dim-mismatch",
     "M3.12": "dim-mismatch",
     "M3.13": "dim-mismatch",
@@ -88,6 +90,21 @@ M1_PAPER = {
     "M1.14": "oob",          # tile coordinate over/underflow
     "M1.15": "wrong-shape",  # index >= rank
     "M1.19": "oob",          # narrow index carrier
+}
+
+# M2 (shape compatibility) maps to the published {dim-mismatch, wrong-shape}
+# (class-axis.json `published_taxonomy`): a mutation that changes an EXTENT or
+# an operand's shape is `dim-mismatch`; one that leaves every extent equal and
+# changes the ORDER/placement/rank of the view is `wrong-shape`.
+M2_PAPER = {
+    "M2.1": "dim-mismatch",   # wrong leading extent
+    "M2.5": "wrong-shape",    # partial / duplicate write (count preserved)
+    "M2.6": "dim-mismatch",   # two extents transposed
+    "M2.7": "wrong-shape",    # reduced-rank view (dimension dropped)
+    "M2.8": "dim-mismatch",   # broadcast extent 1 instead of N
+    "M2.10": "wrong-shape",   # square transpose (extents equal, order changes)
+    "M2.15": "wrong-shape",   # pad_low <-> pad_high swapped (length preserved)
+    "M2.17": "wrong-shape",   # runtime-shaped span (size check skipped)
 }
 
 
@@ -119,6 +136,8 @@ def paper_category(spec_id):
         return M4_PAPER
     if spec_id in M1_PAPER:
         return M1_PAPER[spec_id]
+    if spec_id in M2_PAPER:
+        return M2_PAPER[spec_id]
     if spec_id.startswith("M4"):
         return M4_PAPER
     if spec_id.startswith("L"):

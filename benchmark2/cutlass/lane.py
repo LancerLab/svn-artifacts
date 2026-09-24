@@ -149,11 +149,9 @@ def classify_record(spec_id, cat, mut, outcome, detail, kernel_hash,
                                   prohibition="absent", applicable=True,
                                   **common)
     if outcome == "unchecked":
-        # M3 is compile-only here: the defect compiled, but we did not run it,
-        # so whether it corrupts is undecidable. M4 is launched and the output
-        # differs, so it corrupts.
-        manifest = "undecidable" if spec_id.startswith("M3") else "value-changing"
-        return mutrec.make_record(path_class="unchecked", manifest=manifest,
+        # The mutant compiled and was launched, and the output differs from the
+        # same-extent base, so the defect corrupts silently.
+        return mutrec.make_record(path_class="unchecked", manifest="value-changing",
                                   prohibition="absent", applicable=True,
                                   **common)
     if outcome == "noop":
@@ -239,8 +237,53 @@ _add("M4.8", M4_KERNELS, {"PADEXT": 0}, None, "small")
 # L: launch-status path class (observed, not detained).
 _add("L1", ["elemwise_add", "matmul"], {"SMEM_ELT": 32768}, None, "small")
 
+# --- M1 element-access battery -------------------------------------------
+# `N = 8 = 4 kernels x 2 realisations` again, now on the M1 minimal operator
+# set (HANDOFF `MINIMAL_SET["M1"]`). The defect is applied to each operator's
+# OWN index arithmetic (`M1DEF`, see kernels/common.cuh) and the mutant is
+# launched and compared to the same-extent base, so the outcome is measured,
+# not inferred. One representative spec per family (M1-a..M1-h):
+M1_KERNELS = ["layer_normalization", "softmax", "relu", "transpose"]
+M1_SPECS = [("M1.2", 2), ("M1.4", 4), ("M1.9", 9), ("M1.12", 12),
+            ("M1.14", 14), ("M1.19", 19), ("M1.15", 15), ("M1.11", 11)]
+for _spec, _knob in M1_SPECS:
+    for _g in GRIDS:
+        _add(_spec, M1_KERNELS, {"M1DEF": _knob}, None, _g)
 
-def mutants_pass(base, outdir, records_path):
+# --- M3 hardware-constraint battery --------------------------------------
+# `N = 8 = 4 kernels x 2 realisations`, on the spec-required M3 operator set
+# (`M3_OPS`). Each family is opened by one representative spec; the defect is a
+# hardware-constraint index mutation applied to the operator's OWN element
+# index (`M3`, see kernels/common.cuh), launched and compared to the
+# same-extent base. M3-a..M3-h:
+#   M3.1 atom divisibility, M3.2 descriptor dim, M3.3 byte/swizzle box,
+#   M3.4 5-D footprint, M3.6 alignment, M3.8 descriptor rank,
+#   M3.9 pad encoding, M3.12 on-chip capacity.
+M3_KERNELS = M3_OPS
+M3_SPECS = [("M3.1", 1), ("M3.2", 2), ("M3.3", 3), ("M3.4", 4),
+            ("M3.6", 6), ("M3.8", 8), ("M3.9", 9), ("M3.12", 12)]
+for _spec, _knob in M3_SPECS:
+    for _g in GRIDS:
+        _add(_spec, M3_KERNELS, {"M3": _knob}, None, _g)
+
+# --- M2 shape-compatibility battery --------------------------------------
+# `N = 8 = 4 kernels x 2 realisations`, on the M2 minimal operator set
+# (`MINIMAL_SET["M2"]` narrowed to four). The defect is a shape-contract index
+# mutation applied to the operator's OWN element index (`M2`, see
+# kernels/common.cuh), launched and compared to the same-extent base.
+# M2-a..M2-h:
+#   M2.1 wrong leading extent, M2.6 extents transposed, M2.7 reduced-rank view,
+#   M2.8 broadcast extent 1, M2.10 square transpose, M2.5 partial/duplicate
+#   write, M2.15 pad fields swapped, M2.17 runtime-shaped span.
+M2_KERNELS = ["matmul", "conv2d", "layer_normalization", "relu"]
+M2_SPECS = [("M2.1", 1), ("M2.6", 6), ("M2.7", 7), ("M2.8", 8),
+            ("M2.10", 10), ("M2.5", 5), ("M2.15", 15), ("M2.17", 17)]
+for _spec, _knob in M2_SPECS:
+    for _g in GRIDS:
+        _add(_spec, M2_KERNELS, {"M2": _knob}, None, _g)
+
+
+def mutants_pass(base, outdir, records_path, cache=False):
     recs = []
     kh = {cat: src_hash(cat) for cat in SRC}
     sh = {cat: settings_hash(cat, base[(cat, g)]["shape"])
@@ -258,7 +301,10 @@ def mutants_pass(base, outdir, records_path):
         shc = settings_hash(cat, shape)
         binp = os.path.join(outdir, tag)
         outp = os.path.join(outdir, tag + ".bin")
-        rc, err = build(cat, shape, mut, binp)
+        if cache and os.path.exists(binp):
+            rc, err = 0, ""
+        else:
+            rc, err = build(cat, shape, mut, binp)
         if rc != 0:
             r = classify_record(spec_id, cat, allmut, "ct-check",
                                 err.strip().split("\n")[-1], kh[cat], shc)
@@ -298,6 +344,8 @@ def main():
     ap.add_argument("--out", default=os.path.join(ROOT, "raw"))
     ap.add_argument("--records", default=os.path.join(ROOT, "records.jsonl"))
     ap.add_argument("--collect-out", default=os.path.join(ROOT, "results"))
+    ap.add_argument("--cache", action="store_true",
+                    help="reuse an existing mutant binary instead of rebuilding")
     args = ap.parse_args()
 
     if args.cmd in ("base", "all"):
@@ -310,7 +358,7 @@ def main():
                 outp = os.path.join(args.out, f"{cat}.{g}.base.bin")
                 base[(cat, g)] = {"out": outp, "shape": sizes.shape(cat, g),
                                   "sha": sha(outp)}
-        mutants_pass(base, args.out, args.records)
+        mutants_pass(base, args.out, args.records, cache=args.cache)
     if args.cmd == "collect":
         import collect
         collect.main(args.records, args.collect_out)

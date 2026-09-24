@@ -29,22 +29,27 @@ cmd_setup() {
 cmd_minimal() {
   mkdir -p "$RAW"
   "$PY" "$HERE/lane.py" all --out "$RAW" --records "$RECORDS"
-  "$PY" "$HERE/probes.py" "$RAW/probes" "$HERE/records_m3.jsonl"
 }
 
 cmd_e2() {
   # expressibility sweep: base kernels already gate all spec-required operators.
-  echo "[$TOOLCHAIN] e2: see 'base' stage in lane.py (15 operators gated)"
-  # M1 element-access probe slice (one realizable spec per family a..h).
-  "$PY" "$HERE/probes.py" "$RAW/probes_m1" "$HERE/records_m1.jsonl" m1
+  # M1 is now a LAUNCHED battery in records.jsonl (M1 minimal operator set x
+  # small/alt extents, one spec per family a..h); the old compile-only probe
+  # slice is retired.
+  echo "[$TOOLCHAIN] e2: see 'base' + M1 battery in lane.py (15 operators gated)"
 }
 
 cmd_e3() {
-  # unconditional-guard remainder: M3 descriptor/TMA/atom probe battery.
-  "$PY" "$HERE/probes.py" "$RAW/probes" "$HERE/records_m3.jsonl"
+  # M3 is now a LAUNCHED battery in records.jsonl (M3 spec-required operators x
+  # small/alt extents, one spec per family a..h); the old compile-only
+  # descriptor/TMA/atom probe slice is retired.
+  echo "[$TOOLCHAIN] e3: see M3 battery in lane.py (matmul/conv2d/batch_norm/max_pool2d)"
 }
 
-cmd_collect() { "$PY" "$HERE/lane.py" collect --records "$RECORDS" --collect-out "$RESULTS"; }
+cmd_collect() {
+  "$PY" "$HERE/lane.py" collect --records "$RECORDS" --collect-out "$RESULTS"
+  "$PY" "$HERE/gen_manifest.py" --records "$RECORDS" --out "$RAW/mutant_manifest.json"
+}
 cmd_stats()   { cmd_collect; }
 cmd_verify()  { "$PY" "$HERE/verify.py"; }
 

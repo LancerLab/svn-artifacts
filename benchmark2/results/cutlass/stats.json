@@ -12,17 +12,24 @@
   },
   "S1_detection": {
     "M1": {
-      "n_injected": 8,
-      "n_compile": 1,
+      "n_injected": 64,
+      "n_compile": 8,
       "n_runtime": 0,
-      "n_never": 7,
+      "n_never": 47,
+      "n_discarded_noop": 9
+    },
+    "M2": {
+      "n_injected": 64,
+      "n_compile": 0,
+      "n_runtime": 0,
+      "n_never": 64,
       "n_discarded_noop": 0
     },
     "M3": {
-      "n_injected": 12,
-      "n_compile": 3,
+      "n_injected": 64,
+      "n_compile": 0,
       "n_runtime": 0,
-      "n_never": 9,
+      "n_never": 64,
       "n_discarded_noop": 0
     },
     "M4": {
@@ -43,44 +50,37 @@
     }
   },
   "S1_declared_uncompared": {
-    "classes": [
-      "M2"
-    ],
-    "reason": "The CuTe surface can express shape-contract (M2) mutations, but this candidate lane has only been run against M1/M3/M4. M2 is unmeasured, not inexpressible: it carries no S1 cell."
+    "classes": [],
+    "reason": ""
   },
   "S1_class_axis": {
     "source": "schema/class-axis.json",
     "axis_version": "v2.1",
     "status": {
       "M1": "measured",
-      "M2": "uncompared",
+      "M2": "measured",
       "M3": "measured",
       "M4": "measured"
     },
     "sampled": {
       "M1": true,
-      "M2": false,
+      "M2": true,
       "M3": true,
       "M4": true
     }
   },
   "notes": [
-    "vertical slice: launch-time M4/L battery + compile-only M3 probe battery",
+    "vertical slice: launched M1/M2/M3/M4 batteries + L path-class control",
     "M4 is a CONFORMING 7-family battery of 56 instances (families M4-a..M4-g x 4 kernels x 2 realisations): the kernels are the spec-required M4_OPS (layer_normalization, softmax, matmul, elemwise_add) and the two realisations are the small/alt extent grids in sizes.py",
     "M4-a: M4.1 (with-in dim -> 0, LOOP=0) + M4.2 (parallel-by -> 0, PBOUND=0); M4-b: M4.6 negative bound (NBOUND); M4-c: M4.3 runtime-zero bound (env CUT_LOOP_RT); M4-f: M4.5 zero step (STEP=0) -- both extent realisations -> 8 each",
     "M4-d: M4.4 (empty iteration space) + M1.6 (stride-0 over an empty range) are neutral controls, no-op by construction (recorded `n/a`); M4-e: M1.7 reversed/overrunning bound (REVB); M4-g: M4.7/M4.8 degenerate padded extent, a mutation-only pad category (PADEXT) on all four kernels",
     "M4 outcomes at launch time: M4.8 empty padded extent detains at COMPILE time (CuTe static assert); M4.1/M4.6/M4.3/M4.5 and M4.7 compile and launch with output differing silently (`never`); the M4.2 zero parallel-by, the neutral controls and the elemwise_add zero step are `n/a`",
-    "M3 outcomes are COMPILE-ONLY: `never` means nvcc/CuTe did not detain the defect at compile time; runtime behaviour is unmeasured",
-    "M3 ct-check probes: M3.5 swizzle, M3.6 vector divisibility, M3.8 GMMA descriptor rank",
-    "M3 never (compile) probes: M3.1/M3.2/M3.3/M3.4/M3.7/M3.11/M3.12/M3.13/M3.14; TMA/GMMA pairs target sm_90a, static-smem sm_86",
-    "M3.9/M3.10 (TMA pad-field) and M3.15 (pad path) are unexpressible on CuTe: the descriptor/pad fields are authored by the library, not the kernel author",
-    "M3.16 (symbolic leading dim) is unexpressible: make_tma_copy requires static box shapes",
-    "M1 is a ONE-PER-FAMILY PROBE SLICE (M1-a..M1-h), COMPILE-ONLY: on a hand-written CuTe kernel the index/stride/bound arithmetic is the author's own, so the surface emits nothing for 7 of 8 families; only M1-g (index >= rank) is statically detained, by CuTe's tuple `get` static_assert",
-    "M1 outcome: M1.15 ct-check (rank/arity); M1.2/M1.4/M1.9/M1.12/M1.14/M1.19/M1.11 never (unchecked) -- the permissive-surface control, not a competing M1 baseline",
+    "M3 is a CONFORMING 8-family battery of 64 instances (families M3-a..M3-h x 4 kernels x 2 realisations): the kernels are the spec-required M3_OPS (matmul, conv2d, batch_norm, max_pool2d) and the two realisations are the small/alt extent grids in sizes.py; one representative spec per family (M3.1/M3.2/M3.3/M3.4/M3.6/M3.8/M3.9/M3.12), applied to the operator's own element index",
+    "M1 is a CONFORMING 8-family battery of 64 instances (families M1-a..M1-h x 4 kernels x 2 realisations): the kernels are MINIMAL_SET[\"M1\"] (layer_normalization, softmax, relu, transpose) and the two realisations are the small/alt extent grids; one representative spec per family (M1.2/M1.4/M1.9/M1.12/M1.14/M1.19/M1.15/M1.11), applied to the operator's own index arithmetic",
+    "M2 is a CONFORMING 8-family battery of 64 instances (families M2-a..M2-h x 4 kernels x 2 realisations): the kernels are matmul, conv2d, layer_normalization, relu and the two realisations are the small/alt extent grids; one representative spec per family (M2.1/M2.6/M2.7/M2.8/M2.10/M2.5/M2.15/M2.17)",
     "n_discarded_noop counts the inapplicable launch-status control (L1 on matmul: the static-smem override is not used, so the mutation has no effect -> `n/a`, applicable=false)",
     "`L` (launch-status) is a path class, not a mutation class: its cells live under `S1_path_class`, never in `S1_detection`",
-    "M2 is declared uncompared in `S1_declared_uncompared`; it carries no S1 cell because the lane was never run against it",
-    "records are v2.1 mutant records (see cutlass/mutrec.py): outcome compile|runtime|never|n/a, class M1/M3/M4, path_class carries the L distinction"
+    "records are v2.1 mutant records (see cutlass/mutrec.py): outcome compile|runtime|never|n/a, class M1/M2/M3/M4, path_class carries the L distinction"
   ],
-  "records": 78
+  "records": 250
 }

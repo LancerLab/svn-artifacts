@@ -53,6 +53,14 @@
 #ifndef PADEXT
 #define PADEXT 4    // M4.7/M4.8: padded extent (0 => empty, <0 => negative)
 #endif
+// `M1DEF` not `M1`: CuTe headers use `M1` as an identifier, so a macro of that
+// name rewrites them.
+#ifndef M1DEF
+#define M1DEF 0     // M1 element-access defect, applied to the operator's own
+                    // index arithmetic: 2 off-by-one, 4 bad stride, 9 displaced
+                    // base, 12 wrong loop var, 14 swapped tile coord, 15 index
+                    // >= rank, 19 narrow carrier, 11 read/write overlap.
+#endif
 #ifndef VEC
 #define VEC 4
 #endif
@@ -133,6 +141,98 @@ __device__ __forceinline__ void cut_pad_probe(float* scratch) {
   auto b = cute::make_tensor(cute::make_smem_ptr(scratch + 128), l);
   cute::copy(a, b);
 }
+
+// M3 hardware-constraint defect, applied to the operator's own element index
+// `i` of extent `n`. `M3` holds the *spec number*, not the family letter, so
+// the attribution reads directly off the macro. `M3` is a safe name (unlike
+// `M1`, which CuTe uses as an identifier). Base (M3==0) is the identity.
+//   1  M3-a  atom divisibility: the tail atom is dropped
+//   2  M3-b  descriptor dim: the leading extent reaches past 2^24
+//   3  M3-c  byte / swizzle box: the ceiled box wraps
+//   4  M3-d  5-D descriptor footprint exceeds 4 GB (32-bit product wraps)
+//   6  M3-e  base / inner box not aligned to the descriptor granularity
+//   8  M3-f  descriptor rank outside the assessed [1,5]
+//   9  M3-g  pad field overruns its assessed range
+//   12 M3-h  on-chip tile exceeds the per-SM budget (index folds back)
+#ifndef M3
+#define M3 0
+#endif
+
+__device__ __forceinline__ long cut_m3_read(long i, long n) {
+  long r = i;
+  if (M3 == 1)  r = (i >= n / 2) ? (i - n / 2) : i; // a: dropped tail atom
+  if (M3 == 2)  r = (i + 1) % n;                   // b: 2^24 descriptor stride
+  if (M3 == 3)  r = (i + n / 2) % n;               // c: box byte wrap
+  if (M3 == 4)  r = (i / 2) % n;                   // d: 5-D footprint wrap
+  if (M3 == 6)  r = (i + 3) % n;                   // e: unaligned base
+  if (M3 == 8)  r = (i / 2) % n;                   // f: rank-6 alias
+  if (M3 == 9)  r = (i + 7) % n;                   // g: pad overrun
+  if (M3 == 12) r = i % (n - n / 8);               // h: on-chip capacity fold
+  return r;
+}
+
+// M2 shape-compatibility defect, applied to the operator's own element index
+// `i` of extent `n`. `M2` holds the spec number. Base (M2==0) is the identity.
+//   1  M2-a  wrong leading extent (secondary operand / scale)
+//   6  M2-b  two extents transposed
+//   7  M2-c  reduced-rank view (a dimension dropped)
+//   8  M2-d  broadcast extent set to 1 instead of N
+//   10 M2-e  transpose permutation on a square operand (layout, not extent)
+//   5  M2-f  partial / duplicate write
+//   15 M2-g  pad_low <-> pad_high swapped (total length preserved)
+//   17 M2-h  runtime-shaped span (the size check is skipped)
+#ifndef M2
+#define M2 0
+#endif
+
+__device__ __forceinline__ long cut_m2_read(long i, long n) {
+  long r = i;
+  if (M2 == 1)  r = (i + 1) % n;                   // a: wrong leading extent
+  if (M2 == 6)  r = (i / 2) % n;                   // b: extents transposed
+  if (M2 == 7)  r = i % (n / 2);                   // c: reduced-rank view
+  if (M2 == 8)  r = i - (i % 2);                   // d: broadcast extent 1
+  if (M2 == 10) r = (i ^ 1) % n;                   // e: square transpose
+  if (M2 == 5)  r = (i + n / 2) % n;               // f: partial/duplicate write
+  if (M2 == 15) r = (i + n / 4) % n;               // g: pad fields swapped
+  if (M2 == 17) r = (i + 3) % n;                   // h: runtime-shaped span
+  return r;
+}
+
+// M1 element-access defect on a column index `k` of extent `cols`. `M1DEF`
+// picks the defect; the base (M1DEF==0) is the identity.
+__device__ __forceinline__ long cut_m1_read(long k, long cols) {
+  long r = k;
+  if (M1DEF == 4)  r = (k * 2) % cols;   // M1.4 non-unit stride
+  if (M1DEF == 9)  r = k + 1;            // M1.9 displaced base
+  if (M1DEF == 12) r = (k + 1) % cols;   // M1.12 wrong loop variable
+  // M1.19: narrow carrier. Truncate the row-local index to 16 bits; it aliases
+  // within the same 64K window, and the caller skips aliases past `cols`.
+  if (M1DEF == 19) r = k & 0xFFFF;
+  return r;
+}
+__device__ __forceinline__ bool cut_m1_bound(long k, long cols) {
+  if ((M1DEF == 19) && (k & 0xFFFF) >= cols)       // M1.19 alias past extent
+    return false;
+  return (M1DEF == 2) ? (k <= cols) : (k < cols);   // M1.2 off-by-one
+}
+// M1.14: `off` is the tile/row coordinate; the defect reads the *next* one.
+__device__ __forceinline__ long cut_m1_row(long r, long rows) {
+  return (M1DEF == 14) ? ((r + 1) % rows) : r;      // swapped tile coordinate
+}
+
+// M1-g / M1.15: an index at or past the rank. Only `get<2>` of a rank-2 shape
+// is instantiated, and only when the M1 knob selects it, so the base kernel
+// still compiles.
+template <int M, bool Bad = (M == 15)> struct CutM1RankProbe;
+template <int M> struct CutM1RankProbe<M, false> {
+  __device__ __forceinline__ static void run() {}
+};
+template <int M> struct CutM1RankProbe<M, true> {
+  __device__ __forceinline__ static void run() {
+    auto s = cute::make_shape(cute::Int<4>{}, cute::Int<4>{});
+    (void)cute::get<(M - 13)>(s);   // M==15 => get<2> of a rank-2 shape
+  }
+};
 
 static inline int cut_env_int(const char* k, int dflt) {
   const char* v = getenv(k);

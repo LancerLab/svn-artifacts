@@ -29,9 +29,10 @@ from schema import records as REC                                # noqa: E402
 from schema import class_axis as AX                              # noqa: E402
 
 LANE = "cutlass"
-RECORDS = [os.path.join(HERE, "records.jsonl"),
-           os.path.join(HERE, "records_m3.jsonl"),
-           os.path.join(HERE, "records_m1.jsonl")]
+# M1 and M3 are LAUNCHED batteries in records.jsonl, so the old compile-only
+# `records_m1.jsonl`/`records_m3.jsonl` probe slices are retired (kept on disk
+# for provenance only).
+RECORDS = [os.path.join(HERE, "records.jsonl")]
 STATS = os.path.join(BENCH2, "results", LANE, "stats.json")
 
 

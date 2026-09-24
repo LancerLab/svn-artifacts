@@ -27,9 +27,10 @@ __global__ void k_softmax(const float* __restrict__ A, float* __restrict__ C,
   cut_zstride_probe();
   __shared__ float cut_pad_scratch[512];
   cut_pad_probe<PADEXT>(cut_pad_scratch);
+  CutM1RankProbe<M1DEF>::run();
   float* red = smem;                                  // blockDim.x floats
   const long r = blockIdx.x;
-  const float* a = A + r * cols;
+  const float* a = A + cut_m1_row(r, rows) * cols;
   float* c = C + r * cols;
   const int nchunks = (int)((cols + TILE - 1) / TILE);
   int nl = (LOOP == -1) ? ((rt >= 0) ? rt : nchunks) : LOOP;
@@ -39,8 +40,9 @@ __global__ void k_softmax(const float* __restrict__ A, float* __restrict__ C,
   float m = -INFINITY;
   for (int it = 0; it < nl; ++it) {
     const long off = (long)it * STEP * TILE;
-    for (long k = off + threadIdx.x; k < off + TILE && k < cols; k += blockDim.x)
-      m = fmaxf(m, a[k]);
+    for (long k = off + threadIdx.x; k < off + TILE && cut_m1_bound(k, cols);
+         k += blockDim.x)
+      m = fmaxf(m, a[cut_m1_read(k, cols)]);
   }
   red[threadIdx.x] = m;
   blk_reduce_max(red);
@@ -49,8 +51,9 @@ __global__ void k_softmax(const float* __restrict__ A, float* __restrict__ C,
   float s = 0.f;
   for (int it = 0; it < nl; ++it) {
     const long off = (long)it * STEP * TILE;
-    for (long k = off + threadIdx.x; k < off + TILE && k < cols; k += blockDim.x)
-      s += expf(a[k] - m);
+    for (long k = off + threadIdx.x; k < off + TILE && cut_m1_bound(k, cols);
+         k += blockDim.x)
+      s += expf(a[cut_m1_read(k, cols)] - m);
   }
   red[threadIdx.x] = s;
   blk_reduce_sum(red);
@@ -58,8 +61,11 @@ __global__ void k_softmax(const float* __restrict__ A, float* __restrict__ C,
 
   for (int it = 0; it < nl; ++it) {
     const long off = (long)it * STEP * TILE;
-    for (long k = off + threadIdx.x; k < off + TILE && k < cols; k += blockDim.x)
-      c[k] = expf(a[k] - m) / s;
+    for (long k = off + threadIdx.x; k < off + TILE && cut_m1_bound(k, cols);
+         k += blockDim.x) {
+      const float x = (M1DEF == 11) ? c[k] : a[cut_m1_read(k, cols)];  // M1.11 alias
+      c[k] = expf(x - m) / s;
+    }
   }
 }
 
