@@ -75,13 +75,25 @@ factor rather than reaching for the local cap.
   settles** (`toolchain_warning` cleared); do not mix pre-/post-cap corpora
   in one manifest.
 
-### W4 — Verify the sm_120 SHARED capacity (croqtile side, PR-only)
+### W4 — Verify the sm_120 SHARED capacity (croqtile side) — DONE 2026-09-24
 
-Confirm CC 12.0 per-SM shared memory against the CUDA programming guide
-(expected 228 KB/SM, 227 KB/block opt-in). If `gpu_target.hpp:69`'s 300 KB
-is wrong, fix via a croqtile PR (clang-format, feature branch → PR; never
-push to main), rebuild, and re-pin the toolchain — this changes what the
-SHARED static check accepts on the target, so it lands before W3's rerun.
+Confirmed against the CUDA C Programming Guide "Memory Information per
+Compute Capability" (v13.4.2): **CC 12.x = 100 KB per SM, 99 KB per block
+opt-in** (consumer Blackwell is in the 8.6/8.9 class, not the 228 KB
+datacenter class; 10.0/10.3 = 228, 10.7 = 328). `gpu_target.hpp`'s 300 KB
+was wrong 3× over — the SHARED static check would have accepted kernels no
+sm_120 block can launch. Fixed on the croqtile `ledger-artifacts` branch
+(per the 2026-09-24 host notice: all croqtile changes on `ledger-artifacts`,
+never main) as commit `215e17b0` ("choreo: correct the sm_120
+shared-memory capacity", sm_120 → 100 KB following the table's per-SM
+convention). NOT yet rebuilt into `build-release/choreo` — the rebuild must
+be sequenced with the in-flight probe/rerun so a swapped binary cannot mix
+toolchains mid-corpus; rebuild + re-pin as part of W3. Note: the table
+follows the per-SM convention; the per-block opt-in caps are 1 KB lower
+(99/227 KB) — a per-SM check admits that 1 KB of slack, accepted here as
+the codebase's existing convention. Side finding left for later: sm_70 is
+listed as 48 KB but V100 (CC 7.0) is 96 KB/SM — out of the benchmark's
+target set, fix if the arch is ever exercised.
 
 ## E1-impact discipline (paper-facing)
 
