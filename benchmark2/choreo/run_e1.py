@@ -6,7 +6,7 @@ Takes the mutants written by gen_mutants.py and classifies each one into the
 
     outcome in {compile, runtime, never, n/a}
     stage   in {compile, runtime}
-    manifest in {corrupts, noop}
+    manifest in {corrupts, noop, undecidable}
 
 Attribution — the part that is easy to get wrong
 ------------------------------------------------
@@ -82,8 +82,17 @@ leaving the kernel's own `choreo_assert` reference check (source C) and the
 inlined runtime header's checks (source B and LIB) intact. Running the mutant
 under `-rtc=none` is therefore exactly the specs §7 manifest check:
 
-    oracle fails / aborts / no "Passed."  -> manifest = corrupts  (real defect)
-    oracle prints "Passed."               -> manifest = noop      (discard, §11.1)
+    oracle fails / aborts / no "Passed."  -> manifest = corrupts      (real defect)
+    oracle prints "Passed."               -> manifest = noop          (inert, discard, §11.1)
+    base oracle fails its own reference    -> manifest = undecidable   (unjudged, not inert)
+
+`noop` and `undecidable` are DIFFERENT and must not be conflated. `noop` is a
+measurement: the mutation was injected into a working base and the oracle still
+passed, so the edit is inert. `undecidable` is an infrastructure state: the
+UNMUTATED base fails its own §7 reference, so whether the mutation corrupts is
+unknowable until the base reference is repaired; the mutant is created but
+unjudged. Neither is a detection verdict — "choreo did not catch it" is
+`outcome=never` (the `unchecked` miss surface), an orthogonal axis.
 
 `-rtc=none` and `--disable-runtime-check` are EQUIVALENT, proven at the
 generated-code level rather than assumed: over 20 mutants the two builds are
@@ -93,6 +102,10 @@ Both reduce `runtime_check(` sites 14 -> 9 and leave `choreo_assert(` sites
 parameter (...)`. So the flag removes only source A's host form and touches
 neither source B nor source C. ORACLE_FLAGS keeps `-rtc=none`; the choice is
 cosmetic, and the equivalence is now evidence rather than an assumption.
+
+The DETECTOR arm defaults to `-rtc=all` (see COMPILE_FLAGS): at lower levels an
+assessment choreo created may simply not be emitted, which understates S2. The
+oracle arm is unaffected by this, always building at `-rtc=none`.
 
 Usage:
   run_e1.py [--jobs N] [--limit N] [--only CLASS] [--out FILE]
@@ -132,7 +145,13 @@ TOOLCHAIN = "choreo"
 # device limit (48 KB default / 98304 B with the dynamic attribute), not against
 # the 2048-byte default.
 CAP = "--max-local-mem-capacity=2000000"
-COMPILE_FLAGS = ["-gs", "-t", "cute", "-kt", CAP]
+# The DETECTOR arm runs at the highest check level, `-rtc=all` (= `high`). The
+# default `-rtc=entry` emits only host-entry obligations, so an assessment that
+# choreo DID create can be absent from the build and the mutant is charged as a
+# miss. Running the assessor at `-rtc=all` is the fair test of what choreo can
+# detect, and it is what the S2 ceiling figure is measured at. Override with
+# `--rtc <level>`; the level is always replaced, never appended twice.
+COMPILE_FLAGS = ["-gs", "-t", "cute", "-kt", CAP, "-rtc=all"]
 ORACLE_FLAGS = ["-gs", "-t", "cute", "-kt", CAP, "-rtc=none"]
 
 # Categories whose reference check is compiled out unless -D__CHECK__ is given
@@ -657,7 +676,7 @@ def classify_one(rec, workdir, keep_logs=True, policy=None):
         # manifest field cannot be decided. Mark it rather than guess.
         out["note"] = ("manifest undecidable: unmutated base fails its own "
                        "reference check (see raw/oracle_policy.json)")
-        out["manifest"] = "noop"
+        out["manifest"] = "undecidable"
 
     out["wall_s"] = round(time.time() - t0, 2)
 
@@ -755,7 +774,7 @@ def reproject_one(rec, workdir):
     # result: an unusable reference means no manifest verdict can be trusted.
     # Preserve it rather than silently re-deciding.
     if rec.get("oracle_usable") is False:
-        manifest = "noop"
+        manifest = "undecidable"
         out["note"] = rec.get("note") or (
             "manifest undecidable: unmutated base fails its own reference check "
             "(see raw/oracle_policy.json)")
@@ -800,9 +819,10 @@ def main():
                          "shared freely (manifest §6)")
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--only", default="", help="restrict to one class, e.g. M1")
-    ap.add_argument("--rtc", choices=("none", "entry", "low", "medium", "high", "all"),
-                    help="detector-arm runtime-check level; omitted preserves the "
-                         "compiler default. The oracle arm always uses -rtc=none.")
+    ap.add_argument("--rtc", default="all",
+                    choices=("none", "entry", "low", "medium", "high", "all"),
+                    help="detector-arm runtime-check level (default: all). The "
+                         "oracle arm always uses -rtc=none.")
     ap.add_argument("--manifest", default=MANIFEST_IN)
     ap.add_argument("--policy", default=ORACLE_POLICY)
     ap.add_argument("--strict-policy", action="store_true",
@@ -842,6 +862,7 @@ def main():
     a.policy = os.path.abspath(a.policy)
 
     if a.rtc:
+        COMPILE_FLAGS = [f for f in COMPILE_FLAGS if not f.startswith("-rtc=")]
         COMPILE_FLAGS = COMPILE_FLAGS + [f"-rtc={a.rtc}"]
 
     if not os.path.exists(CHOREO):
@@ -1088,7 +1109,7 @@ def main():
     print(f"\n[{choreo_tag()}] wrote {len(results)} records -> "
           f"{os.path.relpath(a.out, REPO)}  ({round(time.time()-t0,1)}s)")
     print(f"\n{'class':<6}{'compile':>9}{'runtime':>9}{'never':>7}{'n/a':>6}"
-          f"{'corrupts':>10}{'noop':>6}")
+          f"{'corrupts':>10}{'noop':>6}{'undec':>7}")
     # Reported per class PRESENT in the run, not a hardcoded M1/M2/M3: a class
     # added to the manifest must show up in the run's own summary, or a gap in
     # the corpus is invisible at the one moment it is cheap to notice.
@@ -1097,16 +1118,26 @@ def main():
         c = collections.Counter(r["outcome"] for r in sub)
         mf = collections.Counter(r["manifest"] for r in sub)
         print(f"{cls:<6}{c['compile']:>9}{c['runtime']:>9}{c['never']:>7}"
-              f"{c['n/a']:>6}{mf['corrupts']:>10}{mf['noop']:>6}")
+              f"{c['n/a']:>6}{mf['corrupts']:>10}{mf['noop']:>6}"
+              f"{mf['undecidable']:>7}")
     tot = collections.Counter(r["outcome"] for r in results)
     mft = collections.Counter(r["manifest"] for r in results)
     print(f"{'ALL':<6}{tot['compile']:>9}{tot['runtime']:>9}{tot['never']:>7}"
-          f"{tot['n/a']:>6}{mft['corrupts']:>10}{mft['noop']:>6}")
+          f"{tot['n/a']:>6}{mft['corrupts']:>10}{mft['noop']:>6}"
+          f"{mft['undecidable']:>7}")
 
     noops = [r["mutant_id"] for r in results if r["manifest"] == "noop"]
     if noops:
-        print(f"\nDISCARD (manifest=noop, specs §11.1): {len(noops)}")
+        print(f"\nINERT (manifest=noop: injected into a working base, oracle "
+              f"passed; discard per specs §11.1): {len(noops)}")
         for m in noops:
+            print(f"  {m}")
+
+    undec = [r["mutant_id"] for r in results if r["manifest"] == "undecidable"]
+    if undec:
+        print(f"\nUNJUDGED (manifest=undecidable: UNMUTATED base fails its own "
+              f"§7 reference; fix the base, do NOT read as inert): {len(undec)}")
+        for m in undec:
             print(f"  {m}")
 
     infra = [r for r in results if r.get("infra_error")]

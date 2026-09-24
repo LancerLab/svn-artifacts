@@ -1,0 +1,57 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+#include <cmath>
+#define I 32
+#define J 64
+#define K 768
+#define NUM_BLOCK 2
+
+/* Mutation-only host (M4-g): the padded extent is derived at run time and used
+   as the loop bound, so a degenerate pad (negative or zero-length) removes the
+   iteration space instead of being rejected. padding=0 leaves the op identical
+   to a plain affine (scale/shift) kernel, which keeps the base oracle usable. */
+__co__ auto layer_norm_pad(f32 [I, J, K] lhs, f32 [K] scale, f32 [K] bias,
+                           int padding) {
+  H = lhs.span(1);
+  W = lhs.span(2);
+  Hpad = H + 2 * padding;
+  Wpad = W - W;
+  f32 [lhs.span] out;
+
+  parallel p by NUM_BLOCK : block {
+    foreach n in [I / #p] {
+      foreach {j, k} in [Hpad, Wpad]
+        out.at(p#n, j, k) = scale.at(k) * lhs.at(p#n, j, k) + bias.at(k);
+    }
+  }
+  return out;
+}
+
+int main() {
+  auto input = choreo::make_spandata<choreo::f32>(I, J, K);
+  auto scale = choreo::make_spandata<choreo::f32>(K);
+  auto bias = choreo::make_spandata<choreo::f32>(K);
+  input.fill_random(-1.0, 1.0);
+  scale.fill_random(-1.0, 1.0);
+  bias.fill_random(-1.0, 1.0);
+
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto res = layer_norm_pad(input.view(), scale.view(), bias.view(), 0);
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+  for (size_t i = 0; i < res.shape()[0]; ++i)
+    for (size_t j = 0; j < res.shape()[1]; ++j)
+      for (size_t k = 0; k < res.shape()[2]; ++k) {
+        float ref = scale[k] * input[i][j][k] + bias[k];
+        if (fabs(ref - res[i][j][k]) > 1e-3) {
+          std::cout << "affine mismatch\n";
+          choreo::choreo_assert(false, "values are not equal.");
+        }
+      }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " microseconds\n";
+  return 0;
+}

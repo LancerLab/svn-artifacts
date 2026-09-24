@@ -3,13 +3,18 @@
 // case1: [32, 512, 768] + [768, 768] --> [32, 512, 768] (BERT)
 __co__ auto matmul1(f32 [32, 512, 768] lhs, f32 [768, 768] rhs) {
   f32 [lhs.span(0), lhs.span(1), rhs.span(1)] output;
+  // Group tile buffers live in shared memory (one on-chip copy per group),
+  // the same pattern as the dynamic cases.  [32, 32, 32] tiling keeps l1_out
+  // at [1, 16, 24] = 1.5 KB per thread; l1_a and l1_b are 1.5 KB and 2.25 KB.
+  // All three are declared shared so no dynamic-size buffer lands in
+  // per-thread local memory.
   parallel p by 4, q by 8 {
-    with index = {m_tile, n_tile, k_tile} in [4, 4, 4] {
+    with index = {m_tile, n_tile, k_tile} in [32, 32, 32] {
       foreach m_tile, n_tile {
-        local f32[output.span(0)/#p/#q, output.span(1)/#m_tile, output.span(2)/#n_tile] l1_out {0.0f};
+        shared f32[output.span(0)/#p/#q, output.span(1)/#m_tile, output.span(2)/#n_tile] l1_out {0.0f};
         foreach k_tile {
-          l1_a = dma.copy lhs.chunkat(p#q, m_tile, 16777216) => local;
-          l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => local;
+          l1_a = dma.copy lhs.chunkat(p#q, m_tile, 16777216) => shared;
+          l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => shared;
           foreach {i} in [l1_out.span(0)] {
             call k_matmul(l1_a.chunkat(i,_,_), l1_b.data, l1_out, l1_a.span(1), l1_b.span(0), l1_a.span(2));
           }

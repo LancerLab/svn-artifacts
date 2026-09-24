@@ -110,7 +110,11 @@ SOURCES = [
 def load_schema():
     with open(SCHEMA) as f:
         s = json.load(f)
-    return s["records"], s.get("version", "?")
+    # `records` also holds meta-directives (e.g. `require_version_declaration`,
+    # a plain list consumed by schema/records.py), not only per-type spec dicts.
+    # Keep only the record types so `specs[rtype].get(...)` is always valid.
+    records = {k: v for k, v in s["records"].items() if isinstance(v, dict)}
+    return records, s.get("version", "?")
 
 
 def coerce(rtype, value, enums):

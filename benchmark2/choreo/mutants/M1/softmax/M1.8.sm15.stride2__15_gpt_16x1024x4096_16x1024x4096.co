@@ -7,7 +7,7 @@ __co__ auto softmax15(f32 [16, 1024, 4096] input)  {
     foreach {i} in [input.span(0)] {
       // Per-thread rows are staged in local memory (the softmax11 pattern):
       // the block's 64 rows x 16 KB cannot fit the on-chip shared budget.
-      l1_input = dma.copy input.chunkat(i + 1, p#q, _) => local;
+      l1_input = dma.copy input.chunkat(i, p#q * 2, _) => local;
       local f32[1, l1_input.span(1), l1_input.span(2)] l1_out;
       foreach {j} in [l1_input.span(1)] {
         // Find max for numerical stability

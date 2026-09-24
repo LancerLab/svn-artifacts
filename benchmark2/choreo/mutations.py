@@ -117,7 +117,8 @@ MINIMAL_SET = {
 
 # Level-2 widening order (specs §5), applied only after level-1 is green.
 LEVEL2_SET = {
-    "M1": ["max_pool2d", "conv2d", "embedding", "batch_norm"],
+    "M1": ["max_pool2d", "conv2d", "embedding", "batch_norm",
+           "matmul", "gelu", "sigmoid"],
     # `transpose_square` is mlir-linalg's M2-e surface (family "layout (extents
     # intact)"): a square transpose keeps every extent legal under a wrong
     # permutation, so only the memory order changes. `pad` is the M2-g surface
@@ -128,7 +129,8 @@ LEVEL2_SET = {
     # rank-unequal binary add whose trailing-dims-only compatibility walk leaves
     # the leading extent open. Declared here (not in MINIMAL_SET) so they widen
     # the coverage set without reclassifying any existing choreo level-1 category.
-    "M2": ["elemwise_add", "transpose_square", "pad", "reshape", "broadcast"],
+    "M2": ["elemwise_add", "transpose_square", "pad", "reshape", "broadcast",
+           "batch_norm"],
     "M3": ["batch_norm"],
     "M4": [],
 }
@@ -794,8 +796,9 @@ M1 = [
        ("l1_input.data.at(0, j, k)", "l1_input.data.at(0, j, k + 1)")),
     _m("M1.s5.sm11.write", "M1", 5, "oob", "softmax",
        "11_dynamic_32xSx768_32xSx768",
-       "offset view on the output row index",
-       ("l1_out.at(0, j, k)", "l1_out.at(0, j + 1, k)")),
+       "offset view on the output row index (in-place normalize write)",
+       ("l1_input.data.at(0, j, k) = l1_input.data.at(0, j, k) / sum_exp;",
+        "l1_input.data.at(0, j + 1, k) = l1_input.data.at(0, j, k) / sum_exp;")),
     _m("M1.s6.sm11.empty", "M4", 6, "stride", "softmax",
        "11_dynamic_32xSx768_32xSx768",
        "empty reduction range",
@@ -984,7 +987,7 @@ M2 = [
        "1_bert_32x512x768_768_768",
        "reduction divisor disagrees with the reduced extent",
        ("s_mean.at(0) / (lhs.span(1) * lhs.span(2))",
-        "s_mean.at(0) / (lhs.span(1) * lhs.span(2) - 1)")),
+        "s_mean.at(0) / (lhs.span(1) * lhs.span(2) / 2)")),
     _m("M2.s1.ln1.caller.scale", "M2", 1, "dim-mismatch", "layer_normalization",
        "1_bert_32x512x768_768_768",
        "caller materialises the secondary operand with the wrong extent",
@@ -1183,7 +1186,7 @@ M2 = [
     _m("M2.16.cv1.alt", "M2", 16, 'dim-mismatch', 'conv2d',
        '20_static_16x1024x13x13_255x1024x1x1_16x255x13x13_1_0_1',
        'span_as split exchanged: ElementCount is preserved, so the count-only comparison at semacheck.cpp:947 passes on conv2d (second cell: the same defect on another kernel of the family)',
-       ('dma.copy w.span_as(Cout, K).chunkat(_, kt) => B_tile;', 'dma.copy w.span_as(K, Cout).chunkat(_, kt) => B_tile;')),
+        ('dma.copy w.span_as(Cout, K).chunkat(_, kt) => B_tile;', 'dma.copy w.span_as(K, Cout).chunkat(_, kt) => B_tile;')),
     _m("M2.7.mm1.alt", "M2", 7, 'dim-mismatch', 'matmul',
        '11_dynamic_32xSx768_768x768_32xSx768',
        'reduced-rank view: a dimension is dropped from the output declaration on matmul (second cell: the same defect on another kernel of the family)',
@@ -1201,6 +1204,10 @@ M2 = [
 M3 = []
 
 # ---- matmul / 1_bert (static): contraction arg to the MMA atom -----------
+# matmul/1_bert is the shared-memory tiled GEMM in
+# 1_bert_32x512x768_768x768_32x512x768.co: group tiles stream through shared
+# and accumulate via the k_matmul contraction routine. Anchors below name that
+# structure.
 _MM1_CALL = ("call k_matmul(l1_a.chunkat(i,_,_), l1_b.data, l1_out, "
              "l1_a.span(1), l1_b.span(0), l1_a.span(2));")
 for _k in (6, 10, 12, 20, 24):          # all % 16 != 0
@@ -1212,25 +1219,25 @@ for _t in (7, 9):                        # 768 / t is not an integer multiple of
     M3.append(_m(f"M3.s1.mm1.ktile{_t}", "M3", 1, "dim-mismatch", "matmul",
                  "1_bert_32x512x768_768x768_32x512x768",
                  f"k-tile count {_t} yields a contraction tile that is not atom-divisible",
-                 ("with index = {m_tile, n_tile, k_tile} in [4, 4, 4] {",
-                  "with index = {m_tile, n_tile, k_tile} in [4, 4, %d] {" % _t)))
+                 ("with index = {m_tile, n_tile, k_tile} in [32, 32, 32] {",
+                  "with index = {m_tile, n_tile, k_tile} in [32, 32, %d] {" % _t)))
 for _off in (1, 2):
     M3.append(_m(f"M3.s2.mm1.rhs{_off}", "M3", 2, "stride", "matmul",
                  "1_bert_32x512x768_768x768_32x512x768",
                  f"misaligned tensor-core base: rhs DMA chunk offset by {_off}",
-                 ("l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => local;",
-                  f"l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile + {_off}) => local;")))
+                 ("l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => shared;",
+                  f"l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile + {_off}) => shared;")))
 M3.append(_m("M3.s2.mm1.lhs1", "M3", 2, "stride", "matmul",
              "1_bert_32x512x768_768x768_32x512x768",
              "misaligned DMA base: lhs chunk offset on the contraction tile",
-             ("l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile) => local;",
-              "l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile + 1) => local;")))
+             ("l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile) => shared;",
+              "l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile + 1) => shared;")))
 for _mul in (8, 16):
     M3.append(_m(f"M3.s3.mm1.local{_mul}", "M3", 3, "dim-mismatch", "matmul",
                  "1_bert_32x512x768_768x768_32x512x768",
-                 f"per-thread accumulator tile {_mul}x over the local-memory budget",
+                 f"on-chip accumulator tile {_mul}x over the shared-memory budget",
                  ("output.span(2)/#n_tile] l1_out {0.0f};",
-                  "output.span(2)/#n_tile * %d] l1_out {0.0f};" % _mul)))
+                  "output.span(2)/#n_tile * %d * 16] l1_out {0.0f};" % _mul)))
 
 # ---- matmul / 11_dynamic -------------------------------------------------
 _MM11_CALL = ("call k_matmul(l1_a.chunkat(i,_,_), l1_b.data, l1_out, "
@@ -1265,33 +1272,32 @@ for _d in (2, 4, 6, 8, 12):              # 512 + d is never % 16 == 0
     M3.append(_m(f"M3.s1.cv1.kplus{_d}", "M3", 1, "dim-mismatch", "conv2d", _C1,
                  f"contraction extent K + {_d} not divisible by the tensor-core atom (16)",
                  ("K = Cin * Kh * Kw;", f"K = Cin * Kh * Kw + {_d};")))
-_C1_CALL = "call k_matmul(l1_A.data, l1_B.data, l1_Y, M/#q, Cout, 8);"
+_C1_KK = "foreach kk in [KT] {"
 for _k in (6, 10, 12, 20):
     M3.append(_m(f"M3.s1.cv1.atom{_k}", "M3", 1, "dim-mismatch", "conv2d", _C1,
                  f"MMA contraction extent {_k} not divisible by the tensor-core atom (16)",
-                 (_C1_CALL, _C1_CALL.replace("Cout, 8);", f"Cout, {_k});"))))
+                 (_C1_KK, f"foreach kk in [{_k}] {{")))
 for _w in (32, 64, 128):
-    # 1024 * w * 4 B = 128 KB / 256 KB / 512 KB, all over the 48 KB shared limit.
-    # The k-tile loop and the atom extent move with it so the defect stays purely
-    # "shared tile too large" rather than becoming an M2 extent disagreement.
+    # Cout * (KT * w) * 4 B = 1 MB / 2 MB / 4 MB, all over the 102400 B shared
+    # limit. The tile is declared (not inferred from the DMA) so the oversize is
+    # visible to the static capacity check.
     M3.append(_m(f"M3.s3.cv1.shared{_w}", "M3", 3, "dim-mismatch", "conv2d", _C1,
-                 f"shared-memory weight tile 1024 x {_w} f32 = {1024 * _w * 4 // 1024} KB, "
-                 f"over the 48 KB device limit",
-                 ("shared f32 [Cout, 8] B_tile;", f"shared f32 [Cout, {_w}] B_tile;"),
-                 ("foreach kt in [K / 8] {", "foreach kt in [K / %d] {" % _w),
-                 (_C1_CALL, _C1_CALL.replace("Cout, 8);", f"Cout, {_w});"))))
+                 f"shared-memory weight tile {1024} x {8 * _w} f32 = "
+                 f"{1024 * 8 * _w * 4 // 1024} KB, over the shared device limit",
+                 ("shared f32 [CT, KT] B_tile;",
+                  f"shared f32 [Cout, KT * {_w}] B_tile;")))
 M3.append(_m("M3.s2.cv1.w1", "M3", 2, "stride", "conv2d", _C1,
              "misaligned DMA base address on the weight tensor",
-             ("dma.copy w.span_as(Cout, K).chunkat(_, kt) => B_tile;",
-              "dma.copy w.span_as(Cout, K).chunkat(_, kt + 1) => B_tile;")))
+             ("dma.copy w.span_as(Cout, K).chunkat(ct, kt) => B_tile;",
+              "dma.copy w.span_as(Cout, K).chunkat(ct, kt + 1) => B_tile;")))
 M3.append(_m("M3.s2.cv1.i1", "M3", 2, "stride", "conv2d", _C1,
              "misaligned DMA base address on the input tensor",
              ("i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo)",
               "i.chunkat(p#n + 1, _, _, _).span_as(K, Ho, Wo)")))
 M3.append(_m("M3.s3.cv1.local8", "M3", 3, "dim-mismatch", "conv2d", _C1,
-             "local accumulator tile 8x over the per-thread budget",
-             ("local f32 [M/#q, Cout] l1_Y{0.0f};",
-              "local f32 [M/#q, Cout * 8] l1_Y{0.0f};")))
+             "local accumulator tile 1024x over the per-thread budget",
+             ("local f32 [MT, CT] l1_Y{0.0f};",
+              "local f32 [MT, CT * 1024] l1_Y{0.0f};")))
 
 # ---- conv2d / 11_static (Cout=32, Cin=128, K=128, full weight in shared) --
 _C2 = "11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1"
@@ -1490,8 +1496,8 @@ M1 += [
     _m("M1.14.sm11.store", "M1", 14, "oob", "softmax",
        "11_dynamic_32xSx768_32xSx768",
        "tile-coordinate overrun on the dynamic write-back chunk",
-       ("dma.copy l1_out => output.chunkat(i#p, q, _)",
-        "dma.copy l1_out => output.chunkat(i#p + 1, q, _)")),
+       ("dma.copy l1_input => output.chunkat(i, p#q, _)",
+        "dma.copy l1_input => output.chunkat(i + 1, p#q, _)")),
     _m("M1.14.rl1.load", "M1", 14, "oob", "relu",
        "1_bert_32x512x768_32x512x768",
        "tile-coordinate overrun on the async DMA source chunk",
@@ -1615,10 +1621,10 @@ M2 += [
 
 # ---- M2.9 batch/group dimension swapped -----------------------------------
 M2 += [
-    _m("M2.9.ln3.batchswap", "M2", 9, "dim-mismatch", "layer_normalization",
-       "3_attention_32xNx512x64_64_64",
+    _m("M2.9.ln11.batchswap", "M2", 9, "dim-mismatch", "layer_normalization",
+       "11_dynamic_32xSx768_768_768",
        "batch/group dimension swapped on the primary operand",
-       ("f32 [I, N0, K, L] lhs", "f32 [N0, I, K, L] lhs")),
+       ("f32 [I, N0, K] lhs", "f32 [N0, I, K] lhs")),
     _m("M2.9.cc11.batchswap", "M2", 9, "dim-mismatch", "concat",
        "11_dynamic_32xS1x768_32xS2x768_32xS1pS2x768",
        "batch/group dimension swapped on the first dynamic concat operand",
@@ -1668,8 +1674,8 @@ M2 += [
        "1_bert_32x512x768_768x768_32x512x768",
        "shape-equal / layout-unequal: the rhs tile coordinates are exchanged "
        "on a SQUARE operand, so no extent disagrees",
-       ("l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => local;",
-        "l1_b = dma.transp<1,0> rhs.chunkat(n_tile, k_tile) => local;")),
+       ("l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => shared;",
+        "l1_b = dma.transp<1,0> rhs.chunkat(n_tile, k_tile) => shared;")),
     _m("M2.13.mm11.affine", "M2", 13, "wrong-shape", "matmul",
        "11_dynamic_32xSx768_768x768_32xSx768",
        "shape-equal / layout-unequal on the dynamic operand pair",
@@ -1693,8 +1699,8 @@ M2 += [
        _C1,
        "span_as split exchanged: ElementCount is preserved, so the count-only "
        "comparison at semacheck.cpp:947 passes",
-       ("dma.copy w.span_as(Cout, K).chunkat(_, kt) => B_tile;",
-        "dma.copy w.span_as(K, Cout).chunkat(_, kt) => B_tile;")),
+       ("dma.copy w.span_as(Cout, K).chunkat(ct, kt) => B_tile;",
+        "dma.copy w.span_as(K, Cout).chunkat(ct, kt) => B_tile;")),
 ]
 
 # ---- M2.17 span_as / reshape on runtime-shaped data (check skipped) -------
@@ -1728,8 +1734,10 @@ M2 += [
         "dma.copy l1_out => output.chunkat(p#q, m_tile + 1, n_tile);")),
     _m("M2.19.cc11.symdma", "M2", 19, "dim-mismatch", "concat",
        "11_dynamic_32xS1x768_32xS2x768_32xS1pS2x768",
-       "shared destination tile disagrees with a symbolic DMA source extent",
-       ("shared f32 [1, J_OUT, 1, 1] os;", "shared f32 [1, J_OUT, 1, 2] os;")),
+       "DMA destination tile offset by one along the symbolic K extent, so the "
+       "shared source and symbolic destination extents disagree",
+       ("dma.copy os => out.chunkat(p#i, _, k, l);",
+        "dma.copy os => out.chunkat(p#i, _, k + 1, l);")),
 ]
 
 # ---- M3.14 linear .copy with a dim >= 2^24 -- the check is ABSENT ---------
@@ -1758,26 +1766,29 @@ M3 += [
        "1_bert_32x512x768_768x768_32x512x768",
        "linear .copy with a dimension >= 2^24 reached by STRIDE, on the one "
        "DMA-matrix cell that carries no CheckDimSize call",
-       ("l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile) => local;",
-        "l1_a = dma.copy lhs.chunkat(p#q, m_tile, 16777216) => local;")),
+       ("l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile) => shared;",
+        "l1_a = dma.copy lhs.chunkat(p#q, m_tile, 16777216) => shared;")),
     _m("M3.14.cv1.linearcopy", "M3", 14, "dim-mismatch", "conv2d",
        _C1,
        "same absent CheckDimSize cell reached through the im2col linear copy: "
        "the K-tile index is a 2^24 stride into a tensor whose K extent is 512",
-       ("l1_A = dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo)"
-        ".chunkat(kt, q, _).span_as(8, M/#q) => local;",
-        "l1_A = dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo)"
-        ".chunkat(16777216, q, _).span_as(8, M/#q) => local;")),
+        ("dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo)"
+         ".chunkat(kt, q, _).span_as(KT, MT) => l1_A;",
+         "dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo)"
+         ".chunkat(16777216, q, _).span_as(KT, MT) => l1_A;")),
 ]
 
 # ---- M3.15 .pad with a dim >= 2^24 -- the pad path never checks -----------
 # gpu_adapt.hpp:360-450: RankLE5, pad ranges and padding_mid only (defect F2).
 M3 += [
-    _m("M3.15.cv1.pad2p24", "M3", 15, "dim-mismatch", "conv2d",
-       _C1,
-       "shared tile beyond 2^24 elements on the pad path, which never calls "
+    _m("M3.15.cv10.pad2p24", "M3", 15, "dim-mismatch", "conv2d",
+       "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
+       "pad extent beyond 2^24 elements on the pad path, which never calls "
        "CheckDimSize",
-       ("shared f32 [Cout, 8] B_tile;", "shared f32 [Cout, 16777216] B_tile;")),
+       ("il = dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, "
+        "{0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => shared;",
+        "il = dma.pad<{0, 0, padding, padding}, {0, 0, 16777216, padding}, "
+        "{0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => shared;")),
 ]
 
 # ---- M3.16 TMA box inner alignment with a SYMBOLIC leading dim ------------
@@ -1799,8 +1810,8 @@ M3 += [
 # magnitude path. The overrun is bounded (+1 element on one dim) so the padded
 # tile stays the same size class and the mutant never allocates: what moves is
 # the *placement*, which is value-observable through the im2col index map.
-_PAD10 = ("dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, "
-          "{0, 0, 0, 0}, 0.0f> i.chunkat(p#n, _, _, _) => shared;")
+_PAD10 = ("il = dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, "
+          "{0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => shared;")
 M3 += [
     _m("M3.9.cv10.padhigh", "M3", 9, "dim-mismatch", "conv2d",
        "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
@@ -1857,13 +1868,13 @@ M3 += [
        "shared tile extent made runtime-shaped (Cout x 8*H, H = attn_h): the "
        "byte size is not a compile-time constant, so the capacity check stays "
        "silent and the tile is launched far past the device budget",
-       ("shared f32 [Cout, 8] B_tile;",
-        "shared f32 [Cout, 8 * H] B_tile;"), spec_id="M3.27"),
+       ("shared f32 [CT, KT] B_tile;",
+        "shared f32 [Cout, KT * H] B_tile;"), spec_id="M3.27"),
     _m("M3.28.cv1.symlocal", "M3", 28, "dim-mismatch", "conv2d", _C1,
-       "per-thread local tile extent made runtime-shaped (M/#q x Cout*H): the "
+       "per-thread local tile extent made runtime-shaped (MT x CT*H): the "
        "per-thread budget is exceeded in a size the static check cannot fold",
-       ("local f32 [M/#q, Cout] l1_Y{0.0f};",
-        "local f32 [M/#q, Cout * H] l1_Y{0.0f};"), spec_id="M3.28"),
+       ("local f32 [MT, CT] l1_Y{0.0f};",
+        "local f32 [MT, CT * H] l1_Y{0.0f};"), spec_id="M3.28"),
 ]
 
 # M3.27/M3.28 on the other three dynamic categories. Each base case exposes a
@@ -1956,7 +1967,7 @@ M4 += [
        "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
        "with-in mdspan extent mutated to 0: the loop body cannot execute, so "
        "any assessed obligation in it is vacuous",
-       ("with {i, j} in [Hpad/2, Wpad/2]", "with {i, j} in [0, Wpad/2]")),
+       ("foreach {ho, wo} in [Ho, Wo]", "foreach {ho, wo} in [0, Wo]")),
     _m("M4.1.rl1.zeroextent", "M4", 1, "stride", "relu",
        "1_bert_32x512x768_32x512x768",
        "with-in mdspan extent mutated to 0 on the element loop",
@@ -1994,7 +2005,7 @@ M4 += [
        "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
        "parallelby bound mutated to 0: a legal empty iteration space that "
        "still carries the whole body's obligations",
-       ("parallel q by 8  {", "parallel q by 0  {")),
+       ("parallel q by 4  {", "parallel q by 0  {")),
     _m("M4.6.cv1.negative", "M4", 2, "stride", "conv2d",
        _C1, "parallelby bound mutated to negative -- an invalid bound that "
             "must be rejected, unlike the legal-empty M4.2 zero cases",
@@ -2007,7 +2018,8 @@ M4 += [
        "parallelby bound symbolic and zero only at runtime: statically "
        "indistinguishable from a real loop, so only a runtime assessment "
        "can catch it",
-       ("foreach n in [N / #p]", "foreach n in [N - N]")),
+       ("foreach {co, n} in [Cout, N / #p / #q]",
+        "foreach {co, n} in [Cout, N - N]")),
     _m("M4.3.tp1.symzero", "M4", 3, "stride", "transpose",
        "1_bert_32x512x768_32x768x512",
        "symbolic loop bound that vanishes at runtime on the transpose path",
@@ -2024,8 +2036,8 @@ M4 += [
        "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
        "zero stride in the index map: every iteration reads tile 0, so the "
        "write-back overwrites a single tile N times",
-       ("dma.copy l1_Y => Y.chunkat(q#_q, qq);",
-        "dma.copy l1_Y => Y.chunkat(q#_q, qq * 0);")),
+       ("dma.copy Y.span_as(1, 1, Ho, Wo) => o.chunkat(p#q#n, co, _, _);",
+        "dma.copy Y.span_as(1, 1, Ho, Wo) => o.chunkat(p#q#n, co * 0, _, _);")),
 ]
 
 # ---- M4-g degenerate pad (specs §4; M2.12's trigger re-realised on rt-check) ----
@@ -2046,6 +2058,56 @@ M4 += [
        spec_id="M4.7"),
     _m("M4.8.cv14.emptypad", "M4", 8, "stride", "conv2d",
        "14_mobilenet_128x32x112x112_32x32x3x3_128x32x112x112_S_P_D",
+       "padded extent vanishes exactly (W - W): the zero-length half of the "
+       "GSC corner-case trigger, a legal zero-trip loop whose body never runs",
+       ("Wpad = W + 2 * padding;", "Wpad = W - W;"),
+       spec_id="M4.8"),
+]
+
+# M4-g is a pad-surface spec and the suite carried that surface on conv2d alone,
+# which capped the family at the two conv2d realisations above. The pad surface
+# is therefore opened on three more categories here -- a mutation-only host in
+# each (22_pad_extent_32x512x768_32x512x768 in relu, 22_pad_extent_..._32x768x512
+# in transpose, 12_pad_extent_..._768_768 in layer_normalization) that derives
+# the padded extent at run time and uses it as its loop bound. This is the same
+# move that opened dma_rank5 for M3-d/M3-f. padding=0 leaves each host equal to
+# its category's op, so the base oracle stays usable.
+M4 += [
+    _m("M4.7.rl22.negpad", "M4", 7, "stride", "relu",
+       "22_pad_extent_32x512x768_32x512x768",
+       "padded extent computed as 2*padding - H - 1: negative at the case's own "
+       "padding (=0) and H (=512), so the padded relu loop over the extent is "
+       "invalid rather than merely empty",
+       ("Hpad = H + 2 * padding;", "Hpad = 2 * padding - H - 1;"),
+       spec_id="M4.7"),
+    _m("M4.8.rl22.emptypad", "M4", 8, "stride", "relu",
+       "22_pad_extent_32x512x768_32x512x768",
+       "padded extent vanishes exactly (W - W): the zero-length half of the "
+       "GSC corner-case trigger, a legal zero-trip loop whose body never runs",
+       ("Wpad = W + 2 * padding;", "Wpad = W - W;"),
+       spec_id="M4.8"),
+    _m("M4.7.tp22.negpad", "M4", 7, "stride", "transpose",
+       "22_pad_extent_32x512x768_32x768x512",
+       "padded extent computed as 2*padding - H - 1: negative at the case's own "
+       "padding (=0) and H (=512), so the padded transpose loop over the extent "
+       "is invalid rather than merely empty",
+       ("Hpad = H + 2 * padding;", "Hpad = 2 * padding - H - 1;"),
+       spec_id="M4.7"),
+    _m("M4.8.tp22.emptypad", "M4", 8, "stride", "transpose",
+       "22_pad_extent_32x512x768_32x768x512",
+       "padded extent vanishes exactly (W - W): the zero-length half of the "
+       "GSC corner-case trigger, a legal zero-trip loop whose body never runs",
+       ("Wpad = W + 2 * padding;", "Wpad = W - W;"),
+       spec_id="M4.8"),
+    _m("M4.7.ln12.negpad", "M4", 7, "stride", "layer_normalization",
+       "12_pad_extent_32x512x768_768_768",
+       "padded extent computed as 2*padding - H - 1: negative at the case's own "
+       "padding (=0) and H (=64), so the padded affine loop over the extent is "
+       "invalid rather than merely empty",
+       ("Hpad = H + 2 * padding;", "Hpad = 2 * padding - H - 1;"),
+       spec_id="M4.7"),
+    _m("M4.8.ln12.emptypad", "M4", 8, "stride", "layer_normalization",
+       "12_pad_extent_32x512x768_768_768",
        "padded extent vanishes exactly (W - W): the zero-length half of the "
        "GSC corner-case trigger, a legal zero-trip loop whose body never runs",
        ("Wpad = W + 2 * padding;", "Wpad = W - W;"),
@@ -2221,6 +2283,95 @@ M4 += [
        ("out.chunkat(p#i, j, k, l);", "out.chunkat(p#i, j, k, l * 0);")),
 ]
 
+# ---- M4 depth on layer_normalization / softmax ---------------------------
+# M4's minimal set is conv2d / relu / transpose / layer_normalization /
+# softmax, and the generator caps each (family, category) pair at
+# n_realisations = 2. M4-a/b/c already hold 2 in each of conv2d, relu and
+# transpose (depth 6); the reduction kernels carry the same iteration
+# surfaces, so realising each state there lifts the family to 8 without a new
+# operator class. These are the class's cost-filter control: a zero, negative
+# or runtime-zero bound, or a zero step, leaves a legal-or-refused iteration
+# space whose body never runs or whose writes collide, so the expected verdict
+# is entry cost and "not attributed".
+M4 += [
+    _m("M4.1.ln11.zeroextent", "M4", 1, "stride", "layer_normalization",
+       "11_dynamic_32xSx768_768_768",
+       "reduction extent mutated to 0 on the dynamic layer-norm: the body "
+       "cannot execute, so every obligation it carries is vacuous",
+       ("foreach {j, k} in [N0, K]", "foreach {j, k} in [0, K]", 3)),
+    _m("M4.2.ln11.zerobound", "M4", 2, "stride", "layer_normalization",
+       "11_dynamic_32xSx768_768_768",
+       "parallelby bound mutated to 0: a legal empty iteration space that "
+       "still carries the whole body's obligations",
+       ("parallel p by NUM_BLOCK : block {", "parallel p by 0 : block {")),
+    _m("M4.6.ln11.negbound", "M4", 2, "stride", "layer_normalization",
+       "11_dynamic_32xSx768_768_768",
+       "parallelby bound mutated to negative -- an invalid bound that must be "
+       "rejected, unlike the legal-empty zero cases",
+       ("parallel p by NUM_BLOCK : block {",
+        "parallel p by -NUM_BLOCK : block {"), spec_id="M4.6"),
+    _m("M4.6.ln1.negbound", "M4", 2, "stride", "layer_normalization",
+       "1_bert_32x512x768_768_768",
+       "negative parallelby bound on the static layer-norm",
+       ("parallel p by NUM_BLOCK : block {",
+        "parallel p by -NUM_BLOCK : block {"), spec_id="M4.6"),
+    _m("M4.3.ln11.symzero", "M4", 3, "stride", "layer_normalization",
+       "11_dynamic_32xSx768_768_768",
+       "symbolic bound that vanishes only at runtime on the dynamic "
+       "layer-norm, so only a runtime assessment can catch it",
+       ("foreach n in [I / #p]", "foreach n in [I - I]")),
+    _m("M4.3.ln1.symzero", "M4", 3, "stride", "layer_normalization",
+       "1_bert_32x512x768_768_768",
+       "symbolic loop bound that vanishes at runtime on the static layer-norm",
+       ("foreach n in [I / #p]", "foreach n in [I - I]")),
+    _m("M4.5.sm11.zerostep", "M4", 5, "stride", "softmax",
+       "11_dynamic_32xSx768_32xSx768",
+       "write-back chunk index multiplied by 0: every iteration writes the "
+       "same column block, so the store collapses onto one tile",
+       ("output.chunkat(i, p#q, _)", "output.chunkat(i, 0, _)")),
+    _m("M4.5.sm1.zerostep", "M4", 5, "stride", "softmax",
+       "1_bert_32x512x768_32x512x768",
+       "write-back chunk index multiplied by 0 on the static softmax",
+       ("output.chunkat(i, p#q, _)", "output.chunkat(i, 0, _)")),
+]
+
+# ---- M4-e reversed loop bound on the reduction / conv surfaces -----------
+# M1.7's defect is the same "upper < lower" reversal wherever a loop extent
+# pair can be transposed. relu and transpose already realise it once each
+# (depth 2); layer_normalization and conv2d bring the family to the four
+# categories the budget N=8 needs, and top relu/transpose up to their cap.
+M4 += [
+    _m("M1.7.ln11.revbound", "M4", 7, "stride", "layer_normalization",
+       "11_dynamic_32xSx768_768_768",
+       "reversed reduction extent: the inner dimension takes the outer's "
+       "bound, so every element tile overruns instead of the tail being empty",
+       ("foreach {j, k} in [N0, K]", "foreach {j, k} in [K, N0]", 3)),
+    _m("M1.7.ln1.revbound", "M4", 7, "stride", "layer_normalization",
+       "1_bert_32x512x768_768_768",
+       "reversed reduction extent on the static layer-norm",
+       ("foreach {j, k} in [J, K]", "foreach {j, k} in [K, J]", 3)),
+    _m("M1.7.cv3.revbound", "M4", 7, "stride", "conv2d",
+       "3_dynamic_16x256xHxW_256x256x3x3_16x256xHxW_S_P_D",
+       "reversed output-tile extent: height and width bounds exchanged, so "
+       "the tile walk steps off the output plane",
+       ("foreach {ho, wo} in [Ho, Wo]", "foreach {ho, wo} in [Wo, Ho]")),
+    _m("M1.7.cv4.revbound", "M4", 7, "stride", "conv2d",
+       "4_dynamic_32x128xHxW_256x128x3x3_32x256xHxW_S_P_D",
+       "reversed output-tile extent on a second dynamic conv case",
+       ("foreach {ho, wo} in [Ho, Wo]", "foreach {ho, wo} in [Wo, Ho]")),
+    _m("M1.7.tp1.revbound", "M4", 7, "stride", "transpose",
+       "1_bert_32x512x768_32x768x512",
+       "reversed loop extent: the store tile takes the sequence bound and the "
+       "load tile the tile count, so the two walks disagree",
+       ("foreach {y, z} in [512, 12]", "foreach {y, z} in [12, 512]")),
+    _m("M1.7.rl2.revbound", "M4", 7, "stride", "relu",
+       "2_cnn_128x128x28x28_128x128x28x28",
+       "reversed loop extent: the innermost bound moves to the outermost "
+       "position, so the element walk overruns",
+       ("foreach {i, j, k, l} in [I / #p, J, K, 7]",
+        "foreach {i, j, k, l} in [7, J, K, I / #p]")),
+]
+
 # ---- M2.15 pad_low <-> pad_high swapped (length preserved) ---------------
 # The check at semacheck.cpp:1076-1100 SUMs the pad fields, so it is blind to
 # placement. Exchanging pad_low and pad_high per axis leaves the total (and
@@ -2228,19 +2379,19 @@ M4 += [
 M2 += [
     _m("M2.15.cv10.padswap", "M2", 15, "wrong-shape", "conv2d",
        "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
-       "pad_low and pad_high swapped per axis: the padded length is unchanged, "
-       "so the sum-based check cannot see it, but every element moves",
-       ("dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, "
-        "{0, 0, 0, 0}, 0.0f> i.chunkat(p#n, _, _, _) => shared;",
-        "dma.pad<{0, padding, padding, 0}, {0, padding, padding, 0}, "
-        "{0, 0, 0, 0}, 0.0f> i.chunkat(p#n, _, _, _) => shared;")),
+        "pad_low and pad_high swapped per axis: the padded length is unchanged, "
+        "so the sum-based check cannot see it, but every element moves",
+        ("dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, "
+         "{0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => shared;",
+         "dma.pad<{0, padding, padding, 0}, {0, padding, padding, 0}, "
+         "{0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => shared;")),
     _m("M2.15.cv4.padswap", "M2", 15, "wrong-shape", "conv2d",
        "4_dynamic_32x128xHxW_256x128x3x3_32x256xHxW_S_P_D",
        "pad_low and pad_high swapped on the per-thread padded tile",
        ("dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, "
-        "{0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => local;",
+        "{0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => shared;",
         "dma.pad<{0, padding, padding, 0}, {0, padding, padding, 0}, "
-        "{0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => local;")),
+        "{0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => shared;")),
 ]
 
 # ---- M2.21 MSB broadcast extent neither 1 nor equal ----------------------
@@ -2274,6 +2425,78 @@ M3 += [
        "obligation -- exercises the observation channel and is excluded from "
        "every admissible denominator",
        ("parallel p by 2  {", "parallel p by 3  {"), spec_id="M3.20"),
+]
+
+# ---- M1-b extra realisation cells: stride scaling on matmul / softmax ------
+# M1.8 is realised on relu/transpose/layer_normalization; the stride defect is
+# the same "a tile coordinate advances by 2" wherever a tiled chunkat walk
+# exists, so the operand walks of matmul and softmax add the two categories the
+# budget needs without a new kernel.
+M1 += [
+    _m("M1.8.mm11.stride2", "M1", 8, "stride", "matmul",
+       "11_dynamic_32xSx768_768x768_32xSx768",
+       "stride scaling on the left-operand tile walk: the reduction-tile "
+       "coordinate advances by 2, skipping every other k-tile and stepping "
+       "past the operand",
+       ("lhs.chunkat(p#q, m_tile, k_tile)",
+        "lhs.chunkat(p#q, m_tile, k_tile * 2)")),
+    _m("M1.8.sm15.stride2", "M1", 8, "stride", "softmax",
+       "15_gpt_16x1024x4096_16x1024x4096",
+       "stride scaling on the staged load: the row-tile coordinate advances "
+       "by 2, so the walk skips tiles and overruns the input",
+       ("input.chunkat(i, p#q, _)", "input.chunkat(i, p#q * 2, _)")),
+]
+
+# ---- M1-d extra realisation cells: broadcast index reuse on gelu/sigmoid --
+# M1.12 is the reduction/flat index agreeing with a dimension it does not
+# belong to. gelu and sigmoid are structurally the relu tile walk (a [1,1,64]
+# shared tile with `parallel q by 64`), so the reuse is the same substitution:
+# the flat thread index q is written into the singleton staging dimension,
+# reading past the tile's middle axis.
+M1 += [
+    _m("M1.12.gel1.idxreuse", "M1", 12, "stride", "gelu",
+       "1_bert_32x512x768",
+       "wrong loop variable for a dimension: the flat element index q is "
+       "reused for the singleton staging axis, so the read steps off the tile",
+       ("v = is.at(0, 0, q);", "v = is.at(0, q, q);")),
+    _m("M1.12.gel11.idxreuse", "M1", 12, "stride", "gelu",
+       "11_dynamic_32xSx768",
+       "broadcast index reuse on the dynamic gelu tile",
+       ("v = is.at(0, 0, q);", "v = is.at(0, q, q);")),
+    _m("M1.12.sg1.idxreuse", "M1", 12, "stride", "sigmoid",
+       "1_bert_32x512x768",
+       "wrong loop variable for a dimension on the sigmoid staging tile",
+       ("v = lhs_s.at(0, 0, q);", "v = lhs_s.at(0, q, q);")),
+    _m("M1.12.sg11.idxreuse", "M1", 12, "stride", "sigmoid",
+       "11_dynamic_32xSx768",
+       "broadcast index reuse on the dynamic sigmoid tile",
+       ("v = lhs_s.at(0, 0, q);", "v = lhs_s.at(0, q, q);")),
+]
+
+# ---- M1-h extra realisation cells: read-after-write aliasing --------------
+# (The gelu/sigmoid 3-D-tile shrink was prototyped and DROPPED: unlike the
+# 4-D relu tile and the transpose tile, the shrink is not caught by the site
+# assessment, so the mutated kernel does not fail fast -- it spins until the
+# harness 900 s execution timeout, burning a GPU slot per arm. A hang is not a
+# usable finding, so these four cells are intentionally not authored.)
+
+# ---- M2-d extra realisation cells: broadcast extent set to 1 --------------
+# M2.8 is realised on layer_normalization; batch_norm carries the same
+# secondary-operand shape, a rank-1 per-channel affine pair, so the same
+# "declare the extent as 1" edit materialises the broadcast drop on a fresh
+# category.
+M2 += [
+    _m("M2.8.bn11.gamma1", "M2", 8, "dim-mismatch", "batch_norm",
+       "11_dynamic_32xSx768_768_768_32xSx768",
+       "broadcast extent set to 1 instead of E on the per-channel scale: the "
+       "declared extent becomes a singleton while the caller still supplies E",
+       ("f32 [E] gamma, f32 [E] beta",
+        "f32 [1] gamma, f32 [E] beta")),
+    _m("M2.8.bn11.beta1", "M2", 8, "dim-mismatch", "batch_norm",
+       "11_dynamic_32xSx768_768_768_32xSx768",
+       "broadcast extent set to 1 instead of E on the per-channel bias",
+       ("f32 [E] gamma, f32 [E] beta",
+        "f32 [E] gamma, f32 [1] beta")),
 ]
 
 # ---------------------------------------------------------------------------

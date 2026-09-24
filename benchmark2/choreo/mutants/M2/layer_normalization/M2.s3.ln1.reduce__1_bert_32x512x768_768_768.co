@@ -18,7 +18,7 @@ __co__ auto layer_norm(f32 [I, J, K] lhs, f32 [K] scale, f32 [K] bias) {
       s_mean.at(0) = 0.0f;
       foreach {j, k} in [J, K]
         s_mean.at(0) = s_mean.at(0) + lhs.at(p#n, j, k);
-      s_mean.at(0) = s_mean.at(0) / (lhs.span(1) * lhs.span(2) - 1);
+      s_mean.at(0) = s_mean.at(0) / (lhs.span(1) * lhs.span(2) / 2);
       shared f32 [1] s_var;
       s_var.at(0) = 0.0f;
       foreach {j, k} in [J, K] {

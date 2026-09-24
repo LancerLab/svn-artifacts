@@ -386,7 +386,8 @@ def s1_s2(mutants, present):
     # raw/never_attribution.json (analyze_never.py). stats.py reads only the
     # register, so the criterion is evaluable from committed data alone.
     never_rows = [m for m in mutants
-                  if m.get("outcome") == "never" and m.get("manifest") != "noop"]
+                  if m.get("outcome") == "never"
+                  and m.get("manifest") not in ("noop", "undecidable")]
     if never_rows:
         causes = collections.Counter(r.get("never_cause") for r in never_rows)
         unattributed = sorted(r.get("mutant_id") for r in never_rows
@@ -2118,9 +2119,10 @@ def s14_path_class(mutants, specs, obligations, present):
 
         # The DETECTION half: measured only at the two recorded arms.
         entry_det = sum(1 for m in mutants
-                        if m.get("manifest") != "noop"
+                        if m.get("manifest") not in ("noop", "undecidable")
                         and m.get("outcome") in ("compile", "runtime"))
-        n_inj = sum(1 for m in mutants if m.get("manifest") != "noop")
+        n_inj = sum(1 for m in mutants
+                    if m.get("manifest") not in ("noop", "undecidable"))
         rtc["n_detected"] = {"entry": entry_det, "low": None, "medium": None,
                              "high": None}
         rtc["n_detected_note"] = (
@@ -2267,7 +2269,8 @@ def _read_rtc_all_arm():
     except (ValueError, OSError):
         return None
     recs = d.get("records") or []
-    inj = [r for r in recs if r.get("manifest") != "noop"]
+    inj = [r for r in recs
+           if r.get("manifest") not in ("noop", "undecidable")]
     det = [r for r in inj if r.get("outcome") in ("compile", "runtime")]
     return {
         "source": os.path.relpath(p, B2),

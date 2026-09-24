@@ -15,8 +15,8 @@ __co__ auto matmul11(f32 [32, S, 768] lhs, f32 [768, 768] rhs) {
       foreach m_tile, n_tile {
         shared f32[output.span(0)/#p/#q, output.span(1)/#m_tile, output.span(2)/#n_tile] l1_out {0.0f};
         foreach k_tile {
-          l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile) => shared;
-          l1_b = dma.transp<1,0> rhs.chunkat(n_tile, k_tile) => shared;
+          l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile * 2) => shared;
+          l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => shared;
           foreach {i} in [l1_out.span(0)] {
             call k_matmul(l1_a.chunkat(i,_,_), l1_b.data, l1_out, l1_a.span(1), l1_b.span(0), l1_a.span(2));
           }

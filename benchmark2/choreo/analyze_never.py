@@ -954,6 +954,7 @@ def main():
     only = {x.strip() for x in a.only.split(",") if x.strip()}
     targets = [r for r in rows
                if r.get("outcome") == "never"
+               and r.get("manifest") != "undecidable"
                and (a.include_noop or r.get("manifest") == "corrupts")
                and (not only or r.get("mutant_id") in only)]
 
