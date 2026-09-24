@@ -26,7 +26,7 @@
   "expressibility": 0,
   "kernel": 310,
   "latency": 32,
-  "mutant": 225,
+  "mutant": 232,
   "obligation": 17353,
   "remainder": 0,
   "residue": 28,
@@ -50,11 +50,11 @@
   "feeds": "E1 detection matrix (\u00a75.2 \u00b62; replaces tab:rq2-bugs)",
   "per_class": {
    "M1": {
-    "n_compile": 42,
-    "n_injected": 57,
+    "n_compile": 49,
+    "n_injected": 64,
     "n_never": 9,
     "n_runtime": 6,
-    "stage_compile": 42,
+    "stage_compile": 49,
     "stage_runtime": 15,
     "n_n/a": 0
    },
@@ -90,14 +90,14 @@
    }
   },
   "totals": {
-   "n_compile": 144,
+   "n_compile": 151,
    "n_discarded_noop": 4,
-   "n_injected": 217,
+   "n_injected": 224,
    "n_n/a": 0,
    "n_never": 36,
    "n_runtime": 37,
    "n_undecidable": 4,
-   "stage_compile": 144,
+   "stage_compile": 151,
    "stage_runtime": 73
   },
   "undecidable_manifest_mutants": [
@@ -129,20 +129,20 @@
  "S2_before_device": {
   "status": "ok",
   "feeds": "E1 detection matrix (\u00a75.2 \u00b62) \u2014 the \"210/210\" headline is DROPPED (R-D2); criterion is now \"no unattributed never\"",
-  "n_injected": 217,
-  "n_before_device": 181,
-  "n_compile": 144,
+  "n_injected": 224,
+  "n_before_device": 188,
+  "n_compile": 151,
   "n_runtime": 37,
   "n_never": 36,
   "n_na": 0,
   "n_discarded_noop": 4,
   "n_undecidable": 4,
   "undecidable_means": "the unmutated base fails its own reference check, so no manifest verdict exists for this cell. Excluded from n_injected like a noop, but NOT evidence that the mutation does not corrupt output -- it is unmeasured. Never add it to n_discarded_noop: that would report a measurement failure as a clean negative.",
-  "pct_before_device": 83.4101,
+  "pct_before_device": 83.9286,
   "never_is_zero": false,
   "never_is_zero_status": "RETIRED (R-D2, 2026-09-10) \u2014 a non-zero `never` is no longer a failure; an UNATTRIBUTED one is. Do not report this as pass/fail.",
   "per_class_before_device": {
-   "M1": 48,
+   "M1": 55,
    "M2": 51,
    "M3": 39,
    "M4": 43
@@ -150,9 +150,9 @@
   "control_classes": [
    "M4"
   ],
-  "n_injected_excluding_control": 164,
-  "n_before_device_excluding_control": 138,
-  "pct_before_device_excluding_control": 84.1463,
+  "n_injected_excluding_control": 171,
+  "n_before_device_excluding_control": 145,
+  "pct_before_device_excluding_control": 84.7953,
   "settings_hash": [
    "1f5436bfab1f",
    "28fee96c8330",
@@ -191,7 +191,7 @@
    "n_toolchain_or_config": 14,
    "flag_matrix_ablation": {
     "status": "R-D2b \u2014 report as sensitivity, pinned default is the headline",
-    "at_pinned_default": "181/217 = 83.4101%",
+    "at_pinned_default": "188/224 = 83.9286%",
     "with_rtc_all_and_hoist_disabled": "43/72 = 59.72%",
     "recovered_by_flags": 8,
     "source": "raw/c2_probe_groundtruth.json (s2_implication)"
@@ -2254,13 +2254,13 @@
     "n_undecidable": 4
    },
    "unchecked": {
-    "n_admissible": 16,
-    "n_cells": 16,
-    "n_compile": 11,
-    "n_detected": 15,
-    "n_detected_admissible": 15,
-    "n_detected_pct": 93.75,
-    "n_injected": 16,
+    "n_admissible": 23,
+    "n_cells": 23,
+    "n_compile": 18,
+    "n_detected": 22,
+    "n_detected_admissible": 22,
+    "n_detected_pct": 95.6522,
+    "n_injected": 23,
     "n_never": 1,
     "n_never_admissible": 1,
     "n_never_share_of_misses": 100.0,
@@ -2347,12 +2347,12 @@
    },
    "M1.19": {
     "class": "M1",
-    "n_admissible": 1,
-    "n_cells": 1,
-    "n_compile": 1,
-    "n_detected": 1,
-    "n_detected_admissible": 1,
-    "n_injected": 1,
+    "n_admissible": 8,
+    "n_cells": 8,
+    "n_compile": 8,
+    "n_detected": 8,
+    "n_detected_admissible": 8,
+    "n_injected": 8,
     "path_class": "unchecked",
     "prohibition": ""
    },
@@ -2994,17 +2994,17 @@
   },
   "reconciliation": {
    "against": "S1_detection_matrix / S2_before_device",
-   "n_cells": 225,
+   "n_cells": 232,
    "n_cells_non_detection": 0,
-   "n_cells_compared": 225,
-   "n_injected": 217,
+   "n_cells_compared": 232,
+   "n_injected": 224,
    "n_discarded_noop": 4,
    "n_undecidable": 4,
    "n_never": 36,
-   "n_detected_all_paths": 181,
-   "admissible_injected": 202,
-   "admissible_detected": 169,
-   "admissible_pct": 83.6634,
+   "n_detected_all_paths": 188,
+   "admissible_injected": 209,
+   "admissible_detected": 176,
+   "admissible_pct": 84.2105,
    "inadmissible_injected": 15,
    "inadmissible_detected": 12,
    "matches_S1S2": true,
@@ -3012,8 +3012,8 @@
    "n_cells_unaccounted": 0,
    "checks": {
     "n_injected": {
-     "s14": 217,
-     "s1s2": 217
+     "s14": 224,
+     "s1s2": 224
     },
     "n_discarded_noop": {
      "s14": 4,
@@ -3028,8 +3028,8 @@
      "s1s2": 36
     },
     "n_detected_all_paths": {
-     "s14": 181,
-     "s1s2": 181
+     "s14": 188,
+     "s1s2": 188
     }
    }
   },
@@ -3098,14 +3098,14 @@
    "steepest_class": "elem",
    "cost_filter_note": "Enabling every obligation costs 1151/675 = 1.71x the default, and the growth is not uniform: elem goes 58 -> 534 while the other classes are flat. That is the thesis's shape, measured from the ledger.",
    "n_detected": {
-    "entry": 181,
+    "entry": 188,
     "low": null,
     "medium": null,
     "high": null,
     "high (rtc=all arm)": 37
    },
    "n_detected_note": "`enabled` is a ledger property and is exact at every level; `n_detected` needs a full E1 run per level, so only `entry` is measured here. The rtc=all arm exists (see rtc_all_arm) and is reported separately rather than interpolated.",
-   "denominator_us": "181/218 at entry (pinned default)",
+   "denominator_us": "188/225 at entry (pinned default)",
    "rtc_all_arm": {
     "source": "choreo/raw/e1_mutant_records_rtc_all.json",
     "pinned_flags": [

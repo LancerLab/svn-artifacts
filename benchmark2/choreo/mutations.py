@@ -1705,6 +1705,41 @@ M1 += [
        "3_attention_32xNx512x64_64_64",
        "index-carrier overflow on the dynamic-case secondary operand",
        ("f32 [L] bias", "f32 [%s] bias" % _INT32_MAX_EXTENT)),
+    _m("M1.19.smx.carrier", "M1", 19, "oob", "softmax", "smxcarrier",
+       "index-carrier overflow on a declared secondary operand in a staging "
+       "host: an extent in (2^31, 2^32) that a 32-bit signed carrier cannot "
+       "name",
+       ("f32 [K] scale", "f32 [%s] scale" % _INT32_MAX_EXTENT, 1)),
+    _m("M1.19.rl.carrier", "M1", 19, "oob", "relu", "relucarrier",
+       "index-carrier overflow on a declared secondary operand in a staging "
+       "host: an extent in (2^31, 2^32) that a 32-bit signed carrier cannot "
+       "name",
+       ("f32 [K] scale", "f32 [%s] scale" % _INT32_MAX_EXTENT, 1)),
+    _m("M1.19.tp.carrier", "M1", 19, "oob", "transpose", "tpcarrier",
+       "index-carrier overflow on a declared secondary operand in a staging "
+       "host: an extent in (2^31, 2^32) that a 32-bit signed carrier cannot "
+       "name",
+       ("f32 [K] scale", "f32 [%s] scale" % _INT32_MAX_EXTENT, 1)),
+    _m("M1.19.gl.carrier", "M1", 19, "oob", "gelu", "gelucarrier",
+       "index-carrier overflow on a declared secondary operand in a staging "
+       "host: an extent in (2^31, 2^32) that a 32-bit signed carrier cannot "
+       "name",
+       ("f32 [K] scale", "f32 [%s] scale" % _INT32_MAX_EXTENT, 1)),
+    _m("M1.19.sg.carrier", "M1", 19, "oob", "sigmoid", "sigcarrier",
+       "index-carrier overflow on a declared secondary operand in a staging "
+       "host: an extent in (2^31, 2^32) that a 32-bit signed carrier cannot "
+       "name",
+       ("f32 [K] scale", "f32 [%s] scale" % _INT32_MAX_EXTENT, 1)),
+    _m("M1.19.bn.carrier", "M1", 19, "oob", "batch_norm", "bncarrier",
+       "index-carrier overflow on a declared secondary operand in a staging "
+       "host: an extent in (2^31, 2^32) that a 32-bit signed carrier cannot "
+       "name",
+       ("f32 [K] scale", "f32 [%s] scale" % _INT32_MAX_EXTENT, 1)),
+    _m("M1.19.mp.carrier", "M1", 19, "oob", "max_pool2d", "mpcarrier",
+       "index-carrier overflow on a declared secondary operand in a staging "
+       "host: an extent in (2^31, 2^32) that a 32-bit signed carrier cannot "
+       "name",
+       ("f32 [K] scale", "f32 [%s] scale" % _INT32_MAX_EXTENT, 1)),
 ]
 
 # ---- M1.20 view / subspan offset, stride, rank arity (StaticFail-only) ----
