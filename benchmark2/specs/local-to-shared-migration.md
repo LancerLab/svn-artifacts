@@ -70,6 +70,40 @@ factor rather than reaching for the local cap.
 
 ### W1b — Redesign the six shared-over-capacity bases
 
+**Status: DONE (2026-09-24, owner lane)** — all six bases compile under the
+pinned-cap invocation with zero SHARED OUT OF BOUND and pass `basecheck
+--check` on BOTH arms (oracle and rtc-all, detector silent).
+
+- matmul/17, matmul/19: k_tile `[32,32,1]/[32,512,1]` → `[32,32,32]`
+  (chunked shared tiles à la matmul/1) + `l1_out` local→shared; both compile
+  clean at DEFAULT flags (no local-cap entry needed).
+- softmax/2, softmax/19, softmax/20: per-thread staging relabelled
+  shared→local (semantically private data — the shared label was the
+  2026-06-15 authoring bug). Exact LOCAL footprints recorded in
+  `raw/local_cap.json` (50176 / 65536 / 24576 B).
+- conv2d/19: full rewrite as cooperative streaming GEMM (à la conv2d/20):
+  K streamed in 48 chunks of KT=Kw=16 (chunk (c,kh) = flat-k slice
+  [c*Kh*Kw+kh*Kw, +16), contiguous in both operands), [14,CT] output tile in
+  local (896 B), ~13.6 KB shared/block. Compile-clean at the pinned cap;
+  default fails LOCAL only (entry in local_cap.json).
+
+Two latent miscompilations found and worked around in the conv2d/19 rewrite
+(both pre-date this spec; the kernel never ran on any host, so they were
+invisible): (1) `span_as` merging NON-contiguous dims (e.g.
+`span_as(1, K)` over a strided (Cin,Kh,Kw) patch) silently lowers to a
+contiguous stride-1 view — wrong data, no diagnostic; (2) same root cause
+on the output path (`o.chunkat(...).span_as(CT, 14)` over a stride-196 view
+lowered to stride 14). Rule going forward: span_as may only merge
+contiguous or extent-1 dims; write output chunks via 4-D transp into the
+natural chunkat view (idiom proven in conv2d/14, conv2d/16). Worth a
+compiler-side check — candidate ledger obligation, flag to the compiler
+owner. Also observed: cooperative tiled_copy pads the copy tile to the
+thread grid (e.g. (16,32) over a (7,2) grid lowers as (21,32)), scribbling
+past the declared shared buffer into dead space — benign here, worth a
+checker look.
+
+Original W1b text:
+
 The six Class-S bases above are NOT relabel jobs: their shared allocations
 exceed the hardware, so the fix is a shared-memory tiling redesign —
 chunked/block-streamed tiles in the style of the in-flight conv2d/20 edit

@@ -5,6 +5,9 @@
 #define padding 0
 #define dilation 1
 
+#define CT 16
+#define KT 16
+
 __co__ auto CONV2D(f32 [32, 3, 224, 224] i, f32 [768, 3, 16, 16] w) {
   N = i.span(0);
   Cin = i.span(1);
@@ -23,23 +26,39 @@ __co__ auto CONV2D(f32 [32, 3, 224, 224] i, f32 [768, 3, 16, 16] w) {
   M = Ho * Wo;
   K = Cin * Kh * Kw;
 
+  // Cooperative shared-memory GEMM (patchify path, stride = Kh = 16):
+  //   - K = Cin*Kh*Kw = 768 does not fit in shared whole: the previous
+  //     A[14,768] + B[16,768] staging replicated per q-thread ran to 636 KB
+  //     per block.  K is streamed global->shared in 48 chunks of KT = Kw = 16
+  //     instead, and each thread accumulates its [14, CT] output tile in local.
+  //   - K-chunk (c, kh) is the flat-k slice [c*Kh*Kw + kh*Kw, +16): contiguous
+  //     in BOTH operands (one row of the w view, one image row of the patch),
+  //     so no dma view needs to merge strided dims (span_as only ever merges
+  //     contiguous or extent-1 dims).
+  //   - The inner product is indexed (`.at`), so the streamed shared tiles
+  //     keep their strided layouts; a raw-pointer dot would read the wrong
+  //     elements.
   parallel p by 2  {
     foreach n in [N / #p] {
       parallel q by 14  {
         foreach {cot} in [48] {
-          shared f32 [14, 768] A;
-          shared f32 [16, 768] B_tile;
-          dma.copy w.span_as(Cout, K).chunkat(cot, _) => B_tile;
-          with {x, y} in [Ho/14, Wo] {
-            foreach x, y {
-              dma.copy i.chunkat(p#n, _, (q#x)*16, y*16).span_as(1, Cin, Kh, Kw).span_as(1, K) => A.subspan(1, _).at(x*Wo + y, 0).span_as(1, K);
+          local f32 [14, CT] l1_Y{0.0f};
+          shared f32 [14, KT] A_tile;
+          shared f32 [CT, KT] B_tile;
+          foreach {cc, hh} in [Cin, Kh] {
+            dma.copy w.span_as(Cout, K).chunkat(cot, cc#hh) => B_tile;
+            with {x, y} in [Ho/14, Wo] {
+              foreach x, y {
+                dma.copy i.chunkat(p#n, _, q#x, y).chunkat(_, cc, hh, _).span_as(1, Kw) => A_tile.chunkat(y, _);
+              }
+            }
+            foreach {m, co} in [14, CT] {
+              foreach kk in [KT] {
+                l1_Y.at(m, co) += A_tile.at(m, kk) * B_tile.at(co, kk);
+              }
             }
           }
-          l1_A = dma.copy A => local;
-          l1_B = dma.copy B_tile => local;
-          local f32 [14, 16] l1_Y{0.0f};
-          call k_matmul(l1_A.data, l1_B.data, l1_Y, 14, 16, K);
-          dma.transp<1, 0> l1_Y => o.chunkat(p#n, cot, q, _).span_as(16, 14);
+            dma.transp<0, 3, 2, 1> l1_Y.span_as(1, 14, 1, CT) => o.chunkat(p#n, cot, q, _);
         }
       }
     }

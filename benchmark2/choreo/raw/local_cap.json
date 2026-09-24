@@ -1,0 +1,19 @@
+{
+  "schema": "kernel_id -> {cap_bytes, reason}; applied by the harness as a per-kernel --max-local-mem-capacity override in place of the lane-wide 2000000 (spec: local-to-shared-migration W2). cap_bytes = exact compile-time LOCAL usage measured with the ae9c1fda binary on 2026-09-24; a kernel exceeding its own entry fails compile again, by design.",
+  "softmax/2_cnn_128x128x28x28_128x128x28x28": {
+    "cap_bytes": 50176,
+    "reason": "per-thread softmax staging: [1,128,7,7] input tile + same-shape exp/normalize buffer, 2x25088 B; semantically private data, intentionally local (shared staging was the 2026-06-15 authoring bug; relabelled in the W1b fix)"
+  },
+  "softmax/19_transformer_32x512x2048_32x512x2048": {
+    "cap_bytes": 65536,
+    "reason": "per-thread softmax staging: [1,4,2048] row block + same-shape out buffer, 2x32768 B; rows must stay whole for the max/sum reduction, intentionally local (W1b relabel)"
+  },
+  "softmax/20_vit_32x197x3072_32x197x3072": {
+    "cap_bytes": 24576,
+    "reason": "per-thread softmax staging: [1,1,3072] single row + out buffer, 2x12288 B; whole-row reduction, intentionally local (W1b relabel)"
+  },
+  "conv2d/19_vit_32x3x224x224_768x3x16x16_32x768x14x14_16_0_1": {
+    "cap_bytes": 896,
+    "reason": "per-thread [14,16] output accumulator of the cooperative streaming-GEMM rewrite (W1b); the only local buffer left, 896 B"
+  }
+}
