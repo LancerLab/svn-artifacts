@@ -1,0 +1,40 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+
+__co__ auto bnr5at(f32 [2,4,8,16,32] input) {
+  f32 [2,4,8,16,32] output;
+  parallel p by 1 : block
+    parallel q by 32 : thread {
+      foreach {a,b,c,d,e} in [2,4,8,16,32]
+        output.at(a,b,c,d,e) = input.at(a + 1,b,c,d,e) * 2.0f;
+    }
+  return output;
+}
+
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(2,4,8,16,32);
+  a.fill_random(-1.0, 1.0);
+
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto r  = bnr5at(a.view());
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+  for (size_t i = 0; i < r.shape()[0]; ++i)
+    for (size_t j = 0; j < r.shape()[1]; ++j)
+      for (size_t k = 0; k < r.shape()[2]; ++k)
+        for (size_t l = 0; l < r.shape()[3]; ++l)
+          for (size_t m = 0; m < r.shape()[4]; ++m) {
+            float ref = a[i][j][k][l][m] * 2.0f;
+            if (ref != r[i][j][k][l][m]) {
+              std::cout << "bnr5at(" << a[i][j][k][l][m] << ") != "
+                        << r[i][j][k][l][m] << "\n";
+              choreo::choreo_assert(false, "values are not equal.");
+            }
+          }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " microseconds\n";
+  return 0;
+}

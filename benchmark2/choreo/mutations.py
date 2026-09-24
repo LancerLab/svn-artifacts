@@ -1038,6 +1038,30 @@ M1 = [
        "off-by-one on the 5th (last) index of a rank-5 element access: "
        "input.at(a,b,c,d,e + 1) is OOB at e == 31",
        ("input.at(a,b,c,d,e)", "input.at(a,b,c,d,e + 1)")),
+    _m("M1.17.ln.at5", "M1", 17, "oob", "layer_normalization", "lnr5at",
+       "off-by-one on the 5th (last) index of a rank-5 element access in a "
+       "staging host: input.at(a,b,c,d,e + 1) is OOB at e == 31",
+       ("input.at(a,b,c,d,e)", "input.at(a,b,c,d,e + 1)")),
+    _m("M1.17.ln.at1", "M1", 17, "oob", "layer_normalization", "lnr5at",
+       "off-by-one on the 1st index of a rank-5 element access in a staging "
+       "host: input.at(a + 1,b,c,d,e) is OOB at a == 1",
+       ("input.at(a,b,c,d,e)", "input.at(a + 1,b,c,d,e)")),
+    _m("M1.17.bn.at5", "M1", 17, "oob", "batch_norm", "bnr5at",
+       "off-by-one on the 5th (last) index of a rank-5 element access in a "
+       "staging host: input.at(a,b,c,d,e + 1) is OOB at e == 31",
+       ("input.at(a,b,c,d,e)", "input.at(a,b,c,d,e + 1)")),
+    _m("M1.17.bn.at1", "M1", 17, "oob", "batch_norm", "bnr5at",
+       "off-by-one on the 1st index of a rank-5 element access in a staging "
+       "host: input.at(a + 1,b,c,d,e) is OOB at a == 1",
+       ("input.at(a,b,c,d,e)", "input.at(a + 1,b,c,d,e)")),
+    _m("M1.17.mp.at5", "M1", 17, "oob", "max_pool2d", "mpr5at",
+       "off-by-one on the 5th (last) index of a rank-5 element access in a "
+       "staging host: input.at(a,b,c,d,e + 1) is OOB at e == 31",
+       ("input.at(a,b,c,d,e)", "input.at(a,b,c,d,e + 1)")),
+    _m("M1.17.mp.at1", "M1", 17, "oob", "max_pool2d", "mpr5at",
+       "off-by-one on the 1st index of a rank-5 element access in a staging "
+       "host: input.at(a + 1,b,c,d,e) is OOB at a == 1",
+       ("input.at(a,b,c,d,e)", "input.at(a + 1,b,c,d,e)")),
 ]
 
 # ===========================================================================
