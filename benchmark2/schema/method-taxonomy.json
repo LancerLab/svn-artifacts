@@ -325,7 +325,8 @@
       "spec_ids": [
         "M3.3",
         "M3.5",
-        "M3.13"
+        "M3.13",
+        "M3.29"
       ]
     },
     "M3-d": {
@@ -552,16 +553,7 @@
   },
   "known_debt": {
     "note": "Coverage debt that is REAL and TRACKED. `method_taxonomy --check` reports these as DEBT (exit 0) instead of FAIL (exit 1), so the checker is usable as a gate before the debt is paid. The discipline is the same as the `mutants.no-duplicate-injection` ledger: a finding that is NOT listed here is a FAIL (new debt, never seen before); a finding that IS listed but no longer holds is also a FAIL (stale entry). Nothing can be silently added to or removed from this list. Keys are the exact machine keys the checker emits: `<family>:<finding>`.",
-    "items": {
-      "M3-c:no admissible declaration": {
-        "finding": "no admissible declaration",
-        "observed": "R_f=0 after M3.16 was re-homed to M3-e; the remaining spec_ids M3.3/M3.5/M3.13 all carry prohibition `absent`",
-        "why_real": "every remaining spec_id in M3-c carries the prohibition `absent`: the box/swizzle surface is not source-expressible, so no obligation assesses it and no operator could witness anything. M3.16 was the family's only admissible member and it is a box-ALIGNMENT defect (F3, `gpu_adapt.hpp:640`), so it belongs with M3-e's inner-box alignment, not here. The debt moved with it; it was not paid.",
-        "must_not_print_as": "a family with no operators and therefore merely unwritten",
-        "fix": "W1: give the model a prohibition for the swizzle/byte-box relation, rather than adding more operators of the kind that already exist and already cannot be assessed.",
-        "clears_when": "M3-c gains an admissible spec_id"
-      }
-    }
+    "items": {}
   },
   "measured_depth": {
     "note": "Two orthogonal depths per family, both measured against the registry. R_f is how many realisations exist; R_a is how many of those can serve as a TEST. A family with R_f > 0 and R_a == 0 has operators but no admissible test -- a sharper statement than R_f == 0 and invisible if only R_f is printed.",
@@ -569,7 +561,7 @@
     "R_a_definition": "spec_ids in the family with status `implemented` AND admissible is true AND path is not `avoided`",
     "findings": {
       "M3-e": "R_f 2, R_a 1 after M3.16 was re-homed from M3-c. M3.16 `TMA box inner alignment with a SYMBOLIC leading dim` is `unchecked` and admissible, so it is the family's one test; M3.6/M3.7/M3.11 remain `absent`. M3.16 is a box-alignment defect (F3, `gpu_adapt.hpp:640`), which is why it belongs here rather than in M3-c.",
-      "M3-c": "R_f 0, R_a 0. M3.16, the family's only admissible member, was re-homed to M3-e; the remaining M3.3/M3.5/M3.13 are all `absent`, so the family now has a declaration but no admissible member and no operator. The `no admissible declaration` debt followed it here.",
+      "M3-c": "R_f 1, R_a 1. M3.29 (ct-check, the arch-independent swizzle-width ladder on `dma_rank5`/r5swiz) is an admissible member, so the family's `no admissible declaration` debt is paid and its entry removed. M3.3/M3.5/M3.13 remain `absent`: their runtime box<->swizzle relation needs group-4, which the sm_86 runner refuses, and a swizzled write read back linearly is a noop there. The family is real but still far short of N -- the ladder is a single ct-check cell.",
       "M4-d": "R_f 1, R_a 0 by design -- it is the declared noop control, so its instances must be inadmissible for the admissible floor to mean anything.",
       "M3-h": "R_f 2, R_a 2 after the rt-check re-realisations M3.27/M3.28. The declared M3.12 is still `avoided` (compile-time capacity is refused), but a runtime-shaped extent escapes the static check, which is exactly the channel M3-h is about. Before this the family read as unrealisable as declared rather than merely unwritten."
     }

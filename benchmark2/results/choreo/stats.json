@@ -26,7 +26,7 @@
   "expressibility": 0,
   "kernel": 310,
   "latency": 32,
-  "mutant": 204,
+  "mutant": 205,
   "obligation": 17353,
   "remainder": 0,
   "residue": 28,
@@ -68,13 +68,13 @@
     "n_n/a": 0
    },
    "M3": {
-    "n_compile": 11,
+    "n_compile": 12,
     "n_discarded_noop": 4,
-    "n_injected": 28,
+    "n_injected": 29,
     "n_never": 4,
     "n_runtime": 13,
     "n_undecidable": 1,
-    "stage_compile": 11,
+    "stage_compile": 12,
     "stage_runtime": 17,
     "n_n/a": 0
    },
@@ -90,14 +90,14 @@
    }
   },
   "totals": {
-   "n_compile": 123,
+   "n_compile": 124,
    "n_discarded_noop": 4,
-   "n_injected": 196,
+   "n_injected": 197,
    "n_n/a": 0,
    "n_never": 36,
    "n_runtime": 37,
    "n_undecidable": 4,
-   "stage_compile": 123,
+   "stage_compile": 124,
    "stage_runtime": 73
   },
   "undecidable_manifest_mutants": [
@@ -129,30 +129,30 @@
  "S2_before_device": {
   "status": "ok",
   "feeds": "E1 detection matrix (\u00a75.2 \u00b62) \u2014 the \"210/210\" headline is DROPPED (R-D2); criterion is now \"no unattributed never\"",
-  "n_injected": 196,
-  "n_before_device": 160,
-  "n_compile": 123,
+  "n_injected": 197,
+  "n_before_device": 161,
+  "n_compile": 124,
   "n_runtime": 37,
   "n_never": 36,
   "n_na": 0,
   "n_discarded_noop": 4,
   "n_undecidable": 4,
   "undecidable_means": "the unmutated base fails its own reference check, so no manifest verdict exists for this cell. Excluded from n_injected like a noop, but NOT evidence that the mutation does not corrupt output -- it is unmeasured. Never add it to n_discarded_noop: that would report a measurement failure as a clean negative.",
-  "pct_before_device": 81.6327,
+  "pct_before_device": 81.7259,
   "never_is_zero": false,
   "never_is_zero_status": "RETIRED (R-D2, 2026-09-10) \u2014 a non-zero `never` is no longer a failure; an UNATTRIBUTED one is. Do not report this as pass/fail.",
   "per_class_before_device": {
    "M1": 42,
    "M2": 51,
-   "M3": 24,
+   "M3": 25,
    "M4": 43
   },
   "control_classes": [
    "M4"
   ],
-  "n_injected_excluding_control": 143,
-  "n_before_device_excluding_control": 117,
-  "pct_before_device_excluding_control": 81.8182,
+  "n_injected_excluding_control": 144,
+  "n_before_device_excluding_control": 118,
+  "pct_before_device_excluding_control": 81.9444,
   "settings_hash": [
    "1f5436bfab1f",
    "28fee96c8330",
@@ -175,39 +175,23 @@
   "never_attribution": {
    "criterion": "no unattributed `never` (R-D2, 2026-09-10; replaces the retired `never = 0`)",
    "no_unattributed_never": false,
-   "n_unattributed": 20,
+   "n_unattributed": 3,
    "unattributed_mutants": [
-    "M1.11.gl1.alias",
-    "M1.11.gl11.alias",
-    "M1.11.rl1.alias",
-    "M1.11.rl1.alt",
-    "M1.11.sg1.alias",
-    "M1.11.sg11.alias",
-    "M1.11.tp1.alias",
-    "M1.11.tp1.alt",
     "M1.s6.ln1.zerostride",
     "M1.s6.sm1.zerostride",
-    "M2.10.rl24.square",
-    "M2.10.sg23.square",
-    "M2.10.tp24.square",
-    "M2.13.rl24.affine",
-    "M2.13.sg23.affine",
-    "M2.13.tp24.affine",
-    "M2.5.rl1.dup",
-    "M2.5.sm1.partial",
-    "M2.5.tp1.dup",
     "M3.20.cv1.block3"
    ],
    "cause_counts": {
+    "C1_COST_FILTER_SUPPRESSED": 14,
+    "C5_OUT_OF_SCOPE": 9,
     "C4_NOT_ASSESSED": 7,
-    "C1_COST_FILTER_SUPPRESSED": 7,
-    "C5_OUT_OF_SCOPE": 2
+    "UNRESOLVED": 3
    },
-   "n_out_of_scope_or_not_assessed": 9,
-   "n_toolchain_or_config": 7,
+   "n_out_of_scope_or_not_assessed": 16,
+   "n_toolchain_or_config": 14,
    "flag_matrix_ablation": {
     "status": "R-D2b \u2014 report as sensitivity, pinned default is the headline",
-    "at_pinned_default": "160/196 = 81.6327%",
+    "at_pinned_default": "161/197 = 81.7259%",
     "with_rtc_all_and_hoist_disabled": "43/72 = 59.72%",
     "recovered_by_flags": 8,
     "source": "raw/c2_probe_groundtruth.json (s2_implication)"
@@ -217,7 +201,7 @@
     "C3_LOWER_BOUND_OMITTED": "only one of the index's two bounds was generated \u2014 croqtile soundness bug."
    }
   },
-  "never_note": "36 mutant(s) reached outcome=never. Under R-D2 this is NOT a failure provided every one is attributed: 20 unattributed. 9 are out-of-scope or not-assessed-by-construction and 7 are attributable to a hoisting defect plus cost-filter/lower-bound configuration.",
+  "never_note": "36 mutant(s) reached outcome=never. Under R-D2 this is NOT a failure provided every one is attributed: 3 unattributed. 16 are out-of-scope or not-assessed-by-construction and 14 are attributable to a hoisting defect plus cost-filter/lower-bound configuration.",
   "never_mutants": [
    {
     "mutant_id": "M1.s4.tp1.tile",
@@ -235,8 +219,8 @@
     "category": "relu",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C1_COST_FILTER_SUPPRESSED",
+    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
     "note": null
    },
    {
@@ -245,8 +229,8 @@
     "category": "transpose",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C1_COST_FILTER_SUPPRESSED",
+    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
     "note": null
    },
    {
@@ -255,8 +239,8 @@
     "category": "relu",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C1_COST_FILTER_SUPPRESSED",
+    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
     "note": null
    },
    {
@@ -265,8 +249,8 @@
     "category": "transpose",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C1_COST_FILTER_SUPPRESSED",
+    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
     "note": null
    },
    {
@@ -275,8 +259,8 @@
     "category": "gelu",
     "detector": "crash",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C1_COST_FILTER_SUPPRESSED",
+    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
     "note": null
    },
    {
@@ -285,8 +269,8 @@
     "category": "gelu",
     "detector": "crash",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C1_COST_FILTER_SUPPRESSED",
+    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
     "note": null
    },
    {
@@ -295,8 +279,8 @@
     "category": "sigmoid",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C1_COST_FILTER_SUPPRESSED",
+    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
     "note": null
    },
    {
@@ -305,8 +289,8 @@
     "category": "sigmoid",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C1_COST_FILTER_SUPPRESSED",
+    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
     "note": null
    },
    {
@@ -325,8 +309,8 @@
     "category": "transpose",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "UNRESOLVED",
+    "never_cause_reason": "the diff parser found no mutated access surface; the diff needs manual reading",
     "note": null
    },
    {
@@ -335,8 +319,8 @@
     "category": "relu",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "UNRESOLVED",
+    "never_cause_reason": "the diff parser found no mutated access surface; the diff needs manual reading",
     "note": null
    },
    {
@@ -345,8 +329,8 @@
     "category": "sigmoid",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "UNRESOLVED",
+    "never_cause_reason": "the diff parser found no mutated access surface; the diff needs manual reading",
     "note": null
    },
    {
@@ -365,8 +349,8 @@
     "category": "transpose",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C1_COST_FILTER_SUPPRESSED",
+    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
     "note": null
    },
    {
@@ -375,8 +359,8 @@
     "category": "relu",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C1_COST_FILTER_SUPPRESSED",
+    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
     "note": null
    },
    {
@@ -385,8 +369,8 @@
     "category": "sigmoid",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C1_COST_FILTER_SUPPRESSED",
+    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
     "note": null
    },
    {
@@ -415,8 +399,8 @@
     "category": "relu",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C5_OUT_OF_SCOPE",
+    "never_cause_reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
     "note": null
    },
    {
@@ -425,8 +409,8 @@
     "category": "transpose",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C5_OUT_OF_SCOPE",
+    "never_cause_reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
     "note": null
    },
    {
@@ -435,8 +419,8 @@
     "category": "softmax",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C5_OUT_OF_SCOPE",
+    "never_cause_reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
     "note": null
    },
    {
@@ -505,8 +489,8 @@
     "category": "relu",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": "C1_COST_FILTER_SUPPRESSED",
-    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
+    "never_cause": "C5_OUT_OF_SCOPE",
+    "never_cause_reason": "C1's premise is refuted by the probe: at -rtc=all with hoisting ON no assessment guard fires (probe verdict `oracle-only`), so the suppressed runtime obligation was NOT about this mutated access (the chunkat relevance arm matches on array name alone, so it also admits the base kernel's own dynamic-shape guards). The mutation is a constant collapse / value change -- no bound guard can catch it -- which specs \u00a74 puts out of scope, so `never` is the CORRECT verdict, not a detection gap.",
     "note": null
    },
    {
@@ -515,8 +499,8 @@
     "category": "conv2d",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": "C1_COST_FILTER_SUPPRESSED",
-    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
+    "never_cause": "C5_OUT_OF_SCOPE",
+    "never_cause_reason": "C1's premise is refuted by the probe: at -rtc=all with hoisting ON no assessment guard fires (probe verdict `passed-no-detection`), so the suppressed runtime obligation was NOT about this mutated access (the chunkat relevance arm matches on array name alone, so it also admits the base kernel's own dynamic-shape guards). The mutation is a constant collapse / value change -- no bound guard can catch it -- which specs \u00a74 puts out of scope, so `never` is the CORRECT verdict, not a detection gap.",
     "note": null
    },
    {
@@ -525,8 +509,8 @@
     "category": "transpose",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": "C1_COST_FILTER_SUPPRESSED",
-    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
+    "never_cause": "C5_OUT_OF_SCOPE",
+    "never_cause_reason": "C1's premise is refuted by the probe: at -rtc=all with hoisting ON no assessment guard fires (probe verdict `oracle-only`), so the suppressed runtime obligation was NOT about this mutated access (the chunkat relevance arm matches on array name alone, so it also admits the base kernel's own dynamic-shape guards). The mutation is a constant collapse / value change -- no bound guard can catch it -- which specs \u00a74 puts out of scope, so `never` is the CORRECT verdict, not a detection gap.",
     "note": null
    },
    {
@@ -535,8 +519,8 @@
     "category": "relu",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": "C1_COST_FILTER_SUPPRESSED",
-    "never_cause_reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
+    "never_cause": "C5_OUT_OF_SCOPE",
+    "never_cause_reason": "C1's premise is refuted by the probe: at -rtc=all with hoisting ON no assessment guard fires (probe verdict `oracle-only`), so the suppressed runtime obligation was NOT about this mutated access (the chunkat relevance arm matches on array name alone, so it also admits the base kernel's own dynamic-shape guards). The mutation is a constant collapse / value change -- no bound guard can catch it -- which specs \u00a74 puts out of scope, so `never` is the CORRECT verdict, not a detection gap.",
     "note": null
    },
    {
@@ -2203,8 +2187,8 @@
   "feeds": "E1 path-class register (\u00a75.2; new float tab:e1-path-class)",
   "register_source": "choreo/raw/spec_registry.json",
   "denominator": {
-   "n_specs": 78,
-   "n_applicable": 52,
+   "n_specs": 79,
+   "n_applicable": 53,
    "n_not_applicable": 26,
    "n_out_of_scope": 0,
    "rule": "admissible specs (rt-check/unchecked/ct-check + the L row reported separately) form the detection denominator; an inadmissible spec is a recorded verdict with a named prohibition and is NOT open work (specs \u00a72)"
@@ -2245,13 +2229,13 @@
     "n_never_share_of_misses": null
    },
    "ct-check": {
-    "n_admissible": 4,
-    "n_cells": 4,
-    "n_compile": 4,
-    "n_detected": 4,
-    "n_detected_admissible": 4,
+    "n_admissible": 5,
+    "n_cells": 5,
+    "n_compile": 5,
+    "n_detected": 5,
+    "n_detected_admissible": 5,
     "n_detected_pct": 100.0,
-    "n_injected": 4,
+    "n_injected": 5,
     "n_never_share_of_misses": null
    },
    "rt-check": {
@@ -2786,6 +2770,17 @@
     "path_class": "rt-check",
     "prohibition": ""
    },
+   "M3.29": {
+    "class": "M3",
+    "n_admissible": 1,
+    "n_cells": 1,
+    "n_compile": 1,
+    "n_detected": 1,
+    "n_detected_admissible": 1,
+    "n_injected": 1,
+    "path_class": "ct-check",
+    "prohibition": ""
+   },
    "M3.4": {
     "class": "M3",
     "n_cells": 1,
@@ -2977,17 +2972,17 @@
   },
   "reconciliation": {
    "against": "S1_detection_matrix / S2_before_device",
-   "n_cells": 204,
+   "n_cells": 205,
    "n_cells_non_detection": 0,
-   "n_cells_compared": 204,
-   "n_injected": 196,
+   "n_cells_compared": 205,
+   "n_injected": 197,
    "n_discarded_noop": 4,
    "n_undecidable": 4,
    "n_never": 36,
-   "n_detected_all_paths": 160,
-   "admissible_injected": 181,
-   "admissible_detected": 148,
-   "admissible_pct": 81.768,
+   "n_detected_all_paths": 161,
+   "admissible_injected": 182,
+   "admissible_detected": 149,
+   "admissible_pct": 81.8681,
    "inadmissible_injected": 15,
    "inadmissible_detected": 12,
    "matches_S1S2": true,
@@ -2995,8 +2990,8 @@
    "n_cells_unaccounted": 0,
    "checks": {
     "n_injected": {
-     "s14": 196,
-     "s1s2": 196
+     "s14": 197,
+     "s1s2": 197
     },
     "n_discarded_noop": {
      "s14": 4,
@@ -3011,8 +3006,8 @@
      "s1s2": 36
     },
     "n_detected_all_paths": {
-     "s14": 160,
-     "s1s2": 160
+     "s14": 161,
+     "s1s2": 161
     }
    }
   },
@@ -3081,14 +3076,14 @@
    "steepest_class": "elem",
    "cost_filter_note": "Enabling every obligation costs 1151/675 = 1.71x the default, and the growth is not uniform: elem goes 58 -> 534 while the other classes are flat. That is the thesis's shape, measured from the ledger.",
    "n_detected": {
-    "entry": 160,
+    "entry": 161,
     "low": null,
     "medium": null,
     "high": null,
     "high (rtc=all arm)": 37
    },
    "n_detected_note": "`enabled` is a ledger property and is exact at every level; `n_detected` needs a full E1 run per level, so only `entry` is measured here. The rtc=all arm exists (see rtc_all_arm) and is reported separately rather than interpolated.",
-   "denominator_us": "160/197 at entry (pinned default)",
+   "denominator_us": "161/198 at entry (pinned default)",
    "rtc_all_arm": {
     "source": "choreo/raw/e1_mutant_records_rtc_all.json",
     "pinned_flags": [

@@ -10,13 +10,13 @@
  "level2": true,
  "rtc": null,
  "accounting": {
-  "candidates": 331,
-  "selected": 200,
+  "candidates": 332,
+  "selected": 201,
   "attribution": 4,
   "dropped": 127,
   "na": 0,
   "skipped": 0,
-  "emitted": 204
+  "emitted": 205
  },
  "family_depth": {
   "M1-a": 8,
@@ -37,7 +37,7 @@
   "M2-h": 8,
   "M3-a": 4,
   "M3-b": 3,
-  "M3-c": 0,
+  "M3-c": 1,
   "M3-d": 1,
   "M3-e": 4,
   "M3-f": 1,
@@ -56,7 +56,7 @@
   "M1-g": 6,
   "M3-a": 4,
   "M3-b": 5,
-  "M3-c": 8,
+  "M3-c": 7,
   "M3-d": 7,
   "M3-e": 4,
   "M3-f": 7
@@ -77,13 +77,13 @@
   ]
  },
  "registry": {
-  "n_specs": 78,
+  "n_specs": 79,
   "status_counts": {
-   "implemented": 57,
+   "implemented": 58,
    "pending": 21
   },
   "admissible_counts": {
-   "true": 52,
+   "true": 53,
    "false": 26
   },
   "prohibition_counts": {
@@ -93,7 +93,7 @@
   },
   "path_counts": {
    "rt-check": 53,
-   "ct-check": 3,
+   "ct-check": 4,
    "unchecked": 9,
    "avoided": 6,
    "L": 7
@@ -145,6 +145,7 @@
    "M3.20",
    "M3.27",
    "M3.28",
+   "M3.29",
    "M3.4",
    "M3.6",
    "M3.8",
@@ -200,6 +201,7 @@
    "M3.16",
    "M3.27",
    "M3.28",
+   "M3.29",
    "M3.4",
    "M3.8",
    "M3.9",
@@ -300,7 +302,7 @@
   "n_operators": {
    "M1": 81,
    "M2": 103,
-   "M3": 67,
+   "M3": 68,
    "M4": 80
   }
  },
@@ -4912,6 +4914,34 @@
    "spec_version": "v2.1",
    "spec_id": "M3.15",
    "path_class": "unchecked",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": false,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M3",
+   "spec": 29,
+   "paper_category": "dim-mismatch",
+   "mutant_id": "M3.29.dma5.swizladder",
+   "category": "dma_rank5",
+   "case": "r5swiz",
+   "level": 1,
+   "base_path": "benchmark/choreo/dma_rank5/r5swiz.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/dma_rank5/M3.29.dma5.swizladder__r5swiz.co",
+   "kernel_hash": "d116ba237752",
+   "mutant_hash": "974df3754a83",
+   "settings_hash": "6ba7925e0a5a",
+   "local_headers": [
+    "common.hpp"
+   ],
+   "desc": "explicit swizzle width off the legal byte ladder {32,64,128}: the box<->swizzle byte size is not a legal swizzle, so the parser refuses it (SwizMode ladder)",
+   "diff": "--- a/dma_rank5/r5swiz.co\n+++ b/dma_rank5/r5swiz.co\n@@ -8,5 +8,5 @@\n // one that writes an EXPLICIT swizzle mode, so the swizzle-width <-> box\n // relation becomes source-expressible at all. The mode is legal here\n-// (swiz<128>), and on a non-warpgroup target the swizzled write is read back\n+// (swiz<48>), and on a non-warpgroup target the swizzled write is read back\n // as a linear copy, so the identity holds -- the base is a correct program.\n __co__ auto r5swiz(f32 [16, 16] input) {\n@@ -14,5 +14,5 @@\n   parallel p by 1 : block\n     parallel q by 32 : thread {\n-      s = dma.copy.swiz<128> input.chunkat(_, _) => shared;\n+      s = dma.copy.swiz<48> input.chunkat(_, _) => shared;\n       dma.copy s => output.chunkat(_, _);\n     }\n",
+   "spec_version": "v2.1",
+   "spec_id": "M3.29",
+   "path_class": "ct-check",
    "prohibition": "",
    "admissible": true,
    "spec_admissible": true,

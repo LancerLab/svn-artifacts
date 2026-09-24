@@ -610,6 +610,24 @@ SPEC_REGISTRY = {
                     "warn-only between the best-practice budget and the hard "
                     "cap), so an over-budget local tile is exactly where a "
                     "compiler that only checks SHARED stays silent"),
+    "M3.29": _spec("M3", "ct-check", "swizzle width off the legal byte ladder "
+                          "{32,64,128} -- the ceiled byte-box swizzle size is "
+                          "not a legal box",
+                   status="implemented",
+                   note="the arch-independent half of M3-c. Its runtime "
+                        "relation (M3.5/M3.13) is sm_90-gated: "
+                        "`mma.load.swiz<W>` needs group-4, which an sm_86 "
+                        "runner refuses, and a swizzled write read back "
+                        "linearly is a noop there (verified). The width "
+                        "LADDER is not gated, though: parser.yy:2279 rejects "
+                        "any `dma.copy.swiz<W>` whose W is not 32/64/128 at "
+                        "parse time "
+                        "(tests/gpu/codegen/cute/dma_copy_swizzle_syntax_fail"
+                        ".co). Realised on `dma_rank5`/`r5swiz`, the one host "
+                        "that writes an explicit swizzle, by moving a legal "
+                        "swiz<128> onto the off-ladder swiz<48>. ct-check is "
+                        "assessed, not cost-suppressible, so it takes the "
+                        "one-per-cell ceiling rather than the -rtc curve"),
 }
 
 # The v1 spec integers still carried by every operator (specs v1 §1-§3) map 1:1
@@ -2162,6 +2180,24 @@ M3 += [
        ("f32 [2,4,8,16,32] input", "f32 [2,4,8,16,32,2] input", 1),
        ("f32 [4,8,16,32,2] output", "f32 [4,8,16,32,2,2] output", 1),
        ("dma.transp<1,2,3,4,0>", "dma.transp<1,2,3,4,5,0>", 1)),
+]
+
+# ---- M3.29 -- the swizzle-width ladder (M3-c's arch-independent half) ------
+# `dma_rank5`/r5swiz is the only case in the suite that writes an explicit
+# swizzle mode, so M3.5/M3.13's "box <-> swizzle" relation is source-
+# expressible at last. The RUNTIME half of it is sm_90-gated (`mma.load.swiz`
+# needs group-4, and a swizzled write read back linearly is a noop on sm_86),
+# but the width ladder is not: the parser admits only 32/64/128. The operator
+# moves the base's legal swiz<128> onto the off-ladder swiz<48>. Verified: the
+# base passes under both the oracle and the detector flag sets, and the mutant
+# is refused under both with "swizzle value must be 128, 64, or 32".
+M3 += [
+    _m("M3.29.dma5.swizladder", "M3", 29, "dim-mismatch", "dma_rank5",
+       "r5swiz",
+       "explicit swizzle width off the legal byte ladder {32,64,128}: the "
+       "box<->swizzle byte size is not a legal swizzle, so the parser refuses "
+       "it (SwizMode ladder)",
+       ("swiz<128>", "swiz<48>"), spec_id="M3.29"),
 ]
 
 # ===========================================================================

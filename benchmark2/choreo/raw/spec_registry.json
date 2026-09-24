@@ -2,13 +2,13 @@
  "toolchain": "choreo",
  "spec_version": "v2.1",
  "summary": {
-  "n_specs": 78,
+  "n_specs": 79,
   "status_counts": {
-   "implemented": 57,
+   "implemented": 58,
    "pending": 21
   },
   "admissible_counts": {
-   "true": 52,
+   "true": 53,
    "false": 26
   },
   "prohibition_counts": {
@@ -18,7 +18,7 @@
   },
   "path_counts": {
    "rt-check": 53,
-   "ct-check": 3,
+   "ct-check": 4,
    "unchecked": 9,
    "avoided": 6,
    "L": 7
@@ -70,6 +70,7 @@
    "M3.20",
    "M3.27",
    "M3.28",
+   "M3.29",
    "M3.4",
    "M3.6",
    "M3.8",
@@ -125,6 +126,7 @@
    "M3.16",
    "M3.27",
    "M3.28",
+   "M3.29",
    "M3.4",
    "M3.8",
    "M3.9",
@@ -225,7 +227,7 @@
   "n_operators": {
    "M1": 81,
    "M2": 103,
-   "M3": 67,
+   "M3": 68,
    "M4": 80
   }
  },
@@ -859,6 +861,16 @@
    "status": "implemented",
    "desc": "per-thread local tile exceeds the per-thread budget, but only for a runtime-shaped (symbolic) extent",
    "note": "the LOCAL half of M3-h, same mechanism as M3.27. The static check has two local bands (memcheck.hpp:288-306, warn-only between the best-practice budget and the hard cap), so an over-budget local tile is exactly where a compiler that only checks SHARED stays silent"
+  },
+  {
+   "spec_id": "M3.29",
+   "cls": "M3",
+   "path": "ct-check",
+   "admissible": true,
+   "prohibition": "",
+   "status": "implemented",
+   "desc": "swizzle width off the legal byte ladder {32,64,128} -- the ceiled byte-box swizzle size is not a legal box",
+   "note": "the arch-independent half of M3-c. Its runtime relation (M3.5/M3.13) is sm_90-gated: `mma.load.swiz<W>` needs group-4, which an sm_86 runner refuses, and a swizzled write read back linearly is a noop there (verified). The width LADDER is not gated, though: parser.yy:2279 rejects any `dma.copy.swiz<W>` whose W is not 32/64/128 at parse time (tests/gpu/codegen/cute/dma_copy_swizzle_syntax_fail.co). Realised on `dma_rank5`/`r5swiz`, the one host that writes an explicit swizzle, by moving a legal swiz<128> onto the off-ladder swiz<48>. ct-check is assessed, not cost-suppressible, so it takes the one-per-cell ceiling rather than the -rtc curve"
   },
   {
    "spec_id": "M3.3",

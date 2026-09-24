@@ -285,6 +285,23 @@
       "reason": "UNMUTATED base fails its own reference check \u2014 manifest verdicts for this case are untrustworthy",
       "use_check": false
     },
+    "dma_rank5/r5swiz": {
+      "base_compile": true,
+      "base_compile_rc": 0,
+      "base_detector": "none",
+      "base_infra": null,
+      "base_passed": true,
+      "base_run_rc": 0,
+      "case": "r5swiz",
+      "category": "dma_rank5",
+      "check_detector": "none",
+      "check_passed": true,
+      "check_run_rc": 0,
+      "gated": false,
+      "oracle_usable": true,
+      "reason": "built-in reference passes on unmutated code",
+      "use_check": false
+    },
     "embedding/10_dynamic_32xS_Vx768_32xSx768": {
       "category": "embedding",
       "case": "10_dynamic_32xS_Vx768_32xSx768",
