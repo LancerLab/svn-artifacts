@@ -36,7 +36,7 @@ LEDGER = ROOT / "schema" / "mutation-correspondence.json"
 REGISTRY = ROOT / "choreo" / "raw" / "spec_registry.json"
 MUTATIONS = ROOT / "choreo" / "mutations.py"
 
-LANES = ("choreo", "triton", "mlir-linalg", "mlir-low", "iree")
+LANES = ("choreo", "triton", "mlir-linalg", "mlir-low", "iree", "cutlass")
 CLASSES = ("M1", "M2", "M3", "M4")
 
 LEGEND = [

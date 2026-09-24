@@ -80,7 +80,246 @@
     "M2 is a CONFORMING 8-family battery of 64 instances (families M2-a..M2-h x 4 kernels x 2 realisations): the kernels are matmul, conv2d, layer_normalization, relu and the two realisations are the small/alt extent grids; one representative spec per family (M2.1/M2.6/M2.7/M2.8/M2.10/M2.5/M2.15/M2.17)",
     "n_discarded_noop counts the inapplicable launch-status control (L1 on matmul: the static-smem override is not used, so the mutation has no effect -> `n/a`, applicable=false)",
     "`L` (launch-status) is a path class, not a mutation class: its cells live under `S1_path_class`, never in `S1_detection`",
-    "records are v2.1 mutant records (see cutlass/mutrec.py): outcome compile|runtime|never|n/a, class M1/M2/M3/M4, path_class carries the L distinction"
+    "records are v2.1 mutant records (see cutlass/mutrec.py): outcome compile|runtime|never|n/a, class M1/M2/M3/M4, path_class carries the L distinction",
+    "2026-09-24: S8/S9/S12 blocks filled post-hoc from the launched-battery records, sanitizer.json, and the F1-F6 probe record (worker-onboarding section 2); derivation documented in S8_expressibility._derivation."
   ],
-  "records": 250
+  "records": 250,
+  "S8_expressibility": {
+    "elem": {
+      "yes": 27,
+      "partial": 5,
+      "no": 0
+    },
+    "shape": {
+      "yes": 0,
+      "partial": 0,
+      "no": 32
+    },
+    "hw": {
+      "yes": 4,
+      "partial": 28,
+      "no": 0
+    },
+    "loop": {
+      "yes": 23,
+      "partial": 17,
+      "no": 0
+    },
+    "_derivation": "Filled 2026-09-24 for paper integration. Unit = one (spec, operator) probe of the launched battery (8 specs x 4 operators for M1/M2/M3 = 32; 10 spec-ids x 4 operators for M4 = 40). yes = surface states the obligation (probe applicable, or positive static evidence: F4 probe, M3.6 copy-atom static_assert). partial = surface derives/repairs the defect (recorded avoided, applicable=false) or carries the construct at type level without detaining it (M3 families other than M3.6; F3 negative for M3.1, R-CUT2 arch-gating for M3.2/M3.3 on sm_86). no = surface has no such construct (shape: no cross-tensor contract on a CuTe kernel surface; worker-onboarding section 1; consistent with the Triton lane's shape ruling)."
+  },
+  "S9_remainder": "n/a (no generated checks)",
+  "S12_method": {
+    "tool": "compute-sanitizer --tool memcheck (CUDA 12.9)",
+    "chain": "nvcc -std=c++17 -arch=sm_86 -I cutlass/include -I cutlass/tools/util/include <kernel.cu> | compute-sanitizer --tool memcheck --error-exitcode 99 <binary>",
+    "rtv": "n/a (no generated runtime checks; the lane's only detentions are nvcc/CuTe static_assert at compile time)"
+  },
+  "S12_sanitizer_supplement": {
+    "M1": {
+      "flagged": 4,
+      "flagged_and_exercised": 4,
+      "exercised": 19,
+      "total": 64,
+      "not_instrumented": 45,
+      "rejected_before_run": 0,
+      "flagged_specs": [
+        "M1.2/layer_normalization",
+        "M1.2/layer_normalization",
+        "M1.9/layer_normalization",
+        "M1.9/layer_normalization"
+      ],
+      "misses": {
+        "M1.11": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M1.12": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M1.14": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M1.15": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M1.19": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M1.4": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M1.6": {
+          "n": 1,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M1.7": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        }
+      }
+    },
+    "M2": {
+      "flagged": 0,
+      "flagged_and_exercised": 0,
+      "exercised": 16,
+      "total": 64,
+      "not_instrumented": 48,
+      "rejected_before_run": 0,
+      "flagged_specs": [],
+      "misses": {
+        "M2.1": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M2.10": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M2.15": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M2.17": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M2.5": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M2.6": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M2.7": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M2.8": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        }
+      }
+    },
+    "M3": {
+      "flagged": 0,
+      "flagged_and_exercised": 0,
+      "exercised": 16,
+      "total": 64,
+      "not_instrumented": 48,
+      "rejected_before_run": 0,
+      "flagged_specs": [],
+      "misses": {
+        "M3.1": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M3.12": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M3.2": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M3.3": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M3.4": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M3.6": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M3.8": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M3.9": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        }
+      }
+    },
+    "M4": {
+      "flagged": 1,
+      "flagged_and_exercised": 1,
+      "exercised": 11,
+      "total": 56,
+      "not_instrumented": 45,
+      "rejected_before_run": 0,
+      "flagged_specs": [
+        "M4.2/layer_normalization"
+      ],
+      "misses": {
+        "M4.1": {
+          "n": 1,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M4.3": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M4.4": {
+          "n": 1,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M4.5": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M4.6": {
+          "n": 2,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M4.7": {
+          "n": 1,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        },
+        "M4.8": {
+          "n": 1,
+          "instrumented_min": 0,
+          "instrumented_max": 0
+        }
+      }
+    },
+    "_note": "Sampled one kernel per (spec, grid) plus every base kernel (30 bases, 0 errors). instrumented_min/max are 0: memcheck is an external dynamic oracle, no checks are generated into the kernel. The dynamic oracle is blind to most of the battery, but not all of it. Memcheck reports 0 errors for every M2 and M3 sample and for most M1/M4 samples: those index perturbations stay INSIDE the allocation (a wrong element of the right buffer), so a memory sanitizer cannot see them -- which is the lane's point. It DOES catch the samples whose index escapes the allocation: M1.2 and M1.9 (off-by-one / un-shrunk base offset) on layer_normalization, and M4.2 (zero parallel-by bound) on layer_normalization. A compile-time detention (ct-check) has no binary to run and is recorded `n/a`."
+  }
 }

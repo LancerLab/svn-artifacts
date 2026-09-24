@@ -18,33 +18,36 @@
     "n_specs": 77,
     "choreo_realized": 56,
     "choreo_unrealized": 21,
-    "recorded_by_a_sota_lane": 37,
-    "recorded_over_choreo": 0.6607,
-    "recorded_over_all_specs": 0.4805,
-    "achievable_by_a_sota_lane": 65,
-    "achievable_over_all_specs": 0.8442,
+    "recorded_by_a_sota_lane": 49,
+    "recorded_over_choreo": 0.875,
+    "recorded_over_all_specs": 0.6364,
+    "achievable_by_a_sota_lane": 68,
+    "achievable_over_all_specs": 0.8831,
     "achievable_among_choreo_realized": 56,
     "achievable_over_choreo": 1.0,
-    "choreo_only_and_achievable": 19,
-    "choreo_only_and_recorded": 37,
-    "constitutional_n_a_anywhere": 47,
+    "choreo_only_and_achievable": 7,
+    "choreo_only_and_recorded": 49,
+    "constitutional_n_a_anywhere": 48,
     "lane_recorded_counts": {
       "triton": 8,
-      "mlir-low": 15,
       "mlir-linalg": 17,
-      "iree": 15
+      "mlir-low": 15,
+      "iree": 15,
+      "cutlass": 34
     },
     "lane_achievable_counts": {
       "triton": 45,
       "mlir-linalg": 36,
       "mlir-low": 23,
-      "iree": 35
+      "iree": 35,
+      "cutlass": 56
     },
     "lane_recorded_over_achievable": {
       "triton": 0.1778,
       "mlir-linalg": 0.4722,
       "mlir-low": 0.6522,
-      "iree": 0.4286
+      "iree": 0.4286,
+      "cutlass": 0.6071
     },
     "union_metric_caveat": "`achievable_by_a_sota_lane` is the union over lanes and reaches 100% because each obligation class is declared expressible by at least one lane.  It answers 'could ANY lane express this?' and must not be quoted as a per-lane rate.  Quote `lane_recorded_over_achievable` instead.",
     "n_duplicate_findings": 29,
@@ -252,6 +255,38 @@
       "power_floor": 35,
       "status": "absent",
       "annotation": "no cell: the lane was never run against this class -- unmeasured, not n/a"
+    },
+    {
+      "lane": "cutlass",
+      "class": "M1",
+      "n_mutants": 64,
+      "power_floor": 35,
+      "status": "ok",
+      "annotation": "meets the power floor"
+    },
+    {
+      "lane": "cutlass",
+      "class": "M2",
+      "n_mutants": 64,
+      "power_floor": 35,
+      "status": "ok",
+      "annotation": "meets the power floor"
+    },
+    {
+      "lane": "cutlass",
+      "class": "M3",
+      "n_mutants": 64,
+      "power_floor": 35,
+      "status": "ok",
+      "annotation": "meets the power floor"
+    },
+    {
+      "lane": "cutlass",
+      "class": "M4",
+      "n_mutants": 56,
+      "power_floor": 35,
+      "status": "ok",
+      "annotation": "meets the power floor"
     }
   ],
   "duplicates": [
@@ -986,6 +1021,28 @@
         "partial": 0,
         "no": 1
       }
+    },
+    "cutlass": {
+      "elem": {
+        "yes": 27,
+        "partial": 5,
+        "no": 0
+      },
+      "shape": {
+        "yes": 0,
+        "partial": 0,
+        "no": 32
+      },
+      "hw": {
+        "yes": 4,
+        "partial": 28,
+        "no": 0
+      },
+      "loop": {
+        "yes": 23,
+        "partial": 17,
+        "no": 0
+      }
     }
   },
   "cross_label_spec": {
@@ -1033,6 +1090,12 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "results/cutlass/stats.json S8_expressibility[elem] = {'yes': 27, 'partial': 5, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -1078,6 +1141,10 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -1122,6 +1189,12 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "results/cutlass/stats.json S8_expressibility[elem] = {'yes': 27, 'partial': 5, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -1164,6 +1237,10 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -1209,6 +1286,12 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "results/cutlass/stats.json S8_expressibility[elem] = {'yes': 27, 'partial': 5, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -1258,6 +1341,12 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "results/cutlass/stats.json S8_expressibility[elem] = {'yes': 27, 'partial': 5, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -1304,6 +1393,10 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -1349,6 +1442,12 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "results/cutlass/stats.json S8_expressibility[elem] = {'yes': 27, 'partial': 5, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -1395,6 +1494,10 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -1443,6 +1546,10 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -1488,6 +1595,12 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "results/cutlass/stats.json S8_expressibility[elem] = {'yes': 27, 'partial': 5, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -1535,6 +1648,10 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -1578,6 +1695,10 @@
           "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
           "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
           "needs": "a new base case -- see the suite-gap register"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       },
       "na_kind": "suite-surface",
@@ -1619,6 +1740,12 @@
           "needs": "a new base case -- see the suite-gap register"
         },
         "iree": {
+          "status": "blocked-by-suite",
+          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
+          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
+          "needs": "a new base case -- see the suite-gap register"
+        },
+        "cutlass": {
           "status": "blocked-by-suite",
           "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
           "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
@@ -1670,6 +1797,12 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "results/cutlass/stats.json S8_expressibility[elem] = {'yes': 27, 'partial': 5, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -1709,6 +1842,12 @@
           "needs": "a new base case -- see the suite-gap register"
         },
         "iree": {
+          "status": "blocked-by-suite",
+          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
+          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
+          "needs": "a new base case -- see the suite-gap register"
+        },
+        "cutlass": {
           "status": "blocked-by-suite",
           "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
           "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
@@ -1758,6 +1897,10 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -1801,6 +1944,12 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "results/cutlass/stats.json S8_expressibility[elem] = {'yes': 27, 'partial': 5, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -1848,6 +1997,12 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[elem] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "yes",
+          "evidence": "results/cutlass/stats.json S8_expressibility[elem] = {'yes': 27, 'partial': 5, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -1891,6 +2046,10 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (layer_norm beta/gamma len pm1)"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -1936,6 +2095,13 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "constitutional-n-a",
+          "kind": "delegation",
+          "annotation": "The model does not check this because the responsibility is contractually the code-writer's.  A CuTe kernel declares no cross-tensor extent relation, so there is no contract to violate.  This is an apple-to-apple exclusion: comparing our rate against theirs would credit them for a check they never claimed.",
+          "evidence": "results/cutlass/stats.json S8_expressibility[shape] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack."
         }
       }
     },
@@ -1979,6 +2145,13 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (elemwise_add rhs trailing-extent pm1)"
+        },
+        "cutlass": {
+          "status": "constitutional-n-a",
+          "kind": "delegation",
+          "annotation": "The model does not check this because the responsibility is contractually the code-writer's.  A CuTe kernel declares no cross-tensor extent relation, so there is no contract to violate.  This is an apple-to-apple exclusion: comparing our rate against theirs would credit them for a check they never claimed.",
+          "evidence": "results/cutlass/stats.json S8_expressibility[shape] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack."
         }
       }
     },
@@ -2024,6 +2197,13 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "constitutional-n-a",
+          "kind": "delegation",
+          "annotation": "The model does not check this because the responsibility is contractually the code-writer's.  A CuTe kernel declares no cross-tensor extent relation, so there is no contract to violate.  This is an apple-to-apple exclusion: comparing our rate against theirs would credit them for a check they never claimed.",
+          "evidence": "results/cutlass/stats.json S8_expressibility[shape] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack."
         }
       }
     },
@@ -2067,6 +2247,10 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (authored tile_write: omitted tail tile (partial) / overlapping tile (duplicate))"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -2112,6 +2296,10 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (seq/hid extents transposed (matmul lhs, transpose, concat, conv2d))"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -2158,6 +2346,10 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (input rank dropped (matmul lhs, transpose, reduce_mean, softmax))"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -2202,6 +2394,10 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (norm gamma broadcast extent set to 1)"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -2247,6 +2443,13 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (batch/group extents swapped (matmul lhs, transpose, concat, conv2d))"
+        },
+        "cutlass": {
+          "status": "constitutional-n-a",
+          "kind": "delegation",
+          "annotation": "The model does not check this because the responsibility is contractually the code-writer's.  A CuTe kernel declares no cross-tensor extent relation, so there is no contract to violate.  This is an apple-to-apple exclusion: comparing our rate against theirs would credit them for a check they never claimed.",
+          "evidence": "results/cutlass/stats.json S8_expressibility[shape] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack."
         }
       }
     },
@@ -2290,6 +2493,10 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (square input transposed (transpose, batch_norm, concat, matmul rhs))"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -2338,6 +2545,13 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "constitutional-n-a",
+          "kind": "delegation",
+          "annotation": "The model does not check this because the responsibility is contractually the code-writer's.  A CuTe kernel declares no cross-tensor extent relation, so there is no contract to violate.  This is an apple-to-apple exclusion: comparing our rate against theirs would credit them for a check they never claimed.",
+          "evidence": "results/cutlass/stats.json S8_expressibility[shape] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack."
         }
       }
     },
@@ -2383,6 +2597,13 @@
           "declared_ability": "partial",
           "evidence": "results/iree/stats.json S8_expressibility[shape] = partial",
           "note": "the lane's own S8 says this obligation is expressible, but no mutant for this spec exists in its corpus -- an open action item, not a limitation"
+        },
+        "cutlass": {
+          "status": "constitutional-n-a",
+          "kind": "delegation",
+          "annotation": "The model does not check this because the responsibility is contractually the code-writer's.  A CuTe kernel declares no cross-tensor extent relation, so there is no contract to violate.  This is an apple-to-apple exclusion: comparing our rate against theirs would credit them for a check they never claimed.",
+          "evidence": "results/cutlass/stats.json S8_expressibility[shape] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack."
         }
       },
       "na_kind": "model-repaired"
@@ -2427,6 +2648,13 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (shape-equal / layout-unequal view (transpose, batch_norm, concat, matmul lhs))"
+        },
+        "cutlass": {
+          "status": "constitutional-n-a",
+          "kind": "delegation",
+          "annotation": "The model does not check this because the responsibility is contractually the code-writer's.  A CuTe kernel declares no cross-tensor extent relation, so there is no contract to violate.  This is an apple-to-apple exclusion: comparing our rate against theirs would credit them for a check they never claimed.",
+          "evidence": "results/cutlass/stats.json S8_expressibility[shape] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack."
         }
       }
     },
@@ -2468,6 +2696,13 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (matmul rhs contraction dim K pm1)"
+        },
+        "cutlass": {
+          "status": "constitutional-n-a",
+          "kind": "delegation",
+          "annotation": "The model does not check this because the responsibility is contractually the code-writer's.  A CuTe kernel declares no cross-tensor extent relation, so there is no contract to violate.  This is an apple-to-apple exclusion: comparing our rate against theirs would credit them for a check they never claimed.",
+          "evidence": "results/cutlass/stats.json S8_expressibility[shape] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack."
         }
       },
       "na_kind": "model-unknown"
@@ -2513,6 +2748,10 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (authored pad_shift: pad_low<->pad_high swapped, total length preserved)"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -2557,6 +2796,13 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (size-1 rank insert, ElementCount preserved (matmul lhs, transpose, reduce_mean, softmax))"
+        },
+        "cutlass": {
+          "status": "constitutional-n-a",
+          "kind": "delegation",
+          "annotation": "The model does not check this because the responsibility is contractually the code-writer's.  A CuTe kernel declares no cross-tensor extent relation, so there is no contract to violate.  This is an apple-to-apple exclusion: comparing our rate against theirs would credit them for a check they never claimed.",
+          "evidence": "results/cutlass/stats.json S8_expressibility[shape] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack."
         }
       }
     },
@@ -2601,6 +2847,10 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (dynamic split on a non-divisible extent (silent drop; unchecked))"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -2642,6 +2892,13 @@
           "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
           "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
           "needs": "a new base case -- see the suite-gap register"
+        },
+        "cutlass": {
+          "status": "constitutional-n-a",
+          "kind": "delegation",
+          "annotation": "The model does not check this because the responsibility is contractually the code-writer's.  A CuTe kernel declares no cross-tensor extent relation, so there is no contract to violate.  This is an apple-to-apple exclusion: comparing our rate against theirs would credit them for a check they never claimed.",
+          "evidence": "results/cutlass/stats.json S8_expressibility[shape] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack."
         }
       },
       "na_kind": "suite-surface",
@@ -2690,6 +2947,13 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (norm dynamic (symbolic) beta/gamma extent pm1)"
+        },
+        "cutlass": {
+          "status": "constitutional-n-a",
+          "kind": "delegation",
+          "annotation": "The model does not check this because the responsibility is contractually the code-writer's.  A CuTe kernel declares no cross-tensor extent relation, so there is no contract to violate.  This is an apple-to-apple exclusion: comparing our rate against theirs would credit them for a check they never claimed.",
+          "evidence": "results/cutlass/stats.json S8_expressibility[shape] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack."
         }
       }
     },
@@ -2734,6 +2998,13 @@
         "iree": {
           "status": "recorded",
           "evidence": "iree/mutants/M2/* (norm gamma 3rd broadcast extent neither 1 nor equal)"
+        },
+        "cutlass": {
+          "status": "constitutional-n-a",
+          "kind": "delegation",
+          "annotation": "The model does not check this because the responsibility is contractually the code-writer's.  A CuTe kernel declares no cross-tensor extent relation, so there is no contract to violate.  This is an apple-to-apple exclusion: comparing our rate against theirs would credit them for a check they never claimed.",
+          "evidence": "results/cutlass/stats.json S8_expressibility[shape] = no",
+          "needs": "nothing the lane can add: the construct does not exist at this level of the stack."
         }
       }
     },
@@ -2781,6 +3052,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -2824,6 +3099,10 @@
           "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
           "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
           "needs": "a new base case -- see the suite-gap register"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       },
       "na_kind": "suite-surface",
@@ -2869,6 +3148,10 @@
           "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
           "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
           "needs": "a new base case -- see the suite-gap register"
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       },
       "na_kind": "suite-surface",
@@ -2919,6 +3202,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -2958,6 +3245,12 @@
           "needs": "a new base case -- see the suite-gap register"
         },
         "iree": {
+          "status": "blocked-by-suite",
+          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
+          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
+          "needs": "a new base case -- see the suite-gap register"
+        },
+        "cutlass": {
           "status": "blocked-by-suite",
           "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
           "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
@@ -3014,6 +3307,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -3053,6 +3350,12 @@
           "needs": "a new base case -- see the suite-gap register"
         },
         "iree": {
+          "status": "blocked-by-suite",
+          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
+          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
+          "needs": "a new base case -- see the suite-gap register"
+        },
+        "cutlass": {
           "status": "blocked-by-suite",
           "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
           "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
@@ -3107,6 +3410,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -3155,6 +3462,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -3203,6 +3514,12 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "results/cutlass/stats.json S8_expressibility[hw] = {'yes': 4, 'partial': 28, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -3244,6 +3561,12 @@
           "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
           "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
           "needs": "a new base case -- see the suite-gap register"
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "results/cutlass/stats.json S8_expressibility[hw] = {'yes': 4, 'partial': 28, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       },
       "na_kind": "suite-surface",
@@ -3292,6 +3615,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       },
       "na_kind": "model-repaired"
@@ -3332,6 +3659,12 @@
           "needs": "a new base case -- see the suite-gap register"
         },
         "iree": {
+          "status": "blocked-by-suite",
+          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
+          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
+          "needs": "a new base case -- see the suite-gap register"
+        },
+        "cutlass": {
           "status": "blocked-by-suite",
           "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
           "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
@@ -3387,6 +3720,12 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "results/cutlass/stats.json S8_expressibility[hw] = {'yes': 4, 'partial': 28, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -3435,6 +3774,12 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "results/cutlass/stats.json S8_expressibility[hw] = {'yes': 4, 'partial': 28, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -3483,6 +3828,12 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "results/cutlass/stats.json S8_expressibility[hw] = {'yes': 4, 'partial': 28, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -3531,6 +3882,12 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "results/cutlass/stats.json S8_expressibility[hw] = {'yes': 4, 'partial': 28, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -3580,6 +3937,12 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "results/cutlass/stats.json S8_expressibility[hw] = {'yes': 4, 'partial': 28, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -3626,6 +3989,12 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "results/cutlass/stats.json S8_expressibility[hw] = {'yes': 4, 'partial': 28, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       },
       "na_kind": "model-repaired"
@@ -3675,6 +4044,12 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "results/cutlass/stats.json S8_expressibility[hw] = {'yes': 4, 'partial': 28, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -3721,6 +4096,12 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "results/cutlass/stats.json S8_expressibility[hw] = {'yes': 4, 'partial': 28, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       },
       "na_kind": "model-repaired"
@@ -3768,6 +4149,12 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "results/cutlass/stats.json S8_expressibility[hw] = {'yes': 4, 'partial': 28, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       },
       "na_kind": "model-repaired"
@@ -3808,6 +4195,12 @@
           "needs": "a new base case -- see the suite-gap register"
         },
         "iree": {
+          "status": "blocked-by-suite",
+          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
+          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
+          "needs": "a new base case -- see the suite-gap register"
+        },
+        "cutlass": {
           "status": "blocked-by-suite",
           "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
           "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
@@ -3857,6 +4250,12 @@
           "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
           "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
           "needs": "a new base case -- see the suite-gap register"
+        },
+        "cutlass": {
+          "status": "blocked-by-suite",
+          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
+          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
+          "needs": "a new base case -- see the suite-gap register"
         }
       },
       "na_kind": "suite-surface",
@@ -3902,6 +4301,12 @@
           "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
           "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
           "needs": "a new base case -- see the suite-gap register"
+        },
+        "cutlass": {
+          "status": "blocked-by-suite",
+          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
+          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
+          "needs": "a new base case -- see the suite-gap register"
         }
       },
       "na_kind": "suite-surface",
@@ -3943,6 +4348,12 @@
           "needs": "a new base case -- see the suite-gap register"
         },
         "iree": {
+          "status": "blocked-by-suite",
+          "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
+          "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
+          "needs": "a new base case -- see the suite-gap register"
+        },
+        "cutlass": {
           "status": "blocked-by-suite",
           "annotation": "OUR base kernels lack the construct this defect needs, so neither choreo nor any lane can generate the mutant.  This is not a lane's corpus gap and not a model claim -- it is a hole in the benchmark that must be filled with a new base case before the unit counts.",
           "evidence": "choreo/raw/spec_registry.json note: MISSING SURFACE",
@@ -3999,6 +4410,12 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "results/cutlass/stats.json S8_expressibility[hw] = {'yes': 4, 'partial': 28, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -4051,6 +4468,12 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[hw] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "expressible-not-recorded",
+          "declared_ability": "partial",
+          "evidence": "results/cutlass/stats.json S8_expressibility[hw] = {'yes': 4, 'partial': 28, 'no': 0}",
+          "note": "the lane's own S8 says this obligation is expressible on its surface, but the launched battery used one representative spec per family; this sibling spec was not instantiated -- an open action item, not a limitation"
         }
       }
     },
@@ -4101,6 +4524,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -4150,6 +4577,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -4202,6 +4633,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -4248,6 +4683,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       },
       "na_kind": "model-prohibited"
@@ -4301,6 +4740,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -4349,6 +4792,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -4401,6 +4848,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -4453,6 +4904,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -4504,6 +4959,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     },
@@ -4552,6 +5011,10 @@
           "annotation": "The surface has no construct of that kind, so the defect does not exist at that level of the stack.  IREE's entry surface carries no interior memory access, so there is nothing for an M1 mutation to corrupt.  This is a scope claim, not a detection claim.",
           "evidence": "results/iree/stats.json S8_expressibility[loop] = no",
           "needs": "nothing the lane can add: the construct does not exist at this level of the stack.  Do not count this as a miss; do not report it as an n/a rate either."
+        },
+        "cutlass": {
+          "status": "recorded",
+          "evidence": "cutlass/records.jsonl (v2.1 launched battery)"
         }
       }
     }
