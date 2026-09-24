@@ -21,7 +21,7 @@ __co__ auto matmul11(f32 [32, S, 768] lhs, f32 [768, 768] rhs) {
             call k_matmul(l1_a.chunkat(i,_,_), l1_b.data, l1_out, l1_a.span(1), l1_b.span(0), l1_a.span(2));
           }
         }
-        dma.copy l1_out => output.chunkat(p#q, m_tile + 1, n_tile);
+        dma.transp<1,0> l1_out => output.chunkat(p#q, n_tile, m_tile);
       }
     }
   }

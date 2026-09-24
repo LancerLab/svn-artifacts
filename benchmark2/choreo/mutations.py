@@ -209,14 +209,20 @@ def _spec(cls, path, desc, admissible=True, prohibition="", status="pending",
 # selection (the id/`spec` still drive `select()`). Applied after selection in
 # `gen_mutants.py`, so the corpus is byte-identical while the register and the
 # per-spec tables attribute the specimen to the spec it actually exercises.
+#
+# Empty as of the M2-e balance fix: the two corrections below used to be
+# applied here, AFTER selection, which moved one instance out of M2-e into
+# M2-b and one out of M2-b into M2-a -- no net family change, so the emitted
+# per-family table read M2-a 9 / M2-b 8 / M2-e 7 while selection had filled
+# every family to N. They are now declared on the operator itself
+# (`spec_id=` at the `_m` call), so selection budgets them in the family they
+# actually exercise and the emitted table and the selection agree. The map is
+# kept (empty) as the documented hook for any future post-hoc correction.
 #   M2.6.mm1.alt       symbolic output extent -> the M2.17/M2.19 symbolic-skip
 #                      family (the tiling check folds only on a static extent)
 #   M2.10.mm1.square   non-square output -> a real two-extent mismatch, i.e.
 #                      the M2.6 defect, not an equal-extent M2.10 permutation
-REHOME_SPEC = {
-    "M2.6.mm1.alt": "M2.19",
-    "M2.10.mm1.square": "M2.6",
-}
+REHOME_SPEC = {}
 
 
 def apply_rehome(recs):
@@ -1427,7 +1433,8 @@ M2 = [
     _m("M2.6.mm1.alt", "M2", 6, 'dim-mismatch', 'matmul',
        '11_dynamic_32xSx768_768x768_32xSx768',
        'two leading extents transposed in the output declaration on matmul (second cell: the same defect on another kernel of the family)',
-       ('f32 [lhs.span(0), lhs.span(1), rhs.span(1)] output;', 'f32 [lhs.span(1), lhs.span(0), rhs.span(1)] output;')),
+       ('f32 [lhs.span(0), lhs.span(1), rhs.span(1)] output;', 'f32 [lhs.span(1), lhs.span(0), rhs.span(1)] output;'),
+       spec_id="M2.19"),
     _m("M2.7.cc1.alt", "M2", 7, 'dim-mismatch', 'concat',
        '15_gpt_16x512x1536_16x512x1536_16x512x3072',
        'reduced-rank view on the second concat operand on concat (second cell: the same defect on another kernel of the family)',
@@ -2034,7 +2041,8 @@ M2 += [
        "square transpose: permutation and tile coordinates move TOGETHER, so "
        "every extent agrees and only the layout is wrong",
        ("dma.copy l1_out => output.chunkat(p#q, m_tile, n_tile);",
-        "dma.transp<1,0> l1_out => output.chunkat(p#q, n_tile, m_tile);")),
+        "dma.transp<1,0> l1_out => output.chunkat(p#q, n_tile, m_tile);"),
+       spec_id="M2.6"),
     _m("M2.10.mm11.square", "M2", 10, "wrong-shape", "matmul",
        "11_dynamic_32xSx768_768x768_32xSx768",
        "square transpose on the dynamic operand pair",
