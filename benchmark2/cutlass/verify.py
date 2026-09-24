@@ -43,17 +43,15 @@ def load(path):
 
 def aggregate(recs):
     """Recompute the S1 blocks from the records; the one definition."""
+    def _cell():
+        return dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0, n_na=0)
     det = {}
     pathcls = {}
     for r in recs:
         if r.get("path_class") == "L":
-            bucket = pathcls.setdefault("L", dict(n_injected=0, n_compile=0,
-                                                  n_runtime=0, n_never=0,
-                                                  n_discarded_noop=0))
+            bucket = pathcls.setdefault("L", _cell())
         else:
-            bucket = det.setdefault(r["class"],
-                                    dict(n_injected=0, n_compile=0, n_runtime=0,
-                                         n_never=0, n_discarded_noop=0))
+            bucket = det.setdefault(r["class"], _cell())
         bucket["n_injected"] += 1
         o = r["outcome"]
         if o == "compile":
@@ -63,7 +61,7 @@ def aggregate(recs):
         elif o == "never":
             bucket["n_never"] += 1
         elif o == "n/a":
-            bucket["n_discarded_noop"] += 1
+            bucket["n_na"] += 1
     return det, pathcls
 
 

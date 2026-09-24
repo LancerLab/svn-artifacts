@@ -15,29 +15,29 @@
       "n_injected": 64,
       "n_compile": 8,
       "n_runtime": 0,
-      "n_never": 47,
-      "n_discarded_noop": 9
+      "n_never": 50,
+      "n_na": 6
     },
     "M2": {
       "n_injected": 64,
       "n_compile": 0,
       "n_runtime": 0,
       "n_never": 64,
-      "n_discarded_noop": 0
+      "n_na": 0
     },
     "M3": {
       "n_injected": 64,
       "n_compile": 0,
       "n_runtime": 0,
       "n_never": 64,
-      "n_discarded_noop": 0
+      "n_na": 0
     },
     "M4": {
       "n_injected": 56,
       "n_compile": 4,
       "n_runtime": 0,
       "n_never": 30,
-      "n_discarded_noop": 22
+      "n_na": 22
     }
   },
   "S1_path_class": {
@@ -46,7 +46,7 @@
       "n_compile": 0,
       "n_runtime": 0,
       "n_never": 1,
-      "n_discarded_noop": 1
+      "n_na": 1
     }
   },
   "S1_declared_uncompared": {
@@ -78,10 +78,9 @@
     "M3 is a CONFORMING 8-family battery of 64 instances (families M3-a..M3-h x 4 kernels x 2 realisations): the kernels are the spec-required M3_OPS (matmul, conv2d, batch_norm, max_pool2d) and the two realisations are the small/alt extent grids in sizes.py; one representative spec per family (M3.1/M3.2/M3.3/M3.4/M3.6/M3.8/M3.9/M3.12), applied to the operator's own element index",
     "M1 is a CONFORMING 8-family battery of 64 instances (families M1-a..M1-h x 4 kernels x 2 realisations): the kernels are MINIMAL_SET[\"M1\"] (layer_normalization, softmax, relu, transpose) and the two realisations are the small/alt extent grids; one representative spec per family (M1.2/M1.4/M1.9/M1.12/M1.14/M1.19/M1.15/M1.11), applied to the operator's own index arithmetic",
     "M2 is a CONFORMING 8-family battery of 64 instances (families M2-a..M2-h x 4 kernels x 2 realisations): the kernels are matmul, conv2d, layer_normalization, relu and the two realisations are the small/alt extent grids; one representative spec per family (M2.1/M2.6/M2.7/M2.8/M2.10/M2.5/M2.15/M2.17)",
-    "n_discarded_noop counts the inapplicable launch-status control (L1 on matmul: the static-smem override is not used, so the mutation has no effect -> `n/a`, applicable=false)",
+    "n_na counts the instance-level inapplicable rows: outcome `n/a`, measured `avoid`, applicable=false, manifest `noop`. These are the neutral controls (M4.4/M1.6 empty-iteration no-op by construction, M1.7 reversed bound) and the specs whose defect has no legal statement on some operators (M1.19 32-bit carrier on ln/softmax/transpose; the launch-status control L1 on matmul). They are excluded from detection and enter no denominator (\u00a79.6.1b rule 4).",
     "`L` (launch-status) is a path class, not a mutation class: its cells live under `S1_path_class`, never in `S1_detection`",
-    "records are v2.1 mutant records (see cutlass/mutrec.py): outcome compile|runtime|never|n/a, class M1/M2/M3/M4, path_class carries the L distinction",
-    "2026-09-24: S8/S9/S12 blocks filled post-hoc from the launched-battery records, sanitizer.json, and the F1-F6 probe record (worker-onboarding section 2); derivation documented in S8_expressibility._derivation."
+    "records are v2.1 mutant records (see cutlass/mutrec.py): outcome compile|runtime|never|n/a, class M1/M2/M3/M4, path_class carries the L distinction"
   ],
   "records": 250,
   "S8_expressibility": {

@@ -51,25 +51,24 @@ def main(records_path, out_dir):
             with open(p) as f:
                 recs += [json.loads(l) for l in f if l.strip()]
 
-    classes = {"M1": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
-                          n_discarded_noop=0),
-               "M2": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
-                          n_discarded_noop=0),
-               "M3": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
-                          n_discarded_noop=0),
-               "M4": dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0,
-                          n_discarded_noop=0)}
+    # `n_na` is the canonical S1 key (`schema/statistics-manifest.md`, and the
+    # key set `render.py::_norm_s1` reads); on this lane it counts the
+    # instance-level inapplicable rows (outcome `n/a`, i.e. measured `avoid`: no
+    # legal program states the defect). Those rows are excluded from detection
+    # and enter no denominator. It is deliberately NOT spelled
+    # `n_discarded_noop`: that name is choreo's S14/S2 "inert no-op" concept,
+    # which is a different thing and is not an S1 cell field.
+    def _cell():
+        return dict(n_injected=0, n_compile=0, n_runtime=0, n_never=0, n_na=0)
+    classes = {c: _cell() for c in AX.mutation_classes()}
     # `L` is a path class, not a mutation class: it must not appear in
     # `S1_detection` (which is keyed by M1..M4 only). It is reported separately.
-    path_classes = {"L": dict(n_injected=0, n_compile=0, n_runtime=0,
-                              n_never=0, n_discarded_noop=0)}
+    path_classes = {"L": _cell()}
     for r in recs:
         if r.get("path_class") == "L":
             bucket = path_classes["L"]
         else:
-            bucket = classes.setdefault(
-                r["class"], dict(n_injected=0, n_compile=0, n_runtime=0,
-                                 n_never=0, n_discarded_noop=0))
+            bucket = classes.setdefault(r["class"], _cell())
         bucket["n_injected"] += 1
         o = r["outcome"]
         if o == "compile":
@@ -79,7 +78,7 @@ def main(records_path, out_dir):
         elif o == "never":
             bucket["n_never"] += 1
         elif o == "n/a":
-            bucket["n_discarded_noop"] += 1
+            bucket["n_na"] += 1
 
     stats = {
         "toolchain": "cutlass",
@@ -145,9 +144,14 @@ def main(records_path, out_dir):
             "matmul, conv2d, layer_normalization, relu and the two realisations "
             "are the small/alt extent grids; one representative spec per family "
             "(M2.1/M2.6/M2.7/M2.8/M2.10/M2.5/M2.15/M2.17)",
-            "n_discarded_noop counts the inapplicable launch-status control "
-            "(L1 on matmul: the static-smem override is not used, so the "
-            "mutation has no effect -> `n/a`, applicable=false)",
+            "n_na counts the instance-level inapplicable rows: outcome `n/a`, "
+            "measured `avoid`, applicable=false, manifest `noop`. These are the "
+            "neutral controls "
+            "(M4.4/M1.6 empty-iteration no-op by construction, M1.7 reversed "
+            "bound) and the specs whose defect has no legal statement on some "
+            "operators (M1.19 32-bit carrier on ln/softmax/transpose; the "
+            "launch-status control L1 on matmul). They are excluded from "
+            "detection and enter no denominator (§9.6.1b rule 4).",
             "`L` (launch-status) is a path class, not a mutation class: its "
             "cells live under `S1_path_class`, never in `S1_detection`",
             "records are v2.1 mutant records (see cutlass/mutrec.py): outcome "
@@ -158,13 +162,26 @@ def main(records_path, out_dir):
     }
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "stats.json")
+    # Preserve blocks this collector does not own (S8_expressibility, S9,
+    # S12_method/S12_sanitizer_supplement) so `collect` is idempotent instead of
+    # destructive: those are derived from sanitizer.json / probes, not from the
+    # mutant records, and a regenerate must not silently drop them.
+    if os.path.exists(path):
+        try:
+            with open(path) as f:
+                prior = json.load(f)
+            for k, v in prior.items():
+                if k not in stats:
+                    stats[k] = v
+        except (json.JSONDecodeError, OSError):
+            pass
     with open(path, "w") as f:
         json.dump(stats, f, indent=2)
     print(f"[collect] wrote {path}  ({len(recs)} records)")
     for c, v in list(classes.items()) + list(path_classes.items()):
         print(f"[collect] {c}: injected={v['n_injected']} "
               f"compile={v['n_compile']} runtime={v['n_runtime']} "
-              f"never={v['n_never']} noop={v['n_discarded_noop']}")
+              f"never={v['n_never']} n_na={v['n_na']}")
 
 
 if __name__ == "__main__":
