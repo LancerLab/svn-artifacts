@@ -56,24 +56,24 @@
     "stage_runtime": 43
    },
    "M2": {
-    "n_compile": 8,
-    "n_injected": 31,
+    "n_compile": 10,
+    "n_injected": 33,
     "n_never": 7,
     "n_runtime": 16,
-    "n_undecidable": 3,
-    "stage_compile": 8,
+    "n_undecidable": 1,
+    "stage_compile": 10,
     "stage_runtime": 23,
     "n_n/a": 0
    },
    "M3": {
-    "n_compile": 6,
+    "n_compile": 8,
     "n_discarded_noop": 5,
-    "n_injected": 16,
-    "n_never": 8,
+    "n_injected": 19,
+    "n_never": 9,
     "n_runtime": 2,
-    "n_undecidable": 6,
-    "stage_compile": 6,
-    "stage_runtime": 10,
+    "n_undecidable": 3,
+    "stage_compile": 8,
+    "stage_runtime": 11,
     "n_n/a": 0
    },
    "M4": {
@@ -88,27 +88,22 @@
    }
   },
   "totals": {
-   "n_compile": 53,
+   "n_compile": 57,
    "n_discarded_noop": 5,
-   "n_injected": 145,
+   "n_injected": 150,
    "n_n/a": 2,
-   "n_never": 42,
+   "n_never": 43,
    "n_runtime": 48,
-   "n_undecidable": 14,
-   "stage_compile": 53,
-   "stage_runtime": 92
+   "n_undecidable": 9,
+   "stage_compile": 57,
+   "stage_runtime": 93
   },
   "undecidable_manifest_mutants": [
    "M1.7.cv3.revbound",
    "M2.16.cv1.alt",
-   "M2.6.mm1.extswap",
-   "M2.7.mm1.rank",
-   "M3.14.mm1.linearcopy",
    "M3.28.mm10.symlocal",
    "M3.4.dma5dyn.footprint",
    "M3.8.dma5.rank6",
-   "M3.s2.mm1.rhs1",
-   "M3.s3.mm1.local8",
    "M4.5.cv1.alt",
    "M4.5.tp2.zerostep",
    "M4.6.cv2.neg",
@@ -135,30 +130,30 @@
  "S2_before_device": {
   "status": "ok",
   "feeds": "E1 detection matrix (\u00a75.2 \u00b62) \u2014 the \"210/210\" headline is DROPPED (R-D2); criterion is now \"no unattributed never\"",
-  "n_injected": 145,
-  "n_before_device": 101,
-  "n_compile": 53,
+  "n_injected": 150,
+  "n_before_device": 105,
+  "n_compile": 57,
   "n_runtime": 48,
-  "n_never": 42,
+  "n_never": 43,
   "n_na": 0,
   "n_discarded_noop": 5,
-  "n_undecidable": 14,
+  "n_undecidable": 9,
   "undecidable_means": "the unmutated base fails its own reference check, so no manifest verdict exists for this cell. Excluded from n_injected like a noop, but NOT evidence that the mutation does not corrupt output -- it is unmeasured. Never add it to n_discarded_noop: that would report a measurement failure as a clean negative.",
-  "pct_before_device": 69.6552,
+  "pct_before_device": 70.0,
   "never_is_zero": false,
   "never_is_zero_status": "RETIRED (R-D2, 2026-09-10) \u2014 a non-zero `never` is no longer a failure; an UNATTRIBUTED one is. Do not report this as pass/fail.",
   "per_class_before_device": {
    "M1": 29,
-   "M2": 24,
-   "M3": 8,
+   "M2": 26,
+   "M3": 10,
    "M4": 40
   },
   "control_classes": [
    "M4"
   ],
-  "n_injected_excluding_control": 94,
-  "n_before_device_excluding_control": 61,
-  "pct_before_device_excluding_control": 64.8936,
+  "n_injected_excluding_control": 99,
+  "n_before_device_excluding_control": 65,
+  "pct_before_device_excluding_control": 65.6566,
   "settings_hash": [
    "1f5436bfab1f",
    "28fee96c8330",
@@ -179,7 +174,7 @@
   "never_attribution": {
    "criterion": "no unattributed `never` (R-D2, 2026-09-10; replaces the retired `never = 0`)",
    "no_unattributed_never": false,
-   "n_unattributed": 36,
+   "n_unattributed": 33,
    "unattributed_mutants": [
     "M1.12.ln1.alt",
     "M1.12.ln1.idxreuse",
@@ -196,7 +191,7 @@
     "M1.s4.tp1.tile",
     "M1.s5.sm1.store",
     "M1.s6.sm1.zerostride",
-    "M2.13.mm11.affine",
+    "M2.13.mm1.affine",
     "M2.19.cc11.symdma",
     "M2.19.mm11.symdma",
     "M2.6.mm1.alt",
@@ -205,10 +200,7 @@
     "M3.16.cv1.symbox",
     "M3.20.cv1.block3",
     "M3.27.cv1.symshared",
-    "M3.s1.mm11.atom12",
-    "M3.s1.mm11.atom6",
     "M3.s2.cv1.w1",
-    "M3.s2.mm11.rhs1",
     "M4.5.cv10.zerostep",
     "M4.5.rl1.alt",
     "M4.5.rl2.zerostep",
@@ -219,14 +211,14 @@
     "M4.7.tp22.negpad"
    ],
    "cause_counts": {
-    "C4_NOT_ASSESSED": 3,
+    "C4_NOT_ASSESSED": 7,
     "C5_OUT_OF_SCOPE": 3
    },
-   "n_out_of_scope_or_not_assessed": 6,
+   "n_out_of_scope_or_not_assessed": 10,
    "n_toolchain_or_config": 0,
    "flag_matrix_ablation": {
     "status": "R-D2b \u2014 report as sensitivity, pinned default is the headline",
-    "at_pinned_default": "101/145 = 69.6552%",
+    "at_pinned_default": "105/150 = 70.0%",
     "with_rtc_all_and_hoist_disabled": "43/72 = 59.72%",
     "recovered_by_flags": 8,
     "source": "raw/c2_probe_groundtruth.json (s2_implication)"
@@ -236,7 +228,7 @@
     "C3_LOWER_BOUND_OMITTED": "only one of the index's two bounds was generated \u2014 croqtile soundness bug."
    }
   },
-  "never_note": "42 mutant(s) reached outcome=never. Under R-D2 this is NOT a failure provided every one is attributed: 36 unattributed. 6 are out-of-scope or not-assessed-by-construction and 0 are attributable to a hoisting defect plus cost-filter/lower-bound configuration.",
+  "never_note": "43 mutant(s) reached outcome=never. Under R-D2 this is NOT a failure provided every one is attributed: 33 unattributed. 10 are out-of-scope or not-assessed-by-construction and 0 are attributable to a hoisting defect plus cost-filter/lower-bound configuration.",
   "never_mutants": [
    {
     "mutant_id": "M1.12.ln1.alt",
@@ -439,7 +431,7 @@
     "note": null
    },
    {
-    "mutant_id": "M2.13.mm11.affine",
+    "mutant_id": "M2.13.mm1.affine",
     "class": "M2",
     "category": "matmul",
     "detector": "oracle",
@@ -519,33 +511,43 @@
     "note": null
    },
    {
-    "mutant_id": "M3.s1.mm11.atom12",
+    "mutant_id": "M3.s1.mm1.atom10",
     "class": "M3",
     "category": "matmul",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C4_NOT_ASSESSED",
+    "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
     "note": null
    },
    {
-    "mutant_id": "M3.s1.mm11.atom6",
+    "mutant_id": "M3.s1.mm1.atom6",
     "class": "M3",
     "category": "matmul",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C4_NOT_ASSESSED",
+    "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
     "note": null
    },
    {
-    "mutant_id": "M3.s2.mm11.rhs1",
+    "mutant_id": "M3.s2.mm1.rhs1",
     "class": "M3",
     "category": "matmul",
     "detector": "oracle",
     "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
+    "never_cause": "C4_NOT_ASSESSED",
+    "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
+    "note": null
+   },
+   {
+    "mutant_id": "M3.s2.mm1.rhs2",
+    "class": "M3",
+    "category": "matmul",
+    "detector": "oracle",
+    "manifest": "corrupts",
+    "never_cause": "C4_NOT_ASSESSED",
+    "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
     "note": null
    },
    {
@@ -2316,13 +2318,12 @@
   "per_path": {
    "L": {
     "n_cells": 4,
-    "n_compile": 2,
-    "n_detected": 2,
+    "n_compile": 3,
+    "n_detected": 3,
     "n_detected_pct": null,
-    "n_injected": 3,
+    "n_injected": 4,
     "n_never": 1,
-    "n_never_share_of_misses": null,
-    "n_undecidable": 1
+    "n_never_share_of_misses": null
    },
    "ct-check": {
     "n_cells": 1,
@@ -2331,34 +2332,33 @@
     "n_undecidable": 1
    },
    "rt-check": {
-    "n_admissible": 123,
+    "n_admissible": 125,
     "n_cells": 149,
-    "n_compile": 47,
-    "n_detected": 94,
-    "n_detected_admissible": 88,
-    "n_detected_pct": 71.5447,
+    "n_compile": 49,
+    "n_detected": 96,
+    "n_detected_admissible": 90,
+    "n_detected_pct": 72.0,
     "n_discarded_noop": 5,
-    "n_injected": 133,
+    "n_injected": 136,
     "n_n/a": 2,
-    "n_never": 37,
+    "n_never": 38,
     "n_never_admissible": 33,
     "n_never_share_of_misses": 94.2857,
     "n_runtime": 47,
-    "n_undecidable": 11
+    "n_undecidable": 8
    },
    "unchecked": {
-    "n_admissible": 9,
+    "n_admissible": 10,
     "n_cells": 10,
-    "n_compile": 4,
-    "n_detected": 5,
-    "n_detected_admissible": 5,
-    "n_detected_pct": 55.5556,
-    "n_injected": 9,
+    "n_compile": 5,
+    "n_detected": 6,
+    "n_detected_admissible": 6,
+    "n_detected_pct": 60.0,
+    "n_injected": 10,
     "n_never": 4,
     "n_never_admissible": 4,
     "n_never_share_of_misses": 100.0,
-    "n_runtime": 1,
-    "n_undecidable": 1
+    "n_runtime": 1
    }
   },
   "per_spec": {
@@ -2714,27 +2714,25 @@
    },
    "M2.6": {
     "class": "M2",
-    "n_admissible": 2,
+    "n_admissible": 3,
     "n_cells": 3,
-    "n_compile": 1,
-    "n_detected": 1,
-    "n_detected_admissible": 1,
-    "n_injected": 2,
+    "n_compile": 2,
+    "n_detected": 2,
+    "n_detected_admissible": 2,
+    "n_injected": 3,
     "n_never": 1,
     "n_never_admissible": 1,
-    "n_undecidable": 1,
     "path_class": "rt-check",
     "prohibition": ""
    },
    "M2.7": {
     "class": "M2",
-    "n_admissible": 3,
+    "n_admissible": 4,
     "n_cells": 4,
-    "n_compile": 3,
-    "n_detected": 3,
-    "n_detected_admissible": 3,
-    "n_injected": 3,
-    "n_undecidable": 1,
+    "n_compile": 4,
+    "n_detected": 4,
+    "n_detected_admissible": 4,
+    "n_injected": 4,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -2787,13 +2785,12 @@
    },
    "M3.14": {
     "class": "M3",
-    "n_admissible": 1,
+    "n_admissible": 2,
     "n_cells": 2,
-    "n_compile": 1,
-    "n_detected": 1,
-    "n_detected_admissible": 1,
-    "n_injected": 1,
-    "n_undecidable": 1,
+    "n_compile": 2,
+    "n_detected": 2,
+    "n_detected_admissible": 2,
+    "n_injected": 2,
     "path_class": "unchecked",
     "prohibition": ""
    },
@@ -2829,10 +2826,9 @@
    "M3.18": {
     "class": "M3",
     "n_cells": 2,
-    "n_compile": 1,
-    "n_detected": 1,
-    "n_injected": 1,
-    "n_undecidable": 1,
+    "n_compile": 2,
+    "n_detected": 2,
+    "n_injected": 2,
     "path_class": "L",
     "prohibition": "observation"
    },
@@ -2878,9 +2874,8 @@
    "M3.6": {
     "class": "M3",
     "n_cells": 3,
-    "n_injected": 2,
-    "n_never": 2,
-    "n_undecidable": 1,
+    "n_injected": 3,
+    "n_never": 3,
     "path_class": "rt-check",
     "prohibition": "absent"
    },
@@ -3005,9 +3000,9 @@
      "path_class": "rt-check",
      "prohibition": "absent",
      "desc": "leading dim not aligned to descriptor granularity ON A VECTORIZED ACCESS",
-     "n_injected": 2,
+     "n_injected": 3,
      "n_detected": 0,
-     "n_never": 2,
+     "n_never": 3,
      "contradicts_design_claim": false,
      "design_note": "replaces v1 M3 s2: the v1 realization (lhs1/rhs1/w1/i1) is a noop because the reference k_matmul is SCALAR, so an unaligned scalar load is legal. Retained as a named control until the vectorized realization is written."
     },
@@ -3017,8 +3012,8 @@
      "path_class": "L",
      "prohibition": "observation",
      "desc": "thread-block / cluster extent exceeds the device limit",
-     "n_injected": 1,
-     "n_detected": 1,
+     "n_injected": 2,
+     "n_detected": 2,
      "n_never": 0,
      "contradicts_design_claim": true,
      "design_note": "hosts v1 M3 s3's per-thread accumulator oversize (local8/local16): same observation channel (launch rejected), the \u00a74 text names block/cluster extent. KEPT VERBATIM for the same reason as L1"
@@ -3055,39 +3050,39 @@
    "n_cells": 164,
    "n_cells_non_detection": 0,
    "n_cells_compared": 164,
-   "n_injected": 145,
+   "n_injected": 150,
    "n_discarded_noop": 5,
-   "n_undecidable": 14,
-   "n_never": 42,
-   "n_detected_all_paths": 101,
-   "admissible_injected": 132,
-   "admissible_detected": 93,
-   "admissible_pct": 70.4545,
-   "inadmissible_injected": 13,
-   "inadmissible_detected": 8,
+   "n_undecidable": 9,
+   "n_never": 43,
+   "n_detected_all_paths": 105,
+   "admissible_injected": 135,
+   "admissible_detected": 96,
+   "admissible_pct": 71.1111,
+   "inadmissible_injected": 15,
+   "inadmissible_detected": 9,
    "matches_S1S2": true,
-   "interpretation": "S2's headline rate divides by ALL injected cells; the admissible rate divides only by the cells the register says choreo was fair to ask about. Both must be printed: 8 of S2's detections land on cells the register calls inadmissible, so quoting S2's rate as an admissible-denominator rate would overstate it.",
+   "interpretation": "S2's headline rate divides by ALL injected cells; the admissible rate divides only by the cells the register says choreo was fair to ask about. Both must be printed: 9 of S2's detections land on cells the register calls inadmissible, so quoting S2's rate as an admissible-denominator rate would overstate it.",
    "n_cells_unaccounted": 0,
    "checks": {
     "n_injected": {
-     "s14": 145,
-     "s1s2": 145
+     "s14": 150,
+     "s1s2": 150
     },
     "n_discarded_noop": {
      "s14": 5,
      "s1s2": 5
     },
     "n_undecidable": {
-     "s14": 14,
-     "s1s2": 14
+     "s14": 9,
+     "s1s2": 9
     },
     "n_never": {
-     "s14": 42,
-     "s1s2": 42
+     "s14": 43,
+     "s1s2": 43
     },
     "n_detected_all_paths": {
-     "s14": 101,
-     "s1s2": 101
+     "s14": 105,
+     "s1s2": 105
     }
    }
   },
@@ -3156,14 +3151,14 @@
    "steepest_class": "elem",
    "cost_filter_note": "Enabling every obligation costs 1151/675 = 1.71x the default, and the growth is not uniform: elem goes 58 -> 534 while the other classes are flat. That is the thesis's shape, measured from the ledger.",
    "n_detected": {
-    "entry": 101,
+    "entry": 105,
     "low": null,
     "medium": null,
     "high": null,
     "high (rtc=all arm)": 37
    },
    "n_detected_note": "`enabled` is a ledger property and is exact at every level; `n_detected` needs a full E1 run per level, so only `entry` is measured here. The rtc=all arm exists (see rtc_all_arm) and is reported separately rather than interpolated.",
-   "denominator_us": "101/146 at entry (pinned default)",
+   "denominator_us": "105/151 at entry (pinned default)",
    "rtc_all_arm": {
     "source": "choreo/raw/e1_mutant_records_rtc_all.json",
     "pinned_flags": [
