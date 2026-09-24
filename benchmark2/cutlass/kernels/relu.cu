@@ -26,7 +26,6 @@ __global__ void k_relu(const float* __restrict__ A, float* __restrict__ C,
          k += blockDim.x) {
       long r = k;
       if (M1DEF == 9)  r = k + 1;                  // M1.9 displaced base
-      if (M1DEF == 12) r = (k + 1) % cnt;          // M1.12 wrong loop variable
       // M1.19: a narrow (16-bit) index carrier. The global index is truncated
       // to 16 bits; the low bits alias within the same 64K window that holds
       // the tile, so the element addressed is wrong but still legal.
@@ -36,7 +35,10 @@ __global__ void k_relu(const float* __restrict__ A, float* __restrict__ C,
       float v = tA(r);
       if (M1DEF == 11)                             // M1.11 read-after-write overlap
         v = tA(r) + ((r + 1 < cnt) ? tA(r + 1) : 0.f);
-      gC(k) = v > 0.f ? v : 0.f;
+      // M1.12 wrong loop variable: the leading (tile) coordinate is folded into
+      // the element slot as well, so late tiles write past the allocation.
+      const long go = (M1DEF == 12) ? (k + (long)blockIdx.x * TILE) : k;
+      gC(go) = v > 0.f ? v : 0.f;
     }
   }
 }

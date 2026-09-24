@@ -30,7 +30,6 @@ __global__ void k_softmax(const float* __restrict__ A, float* __restrict__ C,
   CutM1RankProbe<M1DEF>::run();
   float* red = smem;                                  // blockDim.x floats
   const long r = blockIdx.x;
-  const float* a = A + cut_m1_row(r, rows) * cols;
   float* c = C + r * cols;
   const int nchunks = (int)((cols + TILE - 1) / TILE);
   int nl = (LOOP == -1) ? ((rt >= 0) ? rt : nchunks) : LOOP;
@@ -42,7 +41,8 @@ __global__ void k_softmax(const float* __restrict__ A, float* __restrict__ C,
     const long off = (long)it * STEP * TILE;
     for (long k = off + threadIdx.x; k < off + TILE && cut_m1_bound(k, cols);
          k += blockDim.x)
-      m = fmaxf(m, a[cut_m1_read(k, cols)]);
+      m = fmaxf(m, A[cut_m1_rowbase(r, rows, k, cols) +
+                     cut_m1_read(k, cols)]);
   }
   red[threadIdx.x] = m;
   blk_reduce_max(red);
@@ -53,7 +53,8 @@ __global__ void k_softmax(const float* __restrict__ A, float* __restrict__ C,
     const long off = (long)it * STEP * TILE;
     for (long k = off + threadIdx.x; k < off + TILE && cut_m1_bound(k, cols);
          k += blockDim.x)
-      s += expf(a[cut_m1_read(k, cols)] - m);
+      s += expf(A[cut_m1_rowbase(r, rows, k, cols) +
+                  cut_m1_read(k, cols)] - m);
   }
   red[threadIdx.x] = s;
   blk_reduce_sum(red);
@@ -63,7 +64,9 @@ __global__ void k_softmax(const float* __restrict__ A, float* __restrict__ C,
     const long off = (long)it * STEP * TILE;
     for (long k = off + threadIdx.x; k < off + TILE && cut_m1_bound(k, cols);
          k += blockDim.x) {
-      const float x = (M1DEF == 11) ? c[k] : a[cut_m1_read(k, cols)];  // M1.11 alias
+      const float x = (M1DEF == 11) ? c[k] :
+          A[cut_m1_rowbase(r, rows, k, cols) +
+            cut_m1_read(k, cols)];  // M1.11 alias
       c[k] = expf(x - m) / s;
     }
   }

@@ -219,6 +219,14 @@ __device__ __forceinline__ bool cut_m1_bound(long k, long cols) {
 __device__ __forceinline__ long cut_m1_row(long r, long rows) {
   return (M1DEF == 14) ? ((r + 1) % rows) : r;      // swapped tile coordinate
 }
+// M1.12 (M1-d, "wrong loop variable for a dimension"): the leading (row)
+// coordinate is taken from the trailing (column) loop variable `k`. Every
+// assessed grid is wide (cols > rows), so `k * cols` runs past the row extent.
+__device__ __forceinline__ long cut_m1_rowbase(long r, long rows, long k,
+                                               long cols) {
+  if (M1DEF == 12) return k * cols;              // M1.12 wrong loop variable
+  return cut_m1_row(r, rows) * cols;
+}
 
 // M1-g / M1.15: an index at or past the rank. Only `get<2>` of a rank-2 shape
 // is instantiated, and only when the M1 knob selects it, so the base kernel

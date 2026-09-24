@@ -143,9 +143,11 @@ def main():
             "most M1/M4 samples: those index perturbations stay INSIDE the "
             "allocation (a wrong element of the right buffer), so a memory "
             "sanitizer cannot see them -- which is the lane's point. It DOES "
-            "catch the samples whose index escapes the allocation: M1.2 and "
-            "M1.9 (off-by-one / un-shrunk base offset) on layer_normalization, "
-            "and M4.2 (zero parallel-by bound) on layer_normalization. A "
+            "catch the samples whose index escapes the allocation: M1.2, "
+            "M1.9 (off-by-one / un-shrunk base offset) and M1.12 (leading "
+            "coordinate taken from the trailing loop variable) on "
+            "layer_normalization, and M4.2 (zero parallel-by bound) on "
+            "layer_normalization. A "
             "compile-time detention (ct-check) has no binary to run and is "
             "recorded `n/a`."),
         "classes": by_class,

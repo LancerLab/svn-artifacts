@@ -214,8 +214,8 @@
   "classes": {
     "M1": {
       "n": 16,
-      "n_clean": 10,
-      "n_error": 4,
+      "n_clean": 8,
+      "n_error": 6,
       "n_unknown": 2
     },
     "M2": {
@@ -242,7 +242,7 @@
     "cuda": "12.9",
     "gpu": "RTX 3070"
   },
-  "note": "The dynamic oracle is blind to most of the battery, but not all of it. Memcheck reports 0 errors for every M2 and M3 sample and for most M1/M4 samples: those index perturbations stay INSIDE the allocation (a wrong element of the right buffer), so a memory sanitizer cannot see them -- which is the lane's point. It DOES catch the samples whose index escapes the allocation: M1.2 and M1.9 (off-by-one / un-shrunk base offset) on layer_normalization, and M4.2 (zero parallel-by bound) on layer_normalization. A compile-time detention (ct-check) has no binary to run and is recorded `n/a`.",
+  "note": "The dynamic oracle is blind to most of the battery, but not all of it. Memcheck reports 0 errors for every M2 and M3 sample and for most M1/M4 samples: those index perturbations stay INSIDE the allocation (a wrong element of the right buffer), so a memory sanitizer cannot see them -- which is the lane's point. It DOES catch the samples whose index escapes the allocation: M1.2, M1.9 (off-by-one / un-shrunk base offset) and M1.12 (leading coordinate taken from the trailing loop variable) on layer_normalization, and M4.2 (zero parallel-by bound) on layer_normalization. A compile-time detention (ct-check) has no binary to run and is recorded `n/a`.",
   "runs": [
     {
       "category": "layer_normalization",
@@ -398,8 +398,8 @@
     },
     {
       "category": "layer_normalization",
-      "detail": "========= ERROR SUMMARY: 89 errors were not printed. Use --print-limit option to adjust the number of printed errors",
-      "errors": 189,
+      "detail": "========= ERROR SUMMARY: 83 errors were not printed. Use --print-limit option to adjust the number of printed errors",
+      "errors": 183,
       "grid": "small",
       "kernel": "layer_normalization",
       "mutant_id": "cutlass-layer_normalization.M1_2.M1DEF2_gridsmall",
@@ -442,8 +442,8 @@
     },
     {
       "category": "layer_normalization",
-      "detail": "========= ERROR SUMMARY: 77 errors were not printed. Use --print-limit option to adjust the number of printed errors",
-      "errors": 177,
+      "detail": "========= ERROR SUMMARY: 96 errors were not printed. Use --print-limit option to adjust the number of printed errors",
+      "errors": 196,
       "grid": "small",
       "kernel": "layer_normalization",
       "mutant_id": "cutlass-layer_normalization.M1_9.M1DEF9_gridsmall",
@@ -464,8 +464,8 @@
     },
     {
       "category": "layer_normalization",
-      "detail": "========= ERROR SUMMARY: 0 errors",
-      "errors": 0,
+      "detail": "========= ERROR SUMMARY: 233 errors were not printed. Use --print-limit option to adjust the number of printed errors",
+      "errors": 333,
       "grid": "small",
       "kernel": "layer_normalization",
       "mutant_id": "cutlass-layer_normalization.M1_12.M1DEF12_gridsmall",
@@ -475,8 +475,8 @@
     },
     {
       "category": "layer_normalization",
-      "detail": "========= ERROR SUMMARY: 0 errors",
-      "errors": 0,
+      "detail": "========= ERROR SUMMARY: 10519 errors were not printed. Use --print-limit option to adjust the number of printed errors",
+      "errors": 10619,
       "grid": "alt",
       "kernel": "layer_normalization",
       "mutant_id": "cutlass-layer_normalization.M1_12.M1DEF12_gridalt",

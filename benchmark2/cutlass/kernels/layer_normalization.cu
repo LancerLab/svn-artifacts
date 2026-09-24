@@ -23,7 +23,6 @@ __global__ void k_layernorm(const float* __restrict__ A,
   CutM1RankProbe<M1DEF>::run();
   float* red = smem;
   const long r = blockIdx.x;
-  const float* a = A + cut_m1_row(r, rows) * cols;
   float* c = C + r * cols;
   const int nchunks = (int)((cols + TILE - 1) / TILE);
   int nl = (LOOP == -1) ? ((rt >= 0) ? rt : nchunks) : LOOP;
@@ -36,7 +35,8 @@ __global__ void k_layernorm(const float* __restrict__ A,
     const long off = (long)it * STEP * TILE;
     for (long k = off + threadIdx.x; k < off + TILE && cut_m1_bound(k, cols);
          k += blockDim.x)
-      s += a[cut_m2_read(cut_m1_read(k, cols), cols)];
+      s += A[cut_m1_rowbase(r, rows, k, cols) +
+             cut_m2_read(cut_m1_read(k, cols), cols)];
   }
   red[threadIdx.x] = s; blk_sum(red); s = red[0];
   const float mean = s / (float)cols;
@@ -46,7 +46,10 @@ __global__ void k_layernorm(const float* __restrict__ A,
     const long off = (long)it * STEP * TILE;
     for (long k = off + threadIdx.x; k < off + TILE && cut_m1_bound(k, cols);
          k += blockDim.x) {
-      const float d = a[cut_m2_read(cut_m1_read(k, cols), cols)] - mean; v += d * d;
+      const float d =
+          A[cut_m1_rowbase(r, rows, k, cols) +
+            cut_m2_read(cut_m1_read(k, cols), cols)] - mean;
+      v += d * d;
     }
   }
   red[threadIdx.x] = v; blk_sum(red); v = red[0];
@@ -56,7 +59,9 @@ __global__ void k_layernorm(const float* __restrict__ A,
     const long off = (long)it * STEP * TILE;
     for (long k = off + threadIdx.x; k < off + TILE && cut_m1_bound(k, cols);
          k += blockDim.x) {
-      const float x = (M1DEF == 11) ? c[k] : a[cut_m2_read(cut_m1_read(k, cols), cols)];  // M1.11 alias
+      const float x = (M1DEF == 11) ? c[k] :
+          A[cut_m1_rowbase(r, rows, k, cols) +
+            cut_m2_read(cut_m1_read(k, cols), cols)];  // M1.11 alias
       c[k] = (x - mean) * inv * G[cut_m1_read(k, cols)] +
              B[cut_m1_read(k, cols)];
     }

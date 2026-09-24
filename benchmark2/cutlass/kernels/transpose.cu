@@ -16,7 +16,12 @@ __global__ void k_transpose(const float* __restrict__ A, float* __restrict__ C,
       const long ii = cut_m1_read(i, total);
       long m = ii / N, n = ii % N;
       if (M1DEF == 14) { long t = m; m = n; n = t; }   // swapped tile coordinate
-      const long dst = (M1DEF == 4) ? (m * N + n) : (n * M + m);  // M1.4 stride
+      // M1.4 bad stride; M1.12 wrong loop variable: the leading coordinate is
+      // strided by the trailing extent (N > M here), so the store leaves the
+      // allocation.
+      const long dst = (M1DEF == 4) ? (m * N + n)
+                     : (M1DEF == 12) ? (n * N + m)
+                     : (n * M + m);
       const long src = (M1DEF == 11) ? dst : ii;       // M1.11 read/write overlap
       C[dst] = A[src];
     }
