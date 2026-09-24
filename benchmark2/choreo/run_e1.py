@@ -362,6 +362,17 @@ RE_PASSED = re.compile(
     re.M | re.I)
 RE_EXECTIME = re.compile(r"Execution time:\s*(\d+)\s*(?:us|microseconds)")
 
+# A compile-time diagnostic about the injected defect is a detection even when
+# the build SUCCEEDS (specs §9.6.1: ct-check = warning or error). The vocabulary
+# below is the closed set emitted by shapeinfer.cpp for a degenerate `foreach`
+# iteration space (zero step / empty range). Matching it scores a warned-but-
+# built mutant ct-check instead of falling through to the runtime arms -- one of
+# which (a zero loop step) never terminates. Enumerated positively, mirroring
+# the oracle matcher, so an unrelated warning cannot be credited to the
+# assessor.
+RE_CT_WARNING = re.compile(
+    r"warning: (?:zero step in the iteration space|empty iteration space)")
+
 # Infrastructure failures. These mean the harness could not build or launch the
 # program at all, so they carry NO information about detection and must never be
 # folded into outcome=never (that would silently corrupt the S1 matrix).
@@ -584,10 +595,17 @@ def classify_one(rec, workdir, keep_logs=True, policy=None):
     # ---- 1. detector compile -------------------------------------------
     base_id = f"{rec['category']}/{rec['case']}"
     det_sh = os.path.join(d, "det.sh")
-    ok, rc, _ = compile_stage(src, COMPILE_FLAGS, det_sh, os.path.join(d, "det.compile.log"),
-                              kernel_id=base_id)
+    ok, rc, dctext = compile_stage(src, COMPILE_FLAGS, det_sh,
+                                   os.path.join(d, "det.compile.log"),
+                                   kernel_id=base_id)
     out["compile_rc"] = rc
     out["local_cap_bytes"] = local_caps.cap_bytes_for(base_id)
+    # A compile-time diagnostic about the defect is a detection whatever its
+    # severity (specs §9.6.1). Record it before the runtime arms so the verdict
+    # can short-circuit execution: a zero-step loop compiles and warns, then
+    # never terminates, so running it would time out and void the verdict.
+    ct_warn = RE_CT_WARNING.search(dctext)
+    out["compile_warning"] = ct_warn.group(0) if ct_warn else None
 
     # ---- 2. oracle build (specs §7 manifest check) ----------------------
     # Done before the detector execute so that a compile-detected mutant still
@@ -606,6 +624,11 @@ def classify_one(rec, workdir, keep_logs=True, policy=None):
         # genuinely broken, so it corrupts.
         manifest = "corrupts"
         oracle_note = "oracle compile failed"
+    elif ct_warn:
+        # The defect is already detected at compile time, so the runtime arms
+        # are skipped (see ct_warn above) and corruption cannot be decided here.
+        manifest = "undecidable"
+        oracle_note = "compile-time ct-check; oracle arm not executed"
     else:
         orc, otext, infra = execute_stage(off_sh, os.path.join(d, "off.run.log"), env=xenv)
         out["oracle_run_rc"] = orc
@@ -656,6 +679,11 @@ def classify_one(rec, workdir, keep_logs=True, policy=None):
         out["outcome"] = "compile"
         out["stage"] = "compile"
         out["detector"] = "compile-error"
+    elif ct_warn:
+        # Warned but built: the compiler caught the defect before execution.
+        out["outcome"] = "compile"
+        out["stage"] = "compile"
+        out["detector"] = "compile-warning"
     else:
         drc, dtext, dinfra = execute_stage(det_sh, os.path.join(d, "det.run.log"), env=xenv)
         infra = infra or dinfra
@@ -692,11 +720,13 @@ def classify_one(rec, workdir, keep_logs=True, policy=None):
         out["infra_error"] = infra
         out["outcome"] = "n/a"
         out["note"] = f"infrastructure failure, verdict void: {infra}"
-    elif not usable:
+    elif not usable and not ct_warn:
         # The base kernel fails its own reference check, so a mutant's failure
         # is not evidence of corruption. Detection verdicts are still valid
         # (choreo's obligation checks are independent of the reference), but the
         # manifest field cannot be decided. Mark it rather than guess.
+        # Skipped when ct_warn: that is already undecidable, for a reason
+        # (`the runtime arms were never run`) worth keeping in the note.
         out["note"] = ("manifest undecidable: unmutated base fails its own "
                        "reference check (see raw/oracle_policy.json)")
         out["manifest"] = "undecidable"
@@ -739,6 +769,11 @@ def reproject_one(rec, workdir):
         with open(p, errors="replace") as f:
             return f.read()
 
+    # `classify_one` skips the runtime arms when the compile warns about the
+    # defect, so neither run log exists for such a record. Re-derive that from
+    # the (retained) compile log before looking for them.
+    ct_warn = RE_CT_WARNING.search(read("det.compile.log") or "")
+
     # ---- oracle arm ------------------------------------------------------
     # Mirrors classify_one's §7 block. `oracle_compile_rc != 0` short-circuits
     # to corrupts without a log, exactly as the original does.
@@ -747,6 +782,8 @@ def reproject_one(rec, workdir):
     # as "oracle compile failed".
     if (rec.get("oracle_compile_rc") or 0) != 0:
         manifest, note = "corrupts", "oracle compile failed"
+    elif ct_warn:
+        manifest, note = "undecidable", "compile-time ct-check; oracle arm not executed"
     else:
         otext = read("off.run.log")
         if otext is None:
@@ -779,6 +816,8 @@ def reproject_one(rec, workdir):
     # ---- detector arm ----------------------------------------------------
     if (rec.get("compile_rc") or 0) != 0:
         outcome, stage, detector = "compile", "compile", "compile-error"
+    elif ct_warn:
+        outcome, stage, detector = "compile", "compile", "compile-warning"
     else:
         dtext = read("det.run.log")
         if dtext is None:
@@ -796,7 +835,7 @@ def reproject_one(rec, workdir):
     # The `oracle_usable=False` override in classify_one wins over the arm
     # result: an unusable reference means no manifest verdict can be trusted.
     # Preserve it rather than silently re-deciding.
-    if rec.get("oracle_usable") is False:
+    if rec.get("oracle_usable") is False and not ct_warn:
         manifest = "undecidable"
         out["note"] = rec.get("note") or (
             "manifest undecidable: unmutated base fails its own reference check "
@@ -1157,10 +1196,24 @@ def main():
             print(f"  {m}")
 
     undec = [r["mutant_id"] for r in results if r["manifest"] == "undecidable"]
-    if undec:
+    # Two undecidable causes are NOT interchangeable. A compile-time detection
+    # deliberately skips the runtime arms, so its manifest is undecidable by
+    # design; a failed base reference is an infrastructure defect. Do not report
+    # the first with the second's "fix the base" wording.
+    ct_only = [m for m, r in ((r["mutant_id"], r) for r in results)
+               if r["manifest"] == "undecidable"
+               and r.get("detector") == "compile-warning"]
+    base_fail = [m for m in undec if m not in ct_only]
+    if base_fail:
         print(f"\nUNJUDGED (manifest=undecidable: UNMUTATED base fails its own "
-              f"§7 reference; fix the base, do NOT read as inert): {len(undec)}")
-        for m in undec:
+              f"§7 reference; fix the base, do NOT read as inert): {len(base_fail)}")
+        for m in base_fail:
+            print(f"  {m}")
+    if ct_only:
+        print(f"\nCT-CHECK (manifest=undecidable by design: the defect is caught "
+              f"at compile time and the runtime arms are skipped, so corruption "
+              f"is not decided): {len(ct_only)}")
+        for m in ct_only:
             print(f"  {m}")
 
     infra = [r for r in results if r.get("infra_error")]

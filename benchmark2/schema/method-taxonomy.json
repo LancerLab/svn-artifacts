@@ -436,7 +436,8 @@
       "edit": "The iteration variable does not advance",
       "view": false,
       "spec_ids": [
-        "M4.5"
+        "M4.5",
+        "M4.9"
       ]
     },
     "M4-g": {

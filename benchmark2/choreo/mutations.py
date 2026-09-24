@@ -132,7 +132,11 @@ LEVEL2_SET = {
     "M2": ["elemwise_add", "transpose_square", "pad", "reshape", "broadcast",
            "batch_norm"],
     "M3": ["batch_norm"],
-    "M4": [],
+    # `matmul` is M4-f's level-2 home: its `foreach` ranges are written as bare
+    # identifiers, the only form a step can be attached to, so it is the one
+    # level-2 category whose zero-step edit survives compilation (conv2d's
+    # `foreach` ranges take the edit but the strict-DMA pass rejects it first).
+    "M4": ["matmul"],
 }
 
 
@@ -509,6 +513,22 @@ SPEC_REGISTRY = {
                        "empty padded extent is a legal zero-trip loop whose "
                        "body never runs, so the expected verdict is a miss, "
                        "not a refusal"),
+    "M4.9": _spec("M4", "ct-check", "zero step in a `foreach` range -- the "
+                        "iteration variable never advances. Legal, so expected "
+                        "as a compile-time WARNING, never an error",
+                  status="implemented",
+                  note="the `foreach`-range half of family M4-f (M4.5 is the "
+                       "index-map half). A range bound carries no LoopBound "
+                       "obligation -- assess emits it only for `parallel by` "
+                       "and `with in`, and no RangeExpr visitor creates one -- "
+                       "so this surface is caught only by the shape-inference "
+                       "warning added with this spec. Warning rather than error "
+                       "is the point: a zero-step 'repeat this index' idiom "
+                       "(and, from the same check, an empty range) is legal and "
+                       "occasionally intended, and neither is memory-unsafe. "
+                       "The realisation asserts the warning fires; before it, "
+                       "the zero step reached codegen and divided by zero in "
+                       "the cost model"),
 
     # ---- M3.17-M3.26 target limits (were class L) ------------------------
     # FOLDED INTO M3: the standalone `L launch-status` class was merged here,
@@ -2526,6 +2546,26 @@ M4 += [
        "write-back overwrites a single tile N times",
        ("dma.copy Y.span_as(1, 1, Ho, Wo) => o.chunkat(p#q#n, co, _, _);",
         "dma.copy Y.span_as(1, 1, Ho, Wo) => o.chunkat(p#q#n, co * 0, _, _);")),
+]
+
+# ---- M4-f, `foreach`-range half (spec M4.9, ct-check) -----------------------
+# M4.5 above covers a zero stride in the INDEX MAP; this covers a zero STEP in
+# the iteration itself, which the index map never sees. A range bound carries no
+# LoopBound obligation -- `assess` emits it only for `parallel by` and `with in`
+# -- so nothing checked this surface until the shape-inference warning added with
+# spec M4.9. The realisation asserts that warning fires: it is a warning, not an
+# error, because a zero-trip loop and a zero-step "repeat this index" idiom are
+# both legal. matmul is the one level-2 category whose ranges are bare
+# identifiers (the form a step attaches to) and whose zero-step edit is not
+# pre-empted by the strict-DMA pass.
+M4 += [
+    _m("M4.9.mm1.zerostep", "M4", 9, "stride", "matmul",
+       "1_bert_32x512x768_768x768_32x512x768",
+       "zero step in a `foreach` range: the iteration variable never advances, "
+       "so the loop repeats one tile forever. Legal, so it must warn, not "
+       "error, and a warned-but-built mutant is already a compile-time "
+       "detection",
+       ("foreach k_tile {", "foreach k_tile(0:0:0) {")),
 ]
 
 # ---- M4-g degenerate pad (specs §4; M2.12's trigger re-realised on rt-check) ----

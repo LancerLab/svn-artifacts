@@ -2,13 +2,13 @@
  "toolchain": "choreo",
  "spec_version": "v2.1",
  "summary": {
-  "n_specs": 81,
+  "n_specs": 82,
   "status_counts": {
-   "implemented": 60,
+   "implemented": 61,
    "pending": 21
   },
   "admissible_counts": {
-   "true": 55,
+   "true": 56,
    "false": 26
   },
   "prohibition_counts": {
@@ -18,7 +18,7 @@
   },
   "path_counts": {
    "rt-check": 53,
-   "ct-check": 6,
+   "ct-check": 7,
    "unchecked": 9,
    "avoided": 6,
    "L": 7
@@ -83,7 +83,8 @@
    "M4.5",
    "M4.6",
    "M4.7",
-   "M4.8"
+   "M4.8",
+   "M4.9"
   ],
   "admissible": [
    "M1.1",
@@ -140,7 +141,8 @@
    "M4.5",
    "M4.6",
    "M4.7",
-   "M4.8"
+   "M4.8",
+   "M4.9"
   ],
   "pending": [],
   "unwritten": [
@@ -231,8 +233,8 @@
   "n_operators": {
    "M1": 94,
    "M2": 103,
-   "M3": 91,
-   "M4": 80
+   "M3": 97,
+   "M4": 81
   }
  },
  "specs": [
@@ -1045,6 +1047,16 @@
    "status": "implemented",
    "desc": "padded extent goes EMPTY -- the zero-length half of the GSC corner-case trigger",
    "note": "the second rt-check realisation of M4-g, so the family is not evidence from a single operator (defect D1). An empty padded extent is a legal zero-trip loop whose body never runs, so the expected verdict is a miss, not a refusal"
+  },
+  {
+   "spec_id": "M4.9",
+   "cls": "M4",
+   "path": "ct-check",
+   "admissible": true,
+   "prohibition": "",
+   "status": "implemented",
+   "desc": "zero step in a `foreach` range -- the iteration variable never advances. Legal, so expected as a compile-time WARNING, never an error",
+   "note": "the `foreach`-range half of family M4-f (M4.5 is the index-map half). A range bound carries no LoopBound obligation -- assess emits it only for `parallel by` and `with in`, and no RangeExpr visitor creates one -- so this surface is caught only by the shape-inference warning added with this spec. Warning rather than error is the point: a zero-step 'repeat this index' idiom (and, from the same check, an empty range) is legal and occasionally intended, and neither is memory-unsafe. The realisation asserts the warning fires; before it, the zero step reached codegen and divided by zero in the cost model"
   }
  ]
 }
