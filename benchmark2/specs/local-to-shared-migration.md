@@ -24,9 +24,24 @@
      data; `local` is defensible but perf-toxic (guaranteed spill).
   2. **Cross-thread tile staging in local** (conv2d, residual matmul,
      max_pool2d): `l1_A = dma.copy ... => local` inside nested parallel
-     scopes — the same pattern the 2026-09-23 repair already moved to
-     `=> shared` in 12 matmul kernels ("Group tile buffers live in shared
-     memory (one on-chip copy per group)", matmul/1_bert).
+   scopes — the same pattern the 2026-09-23 repair already moved to
+   `=> shared` in 12 matmul kernels ("Group tile buffers live in shared
+   memory (one on-chip copy per group)", matmul/1_bert).
+- **Shared-capacity failures (found 2026-09-24, full-suite sweep)**: 6 of
+  the 36 fail even WITH the pinned 2 MB cap — the failure is the SHARED
+  static check, not the local cap ("shared memory OUT OF BOUND ... exceeds
+  the limit of 102400 bytes"): conv2d/19_vit (636 KB/block),
+  matmul/17_general (288 KB), matmul/19_transformer (520 KB),
+  softmax/19_transformer (1 MB), softmax/20_vit (192 KB),
+  softmax/2_cnn (196 KB). All six declare per-block shared allocations above
+  the 100 KB/SM hardware of BOTH the sm_86 dev host and the sm_120 target —
+  physically non-launchable on this lane. All six date to the 2026-06-15
+  suite import (e069af9) and are silently absent from the ledger scan
+  (stats ingests 310 of 317 kernels; the 7th skip is unreconciled — find it
+  during W3). Note the interaction with W4: the old 300 KB sm_120 table let
+  softmax/2, softmax/20 and matmul/17 pass the compile-time check on the
+  measurement host despite being non-launchable there; the corrected 100 KB
+  table rejects all six.
 - **E1 channel neutered**: M3.28/M3.18's expected detection is the static
   local-mem check (`memcheck.hpp` `CheckCtMemUsage`, error band = the cap).
   At 2 MB no local tile can trip it — the warn band (170 B) still fires but
@@ -52,6 +67,21 @@ Constraint: SHARED is capacity-checked per arch (`gpu_target.hpp:63-79`).
 After migration each kernel must compile for `-arch=sm_120` at the default
 cap; if a migrated tile set exceeds the SHARED budget, reduce the tile
 factor rather than reaching for the local cap.
+
+### W1b — Redesign the six shared-over-capacity bases
+
+The six Class-S bases above are NOT relabel jobs: their shared allocations
+exceed the hardware, so the fix is a shared-memory tiling redesign —
+chunked/block-streamed tiles in the style of the in-flight conv2d/20 edit
+(stream `[CT, KT]` tiles global→shared per K-tile instead of staging whole
+operands), sized to fit 100 KB/SM with the per-block opt-in ceiling
+(99 KB) as the binding constraint. softmax/19's 1 MB per-block buffer
+additionally needs the row-chunking treatment, not just tiling. Verify each
+redesigned base compiles for sm_120 at the default flags AND still executes
+correctly (basecheck) before it re-enters the scan. These six are the
+highest-value targets in this spec: they are currently invisible to E2/E3
+(absent from the 310-kernel scan), so landing them also closes the
+317-vs-310 suite/scan gap the paper must reconcile at the final number sync.
 
 ### W2 — Replace the lane-wide cap with per-kernel caps
 
