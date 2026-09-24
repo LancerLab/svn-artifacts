@@ -17,9 +17,9 @@
    "observation": 3
   },
   "path_counts": {
-   "rt-check": 50,
+   "rt-check": 49,
    "ct-check": 8,
-   "unchecked": 11,
+   "unchecked": 12,
    "avoided": 6,
    "L": 7
   },
@@ -611,12 +611,12 @@
   {
    "spec_id": "M2.5",
    "cls": "M2",
-   "path": "rt-check",
+   "path": "unchecked",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
    "desc": "partial write (omitted tail tile) / duplicate write (overlapping tile)",
-   "note": ""
+   "note": "write-coverage family. unchecked, not rt-check (specs 9.6.1): the emitted obligation population is element-access bounds plus hw constraints only -- there is no 'the destination was written fully and exactly once' obligation, so no -rtc value reaches a partial or duplicate write and no check exists to sweep. The measured verdict is never; that is the designed silent outcome, not a gap. Three of the eight cells (rl1.partial, tp1.partial, sm1.dup) trip an unrelated static extent/type inconsistency (DMA source extent > undersized shared tile; a constant index where a bounded iterator is expected); an incidental static catch inside an unchecked spec's cell is normal (the bucket already carries compile-detected cells)"
   },
   {
    "spec_id": "M2.6",
@@ -916,7 +916,7 @@
    "prohibition": "",
    "status": "implemented",
    "desc": "tensor footprint >= 4 GB, 5-D product (family C)",
-   "note": "gpu_adapt.hpp:351-355 -- the family-C obligation is the rank-5 product CeilTo128Byte(bpe * dst dim0) * dim1 * dim2 * dim3 * dim4 < 2^32. Realised on `dma_rank5`/`r5dyn`, a rank-5 global->shared .transp whose dim0 is symbolic, so the assessment is a runtime_check; the mutation lifts a trailing literal dim so the product crosses 2^32 well inside the legal runtime range"
+   "note": "gpu_adapt.hpp:351-355 -- the family-C obligation is the rank-5 product CeilTo128Byte(bpe * dst dim0) * dim1 * dim2 * dim3 * dim4 < 2^32. Realised on `dma_rank5`/r5fp, a rank-5 global->global .transp whose dim0 is symbolic, so the assessment is a runtime_check; the mutation lifts a trailing literal dim and the runnable host trips the check at N=1 with manifest `noop` (the 128-byte row pitch inflates the assessed product ~32x over a 128 MB packed buffer, so the output is unchanged). The family is OBLIGATION-ONLY: the check is conservative, so no value-changing realisation exists within the execute budget -- a genuine >= 4 GB descriptor needs N ~ 2^18 and an infeasible 4 GB shared tile (the retained r5dyn control). Recorded as rt-check and excluded from the admissible denominator (specs 7); M3-d is a designed 1/8 obligation-only family, not a gap"
   },
   {
    "spec_id": "M3.5",

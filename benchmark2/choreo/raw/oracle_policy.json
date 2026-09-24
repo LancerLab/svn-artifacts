@@ -285,6 +285,23 @@
       "reason": "UNMUTATED base fails its own reference check \u2014 manifest verdicts for this case are untrustworthy",
       "use_check": false
     },
+    "dma_rank5/r5fp": {
+      "category": "dma_rank5",
+      "case": "r5fp",
+      "gated": false,
+      "base_compile": true,
+      "base_compile_rc": 0,
+      "base_run_rc": 0,
+      "base_passed": true,
+      "base_detector": "none",
+      "base_infra": null,
+      "check_run_rc": 0,
+      "check_passed": true,
+      "check_detector": "none",
+      "use_check": false,
+      "oracle_usable": true,
+      "reason": "built-in reference passes on unmutated code"
+    },
     "dma_rank5/r5swiz": {
       "base_compile": true,
       "base_compile_rc": 0,

@@ -4,13 +4,12 @@
  "toolchain_identity": {
   "toolchain": "choreo",
   "version": "2b8a937669991480b42b9f3ec45d9a2167aad08f",
-  "version_basis": "binary-newer-than-head",
-  "checkout_head": "2b8a937669991480b42b9f3ec45d9a2167aad08f",
+  "version_basis": "mtime<=commit-date",
+  "checkout_head": "e2b24483fbc9f3ac6fc9a6fa0bc089b33592591b",
   "checkout_branch": "ledger-artifacts",
   "checkout_dirty_source_files": [
    "ib/Target/GPU/gpu_adapt.hpp",
-   "lib/semacheck.cpp",
-   "lib/semacheck.hpp"
+   "lib/semacheck.cpp"
   ],
   "binary": "croqtile/build-release/choreo",
   "binary_sha1_12": "e8b5611103d5",
@@ -19,7 +18,7 @@
   "binary_stale_basis": "source-mtime",
   "binary_predates_source": false,
   "binary_newest_source_mtime": 1790264286.053243,
-  "version_label_disagrees_with_head": false
+  "version_label_disagrees_with_head": true
  },
  "produced_by": "stats.py",
  "inputs": {
@@ -70,11 +69,10 @@
    },
    "M3": {
     "n_compile": 26,
-    "n_discarded_noop": 4,
+    "n_discarded_noop": 5,
     "n_injected": 56,
     "n_never": 14,
     "n_runtime": 16,
-    "n_undecidable": 1,
     "stage_compile": 26,
     "stage_runtime": 30,
     "n_n/a": 0
@@ -92,17 +90,16 @@
   },
   "totals": {
    "n_compile": 151,
-   "n_discarded_noop": 4,
+   "n_discarded_noop": 5,
    "n_injected": 237,
    "n_n/a": 0,
    "n_never": 46,
    "n_runtime": 40,
-   "n_undecidable": 4,
+   "n_undecidable": 3,
    "stage_compile": 151,
    "stage_runtime": 86
   },
   "undecidable_manifest_mutants": [
-   "M3.4.dma5dyn.footprint",
    "M4.5.cv1.alt",
    "M4.5.tp2.zerostep",
    "M4.8.cv14.emptypad",
@@ -125,6 +122,7 @@
   ],
   "toolchain_version": [
    "215e17b0b2380f012ad1558e2640d6fdfa2f27b0",
+   "2b8a937669991480b42b9f3ec45d9a2167aad08f",
    "a7d2abac25886243907b2661f969af195d7c7a61"
   ]
  },
@@ -137,8 +135,8 @@
   "n_runtime": 40,
   "n_never": 46,
   "n_na": 0,
-  "n_discarded_noop": 4,
-  "n_undecidable": 4,
+  "n_discarded_noop": 5,
+  "n_undecidable": 3,
   "undecidable_means": "the unmutated base fails its own reference check, so no manifest verdict exists for this cell. Excluded from n_injected like a noop, but NOT evidence that the mutation does not corrupt output -- it is unmeasured. Never add it to n_discarded_noop: that would report a measurement failure as a clean negative.",
   "pct_before_device": 80.5907,
   "never_is_zero": false,
@@ -172,6 +170,7 @@
   ],
   "toolchain_version": [
    "215e17b0b2380f012ad1558e2640d6fdfa2f27b0",
+   "2b8a937669991480b42b9f3ec45d9a2167aad08f",
    "a7d2abac25886243907b2661f969af195d7c7a61"
   ],
   "never_attribution": {
@@ -2343,40 +2342,38 @@
    "ct-check": {
     "n_admissible": 24,
     "n_cells": 24,
-    "n_compile": 23,
-    "n_detected": 23,
-    "n_detected_admissible": 23,
-    "n_detected_pct": 95.8333,
+    "n_compile": 24,
+    "n_detected": 24,
+    "n_detected_admissible": 24,
+    "n_detected_pct": 100.0,
     "n_injected": 24,
-    "n_never": 1,
-    "n_never_admissible": 1,
-    "n_never_share_of_misses": 100.0
+    "n_never_share_of_misses": null
    },
    "rt-check": {
-    "n_admissible": 158,
-    "n_cells": 175,
-    "n_compile": 104,
-    "n_detected": 137,
-    "n_detected_admissible": 130,
-    "n_detected_pct": 82.2785,
-    "n_discarded_noop": 4,
-    "n_injected": 167,
-    "n_never": 30,
-    "n_never_admissible": 28,
+    "n_admissible": 150,
+    "n_cells": 167,
+    "n_compile": 101,
+    "n_detected": 134,
+    "n_detected_admissible": 127,
+    "n_detected_pct": 84.6667,
+    "n_discarded_noop": 5,
+    "n_injected": 159,
+    "n_never": 25,
+    "n_never_admissible": 23,
     "n_never_share_of_misses": 100.0,
     "n_runtime": 33,
-    "n_undecidable": 4
+    "n_undecidable": 3
    },
    "unchecked": {
-    "n_admissible": 42,
-    "n_cells": 42,
-    "n_compile": 21,
-    "n_detected": 28,
-    "n_detected_admissible": 28,
-    "n_detected_pct": 66.6667,
-    "n_injected": 42,
-    "n_never": 14,
-    "n_never_admissible": 14,
+    "n_admissible": 50,
+    "n_cells": 50,
+    "n_compile": 23,
+    "n_detected": 30,
+    "n_detected_admissible": 30,
+    "n_detected_pct": 60.0,
+    "n_injected": 50,
+    "n_never": 20,
+    "n_never_admissible": 20,
     "n_never_share_of_misses": 100.0,
     "n_runtime": 7
    }
@@ -2596,12 +2593,9 @@
    },
    "M2.10": {
     "class": "M2",
-    "n_admissible": 4,
-    "n_cells": 4,
-    "n_compile": 1,
-    "n_detected": 1,
-    "n_detected_admissible": 1,
-    "n_injected": 4,
+    "n_admissible": 3,
+    "n_cells": 3,
+    "n_injected": 3,
     "n_never": 3,
     "n_never_admissible": 3,
     "path_class": "unchecked",
@@ -2664,12 +2658,14 @@
    },
    "M2.19": {
     "class": "M2",
-    "n_admissible": 2,
-    "n_cells": 2,
+    "n_admissible": 3,
+    "n_cells": 3,
     "n_compile": 2,
     "n_detected": 2,
     "n_detected_admissible": 2,
-    "n_injected": 2,
+    "n_injected": 3,
+    "n_never": 1,
+    "n_never_admissible": 1,
     "path_class": "unchecked",
     "prohibition": ""
    },
@@ -2738,19 +2734,17 @@
     "n_injected": 8,
     "n_never": 5,
     "n_never_admissible": 5,
-    "path_class": "rt-check",
+    "path_class": "unchecked",
     "prohibition": ""
    },
    "M2.6": {
     "class": "M2",
     "n_admissible": 4,
     "n_cells": 4,
-    "n_compile": 3,
-    "n_detected": 3,
-    "n_detected_admissible": 3,
+    "n_compile": 4,
+    "n_detected": 4,
+    "n_detected_admissible": 4,
     "n_injected": 4,
-    "n_never": 1,
-    "n_never_admissible": 1,
     "path_class": "ct-check",
     "prohibition": ""
    },
@@ -2920,7 +2914,7 @@
    "M3.4": {
     "class": "M3",
     "n_cells": 1,
-    "n_undecidable": 1,
+    "n_discarded_noop": 1,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -3123,8 +3117,8 @@
    "n_cells_non_detection": 0,
    "n_cells_compared": 245,
    "n_injected": 237,
-   "n_discarded_noop": 4,
-   "n_undecidable": 4,
+   "n_discarded_noop": 5,
+   "n_undecidable": 3,
    "n_never": 46,
    "n_detected_all_paths": 191,
    "admissible_injected": 224,
@@ -3141,12 +3135,12 @@
      "s1s2": 237
     },
     "n_discarded_noop": {
-     "s14": 4,
-     "s1s2": 4
+     "s14": 5,
+     "s1s2": 5
     },
     "n_undecidable": {
-     "s14": 4,
-     "s1s2": 4
+     "s14": 3,
+     "s1s2": 3
     },
     "n_never": {
      "s14": 46,
@@ -3230,7 +3224,7 @@
     "high (rtc=all arm)": 37
    },
    "n_detected_note": "`enabled` is a ledger property and is exact at every level; `n_detected` needs a full E1 run per level, so only `entry` is measured here. The rtc=all arm exists (see rtc_all_arm) and is reported separately rather than interpolated.",
-   "denominator_us": "190/237 at entry (pinned default)",
+   "denominator_us": "190/236 at entry (pinned default)",
    "rtc_all_arm": {
     "source": "choreo/raw/e1_mutant_records_rtc_all.json",
     "pinned_flags": [
@@ -3266,6 +3260,7 @@
   ],
   "toolchain_version": [
    "215e17b0b2380f012ad1558e2640d6fdfa2f27b0",
+   "2b8a937669991480b42b9f3ec45d9a2167aad08f",
    "a7d2abac25886243907b2661f969af195d7c7a61"
   ]
  },

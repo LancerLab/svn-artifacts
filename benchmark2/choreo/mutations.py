@@ -341,8 +341,22 @@ SPEC_REGISTRY = {
                   status="implemented"),
     "M2.4": _spec("M2", "rt-check", "wrong output leading extent",
                   status="implemented"),
-    "M2.5": _spec("M2", "rt-check", "partial write (omitted tail tile) / duplicate "
-                              "write (overlapping tile)", status="implemented"),
+    "M2.5": _spec("M2", "unchecked", "partial write (omitted tail tile) / duplicate "
+                              "write (overlapping tile)",
+                  curve=True,
+                  note="write-coverage family. unchecked, not rt-check (specs "
+                       "9.6.1): the emitted obligation population is element-access "
+                       "bounds plus hw constraints only -- there is no 'the "
+                       "destination was written fully and exactly once' obligation, "
+                       "so no -rtc value reaches a partial or duplicate write and no "
+                       "check exists to sweep. The measured verdict is never; that "
+                       "is the designed silent outcome, not a gap. Three of the "
+                       "eight cells (rl1.partial, tp1.partial, sm1.dup) trip an "
+                       "unrelated static extent/type inconsistency (DMA source "
+                       "extent > undersized shared tile; a constant index where a "
+                       "bounded iterator is expected); an incidental static catch "
+                       "inside an unchecked spec's cell is normal (the bucket "
+                       "already carries compile-detected cells)"),
     "M2.6": _spec("M2", "ct-check", "two extents transposed",
                   curve=True,
                   note="every realized specimen is a shape/rank inconsistency "
@@ -456,11 +470,19 @@ SPEC_REGISTRY = {
                   note="gpu_adapt.hpp:351-355 -- the family-C obligation is "
                        "the rank-5 product CeilTo128Byte(bpe * dst dim0) * "
                        "dim1 * dim2 * dim3 * dim4 < 2^32. Realised on "
-                       "`dma_rank5`/`r5dyn`, a rank-5 global->shared .transp "
-                       "whose dim0 is symbolic, so the assessment is a "
-                       "runtime_check; the mutation lifts a trailing literal "
-                       "dim so the product crosses 2^32 well inside the legal "
-                       "runtime range"),
+                       "`dma_rank5`/r5fp, a rank-5 global->global .transp whose "
+                       "dim0 is symbolic, so the assessment is a runtime_check; "
+                       "the mutation lifts a trailing literal dim and the "
+                       "runnable host trips the check at N=1 with manifest "
+                       "`noop` (the 128-byte row pitch inflates the assessed "
+                       "product ~32x over a 128 MB packed buffer, so the output "
+                       "is unchanged). The family is OBLIGATION-ONLY: the check "
+                       "is conservative, so no value-changing realisation exists "
+                       "within the execute budget -- a genuine >= 4 GB "
+                       "descriptor needs N ~ 2^18 and an infeasible 4 GB shared "
+                       "tile (the retained r5dyn control). Recorded as rt-check "
+                       "and excluded from the admissible denominator (specs 7); "
+                       "M3-d is a designed 1/8 obligation-only family, not a gap"),
     "M3.5": _spec("M3", "rt-check", "swizzle-incompatible box shape",
                   admissible=False, prohibition="absent",
                   note="MISSING SURFACE: no case in the suite writes an "
@@ -2422,21 +2444,28 @@ M3 += [
 # ---- M3.4 / M3.8 -- the rank-5 DMA surface -------------------------------
 # The suite's maximum rank was 4, so family C (a rank-5 footprint product) and
 # the rank-6 out-of-range side of RankLE5 had no source case at all. `dma_rank5`
-# is a mutation-only category carrying the two rank-5 hosts:
-#   r5dyn   global->shared .transp with a symbolic dim0 -- family C is assessed
-#           at run time, so lifting a trailing literal dim moves the violation
-#           into the legal runtime range (rt-check).
+# is a mutation-only category carrying the rank-5 hosts:
+#   r5fp    global->global .transp with a symbolic dim0 -- family C is assessed
+#           at run time, so lifting a trailing literal dim trips the check at
+#           N=1 on a runnable, output-inert (noop) program. The family-C check
+#           is conservative, so this is the only runnable realisation.
+#   r5dyn   the genuine >=4GB form (global->shared, trailing literal dim 4096):
+#           the check needs N~2^18 and a 4 GB shared tile, so it never reaches
+#           the runtime check under the execute budget. Retained as a control.
 #   r5base  a well-formed rank-5 .transp; adding a 6th dim and a 6-wide
 #           permutation takes the rank outside [1,5] (RankLE5, ct-check).
-# Both base cases compile rc=0 under the pinned flags, and both mutated forms
-# were verified to reach the named assessment before the edits were written.
+# The base cases compile rc=0 under the pinned flags, and each mutated form
+# was verified to reach the named assessment before the edits were written.
 M3 += [
-    _m("M3.4.dma5dyn.footprint", "M3", 4, "stride", "dma_rank5", "r5dyn",
+    _m("M3.4.dma5dyn.footprint", "M3", 4, "stride", "dma_rank5", "r5fp",
        "rank-5 footprint product lifted past 4 GB by a trailing literal dim: "
        "the family-C obligation is assessed at run time (dim0 symbolic) and the "
-       "mutant violates it well inside the legal runtime range",
-       ("f32 [N,2,1,1,1] input", "f32 [N,4096,1,1,1] input", 1),
-       ("f32 [N,1,1,1,2]", "f32 [N,1,1,1,4096]", 2)),
+       "mutant trips the conservative check on an output-inert program "
+       "(manifest noop)",
+       ("f32 [256,N,128,256,2] input", "f32 [256,N,128,256,4] input", 1),
+       ("f32 [N,128,256,2,256] output", "f32 [N,128,256,4,256] output", 1),
+       ("make_spandata<choreo::f32>(256, N, 128, 256, 2)",
+        "make_spandata<choreo::f32>(256, N, 128, 256, 4)", 1)),
     _m("M3.8.dma5.rank6", "M3", 8, "dim-mismatch", "dma_rank5", "r5base",
        "DMA rank raised to 6: a 6th dim and a 6-wide permutation take the "
        "descriptor outside the assessed [1,5], so the compiler refuses it at "
