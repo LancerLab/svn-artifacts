@@ -744,6 +744,17 @@ _DYN_VALUE = 3
 # instead of a fixed value. Values name (operand, axis) to read.
 _DYN_FOLLOW: dict[str, tuple[str, int]] = {"broadcast_r2": ("bias", 0)}
 
+# Categories whose symbolic extent must bind *below* the operand's trailing
+# static extent. The M1-d (`broadcast-index`) realisation reuses the trailing
+# axis's induction variable for the outermost axis, so it leaves the buffer only
+# when the trailing static extent strictly exceeds the runtime outermost extent.
+# The small `relu`/`transpose` operands are `(2, 3)`, so binding the default
+# `_DYN_VALUE` (3) to the leading axis composes a square `?x3` build whose reuse
+# can never overrun. Bind their symbolic axis to the operand's own leading extent
+# instead, keeping the dynamic build non-square; this mirrors `_DYN_FOLLOW`'s use
+# of a static-partner value.
+_DYN_VALUE_OVERRIDE: dict[str, int] = {"relu": 2, "transpose": 2}
+
 # Concat axis, per the settings signature `ele_concat_J`.
 CONCAT_AXIS = 1
 
@@ -857,7 +868,7 @@ def make_case(category: str, size: str = "small", dynamic: bool = False) -> Case
                 fop, fax = fol
                 dyn[f"{op}.{axis}"] = table[category][fop][fax]
             else:
-                dyn[f"{op}.{axis}"] = _DYN_VALUE
+                dyn[f"{op}.{axis}"] = _DYN_VALUE_OVERRIDE.get(category, _DYN_VALUE)
 
     _derive_output(category, dims, dyn)
 

@@ -7,8 +7,8 @@
   "reconciled": true,
   "tally": {
     "flagged=false/fault=none/exercised=false": 4,
-    "flagged=false/fault=none/exercised=true": 60,
-    "flagged=true/fault=oob/exercised=true": 56
+    "flagged=false/fault=none/exercised=true": 56,
+    "flagged=true/fault=oob/exercised=true": 60
   },
   "unflagged_by_spec": {
     "M1.11/dynamic": {
@@ -18,16 +18,6 @@
     },
     "M1.11/static": {
       "n": 4,
-      "instrumented_min": 1,
-      "instrumented_max": 1
-    },
-    "M1.12/dynamic": {
-      "n": 2,
-      "instrumented_min": 1,
-      "instrumented_max": 1
-    },
-    "M1.4/dynamic": {
-      "n": 2,
       "instrumented_min": 1,
       "instrumented_max": 1
     },

@@ -23,8 +23,8 @@
       "never": 120
     },
     "on": {
-      "never": 68,
-      "runtime": 52
+      "never": 64,
+      "runtime": 56
     }
   },
   "problems": []
