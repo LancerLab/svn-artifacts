@@ -20,6 +20,13 @@ int main() {
   auto t0 = std::chrono::high_resolution_clock::now();
   auto r = r5fp(src.view());
   auto t1 = std::chrono::high_resolution_clock::now();
+
+  {
+    const int expect[5] = {1, 128, 256, 2, 256};
+    for (int i = 0; i < 5; ++i)
+      choreo::choreo_assert((int)r.shape()[i] == expect[i],
+                            "M3.4: output extent contract violated");
+  }
   auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
 
   for (int n = 0; n < (int)r.shape()[0]; ++n)

@@ -591,7 +591,25 @@ SPEC_REGISTRY = {
                        "forbid: a zero-trip loop is legal and its body never "
                        "executes. If it is ever counted as admissible the "
                        "oracle has regressed"),
-    "M4.5": _spec("M4", "rt-check", "stride/step = 0 in an iteration"),
+    "M4.5": _spec("M4", "rt-check", "stride/step = 0 in an iteration",
+                  admissible=False, prohibition="absent",
+                  status="implemented",
+                  note="RETIRED 2026-09-25: the realisations collapse a "
+                       "write-back element index (out.chunkat(..., l * 0)), "
+                       "which is a value / write-collision error, not an "
+                       "iteration-validity violation -- no coverage or "
+                       "uniqueness obligation exists, so no -rtc level can "
+                       "catch it and `never` is the correct verdict "
+                       "(raw/never_attribution.json: C5_OUT_OF_SCOPE). Family "
+                       "M4-f's iteration-space realisation is now M4.9 (the "
+                       "`foreach`-range zero step, ct-check). Retained as a "
+                       "named control; excluded from the admissible "
+                       "denominator. The S14 applicability audit still flags "
+                       "it CONTRADICTED, but its one detected realisation "
+                       "(sm11) is compile-rejected as a TYPE error on a "
+                       "literal chunkat index (`ubound(0)`), not by any "
+                       "iteration-validity check, so it does not evidence the "
+                       "declared surface."),
     "M4.7": _spec("M4", "rt-check", "padded extent goes NEGATIVE -- the "
                           "negative-padding corner the GSC study names",
                   status="implemented",
@@ -2446,9 +2464,11 @@ M3 += [
 # the rank-6 out-of-range side of RankLE5 had no source case at all. `dma_rank5`
 # is a mutation-only category carrying the rank-5 hosts:
 #   r5fp    global->global .transp with a symbolic dim0 -- family C is assessed
-#           at run time, so lifting a trailing literal dim trips the check at
-#           N=1 on a runnable, output-inert (noop) program. The family-C check
-#           is conservative, so this is the only runnable realisation.
+#           at run time, so lifting a literal dim trips the check at N=1. The
+#           transp copies in-range elements faithfully, so the defect is only
+#           value-observable through the output EXTENT; the base reference
+#           asserts that extent contract, which makes the mutant a corrupting
+#           (non-noop) program rather than a discarded noop.
 #   r5dyn   the genuine >=4GB form (global->shared, trailing literal dim 4096):
 #           the check needs N~2^18 and a 4 GB shared tile, so it never reaches
 #           the runtime check under the execute budget. Retained as a control.
@@ -2459,9 +2479,9 @@ M3 += [
 M3 += [
     _m("M3.4.dma5dyn.footprint", "M3", 4, "stride", "dma_rank5", "r5fp",
        "rank-5 footprint product lifted past 4 GB by a trailing literal dim: "
-       "the family-C obligation is assessed at run time (dim0 symbolic) and the "
-       "mutant trips the conservative check on an output-inert program "
-       "(manifest noop)",
+       "the family-C obligation is assessed at run time (dim0 symbolic), the "
+       "mutant trips the conservative check, and the base reference's "
+       "output-extent contract makes it a corrupting (non-noop) program",
        ("f32 [256,N,128,256,2] input", "f32 [256,N,128,256,4] input", 1),
        ("f32 [N,128,256,2,256] output", "f32 [N,128,256,4,256] output", 1),
        ("make_spandata<choreo::f32>(256, N, 128, 256, 2)",
@@ -2495,6 +2515,49 @@ M3 += [
        ("f32 [2,4,8,16,32] input", "f32 [2,4,8,16,32,2] input", 1),
        ("f32 [4,8,16,32,2] output", "f32 [4,8,16,32,2,2] output", 1),
        ("dma.transp<1,2,3,4,0>", "dma.transp<1,2,3,4,5,0>", 1)),
+]
+
+# ---- M3.4 staging -- the rank-5 footprint product across the M3 surfaces ---
+# The footprint obligation is the only `dma.transp` surface whose defect is
+# value-inert on a runnable program: a legal rank-5 global->global transpose
+# whose assessed product is lifted past 4 GB changes the output extent but
+# copies the in-range elements faithfully. The base reference therefore asserts
+# the output extent contract, so the mutant is a corrupting (non-noop) program
+# and the family-C assessment is exercised as a validated test rather than a
+# discarded noop. Realised on the rank-5 hosts available to four M3 categories;
+# the `extent` and `layout` realisations lift different descriptor dims.
+_M3_4_EXTENT = (
+    ("f32 [256,N,128,256,2] input", "f32 [256,N,128,256,4] input", 1),
+    ("f32 [N,128,256,2,256] output", "f32 [N,128,256,4,256] output", 1),
+    ("make_spandata<choreo::f32>(256, N, 128, 256, 2)",
+     "make_spandata<choreo::f32>(256, N, 128, 256, 4)", 1),
+)
+_M3_4_LAYOUT = (
+    ("f32 [256,N,128,256,2] input", "f32 [256,N,256,256,2] input", 1),
+    ("f32 [N,128,256,2,256] output", "f32 [N,256,256,2,256] output", 1),
+    ("make_spandata<choreo::f32>(256, N, 128, 256, 2)",
+     "make_spandata<choreo::f32>(256, N, 256, 256, 2)", 1),
+)
+_M3_4_STAGE_DESC = (
+    "rank-5 footprint product lifted past 4 GB on a symbolic-dim0 "
+    "global->global transpose: family C assesses the product at run time, the "
+    "mutant is detected, and the base reference's output-extent contract makes "
+    "it a corrupting (non-noop) program")
+M3 += [
+    _m("M3.4.dma5.r5fp.layout", "M3", 4, "stride", "dma_rank5", "r5fp",
+       _M3_4_STAGE_DESC, *_M3_4_LAYOUT),
+    _m("M3.4.ln.r5fp.extent", "M3", 4, "stride", "layer_normalization",
+       "lnr5fp", _M3_4_STAGE_DESC, *_M3_4_EXTENT),
+    _m("M3.4.ln.r5fp.layout", "M3", 4, "stride", "layer_normalization",
+       "lnr5fp", _M3_4_STAGE_DESC, *_M3_4_LAYOUT),
+    _m("M3.4.bn.r5fp.extent", "M3", 4, "stride", "batch_norm", "bnr5fp",
+       _M3_4_STAGE_DESC, *_M3_4_EXTENT),
+    _m("M3.4.bn.r5fp.layout", "M3", 4, "stride", "batch_norm", "bnr5fp",
+       _M3_4_STAGE_DESC, *_M3_4_LAYOUT),
+    _m("M3.4.mp.r5fp.extent", "M3", 4, "stride", "max_pool2d", "mpr5fp",
+       _M3_4_STAGE_DESC, *_M3_4_EXTENT),
+    _m("M3.4.mp.r5fp.layout", "M3", 4, "stride", "max_pool2d", "mpr5fp",
+       _M3_4_STAGE_DESC, *_M3_4_LAYOUT),
 ]
 
 # ---- M3.31 -- the dma.pad rank ladder (M3-f's second surface) --------------

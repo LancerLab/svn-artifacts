@@ -1,9 +1,8 @@
-#include "common.hpp"
 #include "choreo.h"
 #include <chrono>
 #include <iostream>
 
-__co__ auto r5fp(f32 [256,N,128,256,2] input) {
+__co__ auto bnr5fp(f32 [256,N,128,256,2] input) {
   f32 [N,128,256,2,256] output;
   parallel p by 1 : block
     parallel q by 32 : thread {
@@ -18,7 +17,7 @@ int main() {
   src.fill_random(-1.0, 1.0);
 
   auto t0 = std::chrono::high_resolution_clock::now();
-  auto r = r5fp(src.view());
+  auto r = bnr5fp(src.view());
   auto t1 = std::chrono::high_resolution_clock::now();
 
   {
@@ -36,7 +35,7 @@ int main() {
           for (int m = 0; m < (int)r.shape()[4]; ++m) {
             float ref = src[m][n][c][d][e];
             if (ref != r[n][c][d][e][m]) {
-              std::cout << "r5fp(" << ref << ") != " << r[n][c][d][e][m]
+              std::cout << "bnr5fp(" << ref << ") != " << r[n][c][d][e][m]
                         << "\n";
               choreo::choreo_assert(false, "values are not equal.");
             }

@@ -4,21 +4,21 @@
  "toolchain_identity": {
   "toolchain": "choreo",
   "version": "2b8a937669991480b42b9f3ec45d9a2167aad08f",
-  "version_basis": "mtime<=commit-date",
-  "checkout_head": "e2b24483fbc9f3ac6fc9a6fa0bc089b33592591b",
+  "version_basis": "binary-newer-than-head",
+  "checkout_head": "2b8a937669991480b42b9f3ec45d9a2167aad08f",
   "checkout_branch": "ledger-artifacts",
   "checkout_dirty_source_files": [
    "ib/Target/GPU/gpu_adapt.hpp",
    "lib/semacheck.cpp"
   ],
   "binary": "croqtile/build-release/choreo",
-  "binary_sha1_12": "e8b5611103d5",
-  "binary_mtime": 1790264310.6020553,
+  "binary_sha1_12": "7745d2da0dbc",
+  "binary_mtime": 1790272546.472068,
   "binary_stale_vs_checkout": false,
   "binary_stale_basis": "source-mtime",
   "binary_predates_source": false,
-  "binary_newest_source_mtime": 1790264286.053243,
-  "version_label_disagrees_with_head": true
+  "binary_newest_source_mtime": 1790272522.1712534,
+  "version_label_disagrees_with_head": false
  },
  "produced_by": "stats.py",
  "inputs": {
@@ -26,7 +26,7 @@
   "expressibility": 0,
   "kernel": 310,
   "latency": 32,
-  "mutant": 245,
+  "mutant": 252,
   "obligation": 17353,
   "remainder": 0,
   "residue": 28,
@@ -69,19 +69,19 @@
    },
    "M3": {
     "n_compile": 26,
-    "n_discarded_noop": 5,
-    "n_injected": 56,
+    "n_discarded_noop": 4,
+    "n_injected": 64,
     "n_never": 14,
-    "n_runtime": 16,
+    "n_runtime": 24,
     "stage_compile": 26,
-    "stage_runtime": 30,
+    "stage_runtime": 38,
     "n_n/a": 0
    },
    "M4": {
     "n_compile": 39,
     "n_injected": 53,
-    "n_never": 10,
-    "n_runtime": 4,
+    "n_never": 6,
+    "n_runtime": 8,
     "n_undecidable": 3,
     "stage_compile": 39,
     "stage_runtime": 14,
@@ -90,14 +90,14 @@
   },
   "totals": {
    "n_compile": 151,
-   "n_discarded_noop": 5,
-   "n_injected": 237,
+   "n_discarded_noop": 4,
+   "n_injected": 245,
    "n_n/a": 0,
-   "n_never": 46,
-   "n_runtime": 40,
+   "n_never": 42,
+   "n_runtime": 52,
    "n_undecidable": 3,
    "stage_compile": 151,
-   "stage_runtime": 86
+   "stage_runtime": 94
   },
   "undecidable_manifest_mutants": [
    "M4.5.cv1.alt",
@@ -129,30 +129,30 @@
  "S2_before_device": {
   "status": "ok",
   "feeds": "E1 detection matrix (\u00a75.2 \u00b62) \u2014 the \"210/210\" headline is DROPPED (R-D2); criterion is now \"no unattributed never\"",
-  "n_injected": 237,
-  "n_before_device": 191,
+  "n_injected": 245,
+  "n_before_device": 203,
   "n_compile": 151,
-  "n_runtime": 40,
-  "n_never": 46,
+  "n_runtime": 52,
+  "n_never": 42,
   "n_na": 0,
-  "n_discarded_noop": 5,
+  "n_discarded_noop": 4,
   "n_undecidable": 3,
   "undecidable_means": "the unmutated base fails its own reference check, so no manifest verdict exists for this cell. Excluded from n_injected like a noop, but NOT evidence that the mutation does not corrupt output -- it is unmeasured. Never add it to n_discarded_noop: that would report a measurement failure as a clean negative.",
-  "pct_before_device": 80.5907,
+  "pct_before_device": 82.8571,
   "never_is_zero": false,
   "never_is_zero_status": "RETIRED (R-D2, 2026-09-10) \u2014 a non-zero `never` is no longer a failure; an UNATTRIBUTED one is. Do not report this as pass/fail.",
   "per_class_before_device": {
    "M1": 55,
    "M2": 51,
-   "M3": 42,
-   "M4": 43
+   "M3": 50,
+   "M4": 47
   },
   "control_classes": [
    "M4"
   ],
-  "n_injected_excluding_control": 184,
-  "n_before_device_excluding_control": 148,
-  "pct_before_device_excluding_control": 80.4348,
+  "n_injected_excluding_control": 192,
+  "n_before_device_excluding_control": 156,
+  "pct_before_device_excluding_control": 81.25,
   "settings_hash": [
    "1f5436bfab1f",
    "28fee96c8330",
@@ -195,14 +195,14 @@
    "cause_counts": {
     "C1_COST_FILTER_SUPPRESSED": 14,
     "C5_OUT_OF_SCOPE": 9,
-    "C4_NOT_ASSESSED": 7,
+    "C4_NOT_ASSESSED": 3,
     "UNRESOLVED": 3
    },
-   "n_out_of_scope_or_not_assessed": 16,
+   "n_out_of_scope_or_not_assessed": 12,
    "n_toolchain_or_config": 14,
    "flag_matrix_ablation": {
     "status": "R-D2b \u2014 report as sensitivity, pinned default is the headline",
-    "at_pinned_default": "191/237 = 80.5907%",
+    "at_pinned_default": "203/245 = 82.8571%",
     "with_rtc_all_and_hoist_disabled": "43/72 = 59.72%",
     "recovered_by_flags": 8,
     "source": "raw/c2_probe_groundtruth.json (s2_implication)"
@@ -212,7 +212,7 @@
     "C3_LOWER_BOUND_OMITTED": "only one of the index's two bounds was generated \u2014 croqtile soundness bug."
    }
   },
-  "never_note": "46 mutant(s) reached outcome=never. Under R-D2 this is NOT a failure provided every one is attributed: 13 unattributed. 16 are out-of-scope or not-assessed-by-construction and 14 are attributable to a hoisting defect plus cost-filter/lower-bound configuration.",
+  "never_note": "42 mutant(s) reached outcome=never. Under R-D2 this is NOT a failure provided every one is attributed: 13 unattributed. 12 are out-of-scope or not-assessed-by-construction and 14 are attributable to a hoisting defect plus cost-filter/lower-bound configuration.",
   "never_mutants": [
    {
     "mutant_id": "M1.s4.tp1.tile",
@@ -632,46 +632,6 @@
     "manifest": "corrupts",
     "never_cause": "C5_OUT_OF_SCOPE",
     "never_cause_reason": "C1's premise is refuted by the probe: at -rtc=all with hoisting ON no assessment guard fires (probe verdict `oracle-only`), so the suppressed runtime obligation was NOT about this mutated access (the chunkat relevance arm matches on array name alone, so it also admits the base kernel's own dynamic-shape guards). The mutation is a constant collapse / value change -- no bound guard can catch it -- which specs \u00a74 puts out of scope, so `never` is the CORRECT verdict, not a detection gap.",
-    "note": null
-   },
-   {
-    "mutant_id": "M4.7.cv10.negpad",
-    "class": "M4",
-    "category": "conv2d",
-    "detector": "crash",
-    "manifest": "corrupts",
-    "never_cause": "C4_NOT_ASSESSED",
-    "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
-    "note": null
-   },
-   {
-    "mutant_id": "M4.7.rl22.negpad",
-    "class": "M4",
-    "category": "relu",
-    "detector": "oracle",
-    "manifest": "corrupts",
-    "never_cause": "C4_NOT_ASSESSED",
-    "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
-    "note": null
-   },
-   {
-    "mutant_id": "M4.7.tp22.negpad",
-    "class": "M4",
-    "category": "transpose",
-    "detector": "oracle",
-    "manifest": "corrupts",
-    "never_cause": "C4_NOT_ASSESSED",
-    "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
-    "note": null
-   },
-   {
-    "mutant_id": "M4.7.ln12.negpad",
-    "class": "M4",
-    "category": "layer_normalization",
-    "detector": "oracle",
-    "manifest": "corrupts",
-    "never_cause": "C4_NOT_ASSESSED",
-    "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
     "note": null
    }
   ]
@@ -2299,13 +2259,13 @@
   "register_source": "choreo/raw/spec_registry.json",
   "denominator": {
    "n_specs": 82,
-   "n_applicable": 56,
-   "n_not_applicable": 26,
+   "n_applicable": 55,
+   "n_not_applicable": 27,
    "n_out_of_scope": 0,
    "rule": "admissible specs (rt-check/unchecked/ct-check + the L row reported separately) form the detection denominator; an inadmissible spec is a recorded verdict with a named prohibition and is NOT open work (specs \u00a72)"
   },
   "prohibition": {
-   "absent": 17,
+   "absent": 18,
    "derived": 0,
    "repaired": 6,
    "harness-owned": 0,
@@ -2323,7 +2283,7 @@
     "absent": 1
    },
    "rt-check": {
-    "absent": 10
+    "absent": 11
    },
    "unchecked": {
     "absent": 2
@@ -2350,18 +2310,18 @@
     "n_never_share_of_misses": null
    },
    "rt-check": {
-    "n_admissible": 150,
-    "n_cells": 167,
+    "n_admissible": 153,
+    "n_cells": 174,
     "n_compile": 101,
-    "n_detected": 134,
-    "n_detected_admissible": 127,
-    "n_detected_pct": 84.6667,
-    "n_discarded_noop": 5,
-    "n_injected": 159,
-    "n_never": 25,
-    "n_never_admissible": 23,
+    "n_detected": 146,
+    "n_detected_admissible": 138,
+    "n_detected_pct": 90.1961,
+    "n_discarded_noop": 4,
+    "n_injected": 167,
+    "n_never": 21,
+    "n_never_admissible": 15,
     "n_never_share_of_misses": 100.0,
-    "n_runtime": 33,
+    "n_runtime": 45,
     "n_undecidable": 3
    },
    "unchecked": {
@@ -2913,8 +2873,12 @@
    },
    "M3.4": {
     "class": "M3",
-    "n_cells": 1,
-    "n_discarded_noop": 1,
+    "n_admissible": 8,
+    "n_cells": 8,
+    "n_detected": 8,
+    "n_detected_admissible": 8,
+    "n_injected": 8,
+    "n_runtime": 8,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -2984,17 +2948,14 @@
    },
    "M4.5": {
     "class": "M4",
-    "n_admissible": 5,
     "n_cells": 7,
     "n_compile": 1,
     "n_detected": 1,
-    "n_detected_admissible": 1,
     "n_injected": 5,
     "n_never": 4,
-    "n_never_admissible": 4,
     "n_undecidable": 2,
     "path_class": "rt-check",
-    "prohibition": ""
+    "prohibition": "absent"
    },
    "M4.6": {
     "class": "M4",
@@ -3011,9 +2972,10 @@
     "class": "M4",
     "n_admissible": 4,
     "n_cells": 4,
+    "n_detected": 4,
+    "n_detected_admissible": 4,
     "n_injected": 4,
-    "n_never": 4,
-    "n_never_admissible": 4,
+    "n_runtime": 4,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -3045,8 +3007,8 @@
   "applicability_audit": {
    "question": "does each inadmissible spec's DESIGN claim survive the record-level ground truth?",
    "status": "CONTRADICTED",
-   "n_inadmissible_specs_with_cells": 5,
-   "n_contradicting": 4,
+   "n_inadmissible_specs_with_cells": 6,
+   "n_contradicting": 5,
    "rows": [
     {
      "spec_id": "M3.6",
@@ -3107,48 +3069,60 @@
      "n_never": 2,
      "contradicts_design_claim": true,
      "design_note": "class is M4, not M1: the edit is on an M1 index surface but the defect is M4's 'empty space', so the operator counts in M4's cell (family M4-d) while the spec_id keeps its M1 spelling. noop by construction -- there is no prohibition to enforce, because the range is correctly empty. Retained for the miss audit, excluded from the admissible denominator"
+    },
+    {
+     "spec_id": "M4.5",
+     "class": "M4",
+     "path_class": "rt-check",
+     "prohibition": "absent",
+     "desc": "stride/step = 0 in an iteration",
+     "n_injected": 5,
+     "n_detected": 1,
+     "n_never": 4,
+     "contradicts_design_claim": true,
+     "design_note": "RETIRED 2026-09-25: the realisations collapse a write-back element index (out.chunkat(..., l * 0)), which is a value / write-collision error, not an iteration-validity violation -- no coverage or uniqueness obligation exists, so no -rtc level can catch it and `never` is the correct verdict (raw/never_attribution.json: C5_OUT_OF_SCOPE). Family M4-f's iteration-space realisation is now M4.9 (the `foreach`-range zero step, ct-check). Retained as a named control; excluded from the admissible denominator. The S14 applicability audit still flags it CONTRADICTED, but its one detected realisation (sm11) is compile-rejected as a TYPE error on a literal chunkat index (`ubound(0)`), not by any iteration-validity check, so it does not evidence the declared surface."
     }
    ],
    "note": "A `contradicts_design_claim` row has cells whose own manifest says they corrupt, AND which choreo detected -- so the mutation is testable and the spec belongs in the denominator. This is REPORTED, never auto-applied: moving it changes S1/S2, which specs \u00a77 reserves for v3 with owner sign-off."
   },
   "reconciliation": {
    "against": "S1_detection_matrix / S2_before_device",
-   "n_cells": 245,
+   "n_cells": 252,
    "n_cells_non_detection": 0,
-   "n_cells_compared": 245,
-   "n_injected": 237,
-   "n_discarded_noop": 5,
+   "n_cells_compared": 252,
+   "n_injected": 245,
+   "n_discarded_noop": 4,
    "n_undecidable": 3,
-   "n_never": 46,
-   "n_detected_all_paths": 191,
-   "admissible_injected": 224,
-   "admissible_detected": 181,
-   "admissible_pct": 80.8036,
-   "inadmissible_injected": 13,
-   "inadmissible_detected": 10,
+   "n_never": 42,
+   "n_detected_all_paths": 203,
+   "admissible_injected": 227,
+   "admissible_detected": 192,
+   "admissible_pct": 84.5815,
+   "inadmissible_injected": 18,
+   "inadmissible_detected": 11,
    "matches_S1S2": true,
-   "interpretation": "S2's headline rate divides by ALL injected cells; the admissible rate divides only by the cells the register says choreo was fair to ask about. Both must be printed: 10 of S2's detections land on cells the register calls inadmissible, so quoting S2's rate as an admissible-denominator rate would overstate it.",
+   "interpretation": "S2's headline rate divides by ALL injected cells; the admissible rate divides only by the cells the register says choreo was fair to ask about. Both must be printed: 11 of S2's detections land on cells the register calls inadmissible, so quoting S2's rate as an admissible-denominator rate would overstate it.",
    "n_cells_unaccounted": 0,
    "checks": {
     "n_injected": {
-     "s14": 237,
-     "s1s2": 237
+     "s14": 245,
+     "s1s2": 245
     },
     "n_discarded_noop": {
-     "s14": 5,
-     "s1s2": 5
+     "s14": 4,
+     "s1s2": 4
     },
     "n_undecidable": {
      "s14": 3,
      "s1s2": 3
     },
     "n_never": {
-     "s14": 46,
-     "s1s2": 46
+     "s14": 42,
+     "s1s2": 42
     },
     "n_detected_all_paths": {
-     "s14": 191,
-     "s1s2": 191
+     "s14": 203,
+     "s1s2": 203
     }
    }
   },
@@ -3217,14 +3191,14 @@
    "steepest_class": "elem",
    "cost_filter_note": "Enabling every obligation costs 1151/675 = 1.71x the default, and the growth is not uniform: elem goes 58 -> 534 while the other classes are flat. That is the thesis's shape, measured from the ledger.",
    "n_detected": {
-    "entry": 190,
+    "entry": 202,
     "low": null,
     "medium": null,
     "high": null,
     "high (rtc=all arm)": 37
    },
    "n_detected_note": "`enabled` is a ledger property and is exact at every level; `n_detected` needs a full E1 run per level, so only `entry` is measured here. The rtc=all arm exists (see rtc_all_arm) and is reported separately rather than interpolated.",
-   "denominator_us": "190/236 at entry (pinned default)",
+   "denominator_us": "202/244 at entry (pinned default)",
    "rtc_all_arm": {
     "source": "choreo/raw/e1_mutant_records_rtc_all.json",
     "pinned_flags": [

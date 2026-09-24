@@ -8,11 +8,11 @@
    "pending": 21
   },
   "admissible_counts": {
-   "true": 56,
-   "false": 26
+   "true": 55,
+   "false": 27
   },
   "prohibition_counts": {
-   "absent": 17,
+   "absent": 18,
    "repaired": 6,
    "observation": 3
   },
@@ -138,7 +138,6 @@
    "M4.1",
    "M4.2",
    "M4.3",
-   "M4.5",
    "M4.6",
    "M4.7",
    "M4.8",
@@ -194,7 +193,8 @@
    "M3.5",
    "M3.6",
    "M3.7",
-   "M4.4"
+   "M4.4",
+   "M4.5"
   ],
   "na_by_reason": {
    "absent": [
@@ -214,7 +214,8 @@
     "M3.5",
     "M3.6",
     "M3.7",
-    "M4.4"
+    "M4.4",
+    "M4.5"
    ],
    "repaired": [
     "M2.12",
@@ -233,7 +234,7 @@
   "n_operators": {
    "M1": 94,
    "M2": 103,
-   "M3": 97,
+   "M3": 104,
    "M4": 81
   }
  },
@@ -1012,11 +1013,11 @@
    "spec_id": "M4.5",
    "cls": "M4",
    "path": "rt-check",
-   "admissible": true,
-   "prohibition": "",
+   "admissible": false,
+   "prohibition": "absent",
    "status": "implemented",
    "desc": "stride/step = 0 in an iteration",
-   "note": ""
+   "note": "RETIRED 2026-09-25: the realisations collapse a write-back element index (out.chunkat(..., l * 0)), which is a value / write-collision error, not an iteration-validity violation -- no coverage or uniqueness obligation exists, so no -rtc level can catch it and `never` is the correct verdict (raw/never_attribution.json: C5_OUT_OF_SCOPE). Family M4-f's iteration-space realisation is now M4.9 (the `foreach`-range zero step, ct-check). Retained as a named control; excluded from the admissible denominator. The S14 applicability audit still flags it CONTRADICTED, but its one detected realisation (sm11) is compile-rejected as a TYPE error on a literal chunkat index (`ubound(0)`), not by any iteration-validity check, so it does not evidence the declared surface."
   },
   {
    "spec_id": "M4.6",

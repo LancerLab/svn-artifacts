@@ -3,8 +3,8 @@
 #include <chrono>
 #include <iostream>
 
-__co__ auto r5fp(f32 [256,N,128,256,2] input) {
-  f32 [N,128,256,2,256] output;
+__co__ auto r5fp(f32 [256,N,256,256,2] input) {
+  f32 [N,256,256,2,256] output;
   parallel p by 1 : block
     parallel q by 32 : thread {
       dma.transp<1,2,3,4,0> input => output;
@@ -14,7 +14,7 @@ __co__ auto r5fp(f32 [256,N,128,256,2] input) {
 
 int main() {
   int N = 1;
-  auto src = choreo::make_spandata<choreo::f32>(256, N, 128, 256, 2);
+  auto src = choreo::make_spandata<choreo::f32>(256, N, 256, 256, 2);
   src.fill_random(-1.0, 1.0);
 
   auto t0 = std::chrono::high_resolution_clock::now();
