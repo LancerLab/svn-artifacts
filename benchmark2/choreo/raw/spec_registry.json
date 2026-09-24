@@ -2,13 +2,13 @@
  "toolchain": "choreo",
  "spec_version": "v2.1",
  "summary": {
-  "n_specs": 80,
+  "n_specs": 81,
   "status_counts": {
-   "implemented": 59,
+   "implemented": 60,
    "pending": 21
   },
   "admissible_counts": {
-   "true": 54,
+   "true": 55,
    "false": 26
   },
   "prohibition_counts": {
@@ -18,7 +18,7 @@
   },
   "path_counts": {
    "rt-check": 53,
-   "ct-check": 5,
+   "ct-check": 6,
    "unchecked": 9,
    "avoided": 6,
    "L": 7
@@ -72,6 +72,7 @@
    "M3.28",
    "M3.29",
    "M3.30",
+   "M3.31",
    "M3.4",
    "M3.6",
    "M3.8",
@@ -129,6 +130,7 @@
    "M3.28",
    "M3.29",
    "M3.30",
+   "M3.31",
    "M3.4",
    "M3.8",
    "M3.9",
@@ -229,7 +231,7 @@
   "n_operators": {
    "M1": 81,
    "M2": 103,
-   "M3": 78,
+   "M3": 82,
    "M4": 80
   }
  },
@@ -895,6 +897,16 @@
    "note": "M3-c's second arch-independent byte ladder, sibling of M3.29. `dma.copy.promote<W>` is checked at parse time (parser.yy:2286 `promote_value`, \"L2 promote size must be 64, 128, or 256\") before any target check, so an off-ladder width is refused on sm_86 as on sm_90. Realised on `dma_rank5`/`r5swiz`, whose base now carries `swiz<128>.promote<128>`, by moving a legal promote<128> onto the off-ladder promote<999>. Verified: the base passes under both flag sets; the mutant is refused under both with the promote message. ct-check takes the one-per-cell ceiling"
   },
   {
+   "spec_id": "M3.31",
+   "cls": "M3",
+   "path": "ct-check",
+   "admissible": true,
+   "prohibition": "",
+   "status": "implemented",
+   "desc": "DMA rank = 6 for dma.pad (outside the assessed [1,5])",
+   "note": "M3-f's second rank-outside-[1,5] surface, sibling of M3.8. gpu_adapt.hpp:368 `RankLE5(\"dma.pad\")` fires when the linear-copy operand rank exceeds 5. Realised on a rank-5 `dma.pad` base in four M3 categories (`layer_normalization`/lnr5pad, `batch_norm`/bnr5pad, `max_pool2d`/mpr5pad, `dma_rank5`/r5pad): the mutation adds a 6th dim and a 6-field pad tuple, so the sm_86 backend refuses it at compile time. Verified: bases pass under both flag sets; mutants are refused with \"On SM_86, the rank in dma.pad must be in range [1, 5]\"."
+  },
+  {
    "spec_id": "M3.4",
    "cls": "M3",
    "path": "rt-check",
@@ -942,7 +954,7 @@
    "prohibition": "",
    "status": "implemented",
    "desc": "DMA rank = 6 (outside the assessed [1,5])",
-   "note": "gpu_adapt.hpp:337 RankLE5 -- the rank in dma.transp(not slice nor deslice) must be in [1,5]. Realised on `dma_rank5`/`r5base`: a rank-5 base whose mutation adds a 6th dim and a 6-wide permutation, so the compiler refuses it at compile time (Error1). ct-check is assessed, not cost-suppressible, so it takes the one-per-cell ceiling rather than the -rtc curve"
+   "note": "gpu_adapt.hpp:337 RankLE5 -- the rank in dma.transp(not slice nor deslice) must be in [1,5]. Realised on a rank-5 `dma.transp` base in four M3 categories (`dma_rank5`/r5base, plus staging hosts `lnr5trans`/`bnr5trans`/`mpr5trans`): the mutation adds a 6th dim and a 6-wide permutation, so the compiler refuses it at compile time (Error1). ct-check is assessed, not cost-suppressible, so it takes the one-per-cell ceiling rather than the -rtc curve"
   },
   {
    "spec_id": "M3.9",

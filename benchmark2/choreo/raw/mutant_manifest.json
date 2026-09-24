@@ -10,13 +10,13 @@
  "level2": true,
  "rtc": null,
  "accounting": {
-  "candidates": 342,
-  "selected": 211,
+  "candidates": 346,
+  "selected": 215,
   "attribution": 4,
   "dropped": 127,
   "na": 0,
   "skipped": 0,
-  "emitted": 215
+  "emitted": 219
  },
  "family_depth": {
   "M1-a": 8,
@@ -40,7 +40,7 @@
   "M3-c": 8,
   "M3-d": 1,
   "M3-e": 4,
-  "M3-f": 4,
+  "M3-f": 8,
   "M3-g": 8,
   "M3-h": 8,
   "M4-a": 8,
@@ -57,8 +57,7 @@
   "M3-a": 4,
   "M3-b": 5,
   "M3-d": 7,
-  "M3-e": 4,
-  "M3-f": 4
+  "M3-e": 4
  },
  "unrealised_specs": {
   "M1": [],
@@ -76,13 +75,13 @@
   ]
  },
  "registry": {
-  "n_specs": 80,
+  "n_specs": 81,
   "status_counts": {
-   "implemented": 59,
+   "implemented": 60,
    "pending": 21
   },
   "admissible_counts": {
-   "true": 54,
+   "true": 55,
    "false": 26
   },
   "prohibition_counts": {
@@ -92,7 +91,7 @@
   },
   "path_counts": {
    "rt-check": 53,
-   "ct-check": 5,
+   "ct-check": 6,
    "unchecked": 9,
    "avoided": 6,
    "L": 7
@@ -146,6 +145,7 @@
    "M3.28",
    "M3.29",
    "M3.30",
+   "M3.31",
    "M3.4",
    "M3.6",
    "M3.8",
@@ -203,6 +203,7 @@
    "M3.28",
    "M3.29",
    "M3.30",
+   "M3.31",
    "M3.4",
    "M3.8",
    "M3.9",
@@ -303,7 +304,7 @@
   "n_operators": {
    "M1": 81,
    "M2": 103,
-   "M3": 78,
+   "M3": 82,
    "M4": 80
   }
  },
@@ -5378,6 +5379,114 @@
    "diff": "--- a/max_pool2d/mpr5trans.co\n+++ b/max_pool2d/mpr5trans.co\n@@ -8,9 +8,9 @@\n    transpose, and the mutant takes the descriptor to rank 6, which the sm_86\n    backend refuses at compile time (RankLE5). */\n-__co__ auto mpr5trans(f32 [2,4,8,16,32] input) {\n-  f32 [4,8,16,32,2] output;\n+__co__ auto mpr5trans(f32 [2,4,8,16,32,2] input) {\n+  f32 [4,8,16,32,2,2] output;\n   parallel p by 1 : block\n     parallel q by 32 : thread {\n-      dma.transp<1,2,3,4,0> input => output;\n+      dma.transp<1,2,3,4,5,0> input => output;\n     }\n   return output;\n",
    "spec_version": "v2.1",
    "spec_id": "M3.8",
+   "path_class": "ct-check",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": false,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M3",
+   "spec": 31,
+   "paper_category": "dim-mismatch",
+   "mutant_id": "M3.31.dma5.rank6",
+   "category": "dma_rank5",
+   "case": "r5pad",
+   "level": 1,
+   "base_path": "benchmark/choreo/dma_rank5/r5pad.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/dma_rank5/M3.31.dma5.rank6__r5pad.co",
+   "kernel_hash": "c4df185048b4",
+   "mutant_hash": "43b4cb624122",
+   "settings_hash": "6ba7925e0a5a",
+   "local_headers": [
+    "common.hpp"
+   ],
+   "desc": "rank-5 dma.pad descriptor raised to rank 6: the 6th dim and 6-field pad tuple fall outside the assessed [1,5], so the sm_86 backend refuses it at compile time (RankLE5)",
+   "diff": "--- a/dma_rank5/r5pad.co\n+++ b/dma_rank5/r5pad.co\n@@ -3,9 +3,9 @@\n #include <iostream>\n \n-__co__ auto r5pad(f32 [2,4,8,16,32] input) {\n-  f32 [2,4,8,16,32] output;\n+__co__ auto r5pad(f32 [2,4,8,16,32,2] input) {\n+  f32 [2,4,8,16,32,2] output;\n   parallel p by 1 : block\n     parallel q by 32 : thread {\n-      dma.pad<{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, 0.0f> input => output;\n+      dma.pad<{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, 0.0f> input => output;\n     }\n   return output;\n",
+   "spec_version": "v2.1",
+   "spec_id": "M3.31",
+   "path_class": "ct-check",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": false,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M3",
+   "spec": 31,
+   "paper_category": "dim-mismatch",
+   "mutant_id": "M3.31.ln.rank6",
+   "category": "layer_normalization",
+   "case": "lnr5pad",
+   "level": 1,
+   "base_path": "benchmark/choreo/layer_normalization/lnr5pad.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/layer_normalization/M3.31.ln.rank6__lnr5pad.co",
+   "kernel_hash": "be953c3d1922",
+   "mutant_hash": "1cf08964822c",
+   "settings_hash": "8dbff8357c9b",
+   "local_headers": [],
+   "desc": "rank-5 dma.pad descriptor raised to rank 6 in a staging host: the 6th dim and 6-field pad tuple fall outside the assessed [1,5], so the sm_86 backend refuses it at compile time (RankLE5)",
+   "diff": "--- a/layer_normalization/lnr5pad.co\n+++ b/layer_normalization/lnr5pad.co\n@@ -3,9 +3,9 @@\n #include <iostream>\n \n-__co__ auto lnr5pad(f32 [2,4,8,16,32] input) {\n-  f32 [2,4,8,16,32] output;\n+__co__ auto lnr5pad(f32 [2,4,8,16,32,2] input) {\n+  f32 [2,4,8,16,32,2] output;\n   parallel p by 1 : block\n     parallel q by 32 : thread {\n-      dma.pad<{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, 0.0f> input => output;\n+      dma.pad<{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, 0.0f> input => output;\n     }\n   return output;\n",
+   "spec_version": "v2.1",
+   "spec_id": "M3.31",
+   "path_class": "ct-check",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": false,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M3",
+   "spec": 31,
+   "paper_category": "dim-mismatch",
+   "mutant_id": "M3.31.bn.rank6",
+   "category": "batch_norm",
+   "case": "bnr5pad",
+   "level": 1,
+   "base_path": "benchmark/choreo/batch_norm/bnr5pad.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/batch_norm/M3.31.bn.rank6__bnr5pad.co",
+   "kernel_hash": "cf7e875b2f93",
+   "mutant_hash": "24cade1ba707",
+   "settings_hash": "45f6e81d94c0",
+   "local_headers": [],
+   "desc": "rank-5 dma.pad descriptor raised to rank 6 in a staging host: the 6th dim and 6-field pad tuple fall outside the assessed [1,5], so the sm_86 backend refuses it at compile time (RankLE5)",
+   "diff": "--- a/batch_norm/bnr5pad.co\n+++ b/batch_norm/bnr5pad.co\n@@ -3,9 +3,9 @@\n #include <iostream>\n \n-__co__ auto bnr5pad(f32 [2,4,8,16,32] input) {\n-  f32 [2,4,8,16,32] output;\n+__co__ auto bnr5pad(f32 [2,4,8,16,32,2] input) {\n+  f32 [2,4,8,16,32,2] output;\n   parallel p by 1 : block\n     parallel q by 32 : thread {\n-      dma.pad<{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, 0.0f> input => output;\n+      dma.pad<{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, 0.0f> input => output;\n     }\n   return output;\n",
+   "spec_version": "v2.1",
+   "spec_id": "M3.31",
+   "path_class": "ct-check",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": false,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M3",
+   "spec": 31,
+   "paper_category": "dim-mismatch",
+   "mutant_id": "M3.31.mp.rank6",
+   "category": "max_pool2d",
+   "case": "mpr5pad",
+   "level": 1,
+   "base_path": "benchmark/choreo/max_pool2d/mpr5pad.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/max_pool2d/M3.31.mp.rank6__mpr5pad.co",
+   "kernel_hash": "2ce26057bbc8",
+   "mutant_hash": "e4b615349ede",
+   "settings_hash": "1f5436bfab1f",
+   "local_headers": [
+    "common.hpp"
+   ],
+   "desc": "rank-5 dma.pad descriptor raised to rank 6 in a staging host: the 6th dim and 6-field pad tuple fall outside the assessed [1,5], so the sm_86 backend refuses it at compile time (RankLE5)",
+   "diff": "--- a/max_pool2d/mpr5pad.co\n+++ b/max_pool2d/mpr5pad.co\n@@ -3,9 +3,9 @@\n #include <iostream>\n \n-__co__ auto mpr5pad(f32 [2,4,8,16,32] input) {\n-  f32 [2,4,8,16,32] output;\n+__co__ auto mpr5pad(f32 [2,4,8,16,32,2] input) {\n+  f32 [2,4,8,16,32,2] output;\n   parallel p by 1 : block\n     parallel q by 32 : thread {\n-      dma.pad<{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, 0.0f> input => output;\n+      dma.pad<{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, 0.0f> input => output;\n     }\n   return output;\n",
+   "spec_version": "v2.1",
+   "spec_id": "M3.31",
    "path_class": "ct-check",
    "prohibition": "",
    "admissible": true,

@@ -646,6 +646,20 @@ SPEC_REGISTRY = {
                         "flag sets; the mutant is refused under both with the "
                         "promote message. ct-check takes the one-per-cell "
                         "ceiling"),
+    "M3.31": _spec("M3", "ct-check", "DMA rank = 6 for dma.pad (outside the "
+                           "assessed [1,5])",
+                   status="implemented",
+                   note="M3-f's second rank-outside-[1,5] surface, sibling of "
+                        "M3.8. gpu_adapt.hpp:368 `RankLE5(\"dma.pad\")` fires "
+                        "when the linear-copy operand rank exceeds 5. Realised "
+                        "on a rank-5 `dma.pad` base in four M3 categories "
+                        "(`layer_normalization`/lnr5pad, `batch_norm`/bnr5pad, "
+                        "`max_pool2d`/mpr5pad, `dma_rank5`/r5pad): the mutation "
+                        "adds a 6th dim and a 6-field pad tuple, so the sm_86 "
+                        "backend refuses it at compile time. Verified: bases "
+                        "pass under both flag sets; mutants are refused with "
+                        "\"On SM_86, the rank in dma.pad must be in range "
+                        "[1, 5]\"."),
 }
 
 # The v1 spec integers still carried by every operator (specs v1 §1-§3) map 1:1
@@ -2220,6 +2234,50 @@ M3 += [
        ("f32 [2,4,8,16,32] input", "f32 [2,4,8,16,32,2] input", 1),
        ("f32 [4,8,16,32,2] output", "f32 [4,8,16,32,2,2] output", 1),
        ("dma.transp<1,2,3,4,0>", "dma.transp<1,2,3,4,5,0>", 1)),
+]
+
+# ---- M3.31 -- the dma.pad rank ladder (M3-f's second surface) --------------
+# gpu_adapt.hpp:368 emits the same RankLE5 refusal for a linear-copy `dma.pad`
+# whose operand rank exceeds 5. A rank-5 pad base (all-zero fields, so the op
+# is a plain copy and the base oracle stays usable) takes the descriptor to
+# rank 6. Four categories carry the surface: the pad staging host plus
+# `dma_rank5`/r5pad. Verified: bases pass under both flag sets; mutants are
+# refused under both with "On SM_86, the rank in dma.pad must be in range
+# [1, 5]".
+M3 += [
+    _m("M3.31.dma5.rank6", "M3", 31, "dim-mismatch", "dma_rank5", "r5pad",
+       "rank-5 dma.pad descriptor raised to rank 6: the 6th dim and 6-field "
+       "pad tuple fall outside the assessed [1,5], so the sm_86 backend refuses "
+       "it at compile time (RankLE5)",
+       ("f32 [2,4,8,16,32] input", "f32 [2,4,8,16,32,2] input", 1),
+       ("f32 [2,4,8,16,32] output", "f32 [2,4,8,16,32,2] output", 1),
+       ("{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}",
+        "{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}", 1)),
+    _m("M3.31.ln.rank6", "M3", 31, "dim-mismatch", "layer_normalization",
+       "lnr5pad",
+       "rank-5 dma.pad descriptor raised to rank 6 in a staging host: the 6th "
+       "dim and 6-field pad tuple fall outside the assessed [1,5], so the "
+       "sm_86 backend refuses it at compile time (RankLE5)",
+       ("f32 [2,4,8,16,32] input", "f32 [2,4,8,16,32,2] input", 1),
+       ("f32 [2,4,8,16,32] output", "f32 [2,4,8,16,32,2] output", 1),
+       ("{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}",
+        "{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}", 1)),
+    _m("M3.31.bn.rank6", "M3", 31, "dim-mismatch", "batch_norm", "bnr5pad",
+       "rank-5 dma.pad descriptor raised to rank 6 in a staging host: the 6th "
+       "dim and 6-field pad tuple fall outside the assessed [1,5], so the "
+       "sm_86 backend refuses it at compile time (RankLE5)",
+       ("f32 [2,4,8,16,32] input", "f32 [2,4,8,16,32,2] input", 1),
+       ("f32 [2,4,8,16,32] output", "f32 [2,4,8,16,32,2] output", 1),
+       ("{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}",
+        "{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}", 1)),
+    _m("M3.31.mp.rank6", "M3", 31, "dim-mismatch", "max_pool2d", "mpr5pad",
+       "rank-5 dma.pad descriptor raised to rank 6 in a staging host: the 6th "
+       "dim and 6-field pad tuple fall outside the assessed [1,5], so the "
+       "sm_86 backend refuses it at compile time (RankLE5)",
+       ("f32 [2,4,8,16,32] input", "f32 [2,4,8,16,32,2] input", 1),
+       ("f32 [2,4,8,16,32] output", "f32 [2,4,8,16,32,2] output", 1),
+       ("{0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0}",
+        "{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}", 1)),
 ]
 
 # ---- M3.29 -- the swizzle-width ladder (M3-c's arch-independent half) ------

@@ -1,0 +1,29 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+
+__co__ auto bnr5pad(f32 [2,4,8,16,32,2] input) {
+  f32 [2,4,8,16,32,2] output;
+  parallel p by 1 : block
+    parallel q by 32 : thread {
+      dma.pad<{0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, 0.0f> input => output;
+    }
+  return output;
+}
+
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(2,4,8,16,32);
+  a.fill_random(-1.0, 1.0);
+  auto r = bnr5pad(a.view());
+  for (size_t i = 0; i < r.shape()[0]; ++i)
+    for (size_t j = 0; j < r.shape()[1]; ++j)
+      for (size_t k = 0; k < r.shape()[2]; ++k)
+        for (size_t l = 0; l < r.shape()[3]; ++l)
+          for (size_t m = 0; m < r.shape()[4]; ++m)
+            if (a[i][j][k][l][m] != r[i][j][k][l][m]) {
+              std::cout << "mismatch\n";
+              choreo::choreo_assert(false, "values are not equal.");
+            }
+  std::cout << "Passed.\n";
+  return 0;
+}
