@@ -68,13 +68,13 @@
     "n_n/a": 0
    },
    "M3": {
-    "n_compile": 10,
+    "n_compile": 11,
     "n_discarded_noop": 4,
-    "n_injected": 27,
+    "n_injected": 28,
     "n_never": 4,
     "n_runtime": 13,
-    "n_undecidable": 2,
-    "stage_compile": 10,
+    "n_undecidable": 1,
+    "stage_compile": 11,
     "stage_runtime": 17,
     "n_n/a": 0
    },
@@ -90,19 +90,18 @@
    }
   },
   "totals": {
-   "n_compile": 122,
+   "n_compile": 123,
    "n_discarded_noop": 4,
-   "n_injected": 195,
+   "n_injected": 196,
    "n_n/a": 0,
    "n_never": 36,
    "n_runtime": 37,
-   "n_undecidable": 5,
-   "stage_compile": 122,
+   "n_undecidable": 4,
+   "stage_compile": 123,
    "stage_runtime": 73
   },
   "undecidable_manifest_mutants": [
    "M3.4.dma5dyn.footprint",
-   "M3.8.dma5.rank6",
    "M4.5.cv1.alt",
    "M4.5.tp2.zerostep",
    "M4.8.cv14.emptypad"
@@ -130,30 +129,30 @@
  "S2_before_device": {
   "status": "ok",
   "feeds": "E1 detection matrix (\u00a75.2 \u00b62) \u2014 the \"210/210\" headline is DROPPED (R-D2); criterion is now \"no unattributed never\"",
-  "n_injected": 195,
-  "n_before_device": 159,
-  "n_compile": 122,
+  "n_injected": 196,
+  "n_before_device": 160,
+  "n_compile": 123,
   "n_runtime": 37,
   "n_never": 36,
   "n_na": 0,
   "n_discarded_noop": 4,
-  "n_undecidable": 5,
+  "n_undecidable": 4,
   "undecidable_means": "the unmutated base fails its own reference check, so no manifest verdict exists for this cell. Excluded from n_injected like a noop, but NOT evidence that the mutation does not corrupt output -- it is unmeasured. Never add it to n_discarded_noop: that would report a measurement failure as a clean negative.",
-  "pct_before_device": 81.5385,
+  "pct_before_device": 81.6327,
   "never_is_zero": false,
   "never_is_zero_status": "RETIRED (R-D2, 2026-09-10) \u2014 a non-zero `never` is no longer a failure; an UNATTRIBUTED one is. Do not report this as pass/fail.",
   "per_class_before_device": {
    "M1": 42,
    "M2": 51,
-   "M3": 23,
+   "M3": 24,
    "M4": 43
   },
   "control_classes": [
    "M4"
   ],
-  "n_injected_excluding_control": 142,
-  "n_before_device_excluding_control": 116,
-  "pct_before_device_excluding_control": 81.6901,
+  "n_injected_excluding_control": 143,
+  "n_before_device_excluding_control": 117,
+  "pct_before_device_excluding_control": 81.8182,
   "settings_hash": [
    "1f5436bfab1f",
    "28fee96c8330",
@@ -208,7 +207,7 @@
    "n_toolchain_or_config": 7,
    "flag_matrix_ablation": {
     "status": "R-D2b \u2014 report as sensitivity, pinned default is the headline",
-    "at_pinned_default": "159/195 = 81.5385%",
+    "at_pinned_default": "160/196 = 81.6327%",
     "with_rtc_all_and_hoist_disabled": "43/72 = 59.72%",
     "recovered_by_flags": 8,
     "source": "raw/c2_probe_groundtruth.json (s2_implication)"
@@ -2205,15 +2204,15 @@
   "register_source": "choreo/raw/spec_registry.json",
   "denominator": {
    "n_specs": 78,
-   "n_applicable": 53,
-   "n_not_applicable": 25,
-   "n_out_of_scope": 1,
+   "n_applicable": 52,
+   "n_not_applicable": 26,
+   "n_out_of_scope": 0,
    "rule": "admissible specs (rt-check/unchecked/ct-check + the L row reported separately) form the detection denominator; an inadmissible spec is a recorded verdict with a named prohibition and is NOT open work (specs \u00a72)"
   },
   "prohibition": {
    "absent": 17,
    "derived": 0,
-   "repaired": 5,
+   "repaired": 6,
    "harness-owned": 0,
    "observation": 3
   },
@@ -2223,7 +2222,7 @@
     "absent": 4
    },
    "avoided": {
-    "repaired": 5
+    "repaired": 6
    },
    "ct-check": {
     "absent": 1
@@ -2246,15 +2245,14 @@
     "n_never_share_of_misses": null
    },
    "ct-check": {
-    "n_admissible": 3,
+    "n_admissible": 4,
     "n_cells": 4,
-    "n_compile": 3,
-    "n_detected": 3,
-    "n_detected_admissible": 3,
+    "n_compile": 4,
+    "n_detected": 4,
+    "n_detected_admissible": 4,
     "n_detected_pct": 100.0,
-    "n_injected": 3,
-    "n_never_share_of_misses": null,
-    "n_undecidable": 1
+    "n_injected": 4,
+    "n_never_share_of_misses": null
    },
    "rt-check": {
     "n_admissible": 161,
@@ -2806,8 +2804,12 @@
    },
    "M3.8": {
     "class": "M3",
+    "n_admissible": 1,
     "n_cells": 1,
-    "n_undecidable": 1,
+    "n_compile": 1,
+    "n_detected": 1,
+    "n_detected_admissible": 1,
+    "n_injected": 1,
     "path_class": "ct-check",
     "prohibition": ""
    },
@@ -2978,14 +2980,14 @@
    "n_cells": 204,
    "n_cells_non_detection": 0,
    "n_cells_compared": 204,
-   "n_injected": 195,
+   "n_injected": 196,
    "n_discarded_noop": 4,
-   "n_undecidable": 5,
+   "n_undecidable": 4,
    "n_never": 36,
-   "n_detected_all_paths": 159,
-   "admissible_injected": 180,
-   "admissible_detected": 147,
-   "admissible_pct": 81.6667,
+   "n_detected_all_paths": 160,
+   "admissible_injected": 181,
+   "admissible_detected": 148,
+   "admissible_pct": 81.768,
    "inadmissible_injected": 15,
    "inadmissible_detected": 12,
    "matches_S1S2": true,
@@ -2993,24 +2995,24 @@
    "n_cells_unaccounted": 0,
    "checks": {
     "n_injected": {
-     "s14": 195,
-     "s1s2": 195
+     "s14": 196,
+     "s1s2": 196
     },
     "n_discarded_noop": {
      "s14": 4,
      "s1s2": 4
     },
     "n_undecidable": {
-     "s14": 5,
-     "s1s2": 5
+     "s14": 4,
+     "s1s2": 4
     },
     "n_never": {
      "s14": 36,
      "s1s2": 36
     },
     "n_detected_all_paths": {
-     "s14": 159,
-     "s1s2": 159
+     "s14": 160,
+     "s1s2": 160
     }
    }
   },
@@ -3079,14 +3081,14 @@
    "steepest_class": "elem",
    "cost_filter_note": "Enabling every obligation costs 1151/675 = 1.71x the default, and the growth is not uniform: elem goes 58 -> 534 while the other classes are flat. That is the thesis's shape, measured from the ledger.",
    "n_detected": {
-    "entry": 159,
+    "entry": 160,
     "low": null,
     "medium": null,
     "high": null,
     "high (rtc=all arm)": 37
    },
    "n_detected_note": "`enabled` is a ledger property and is exact at every level; `n_detected` needs a full E1 run per level, so only `entry` is measured here. The rtc=all arm exists (see rtc_all_arm) and is reported separately rather than interpolated.",
-   "denominator_us": "159/196 at entry (pinned default)",
+   "denominator_us": "160/197 at entry (pinned default)",
    "rtc_all_arm": {
     "source": "choreo/raw/e1_mutant_records_rtc_all.json",
     "pinned_flags": [

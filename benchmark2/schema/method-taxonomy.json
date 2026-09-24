@@ -513,7 +513,7 @@
     "distinct_from_a_family_member": "M3.12 is ALSO `avoided`/repaired but it is M3-h's declared realisation, so it stays in `families` and is reported by the `unrealisable_as_declared` check instead of being filed here. The two buckets must not be merged: this one means 'nothing to do', that one means 'the family needs a different realisation'.",
     "note": "M3.12's own registry note records why: 'RECLASSIFIED rt-check -> avoided. memcheck.hpp:106-123 raises Error1 when compile-time SHARED/LOCAL usage exceeds the limit... there is no test to run.' It also names the cause of the 28/40 M3 noops in the committed v1 baseline."
   },
-  "dead_declarations": {
+  "unexpressible_declarations": {
     "spec_ids": [
       "M1.15",
       "M1.16",
@@ -522,20 +522,28 @@
       "M3.2",
       "M3.3",
       "M3.5",
-      "M3.7",
       "M3.11",
       "M3.13",
+      "M4.4"
+    ],
+    "definition": "SIGNED OFF 2026-09-24. Declared in the registry with status `pending` and zero operators, and the model states no legal program that carries the defect: the canonical outcome is `unexpressible` (`u` -- no legal program states the defect, so there is no mutant). These are TERMINAL verdicts, not open work: unlike `dead_declarations`, writing an operator is not the remedy, because the source surface that would state the defect does not exist.",
+    "why": "Each carries prohibition `absent` on its registry entry, which is the registry spelling of the same claim. They remain FAMILY-MEMBERS (M1-d, M1-g, M2-h, M3-b, M3-c, M3-e, M4-d) -- the family and its slot are real, the spec_id is what is retired. Do NOT delete them from `families`, and do NOT remove the entry from this ledger: an unexpressible spec that reads as `dead` would send the reader to write an operator that cannot exist. `method_taxonomy.check()` and `gen_mutants.compose()` both subtract this list so the two ledgers cannot disagree.",
+    "distinct_from_dead": "`dead_declarations` = the surface is absent from the DSL today, so writing an operator WOULD create a test (e.g. M3.7, whose TMA box geometry is merely unwritten). This ledger = the surface can never carry the defect (the box/swizzle/strided-view/launch-geometry relations the compiler derives rather than reads from source), so no operator is owed.",
+    "basis": "User sign-off 2026-09-24 over the pending terminal declarations; see also `outcomes` (`unexpressible`) and `prohibitions` (`absent`)."
+  },
+  "dead_declarations": {
+    "spec_ids": [
+      "M3.7",
       "M3.19",
       "M3.21",
       "M3.22",
       "M3.23",
       "M3.24",
       "M3.25",
-      "M3.26",
-      "M4.4"
+      "M3.26"
     ],
     "definition": "Declared in the registry with status `pending` and zero operators, and NOT in p2_never_generated. Writing one of these WOULD create a test.",
-    "why": "They make `unwritten` look like work-in-progress when it is an empty set. Note M1.15/M1.16/M1.18, M2.18, M3.2/M3.3/M3.5/M3.7/M3.11/M3.13 and M4.4 are nonetheless FAMILY-MEMBERS (M1-g, M1-d, M2-h, M3-b/c/e and M4-d): the family is real and keeps its slot, the spec_id is what is abandoned. Do NOT delete them from `families` -- that would make M1-d and M1-g look like families with no declaration at all. M3.4, M3.8 and now M1.17 have LEFT this list: the rank-5/6 `dma_rank5` re-realisation gave M3-d, M3-f and M1-g operators that the compiler actually assesses, so their family members are no longer abandoned.",
+    "why": "They make `unwritten` look like work-in-progress when it is an empty set. M3.7 is at once a declaration the source surface has not expressed yet (TMA inner-box geometry is unwritten, not unexpressible) and a FAMILY-MEMBER of M3-e: the family is real and keeps its slot, the spec_id is what is abandoned. Do NOT delete it from `families` -- that would make M3-e look like a family with no declaration at all. The ten specs M1.15/M1.16/M1.18, M2.18, M3.2/M3.3/M3.5/M3.11/M3.13 and M4.4 have MOVED to `unexpressible_declarations` (signed off 2026-09-24): they are terminal, not abandoned work. M3.4, M3.8 and M1.17 have LEFT this list entirely: the rank-5/6 `dma_rank5` re-realisation gave M3-d, M3-f and M1-g operators that the compiler actually assesses. M3.19/M3.21/M3.22 remain here only because they are also `avoided` with no family; `avoided_never_generated` owns their verdict.",
     "does_not_exist": [
       "M2.20",
       "M2.22"

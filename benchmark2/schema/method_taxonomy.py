@@ -83,6 +83,10 @@ MEASURED_TODAY: dict[str, int] = _T["measured_today"]
 VIEW_MEMBERS: list[str] = _T["view_family"]["members"]
 PROHIBITIONS: list[str] = _T["prohibitions"]
 DEAD: list[str] = _T["dead_declarations"]["spec_ids"]
+# Terminal: the model states no legal program carrying the defect, so no
+# operator is owed. Unlike DEAD, writing one is not the remedy. Signed off
+# 2026-09-24; see `unexpressible_declarations` in the taxonomy file.
+UNEXPRESSIBLE: list[str] = _T["unexpressible_declarations"]["spec_ids"]
 AVOIDED: list[str] = _T["avoided_never_generated"]["spec_ids"]
 DEBT: dict[str, dict] = _T["known_debt"]["items"]
 ATTRIBUTION_ONLY: dict[str, list[str]] = {
@@ -609,8 +613,24 @@ def check(registry: dict | None = None, declared: list[str] | None = None,
         # would demand that M3.12 be dead as well, which is the opposite of
         # true -- M3.12 exists and is exactly why M3-h needs a new realisation.
         avoided = {s for s, v in registry.items() if v.get("path") == "avoided"}
+        unexp = set(_T["unexpressible_declarations"]["spec_ids"])
+        # A terminal unexpressible spec is NOT unwritten: writing an operator is
+        # not the remedy, so it must not enter the dead-vs-unwritten arithmetic
+        # (it would otherwise look like a non-dead pending spec that must be
+        # AVOIDED). Consistency with the registry is asserted so the two files
+        # cannot disagree about the verdict.
+        for s in sorted(unexp):
+            e = registry.get(s)
+            if e is None:
+                bad.append(f"families.unexpressible {s} is declared "
+                           f"unexpressible but is absent from SPEC_REGISTRY")
+            elif e.get("status") == "implemented":
+                bad.append(f"families.unexpressible {s} is declared "
+                           f"unexpressible but ships an operator "
+                           f"(status implemented): an unexpressible spec must "
+                           f"not be generatable")
         unwritten = {s for s, v in registry.items()
-                     if v.get("status") == "pending"}
+                     if v.get("status") == "pending" and s not in unexp}
         if not dead <= unwritten:
             bad.append("families.dead-vs-unwritten dead_declarations is not a "
                        "subset of the "
@@ -636,6 +656,7 @@ def check(registry: dict | None = None, declared: list[str] | None = None,
     for _f in _FAM:
         _all_ids |= set(specs_of(_f))
     _all_ids |= set(_T["dead_declarations"]["spec_ids"])
+    _all_ids |= set(UNEXPRESSIBLE)
     _all_ids |= set(AVOIDED)
     for _ids in ATTRIBUTION_ONLY.values():
         _all_ids |= set(_ids)

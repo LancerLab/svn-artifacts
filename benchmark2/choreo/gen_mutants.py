@@ -547,7 +547,8 @@ def compose(level2=False, n_per_family=N_PER_FAMILY,
         have = {c.spec_id for c in cands}
         unrealised = sorted(s for f in T.families_of(cls)
                             for s in T.specs_of(f)
-                            if s not in T.AVOIDED and s not in have)
+                            if s not in T.AVOIDED
+                            and s not in T.UNEXPRESSIBLE and s not in have)
 
         # A spec with operators that still got no instance. `select()` gives
         # every declared spec a floor instance whenever a kernel has room, so

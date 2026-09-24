@@ -413,8 +413,19 @@ SPEC_REGISTRY = {
                        "curve"),
     "M3.9": _spec("M3", "rt-check", "pad-field overrun (dma.pad / padding_mid beyond "
                               "the assessed range)"),
-    "M3.10": _spec("M3", "rt-check", "last-dim / rank-5 mid-padding violates "
-                               "padding_mid[rank-1] == 0"),
+    "M3.10": _spec("M3", "avoided", "last-dim / rank-5 mid-padding violates "
+                               "padding_mid[rank-1] == 0",
+                   admissible=False, prohibition="repaired",
+                   note="SIGNED OFF as avoided (was rt-check/pending). The "
+                        "K2 pad encoding derives `padding_mid` from the "
+                        "declared extents and the lowering owns the last-dim "
+                        "0; there is no source surface that states a "
+                        "violating mid-padding, so no legal program expresses "
+                        "the defect and no operator could ever be a test. "
+                        "Filed here rather than left `pending` so it stops "
+                        "reading as open work (the checker's "
+                        "dead-vs-unwritten rule already required exactly "
+                        "this). M3-g stays realised 8/8 on M3.9."),
     "M3.11": _spec("M3", "rt-check", "shared operand base not 128-byte aligned on "
                                "sm_90+",
                    admissible=False, prohibition="absent",

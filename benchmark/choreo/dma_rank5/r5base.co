@@ -1,4 +1,8 @@
 #include "common.hpp"
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+
 __co__ auto r5base(f32 [2,4,8,16,32] input) {
   f32 [4,8,16,32,2] output;
   parallel p by 1 : block
@@ -6,4 +10,31 @@ __co__ auto r5base(f32 [2,4,8,16,32] input) {
       dma.transp<1,2,3,4,0> input => output;
     }
   return output;
+}
+
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(2,4,8,16,32);
+  a.fill_random(-1.0, 1.0);
+
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto r  = r5base(a.view());
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+  for (size_t i = 0; i < r.shape()[0]; ++i)
+    for (size_t j = 0; j < r.shape()[1]; ++j)
+      for (size_t k = 0; k < r.shape()[2]; ++k)
+        for (size_t l = 0; l < r.shape()[3]; ++l)
+          for (size_t m = 0; m < r.shape()[4]; ++m) {
+            float ref = a[m][i][j][k][l];
+            if (ref != r[i][j][k][l][m]) {
+              std::cout << "r5base(" << ref << ") != " << r[i][j][k][l][m]
+                        << "\n";
+              choreo::choreo_assert(false, "values are not equal.");
+            }
+          }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " microseconds\n";
+  return 0;
 }
