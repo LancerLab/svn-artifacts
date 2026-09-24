@@ -221,6 +221,19 @@
       "oracle_usable": true,
       "reason": "__CHECK__ reference passes on unmutated code"
     },
+    "conv2d/5_dynamic_128xCx112x112_64xCx1x1_128x64x112x112_1_0_1": {
+      "category": "conv2d",
+      "case": "5_dynamic_128xCx112x112_64xCx1x1_128x64x112x112_1_0_1",
+      "gated": true,
+      "base_compile": false,
+      "base_compile_rc": 2,
+      "base_run_rc": null,
+      "base_passed": false,
+      "check_passed": false,
+      "use_check": false,
+      "oracle_usable": false,
+      "reason": "unmutated base does not compile (rc=2)"
+    },
     "dma_rank5/r5at": {
       "base_compile": true,
       "base_compile_rc": 0,
@@ -271,6 +284,23 @@
       "oracle_usable": false,
       "reason": "UNMUTATED base fails its own reference check \u2014 manifest verdicts for this case are untrustworthy",
       "use_check": false
+    },
+    "embedding/10_dynamic_32xS_Vx768_32xSx768": {
+      "category": "embedding",
+      "case": "10_dynamic_32xS_Vx768_32xSx768",
+      "gated": false,
+      "base_compile": true,
+      "base_compile_rc": 0,
+      "base_run_rc": 127,
+      "base_passed": false,
+      "base_detector": "crash",
+      "base_infra": ".exe: No such file or directory",
+      "check_run_rc": 127,
+      "check_passed": false,
+      "check_detector": "crash",
+      "use_check": false,
+      "oracle_usable": false,
+      "reason": "UNMUTATED base fails its own reference check \u2014 manifest verdicts for this case are untrustworthy"
     },
     "gelu/11_dynamic_32xSx768": {
       "base_compile": true,
@@ -442,6 +472,23 @@
       "oracle_usable": true,
       "reason": "__CHECK__ reference passes on unmutated code"
     },
+    "matmul/12_dynamic_64xTx256_256x128_64xTx128": {
+      "category": "matmul",
+      "case": "12_dynamic_64xTx256_256x128_64xTx128",
+      "gated": true,
+      "base_compile": true,
+      "base_compile_rc": 0,
+      "base_run_rc": 0,
+      "base_passed": false,
+      "base_detector": "none",
+      "base_infra": null,
+      "check_run_rc": 0,
+      "check_passed": true,
+      "check_detector": "none",
+      "use_check": true,
+      "oracle_usable": true,
+      "reason": "__CHECK__ reference passes on unmutated code"
+    },
     "matmul/1_bert_32x512x768_768x768_32x512x768": {
       "category": "matmul",
       "case": "1_bert_32x512x768_768x768_32x512x768",
@@ -577,6 +624,23 @@
       "oracle_usable": true,
       "reason": "built-in reference passes on unmutated code",
       "use_check": false
+    },
+    "reshape/5_dynamic_Bx1280xHxW_Bx1280HW": {
+      "category": "reshape",
+      "case": "5_dynamic_Bx1280xHxW_Bx1280HW",
+      "gated": true,
+      "base_compile": true,
+      "base_compile_rc": 0,
+      "base_run_rc": 0,
+      "base_passed": true,
+      "base_detector": "none",
+      "base_infra": null,
+      "check_run_rc": 0,
+      "check_passed": true,
+      "check_detector": "none",
+      "use_check": true,
+      "oracle_usable": true,
+      "reason": "__CHECK__ reference passes on unmutated code"
     },
     "sigmoid/11_dynamic_32xSx768": {
       "base_compile": true,
@@ -764,23 +828,6 @@
       "oracle_usable": false,
       "reason": "UNMUTATED base fails its own reference check \u2014 manifest verdicts for this case are untrustworthy",
       "use_check": false
-    },
-    "matmul/12_dynamic_64xTx256_256x128_64xTx128": {
-      "category": "matmul",
-      "case": "12_dynamic_64xTx256_256x128_64xTx128",
-      "gated": true,
-      "base_compile": true,
-      "base_compile_rc": 0,
-      "base_run_rc": 0,
-      "base_passed": false,
-      "base_detector": "none",
-      "base_infra": null,
-      "check_run_rc": 0,
-      "check_passed": true,
-      "check_detector": "none",
-      "use_check": true,
-      "oracle_usable": true,
-      "reason": "__CHECK__ reference passes on unmutated code"
     }
   },
   "produced_by": "calibrate_oracle",
