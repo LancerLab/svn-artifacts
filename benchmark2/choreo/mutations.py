@@ -2100,6 +2100,35 @@ M3 += [
         "{0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => shared;")),
 ]
 
+# ---- M3-b depth: the same two missing checks, on staging anchors elsewhere
+# The three realisations above exhaust the anchors the shipped kernels expose
+# (M3.14's plain-tile copy only on matmul, its im2col copy and M3.15's pad only
+# on conv2d), which caps the family at 3. The M3.1 staging MMA hosts `lnmma` and
+# `bnmma` carry the plain-tile copy anchor into layer_normalization and
+# batch_norm, and the M3-g pad staging hosts `13_dma_pad_extent*`/`23_dma_pad_
+# extent*` carry the pad anchor into layer_normalization, relu and transpose.
+# Five further cells, none of them reusing a (spec, category) the family already
+# holds, bring M3-b to 8.
+for _fn, _cat in (("lnmma", "layer_normalization"), ("bnmma", "batch_norm")):
+    M3.append(_m(f"M3.14.{_fn}.linearcopy", "M3", 14, "dim-mismatch", _cat,
+                 f"{_fn}_32x512x768_768x768_32x512x768",
+                 "the absent CheckDimSize cell reached on the staging MMA host: "
+                 "the K-tile index is a 2^24 stride into a 768-wide contraction",
+                 ("l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile) => shared;",
+                  "l1_a = dma.copy lhs.chunkat(p#q, m_tile, 16777216) => shared;")))
+_PAD_LINE = ("dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, "
+             "{0, 0, 0, 0}, 0.0f> inp.chunkat(p, j, _, _) => shared;")
+for _tag, _cat, _case in (
+        ("ln13", "layer_normalization", "13_dma_pad_extent_32x8x16x16_16_16"),
+        ("rl23", "relu", "23_dma_pad_extent_32x8x16x16"),
+        ("tp23", "transpose", "23_dma_pad_extent_32x8x16x16")):
+    M3.append(_m(f"M3.15.{_tag}.pad2p24", "M3", 15, "dim-mismatch", _cat, _case,
+                 "pad extent beyond 2^24 elements on the pad staging host, "
+                 "whose path never calls CheckDimSize",
+                 (_PAD_LINE,
+                  "dma.pad<{0, 0, padding, padding}, {0, 0, 16777216, padding}, "
+                  "{0, 0, 0, 0}, 0.0f> inp.chunkat(p, j, _, _) => shared;")))
+
 # ---- M3.16 TMA box inner alignment with a SYMBOLIC leading dim ------------
 # gpu_adapt.hpp:640 `// TODO: emit runtime assessment` -- no check at all
 # (defect F3). unchecked.
