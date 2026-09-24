@@ -990,11 +990,13 @@ M2 = [
        "1_bert_32x512x768_768_768",
        "output tensor declared with a wrong trailing extent",
        ("f32 [lhs.span] out;", "f32 [I, J, K - 1] out;")),
-    _m("M2.s3.ln1.reduce", "M2", 3, "dim-mismatch", "layer_normalization",
+    _m("M2.s3.ln1.spanned", "M2", 3, "dim-mismatch", "layer_normalization",
        "1_bert_32x512x768_768_768",
-       "reduction divisor disagrees with the reduced extent",
-       ("s_mean.at(0) / (lhs.span(1) * lhs.span(2))",
-        "s_mean.at(0) / (lhs.span(1) * lhs.span(2) / 2)")),
+       "binary op on mismatched shapes: the per-element accumulate collapses "
+       "into a spanned op between the scalar [1] reduction accumulator and the "
+       "full [I, J, K] operand",
+       ("s_mean.at(0) = s_mean.at(0) + lhs.at(p#n, j, k);",
+        "s_mean += lhs;")),
     _m("M2.s1.ln1.caller.scale", "M2", 1, "dim-mismatch", "layer_normalization",
        "1_bert_32x512x768_768_768",
        "caller materialises the secondary operand with the wrong extent",
@@ -1585,6 +1587,18 @@ M1 += [
        "1_bert_32x512x768_768_768",
        "tile index one past the tiled extent on the primary operand",
        ("lhs.at(p#n, j, k)", "lhs.at(p#n, j, k + K)")),
+    _m("M1.21.mm12.tail", "M1", 21, "oob", "matmul",
+       "12_dynamic_64xTx256_256x128_64xTx128",
+       "tail tile on the reduction extent: the k-tile overshoots the last "
+       "extent of the shared lhs tile by one, so the element index reaches the "
+       "tiled extent",
+       ("foreach {i, m, j, k} in [l1_a.span(0), l1_a.span(1), l1_b.span(1), l1_a.span(2)]",
+        "foreach {i, m, j, k} in [l1_a.span(0), l1_a.span(1), l1_b.span(1), l1_a.span(2) + 1]")),
+    _m("M1.21.cv3.tail", "M1", 21, "oob", "conv2d",
+       "3_dynamic_16x256xHxW_256x256x3x3_16x256xHxW_S_P_D",
+       "tile index vs tiled extent on the output accumulator: the ho loop "
+       "overshoots Ho by one on a non-divisible extent",
+       ("foreach {ho, wo} in [Ho, Wo]", "foreach {ho, wo} in [Ho + 1, Wo]")),
 ]
 
 # ---- M2.6 two extents transposed -----------------------------------------

@@ -1,0 +1,33 @@
+#include "common.hpp"
+#ifdef __STATIC_SHAPE__
+#define T 100
+#endif
+// case12: [64, T, 256] + [256, 128] --> [64, T, 128] (Dynamic)
+__co__ auto matmul12(f32 [64, T, 256] lhs, f32 [256, 128] rhs) {
+  f32 [lhs.span(0), lhs.span(1), rhs.span(1)] output;
+  // Group tile buffers live in shared memory (one on-chip copy per group).
+  // [8, 4, 8, 16] tiling leaves the run-time dim (T) only in shared tiles; the
+  // static rhs tile is staged in a per-thread buffer whose extent is fixed.
+  parallel p by 4, q by 8 {
+    with index = {c_tile, m_tile, n_tile, k_tile} in [8, 4, 8, 16] {
+      foreach c_tile, m_tile, n_tile {
+        shared f32[output.span(0)/#c_tile/#p, output.span(1)/#m_tile, output.span(2)/#n_tile/#q] l1_out {0.0f};
+        foreach k_tile {
+          l1_a = dma.copy lhs.chunkat(p#c_tile, m_tile, k_tile) => shared;
+          local f32[rhs.span(0)/#k_tile, rhs.span(1)/#n_tile/#q] l1_b;
+          dma.copy rhs.chunkat(k_tile, q#n_tile) => l1_b;
+          foreach {i, m, j, k} in [l1_a.span(0), l1_a.span(1), l1_b.span(1), l1_a.span(2) + 1] {
+            l1_out.at(i, m, j) = l1_out.at(i, m, j) + l1_a.data.at(i, m, k) * l1_b.at(k, j);
+          }
+        }
+        dma.copy l1_out => output.chunkat(p#c_tile, m_tile, q#n_tile);
+      }
+    }
+  }
+  return output;
+}
+
+int main() {
+  TEST2(matmul12, 64, 100, 128, 256);
+  return 0;
+}
