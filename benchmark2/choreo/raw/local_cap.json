@@ -135,5 +135,29 @@
  "softmax/4_dynamic_Bx256x56x56_Bx256x56x56": {
   "cap_bytes": 131072,
   "reason": "per-thread softmax row staging (whole rows must stay thread-private for the max/sum reduction); measured LOCAL footprint (dynamic-shape kernel, bound at calibration shapes)"
+ },
+ "layer_normalization/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1": {
+  "cap_bytes": 4096,
+  "reason": "per-thread local GEMM/output accumulator by design (im2col tile does not fit shared); measured LOCAL footprint (dynamic-shape conv staging host, bound at calibration shapes)"
+ },
+ "batch_norm/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1": {
+  "cap_bytes": 4096,
+  "reason": "per-thread local GEMM/output accumulator by design (im2col tile does not fit shared); measured LOCAL footprint (dynamic-shape conv staging host, bound at calibration shapes)"
+ },
+ "max_pool2d/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1": {
+  "cap_bytes": 4096,
+  "reason": "per-thread local GEMM/output accumulator by design (im2col tile does not fit shared); measured LOCAL footprint (dynamic-shape conv staging host, bound at calibration shapes)"
+ },
+ "dma_rank5/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1": {
+  "cap_bytes": 4096,
+  "reason": "per-thread local GEMM/output accumulator by design (im2col tile does not fit shared); measured LOCAL footprint (dynamic-shape conv staging host, bound at calibration shapes)"
+ },
+ "relu/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1": {
+  "cap_bytes": 4096,
+  "reason": "per-thread local GEMM/output accumulator by design (im2col tile does not fit shared); measured LOCAL footprint (dynamic-shape conv staging host, bound at calibration shapes)"
+ },
+ "transpose/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1": {
+  "cap_bytes": 4096,
+  "reason": "per-thread local GEMM/output accumulator by design (im2col tile does not fit shared); measured LOCAL footprint (dynamic-shape conv staging host, bound at calibration shapes)"
  }
 }

@@ -10,13 +10,13 @@
  "level2": true,
  "rtc": null,
  "accounting": {
-  "candidates": 368,
-  "selected": 237,
+  "candidates": 375,
+  "selected": 241,
   "attribution": 4,
-  "dropped": 127,
+  "dropped": 130,
   "na": 0,
   "skipped": 0,
-  "emitted": 241
+  "emitted": 245
  },
  "family_depth": {
   "M1-a": 8,
@@ -39,7 +39,7 @@
   "M3-b": 8,
   "M3-c": 8,
   "M3-d": 1,
-  "M3-e": 4,
+  "M3-e": 8,
   "M3-f": 8,
   "M3-g": 8,
   "M3-h": 8,
@@ -52,8 +52,7 @@
   "M4-g": 8
  },
  "family_short": {
-  "M3-d": 7,
-  "M3-e": 4
+  "M3-d": 7
  },
  "unrealised_specs": {
   "M1": [],
@@ -71,13 +70,13 @@
   ]
  },
  "registry": {
-  "n_specs": 81,
+  "n_specs": 82,
   "status_counts": {
-   "implemented": 60,
+   "implemented": 61,
    "pending": 21
   },
   "admissible_counts": {
-   "true": 55,
+   "true": 56,
    "false": 26
   },
   "prohibition_counts": {
@@ -87,7 +86,7 @@
   },
   "path_counts": {
    "rt-check": 53,
-   "ct-check": 6,
+   "ct-check": 7,
    "unchecked": 9,
    "avoided": 6,
    "L": 7
@@ -152,7 +151,8 @@
    "M4.5",
    "M4.6",
    "M4.7",
-   "M4.8"
+   "M4.8",
+   "M4.9"
   ],
   "admissible": [
    "M1.1",
@@ -209,7 +209,8 @@
    "M4.5",
    "M4.6",
    "M4.7",
-   "M4.8"
+   "M4.8",
+   "M4.9"
   ],
   "pending": [],
   "unwritten": [
@@ -300,8 +301,8 @@
   "n_operators": {
    "M1": 94,
    "M2": 103,
-   "M3": 91,
-   "M4": 80
+   "M3": 97,
+   "M4": 81
   }
  },
  "dropped": [
@@ -1207,13 +1208,23 @@
   },
   {
    "class": "M3",
+   "mutant_id": "M3.s2.mm1.rhs2",
+   "spec_id": "M3.6",
+   "family": "M3-e",
+   "category": "matmul",
+   "case": "1_bert_32x512x768_768x768_32x512x768",
+   "path_class": "rt-check",
+   "reason": "family budget: M3-e already holds 8 instances (n_per_family=8)"
+  },
+  {
+   "class": "M3",
    "mutant_id": "M3.s2.mm1.lhs1",
    "spec_id": "M3.6",
    "family": "M3-e",
    "category": "matmul",
    "case": "1_bert_32x512x768_768x768_32x512x768",
    "path_class": "rt-check",
-   "reason": "category cap: matmul already holds 2 instance(s) in M3-e (n_realisations=2)"
+   "reason": "family budget: M3-e already holds 8 instances (n_per_family=8)"
   },
   {
    "class": "M3",
@@ -1223,7 +1234,17 @@
    "category": "matmul",
    "case": "11_dynamic_32xSx768_768x768_32xSx768",
    "path_class": "rt-check",
-   "reason": "category cap: matmul already holds 2 instance(s) in M3-e (n_realisations=2)"
+   "reason": "family budget: M3-e already holds 8 instances (n_per_family=8)"
+  },
+  {
+   "class": "M3",
+   "mutant_id": "M3.s2.cv1.w1",
+   "spec_id": "M3.6",
+   "family": "M3-e",
+   "category": "conv2d",
+   "case": "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "path_class": "rt-check",
+   "reason": "family budget: M3-e already holds 8 instances (n_per_family=8)"
   },
   {
    "class": "M3",
@@ -1233,7 +1254,7 @@
    "category": "conv2d",
    "case": "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
    "path_class": "rt-check",
-   "reason": "category cap: conv2d already holds 2 instance(s) in M3-e (n_realisations=2)"
+   "reason": "family budget: M3-e already holds 8 instances (n_per_family=8)"
   },
   {
    "class": "M3",
@@ -1243,7 +1264,7 @@
    "category": "conv2d",
    "case": "11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1",
    "path_class": "rt-check",
-   "reason": "category cap: conv2d already holds 2 instance(s) in M3-e (n_realisations=2)"
+   "reason": "family budget: M3-e already holds 8 instances (n_per_family=8)"
   },
   {
    "class": "M3",
@@ -1253,7 +1274,7 @@
    "category": "conv2d",
    "case": "11_static_64x128x32x32_32x128x1x1_64x32x32x32_1_0_1",
    "path_class": "rt-check",
-   "reason": "category cap: conv2d already holds 2 instance(s) in M3-e (n_realisations=2)"
+   "reason": "family budget: M3-e already holds 8 instances (n_per_family=8)"
   },
   {
    "class": "M3",
@@ -1574,6 +1595,16 @@
    "case": "12_dynamic_64xSx256_Sx64x256",
    "path_class": "rt-check",
    "reason": "category cap: transpose already holds 2 instance(s) in M4-f (n_realisations=2)"
+  },
+  {
+   "class": "M4",
+   "mutant_id": "M4.5.sm1.zerostep",
+   "spec_id": "M4.5",
+   "family": "M4-f",
+   "category": "softmax",
+   "case": "1_bert_32x512x768_32x512x768",
+   "path_class": "rt-check",
+   "reason": "family budget: M4-f already holds 8 instances (n_per_family=8)"
   }
  ],
  "na": [],
@@ -5779,62 +5810,6 @@
   {
    "toolchain": "choreo",
    "class": "M3",
-   "spec": 2,
-   "paper_category": "stride",
-   "mutant_id": "M3.s2.mm1.rhs2",
-   "category": "matmul",
-   "case": "1_bert_32x512x768_768x768_32x512x768",
-   "level": 1,
-   "base_path": "benchmark/choreo/matmul/1_bert_32x512x768_768x768_32x512x768.co",
-   "mutant_path": "benchmark2/choreo/mutants/M3/matmul/M3.s2.mm1.rhs2__1_bert_32x512x768_768x768_32x512x768.co",
-   "kernel_hash": "cbdff54a857d",
-   "mutant_hash": "ef0f687ccf37",
-   "settings_hash": "ba2aa2b58125",
-   "local_headers": [
-    "common.hpp"
-   ],
-   "desc": "misaligned tensor-core base: rhs DMA chunk offset by 2",
-   "diff": "--- a/matmul/1_bert_32x512x768_768x768_32x512x768.co\n+++ b/matmul/1_bert_32x512x768_768x768_32x512x768.co\n@@ -15,5 +15,5 @@\n         foreach k_tile {\n           l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile) => shared;\n-          l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => shared;\n+          l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile + 2) => shared;\n           foreach {i} in [l1_out.span(0)] {\n             call k_matmul(l1_a.chunkat(i,_,_), l1_b.data, l1_out, l1_a.span(1), l1_b.span(0), l1_a.span(2));\n",
-   "spec_version": "v2.1",
-   "spec_id": "M3.6",
-   "path_class": "rt-check",
-   "prohibition": "absent",
-   "admissible": false,
-   "spec_admissible": false,
-   "needs_rtc_curve": true,
-   "attribution_only": null
-  },
-  {
-   "toolchain": "choreo",
-   "class": "M3",
-   "spec": 2,
-   "paper_category": "stride",
-   "mutant_id": "M3.s2.cv1.w1",
-   "category": "conv2d",
-   "case": "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
-   "level": 1,
-   "base_path": "benchmark/choreo/conv2d/1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
-   "mutant_path": "benchmark2/choreo/mutants/M3/conv2d/M3.s2.cv1.w1__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
-   "kernel_hash": "00ce9a40b811",
-   "mutant_hash": "12f8815cfa44",
-   "settings_hash": "28fee96c8330",
-   "local_headers": [
-    "common.h"
-   ],
-   "desc": "misaligned DMA base address on the weight tensor",
-   "diff": "--- a/conv2d/1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n+++ b/conv2d/1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n@@ -48,5 +48,5 @@\n           shared f32 [KT, MT] l1_A;\n           foreach kt in [K / KT] {\n-            dma.copy w.span_as(Cout, K).chunkat(ct, kt) => B_tile;\n+            dma.copy w.span_as(Cout, K).chunkat(ct, kt + 1) => B_tile;\n             dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n             foreach {mm, co} in [MT, CT] {\n",
-   "spec_version": "v2.1",
-   "spec_id": "M3.6",
-   "path_class": "rt-check",
-   "prohibition": "absent",
-   "admissible": false,
-   "spec_admissible": false,
-   "needs_rtc_curve": true,
-   "attribution_only": null
-  },
-  {
-   "toolchain": "choreo",
-   "class": "M3",
    "spec": 16,
    "paper_category": "dim-mismatch",
    "mutant_id": "M3.16.cv1.symbox",
@@ -5851,6 +5826,168 @@
    ],
    "desc": "TMA box inner alignment with a symbolic leading dim: the assessment was never emitted, so no threshold reaches it",
    "diff": "--- a/conv2d/1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n+++ b/conv2d/1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n@@ -49,5 +49,5 @@\n           foreach kt in [K / KT] {\n             dma.copy w.span_as(Cout, K).chunkat(ct, kt) => B_tile;\n-            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n+            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho + 1, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n             foreach {mm, co} in [MT, CT] {\n               foreach kk in [KT] {\n",
+   "spec_version": "v2.1",
+   "spec_id": "M3.16",
+   "path_class": "unchecked",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": false,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M3",
+   "spec": 16,
+   "paper_category": "dim-mismatch",
+   "mutant_id": "M3.16.ln1.symbox",
+   "category": "layer_normalization",
+   "case": "conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "level": 1,
+   "base_path": "benchmark/choreo/layer_normalization/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/layer_normalization/M3.16.ln1.symbox__conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "kernel_hash": "0626417858aa",
+   "mutant_hash": "939fc7bb3e05",
+   "settings_hash": "8dbff8357c9b",
+   "local_headers": [],
+   "desc": "TMA box inner alignment with a symbolic leading dim: the assessment was never emitted, so no threshold reaches it",
+   "diff": "--- a/layer_normalization/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n+++ b/layer_normalization/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n@@ -73,5 +73,5 @@\n           foreach kt in [K / KT] {\n             dma.copy w.span_as(Cout, K).chunkat(ct, kt) => B_tile;\n-            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n+            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho + 1, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n             foreach {mm, co} in [MT, CT] {\n               foreach kk in [KT] {\n",
+   "spec_version": "v2.1",
+   "spec_id": "M3.16",
+   "path_class": "unchecked",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": false,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M3",
+   "spec": 16,
+   "paper_category": "dim-mismatch",
+   "mutant_id": "M3.16.bn1.symbox",
+   "category": "batch_norm",
+   "case": "conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "level": 1,
+   "base_path": "benchmark/choreo/batch_norm/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/batch_norm/M3.16.bn1.symbox__conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "kernel_hash": "0626417858aa",
+   "mutant_hash": "939fc7bb3e05",
+   "settings_hash": "45f6e81d94c0",
+   "local_headers": [],
+   "desc": "TMA box inner alignment with a symbolic leading dim: the assessment was never emitted, so no threshold reaches it",
+   "diff": "--- a/batch_norm/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n+++ b/batch_norm/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n@@ -73,5 +73,5 @@\n           foreach kt in [K / KT] {\n             dma.copy w.span_as(Cout, K).chunkat(ct, kt) => B_tile;\n-            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n+            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho + 1, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n             foreach {mm, co} in [MT, CT] {\n               foreach kk in [KT] {\n",
+   "spec_version": "v2.1",
+   "spec_id": "M3.16",
+   "path_class": "unchecked",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": false,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M3",
+   "spec": 16,
+   "paper_category": "dim-mismatch",
+   "mutant_id": "M3.16.mp1.symbox",
+   "category": "max_pool2d",
+   "case": "conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "level": 1,
+   "base_path": "benchmark/choreo/max_pool2d/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/max_pool2d/M3.16.mp1.symbox__conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "kernel_hash": "0626417858aa",
+   "mutant_hash": "939fc7bb3e05",
+   "settings_hash": "1f5436bfab1f",
+   "local_headers": [
+    "common.hpp"
+   ],
+   "desc": "TMA box inner alignment with a symbolic leading dim: the assessment was never emitted, so no threshold reaches it",
+   "diff": "--- a/max_pool2d/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n+++ b/max_pool2d/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n@@ -73,5 +73,5 @@\n           foreach kt in [K / KT] {\n             dma.copy w.span_as(Cout, K).chunkat(ct, kt) => B_tile;\n-            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n+            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho + 1, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n             foreach {mm, co} in [MT, CT] {\n               foreach kk in [KT] {\n",
+   "spec_version": "v2.1",
+   "spec_id": "M3.16",
+   "path_class": "unchecked",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": false,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M3",
+   "spec": 16,
+   "paper_category": "dim-mismatch",
+   "mutant_id": "M3.16.r51.symbox",
+   "category": "dma_rank5",
+   "case": "conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "level": 1,
+   "base_path": "benchmark/choreo/dma_rank5/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/dma_rank5/M3.16.r51.symbox__conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "kernel_hash": "0626417858aa",
+   "mutant_hash": "939fc7bb3e05",
+   "settings_hash": "6ba7925e0a5a",
+   "local_headers": [
+    "common.hpp"
+   ],
+   "desc": "TMA box inner alignment with a symbolic leading dim: the assessment was never emitted, so no threshold reaches it",
+   "diff": "--- a/dma_rank5/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n+++ b/dma_rank5/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n@@ -73,5 +73,5 @@\n           foreach kt in [K / KT] {\n             dma.copy w.span_as(Cout, K).chunkat(ct, kt) => B_tile;\n-            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n+            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho + 1, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n             foreach {mm, co} in [MT, CT] {\n               foreach kk in [KT] {\n",
+   "spec_version": "v2.1",
+   "spec_id": "M3.16",
+   "path_class": "unchecked",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": false,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M3",
+   "spec": 16,
+   "paper_category": "dim-mismatch",
+   "mutant_id": "M3.16.rl1.symbox",
+   "category": "relu",
+   "case": "conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "level": 2,
+   "base_path": "benchmark/choreo/relu/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/relu/M3.16.rl1.symbox__conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "kernel_hash": "0626417858aa",
+   "mutant_hash": "939fc7bb3e05",
+   "settings_hash": "7abb8bd6e718",
+   "local_headers": [],
+   "desc": "TMA box inner alignment with a symbolic leading dim: the assessment was never emitted, so no threshold reaches it",
+   "diff": "--- a/relu/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n+++ b/relu/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n@@ -73,5 +73,5 @@\n           foreach kt in [K / KT] {\n             dma.copy w.span_as(Cout, K).chunkat(ct, kt) => B_tile;\n-            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n+            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho + 1, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n             foreach {mm, co} in [MT, CT] {\n               foreach kk in [KT] {\n",
+   "spec_version": "v2.1",
+   "spec_id": "M3.16",
+   "path_class": "unchecked",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": false,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M3",
+   "spec": 16,
+   "paper_category": "dim-mismatch",
+   "mutant_id": "M3.16.tp1.symbox",
+   "category": "transpose",
+   "case": "conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "level": 2,
+   "base_path": "benchmark/choreo/transpose/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/transpose/M3.16.tp1.symbox__conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "kernel_hash": "0626417858aa",
+   "mutant_hash": "939fc7bb3e05",
+   "settings_hash": "df847a35dd4b",
+   "local_headers": [
+    "common.h"
+   ],
+   "desc": "TMA box inner alignment with a symbolic leading dim: the assessment was never emitted, so no threshold reaches it",
+   "diff": "--- a/transpose/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n+++ b/transpose/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co\n@@ -73,5 +73,5 @@\n           foreach kt in [K / KT] {\n             dma.copy w.span_as(Cout, K).chunkat(ct, kt) => B_tile;\n-            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n+            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho + 1, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;\n             foreach {mm, co} in [MT, CT] {\n               foreach kk in [KT] {\n",
    "spec_version": "v2.1",
    "spec_id": "M3.16",
    "path_class": "unchecked",
@@ -7785,6 +7922,34 @@
   {
    "toolchain": "choreo",
    "class": "M4",
+   "spec": 9,
+   "paper_category": "stride",
+   "mutant_id": "M4.9.mm1.zerostep",
+   "category": "matmul",
+   "case": "1_bert_32x512x768_768x768_32x512x768",
+   "level": 2,
+   "base_path": "benchmark/choreo/matmul/1_bert_32x512x768_768x768_32x512x768.co",
+   "mutant_path": "benchmark2/choreo/mutants/M4/matmul/M4.9.mm1.zerostep__1_bert_32x512x768_768x768_32x512x768.co",
+   "kernel_hash": "cbdff54a857d",
+   "mutant_hash": "8b011350e5d3",
+   "settings_hash": "ba2aa2b58125",
+   "local_headers": [
+    "common.hpp"
+   ],
+   "desc": "zero step in a `foreach` range: the iteration variable never advances, so the loop repeats one tile forever. Legal, so it must warn, not error, and a warned-but-built mutant is already a compile-time detection",
+   "diff": "--- a/matmul/1_bert_32x512x768_768x768_32x512x768.co\n+++ b/matmul/1_bert_32x512x768_768x768_32x512x768.co\n@@ -13,5 +13,5 @@\n       foreach m_tile, n_tile {\n         shared f32[output.span(0)/#p/#q, output.span(1)/#m_tile, output.span(2)/#n_tile] l1_out {0.0f};\n-        foreach k_tile {\n+        foreach k_tile(0:0:0) {\n           l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile) => shared;\n           l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => shared;\n",
+   "spec_version": "v2.1",
+   "spec_id": "M4.9",
+   "path_class": "ct-check",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": false,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M4",
    "spec": 5,
    "paper_category": "stride",
    "mutant_id": "M4.5.tp2.zerostep",
@@ -7883,34 +8048,6 @@
    ],
    "desc": "write-back chunk index multiplied by 0: every iteration writes the same column block, so the store collapses onto one tile",
    "diff": "--- a/softmax/11_dynamic_32xSx768_32xSx768.co\n+++ b/softmax/11_dynamic_32xSx768_32xSx768.co\n@@ -34,5 +34,5 @@\n           l1_input.data.at(0, j, k) = l1_input.data.at(0, j, k) / sum_exp;\n       }\n-      dma.copy l1_input => output.chunkat(i, p#q, _);\n+      dma.copy l1_input => output.chunkat(i, 0, _);\n     }\n   }\n",
-   "spec_version": "v2.1",
-   "spec_id": "M4.5",
-   "path_class": "rt-check",
-   "prohibition": "",
-   "admissible": true,
-   "spec_admissible": true,
-   "needs_rtc_curve": true,
-   "attribution_only": null
-  },
-  {
-   "toolchain": "choreo",
-   "class": "M4",
-   "spec": 5,
-   "paper_category": "stride",
-   "mutant_id": "M4.5.sm1.zerostep",
-   "category": "softmax",
-   "case": "1_bert_32x512x768_32x512x768",
-   "level": 1,
-   "base_path": "benchmark/choreo/softmax/1_bert_32x512x768_32x512x768.co",
-   "mutant_path": "benchmark2/choreo/mutants/M4/softmax/M4.5.sm1.zerostep__1_bert_32x512x768_32x512x768.co",
-   "kernel_hash": "f6943bbcf47c",
-   "mutant_hash": "d6bfd827f19c",
-   "settings_hash": "d59f419be35e",
-   "local_headers": [
-    "common.hpp"
-   ],
-   "desc": "write-back chunk index multiplied by 0 on the static softmax",
-   "diff": "--- a/softmax/1_bert_32x512x768_32x512x768.co\n+++ b/softmax/1_bert_32x512x768_32x512x768.co\n@@ -27,5 +27,5 @@\n           l1_out.at(0, j, k) = l1_out.at(0, j, k) / sum_exp;\n       }\n-      dma.copy l1_out => output.chunkat(i, p#q, _);\n+      dma.copy l1_out => output.chunkat(i, 0, _);\n     }\n   }\n",
    "spec_version": "v2.1",
    "spec_id": "M4.5",
    "path_class": "rt-check",

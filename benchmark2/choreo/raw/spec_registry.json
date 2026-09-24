@@ -17,9 +17,9 @@
    "observation": 3
   },
   "path_counts": {
-   "rt-check": 53,
-   "ct-check": 7,
-   "unchecked": 9,
+   "rt-check": 50,
+   "ct-check": 8,
+   "unchecked": 11,
    "avoided": 6,
    "L": 7
   },
@@ -461,12 +461,12 @@
   {
    "spec_id": "M2.10",
    "cls": "M2",
-   "path": "rt-check",
+   "path": "unchecked",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
    "desc": "transpose permutation on a SQUARE operand (extents equal, memory order changes)",
-   "note": "view/metadata family -- best-attested class in both empirical corpora; report as its own sub-table"
+   "note": "view/metadata family -- best-attested class in both empirical corpora; report as its own sub-table. unchecked, not rt-check (specs 9.5.4): the obligation -- 'this permutation is the intended one' -- cannot be stated in the input type, so no -rtc value reaches it and no runtime check exists to sweep. The measured verdict on the square specimens is never; that is the designed outcome, not a gap. The non-square matmul specimen is an M2.6 two-extents-transposed operator and is counted there, so this spec stays homogeneous"
   },
   {
    "spec_id": "M2.11",
@@ -491,12 +491,12 @@
   {
    "spec_id": "M2.13",
    "cls": "M2",
-   "path": "rt-check",
+   "path": "unchecked",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
    "desc": "shape-equal / layout-unequal (every extent agrees, the affine map does not)",
-   "note": "view/metadata family"
+   "note": "view/metadata family. unchecked, not rt-check (specs 9.5.4): every extent agrees, so the extent-only comparison at semacheck.cpp:1073 has nothing to refute and no obligation exists at any threshold -- no -rtc value reaches it. The measured verdict is never; that is the designed outcome, not a gap"
   },
   {
    "spec_id": "M2.14",
@@ -621,12 +621,12 @@
   {
    "spec_id": "M2.6",
    "cls": "M2",
-   "path": "rt-check",
+   "path": "ct-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
    "desc": "two extents transposed",
-   "note": ""
+   "note": "every realized specimen is a shape/rank inconsistency the injected defect itself creates, so the type checker rejects it: ct-check, not rt-check (specs 9.6.1 rule 2). The one symbolic realization (the output declaration on the dynamic 32xSx768 base) escapes because the tiling check folds only when the extent is static, so it does NOT exercise this spec's check -- it belongs to the symbolic-extent family (M2.17/M2.19 mechanism at the shapeinfer tiling site)"
   },
   {
    "spec_id": "M2.7",

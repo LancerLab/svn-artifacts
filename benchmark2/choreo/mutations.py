@@ -294,14 +294,31 @@ SPEC_REGISTRY = {
                   status="implemented"),
     "M2.5": _spec("M2", "rt-check", "partial write (omitted tail tile) / duplicate "
                               "write (overlapping tile)", status="implemented"),
-    "M2.6": _spec("M2", "rt-check", "two extents transposed"),
+    "M2.6": _spec("M2", "ct-check", "two extents transposed",
+                  note="every realized specimen is a shape/rank inconsistency "
+                       "the injected defect itself creates, so the type checker "
+                       "rejects it: ct-check, not rt-check (specs 9.6.1 rule 2). "
+                       "The one symbolic realization (the output declaration on "
+                       "the dynamic 32xSx768 base) escapes because the tiling "
+                       "check folds only when the extent is static, so it does "
+                       "NOT exercise this spec's check -- it belongs to the "
+                       "symbolic-extent family (M2.17/M2.19 mechanism at the "
+                       "shapeinfer tiling site)"),
     "M2.7": _spec("M2", "rt-check", "reduced-rank view (a dimension dropped)"),
     "M2.8": _spec("M2", "rt-check", "broadcast extent set to 1 instead of N"),
     "M2.9": _spec("M2", "rt-check", "batch/group dimension swapped"),
-    "M2.10": _spec("M2", "rt-check", "transpose permutation on a SQUARE operand "
+    "M2.10": _spec("M2", "unchecked", "transpose permutation on a SQUARE operand "
                                "(extents equal, memory order changes)",
                    note="view/metadata family -- best-attested class in both "
-                        "empirical corpora; report as its own sub-table"),
+                        "empirical corpora; report as its own sub-table. "
+                        "unchecked, not rt-check (specs 9.5.4): the obligation "
+                        "-- 'this permutation is the intended one' -- cannot be "
+                        "stated in the input type, so no -rtc value reaches it "
+                        "and no runtime check exists to sweep. The measured "
+                        "verdict on the square specimens is never; that is the "
+                        "designed outcome, not a gap. The non-square matmul "
+                        "specimen is an M2.6 two-extents-transposed operator and "
+                        "is counted there, so this spec stays homogeneous"),
     "M2.11": _spec("M2", "rt-check", "DMA to-buffer element-count undersize on a "
                                "LogicalEqual path"),
     "M2.12": _spec("M2", "avoided", "rank mismatch through .pad (overlap still "
@@ -309,9 +326,14 @@ SPEC_REGISTRY = {
                    admissible=False, prohibition="repaired",
                    note="semacheck.cpp:1081-1090 is a hard Error1 producing NO "
                         "ledger row -- not applicable (specs §2.1)"),
-    "M2.13": _spec("M2", "rt-check", "shape-equal / layout-unequal (every extent "
+    "M2.13": _spec("M2", "unchecked", "shape-equal / layout-unequal (every extent "
                                "agrees, the affine map does not)",
-                   note="view/metadata family"),
+                   note="view/metadata family. unchecked, not rt-check (specs "
+                        "9.5.4): every extent agrees, so the extent-only "
+                        "comparison at semacheck.cpp:1073 has nothing to refute "
+                        "and no obligation exists at any threshold -- no -rtc "
+                        "value reaches it. The measured verdict is never; that "
+                        "is the designed outcome, not a gap"),
     "M2.14": _spec("M2", "rt-check", "matmul contraction-dim (K) mismatch masked by "
                                "broadcast"),
     "M2.15": _spec("M2", "rt-check", "pad_low <-> pad_high SWAPPED (length preserved, "
@@ -2159,6 +2181,27 @@ M3 += [
        "was never emitted, so no threshold reaches it",
        ("i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo)",
         "i.chunkat(p#n, _, _, _).span_as(K, Ho + 1, Wo)")),
+]
+
+# ---- M3.16 symbox, staged outside `conv2d` --------------------------------
+# Same unchecked defect, same anchor, hosted on the self-contained `conv1s`
+# staging kernel so the category grid supplies the remaining cells.
+_M3_16_STEM = "conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1"
+_M3_16_DESC = ("TMA box inner alignment with a symbolic leading dim: the "
+               "assessment was never emitted, so no threshold reaches it")
+M3 += [
+    _m(f"M3.16.{tag}.symbox", "M3", 16, "dim-mismatch", cat, _M3_16_STEM,
+       _M3_16_DESC,
+       ("i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo)",
+        "i.chunkat(p#n, _, _, _).span_as(K, Ho + 1, Wo)"))
+    for tag, cat in (
+        ("ln1", "layer_normalization"),
+        ("bn1", "batch_norm"),
+        ("mp1", "max_pool2d"),
+        ("r51", "dma_rank5"),
+        ("rl1", "relu"),
+        ("tp1", "transpose"),
+    )
 ]
 
 # ---- M3.9 pad-field overrun ---------------------------------------------
