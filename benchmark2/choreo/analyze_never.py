@@ -88,6 +88,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -120,6 +121,13 @@ CHOREO = os.path.join(REPO, "croqtile", "build-release", "choreo")
 # invocation appends the base's raw/local_cap.json entry, if any, via local_caps.
 LEDGER_FLAGS = ["-gs", "--stats", "-es", "-t", "cute"]
 EXEC_FLAGS = ["-gs", "-t", "cute", "-kt", "-rtc=all"]
+# A mutant that traps or spins can hang the probe kernel indefinitely (seen:
+# M2.6.mm1.alt, and the M1.11.rl1.alt timeout that run_e1.py already caps at
+# 900 s). run.sh/run_e1.py bound their executions; the probe must too, or a
+# single hung kernel stalls the whole attribution pass. On timeout the arm is
+# reported as `crash-only` (rc=-1), which is a non-detection for S2 — the same
+# verdict the harness oracle gives — so a hang cannot be mistaken for a catch.
+EXEC_TIMEOUT_S = 180
 
 # ---------------------------------------------------------------------------
 # THREE sources of assertion output, split across TWO prefixes and TWO streams.
@@ -332,9 +340,24 @@ def run_execute(src, extra_flags):
             return None, f"choreo rc={p.returncode}: {(p.stderr or p.stdout)[-300:]}"
         subprocess.run(["bash", sh, "--compile-link"], capture_output=True,
                        text=True, cwd=REPO)
-        e = subprocess.run(["stdbuf", "-o0", "-e0", "bash", sh, "--execute"],
-                           capture_output=True, text=True, cwd=REPO)
-        return e.returncode, e.stdout + e.stderr
+        # start_new_session so a timeout can kill the WHOLE process tree: the
+        # executed kernel is a grandchild of `bash sh --execute`, and killing
+        # only the shell leaves the GPU kernel orphaned and spinning (observed).
+        e = subprocess.Popen(["stdbuf", "-o0", "-e0", "bash", sh, "--execute"],
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                             text=True, cwd=REPO, start_new_session=True)
+        try:
+            out, _ = e.communicate(timeout=EXEC_TIMEOUT_S)
+            rc = e.returncode
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(os.getpgid(e.pid), signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                pass
+            out, _ = e.communicate()
+            rc = -1
+            out = (out or "") + f"\n# probe timeout after {EXEC_TIMEOUT_S}s"
+        return rc, out
     finally:
         shutil.rmtree(t, ignore_errors=True)
 
@@ -382,6 +405,40 @@ def _norm_idx(expr):
     """
     s = re.sub(r"\s+", "", expr or "")
     return s.replace("(", "").replace(")", "")
+
+
+# An index that CANNOT move out of bounds: a literal, a bare identifier, or a
+# constant-collapse product `expr * 0` / `0 * expr` (with optional parens and
+# whitespace). A product with a zero factor folds to 0 in any index expression,
+# so it stays in bounds by construction. This is the M4.5 zero-step family, where
+# a dma.copy destination coordinate is multiplied by zero so every write lands on
+# the SAME in-bounds tile: a VALUE error (specs §4 out of scope), never a bound
+# violation, so `never` is the correct verdict.
+RE_BENIGN_INDEX = re.compile(
+    r"-?\d+(\.\d+f?)?"
+    r"|[A-Za-z_]\w*"
+    r"|\(?\s*[A-Za-z_]\w*\s*\*\s*0\s*\)?"
+    r"|\(?\s*0\s*\*\s*[A-Za-z_]\w*\s*\)?")
+
+
+def _is_benign_index(expr):
+    """True iff `expr` cannot move an index out of bounds (see RE_BENIGN_INDEX)."""
+    return bool(RE_BENIGN_INDEX.fullmatch(expr or ""))
+
+
+# The mutant's own description, value-vocabulary: a mutation that collapses,
+# overwrites, shortens or otherwise changes VALUES rather than moving an index
+# out of range. `zero[- ]stride` covers the hyphenated and spaced spellings;
+# `multiplied by 0` is the M4.5 zero-step form. Kept deliberately narrow: a
+# broader net (e.g. "collide") starts absorbing the M1.11 modulo-alias family
+# inconsistently, since sibling descriptions word the same defect differently.
+RE_VALUE_VOCAB = re.compile(
+    r"zero[- ]stride|multiplied by 0|collapse|duplicate|partial|"
+    r"overwrite|omitted tail|shortened|divisor|reduction", re.I)
+
+
+def _is_value_vocabulary(desc):
+    return bool(RE_VALUE_VOCAB.search(desc or ""))
 
 
 def _at_sites_in(text):
@@ -662,8 +719,7 @@ def classify(rec, man, execute=False):
     # description must be value-vocabulary, so this cannot silently absorb a real
     # bound violation whose diff happens to look benign.
     changed_idx = [i for _, idxs in at_sites for i in idxs]
-    benign_index = all(
-        re.fullmatch(r"-?\d+(\.\d+f?)?|[A-Za-z_]\w*", i) for i in changed_idx)
+    benign_index = all(_is_benign_index(i) for i in changed_idx)
     # `span-extent` qualifies because a `.span(N)` query returns an EXTENT, not an
     # index: `lhs.span(3)` -> `lhs.span(3) - 1` makes a reduction divide by the
     # wrong number, which is arithmetic, not an out-of-range access.
@@ -682,9 +738,7 @@ def classify(rec, man, execute=False):
             and (changed_idx or other_sites)
             and not rel_suppressed
             and not rel_enabled
-            and re.search(r"zero-stride|collapse|duplicate|partial|overwrite|"
-                          r"omitted tail|shortened|divisor|reduction",
-                          (man.get("desc") or ""), re.I)):
+            and _is_value_vocabulary(man.get("desc"))):
         out.update(cause="C5_OUT_OF_SCOPE",
                    reason="the mutation cannot move an index out of bounds "
                           "(constant collapse / in-range variable substitution / "
@@ -732,6 +786,40 @@ def classify(rec, man, execute=False):
         # actually have caught this one.
         if execute:
             out["forced_all"] = probe_execute(src, mid)
+            fa = out["forced_all"]
+            on_status = (fa.get("hoist_on") or {}).get("status")
+            # C1's whole premise is that raising -rtc would EMIT the lost guard.
+            # The probe runs at -rtc=all with hoisting ON: if even that produces
+            # no assessment guard (and no hoisting defect is confirmed), then the
+            # suppressed obligation was not about this mutation at all -- it is
+            # admitted by the loose chunkat relevance arm, which matches on ARRAY
+            # NAME alone (relevant_runtime:58x), and is usually the base kernel's
+            # own dynamic-shape guard. No bound guard can catch a mutation that
+            # never leaves its extent, so the honest cause is C5 (a value error,
+            # for which `never` is CORRECT), not a detection we could have had by
+            # tuning -rtc. Gate on value evidence so a genuine offset whose guard
+            # the probe failed to fire is not waved through as out-of-scope.
+            value_error = (_is_value_vocabulary(man.get("desc"))
+                           or (changed_idx
+                               and all(_is_benign_index(i) for i in changed_idx)))
+            if (on_status is not None
+                    and on_status not in DETECTION_VERDICTS
+                    and not fa.get("hoisting_defect_confirmed")
+                    and value_error):
+                out["cause_under_execute"] = out["cause"]
+                out.update(
+                    cause="C5_OUT_OF_SCOPE",
+                    reason="C1's premise is refuted by the probe: at -rtc=all "
+                           "with hoisting ON no assessment guard fires (probe "
+                           f"verdict `{on_status}`), so the suppressed runtime "
+                           "obligation was NOT about this mutated access (the "
+                           "chunkat relevance arm matches on array name alone, so "
+                           "it also admits the base kernel's own dynamic-shape "
+                           "guards). The mutation is a constant collapse / value "
+                           "change -- no bound guard can catch it -- which specs "
+                           "§4 puts out of scope, so `never` is the CORRECT "
+                           "verdict, not a detection gap.",
+                    refuted_cause="C1_COST_FILTER_SUPPRESSED")
         else:
             out["forced_all"] = {"status": "untested",
                                  "reason": "pass --execute to test C2 on this mutant"}
