@@ -5,6 +5,10 @@
 #define padding 0
 #define dilation 1
 
+#define MT 169
+#define CT 5
+#define KT 8
+
 __co__ auto CONV2D(f32 [16, 1024, 13, 13] i, f32 [255, 1024, 1, 1] w) {
   N = i.span(0);
   Cin = i.span(1);
@@ -21,18 +25,33 @@ __co__ auto CONV2D(f32 [16, 1024, 13, 13] i, f32 [255, 1024, 1, 1] w) {
   M = Ho * Wo;
   K = Cin * Kh * Kw;
 
+  // Cooperative shared-memory GEMM (1x1 path):
+  //   - The weight matrix B[Cout, K] (1 MB here) does NOT fit in shared, so a
+  //     [CT, KT] block-tile is streamed global->shared per K-tile and Cout-tile,
+  //     and each thread accumulates an [MT, CT] output tile in local.
+  //   - The im2col operand A[K, M] is streamed as [KT, MT] K-tiles; for a 1x1
+  //     kernel the spatial grid (Ho, Wo) is the im2col M axis, so MT = Ho*Wo
+  //     and q selects the (single) spatial tile.
+  //   - The inner product is indexed (`.at`), so the streamed shared tiles keep
+  //     their strided layouts; a raw-pointer dot would read the wrong elements.
   parallel p by 2  {
     foreach n in [N / #p] {
-      parallel q by 13  {
-        local f32 [M/#q, Cout] l1_Y{0.0f};
-        foreach kt in [16] {
-          shared f32 [Cout, 64] B_tile;
-          dma.copy w.span_as(Cout, K).chunkat(_, kt) => B_tile;
-          l1_A = dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(kt, q, _).span_as(64, 13) => local;
-          l1_B = dma.copy B_tile => local;
-          call k_matmul(l1_A.data, l1_B.data, l1_Y, M/#q, Cout, 64);
+      parallel q by 1  {
+        foreach ct in [Cout / CT] {
+          local f32 [MT, CT] l1_Y{0.0f};
+          shared f32 [CT, KT] B_tile;
+          shared f32 [KT, MT] l1_A;
+          foreach kt in [K / KT] {
+            dma.copy w.span_as(Cout, K).chunkat(ct, kt) => B_tile;
+            dma.copy i.chunkat(p#n, _, _, _).span_as(K, Ho, Wo).chunkat(kt, q, _).span_as(KT, MT) => l1_A;
+            foreach {mm, co} in [MT, CT] {
+              foreach kk in [KT] {
+                l1_Y.at(mm, co) += l1_A.at(kk, mm) * B_tile.at(co, kk);
+              }
+            }
+          }
+          dma.transp<1, 0> l1_Y => o.chunkat(p#n, ct, q, _).span_as(CT, MT);
         }
-        dma.transp<1, 0> l1_Y => o.chunkat(p#n, _, q, _).span_as(Cout, 13);
       }
     }
   }

@@ -222,11 +222,18 @@ SPEC_REGISTRY = {
                                "(broadcast index reuse)"),
     "M1.13": _spec("M1", "rt-check", "symbolic-bound overrun (index beyond a bound "
                                "over a runtime parameter)"),
-    "M1.14": _spec("M1", "rt-check", "chunkat tile-coordinate over/underflow while "
+    "M1.14": _spec("M1", "ct-check", "chunkat tile-coordinate over/underflow while "
                                "the element index stays in bounds",
-                  note="load-bearing: the only spec targeting a check the "
-                       "compiler wrote and then disabled (272 chunkat "
-                       "obligations, 0 enabled at -rtc=entry)"),
+                   note="load-bearing: the only spec targeting a check the "
+                        "compiler wrote and then disabled (272 chunkat "
+                        "obligations, 0 enabled at -rtc=entry). Detected at "
+                        "COMPILE time: the chunkat tile-coordinate assessment "
+                        "assesses the coordinate's declared range against the "
+                        "tiling factor, so a coordinate whose bound reaches the "
+                        "tile count folds during semantic checking into a static "
+                        "error (the same treatment element-access subscripts get). "
+                        "No -rtc threshold applies -- the check is not a runtime "
+                        "predicate, so the path is threshold-independent"),
     "M1.15": _spec("M1", "unchecked", "dimof index >= rank, non-constant index",
                   admissible=False, prohibition="absent",
                   note="gap spec: the dimof-rank mechanism neither exists in "
@@ -933,7 +940,7 @@ M1 = [
     _m("M1.12.ln1.alt", 'M1', 12, 'stride', 'layer_normalization',
        '11_dynamic_32xSx768_768_768',
        'wrong loop variable for a dimension on the primary operand',
-       ('lhs.at(p#n, j, k)', 'lhs.at(p#n, j, j)', None)),
+       ('lhs.at(p#n, j, k)', 'lhs.at(p#n, k, k)', None)),
     _m("M1.12.sm1.alt", 'M1', 12, 'stride', 'softmax',
        '11_dynamic_32xSx768_32xSx768',
        'wrong loop variable for a dimension: the reduction index is reused for the row dimension (broadcast index reuse)',
@@ -1186,7 +1193,7 @@ M2 = [
     _m("M2.16.cv1.alt", "M2", 16, 'dim-mismatch', 'conv2d',
        '20_static_16x1024x13x13_255x1024x1x1_16x255x13x13_1_0_1',
        'span_as split exchanged: ElementCount is preserved, so the count-only comparison at semacheck.cpp:947 passes on conv2d (second cell: the same defect on another kernel of the family)',
-        ('dma.copy w.span_as(Cout, K).chunkat(_, kt) => B_tile;', 'dma.copy w.span_as(K, Cout).chunkat(_, kt) => B_tile;')),
+         ('dma.copy w.span_as(Cout, K).chunkat(ct, kt) => B_tile;', 'dma.copy w.span_as(K, Cout).chunkat(ct, kt) => B_tile;')),
     _m("M2.7.mm1.alt", "M2", 7, 'dim-mismatch', 'matmul',
        '11_dynamic_32xSx768_768x768_32xSx768',
        'reduced-rank view: a dimension is dropped from the output declaration on matmul (second cell: the same defect on another kernel of the family)',
@@ -1459,7 +1466,7 @@ M1 += [
     _m("M1.12.ln1.idxreuse", "M1", 12, "stride", "layer_normalization",
        "1_bert_32x512x768_768_768",
        "wrong loop variable for a dimension on the primary operand",
-       ("lhs.at(p#n, j, k)", "lhs.at(p#n, j, j)")),
+       ("lhs.at(p#n, j, k)", "lhs.at(p#n, k, k)")),
     _m("M1.12.sm14.idxreuse", "M1", 12, "stride", "softmax",
        "14_efficientnet_64x1280x7x7_64x1280x7x7",
        "broadcast index reuse on the 4-D softmax: the reduction index is "
@@ -1881,13 +1888,15 @@ M3 += [
 # different runtime symbol, so the multiplier is per case:
 #   batch_norm          H/W  (h_value/w_value, kernel parameters)
 #   layer_normalization N1/N2
-#   matmul              N
+#   matmul              T    (matmul/12: the only dynamic matmul whose tiles
+#       are all static under the run-time dim; the base stages the static rhs
+#       tile in a per-thread buffer, so the multiplier is the run-time T)
 #   max_pool2d          channels/height/width
 # Every edit was verified to stay symbolic under `choreo -t cc -i` and to leave
 # CheckCtMemUsage (target `muchk`) silent -- the rt-check capacity miss M3-h names.
 _BN10 = "10_dynamic_16x512xHxW_512_512_16x512xHxW"
 _LN10 = "10_dynamic_16x512xHxW_HxW_HxW"
-_MM10 = "10_dynamic_128x1280_1280xN_128xN"
+_MM12 = "12_dynamic_64xTx256_256x128_64xTx128"
 _MP10 = "10_dynamic_32xCxHxW_32xCxHd5xWd5"
 M3 += [
     _m("M3.27.bn10.symshared", "M3", 27, "dim-mismatch", "batch_norm", _BN10,
@@ -1913,11 +1922,11 @@ M3 += [
        "is exceeded in a size the static check cannot fold",
        ("local f32 [1] df;",
         "local f32 [N1] df;"), spec_id="M3.28"),
-    _m("M3.28.mm10.symlocal", "M3", 28, "dim-mismatch", "matmul", _MM10,
-       "per-thread accumulator extent made runtime-shaped (N): the per-thread "
+    _m("M3.28.mm12.symlocal", "M3", 28, "dim-mismatch", "matmul", _MM12,
+       "per-thread rhs tile extent made runtime-shaped (T): the per-thread "
        "budget is exceeded in a size the static check cannot fold",
-       ("rhs.span(1)/#n_tile/#q] l1_out",
-        "rhs.span(1)/#n_tile/#q * rhs.span(1)] l1_out"), spec_id="M3.28"),
+       ("rhs.span(1)/#n_tile/#q] l1_b;",
+        "rhs.span(1)/#n_tile/#q * lhs.span(1)] l1_b;"), spec_id="M3.28"),
     _m("M3.28.mp10.symlocal", "M3", 28, "dim-mismatch", "max_pool2d", _MP10,
        "per-thread output tile extent made runtime-shaped (height): the "
        "per-thread budget is exceeded in a size the static check cannot fold",
@@ -2198,8 +2207,8 @@ M4 += [
        ("parallel q by 14  {", "parallel q by 0  {")),
     _m("M4.6.cv2.neg", "M4", 2, "stride", "conv2d",
        "2_dynamic_Nx64x56x56_128x64x3x3_Nx128x56x56_S_P_D",
-       "parallelby bound mutated to negative on a dynamic-batch case",
-       ("parallel q by 4  {", "parallel q by -4  {"), spec_id="M4.6"),
+        "parallelby bound mutated to negative on a dynamic-batch case",
+        ("parallel q by 2  {", "parallel q by -2  {"), spec_id="M4.6"),
     _m("M4.2.cv3.zero", "M4", 2, "stride", "conv2d",
        "3_dynamic_16x256xHxW_256x256x3x3_16x256xHxW_S_P_D",
        "parallelby bound mutated to 0 where every extent is symbolic",

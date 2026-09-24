@@ -28,10 +28,10 @@ __co__ auto CONV2D(f32 [16, 256, pyramid_h, pyramid_w] i, f32 [256, 256, 3, 3] w
   parallel p by 2  {
     parallel q by 4  {
       foreach {co, n} in [Cout, N / #p / #q] {
-        local f32 [Ho, Wo] Y{0.0f};
+        shared f32 [Ho, Wo] Y{0.0f};
         foreach ci in [Cin] {
-          il = dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, {0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => local;
-          ws = dma.copy w.chunkat(co, ci, _, _) => local;
+          il = dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, {0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => shared;
+          ws = dma.copy w.chunkat(co, ci, _, _) => shared;
           foreach {ho, wo} in [Ho, Wo] {
             f32 sum = 0.0f;
             foreach {hw, ww} in [Kh, Kw] {
@@ -50,5 +50,5 @@ __co__ auto CONV2D(f32 [16, 256, pyramid_h, pyramid_w] i, f32 [256, 256, 3, 3] w
 }
 
 int main() {
-  test_dynamic("CONV2D", CONV2D, {16, 256, 32, 32}, {256, 256, 3, 3}, 1, 1, 1);
+  test_dynamic("CONV2D", CONV2D, {16, 256, 32, 48}, {256, 256, 3, 3}, 1, 1, 1);
 }

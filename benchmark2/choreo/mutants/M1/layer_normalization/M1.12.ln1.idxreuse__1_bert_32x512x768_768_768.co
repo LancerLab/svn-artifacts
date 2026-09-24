@@ -17,13 +17,13 @@ __co__ auto layer_norm(f32 [I, J, K] lhs, f32 [K] scale, f32 [K] bias) {
       shared f32 [1] s_mean;
       s_mean.at(0) = 0.0f;
       foreach {j, k} in [J, K]
-        s_mean.at(0) = s_mean.at(0) + lhs.at(p#n, j, j);
+        s_mean.at(0) = s_mean.at(0) + lhs.at(p#n, k, k);
       s_mean.at(0) = s_mean.at(0) / (lhs.span(1) * lhs.span(2));
       shared f32 [1] s_var;
       s_var.at(0) = 0.0f;
       foreach {j, k} in [J, K] {
         local f32 [1] df;
-        df.at(0) = lhs.at(p#n, j, j) - s_mean.at(0);
+        df.at(0) = lhs.at(p#n, k, k) - s_mean.at(0);
         s_var.at(0) = s_var.at(0) + df.at(0) * df.at(0);
       }
       s_var.at(0) = s_var.at(0) / (lhs.span(1) * lhs.span(2));
@@ -31,7 +31,7 @@ __co__ auto layer_norm(f32 [I, J, K] lhs, f32 [K] scale, f32 [K] bias) {
       s_var.at(0) = s_var.at(0) + 0.00001;
       s_std.at(0) = __sqrt(s_var.at(0));
       foreach {j, k} in [J, K]
-        out.at(p#n, j, k) = scale.at(k) * (lhs.at(p#n, j, j) - s_mean.at(0)) / s_std.at(0) + bias.at(k);
+        out.at(p#n, j, k) = scale.at(k) * (lhs.at(p#n, k, k) - s_mean.at(0)) / s_std.at(0) + bias.at(k);
     }
   }
   return out;

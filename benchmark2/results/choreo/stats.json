@@ -1,21 +1,21 @@
 {
  "toolchain": "choreo",
- "toolchain_version": "8ae43eabb31cbbf3c2cb8a49faa6fb6f762eb9c5",
+ "toolchain_version": "ae9c1fda643017538f66f36e4e189343d0eaaa0c",
  "toolchain_identity": {
   "toolchain": "choreo",
-  "version": "8ae43eabb31cbbf3c2cb8a49faa6fb6f762eb9c5",
-  "version_basis": "mtime<=commit-date",
-  "checkout_head": "e4c41795f472bdef605661977f5f276848f915aa",
+  "version": "ae9c1fda643017538f66f36e4e189343d0eaaa0c",
+  "version_basis": "binary-newer-than-head",
+  "checkout_head": "ae9c1fda643017538f66f36e4e189343d0eaaa0c",
   "checkout_branch": "ledger-artifacts",
   "checkout_dirty_source_files": [],
   "binary": "croqtile/build-release/choreo",
-  "binary_sha1_12": "4a7f140471f5",
-  "binary_mtime": 1790152126.8694465,
-  "binary_stale_vs_checkout": true,
+  "binary_sha1_12": "8055324e6898",
+  "binary_mtime": 1790231265.0801544,
+  "binary_stale_vs_checkout": false,
   "binary_stale_basis": "source-mtime",
-  "binary_predates_source": true,
-  "binary_newest_source_mtime": 1790152368.4104183,
-  "version_label_disagrees_with_head": true
+  "binary_predates_source": false,
+  "binary_newest_source_mtime": 1790231264.128119,
+  "version_label_disagrees_with_head": false
  },
  "produced_by": "stats.py",
  "inputs": {
@@ -49,64 +49,60 @@
    "M1": {
     "n_compile": 4,
     "n_injected": 47,
-    "n_n/a": 2,
-    "n_never": 16,
-    "n_runtime": 25,
+    "n_n/a": 1,
+    "n_never": 1,
+    "n_runtime": 41,
     "stage_compile": 4,
     "stage_runtime": 43
    },
    "M2": {
     "n_compile": 10,
-    "n_injected": 33,
-    "n_never": 7,
-    "n_runtime": 16,
-    "n_undecidable": 1,
+    "n_injected": 34,
+    "n_never": 5,
+    "n_runtime": 19,
     "stage_compile": 10,
-    "stage_runtime": 23,
+    "stage_runtime": 24,
     "n_n/a": 0
    },
    "M3": {
     "n_compile": 8,
     "n_discarded_noop": 5,
-    "n_injected": 19,
-    "n_never": 9,
-    "n_runtime": 2,
-    "n_undecidable": 3,
+    "n_injected": 20,
+    "n_never": 6,
+    "n_runtime": 6,
+    "n_undecidable": 2,
     "stage_compile": 8,
-    "stage_runtime": 11,
+    "stage_runtime": 12,
     "n_n/a": 0
    },
    "M4": {
-    "n_compile": 35,
+    "n_compile": 36,
+    "n_discarded_noop": 2,
     "n_injected": 51,
-    "n_never": 11,
+    "n_never": 10,
     "n_runtime": 5,
-    "n_undecidable": 5,
-    "stage_compile": 35,
-    "stage_runtime": 16,
+    "n_undecidable": 3,
+    "stage_compile": 36,
+    "stage_runtime": 15,
     "n_n/a": 0
    }
   },
   "totals": {
-   "n_compile": 57,
-   "n_discarded_noop": 5,
-   "n_injected": 150,
-   "n_n/a": 2,
-   "n_never": 43,
-   "n_runtime": 48,
-   "n_undecidable": 9,
-   "stage_compile": 57,
-   "stage_runtime": 93
+   "n_compile": 58,
+   "n_discarded_noop": 7,
+   "n_injected": 152,
+   "n_n/a": 1,
+   "n_never": 22,
+   "n_runtime": 71,
+   "n_undecidable": 5,
+   "stage_compile": 58,
+   "stage_runtime": 94
   },
   "undecidable_manifest_mutants": [
-   "M1.7.cv3.revbound",
-   "M2.16.cv1.alt",
-   "M3.28.mm10.symlocal",
    "M3.4.dma5dyn.footprint",
    "M3.8.dma5.rank6",
    "M4.5.cv1.alt",
    "M4.5.tp2.zerostep",
-   "M4.6.cv2.neg",
    "M4.8.cv14.emptypad"
   ],
   "settings_hash": [
@@ -124,36 +120,37 @@
    "f08293b4eb9e"
   ],
   "toolchain_version": [
-   "8ae43eabb31cbbf3c2cb8a49faa6fb6f762eb9c5"
+   "36726ef6d35c546ac0d21303f8475952f5e67eb1",
+   "8c7c42cab36376fa8d9b3e9bb00400cba735383f"
   ]
  },
  "S2_before_device": {
   "status": "ok",
   "feeds": "E1 detection matrix (\u00a75.2 \u00b62) \u2014 the \"210/210\" headline is DROPPED (R-D2); criterion is now \"no unattributed never\"",
-  "n_injected": 150,
-  "n_before_device": 105,
-  "n_compile": 57,
-  "n_runtime": 48,
-  "n_never": 43,
+  "n_injected": 152,
+  "n_before_device": 129,
+  "n_compile": 58,
+  "n_runtime": 71,
+  "n_never": 22,
   "n_na": 0,
-  "n_discarded_noop": 5,
-  "n_undecidable": 9,
+  "n_discarded_noop": 7,
+  "n_undecidable": 5,
   "undecidable_means": "the unmutated base fails its own reference check, so no manifest verdict exists for this cell. Excluded from n_injected like a noop, but NOT evidence that the mutation does not corrupt output -- it is unmeasured. Never add it to n_discarded_noop: that would report a measurement failure as a clean negative.",
-  "pct_before_device": 70.0,
+  "pct_before_device": 84.8684,
   "never_is_zero": false,
   "never_is_zero_status": "RETIRED (R-D2, 2026-09-10) \u2014 a non-zero `never` is no longer a failure; an UNATTRIBUTED one is. Do not report this as pass/fail.",
   "per_class_before_device": {
-   "M1": 29,
-   "M2": 26,
-   "M3": 10,
-   "M4": 40
+   "M1": 45,
+   "M2": 29,
+   "M3": 14,
+   "M4": 41
   },
   "control_classes": [
    "M4"
   ],
-  "n_injected_excluding_control": 99,
-  "n_before_device_excluding_control": 65,
-  "pct_before_device_excluding_control": 65.6566,
+  "n_injected_excluding_control": 101,
+  "n_before_device_excluding_control": 88,
+  "pct_before_device_excluding_control": 87.1287,
   "settings_hash": [
    "1f5436bfab1f",
    "28fee96c8330",
@@ -169,38 +166,23 @@
    "f08293b4eb9e"
   ],
   "toolchain_version": [
-   "8ae43eabb31cbbf3c2cb8a49faa6fb6f762eb9c5"
+   "36726ef6d35c546ac0d21303f8475952f5e67eb1",
+   "8c7c42cab36376fa8d9b3e9bb00400cba735383f"
   ],
   "never_attribution": {
    "criterion": "no unattributed `never` (R-D2, 2026-09-10; replaces the retired `never = 0`)",
    "no_unattributed_never": false,
-   "n_unattributed": 33,
+   "n_unattributed": 17,
    "unattributed_mutants": [
-    "M1.12.ln1.alt",
-    "M1.12.ln1.idxreuse",
-    "M1.14.rl1.load",
-    "M1.14.rl11.store",
-    "M1.14.sm1.store",
-    "M1.14.sm11.store",
-    "M1.14.tp1.load",
-    "M1.7.cv4.revbound",
-    "M1.8.mm11.stride2",
-    "M1.8.rl1.stride2",
-    "M1.8.sm15.stride2",
-    "M1.9.rl1.baseoff",
     "M1.s4.tp1.tile",
-    "M1.s5.sm1.store",
     "M1.s6.sm1.zerostride",
     "M2.13.mm1.affine",
-    "M2.19.cc11.symdma",
-    "M2.19.mm11.symdma",
     "M2.6.mm1.alt",
     "M2.s3.ln1.reduce",
     "M3.15.cv10.pad2p24",
     "M3.16.cv1.symbox",
     "M3.20.cv1.block3",
     "M3.27.cv1.symshared",
-    "M3.s2.cv1.w1",
     "M4.5.cv10.zerostep",
     "M4.5.rl1.alt",
     "M4.5.rl2.zerostep",
@@ -211,14 +193,14 @@
     "M4.7.tp22.negpad"
    ],
    "cause_counts": {
-    "C4_NOT_ASSESSED": 7,
-    "C5_OUT_OF_SCOPE": 3
+    "C5_OUT_OF_SCOPE": 3,
+    "C4_NOT_ASSESSED": 2
    },
-   "n_out_of_scope_or_not_assessed": 10,
+   "n_out_of_scope_or_not_assessed": 5,
    "n_toolchain_or_config": 0,
    "flag_matrix_ablation": {
     "status": "R-D2b \u2014 report as sensitivity, pinned default is the headline",
-    "at_pinned_default": "105/150 = 70.0%",
+    "at_pinned_default": "129/152 = 84.8684%",
     "with_rtc_all_and_hoist_disabled": "43/72 = 59.72%",
     "recovered_by_flags": 8,
     "source": "raw/c2_probe_groundtruth.json (s2_implication)"
@@ -228,173 +210,13 @@
     "C3_LOWER_BOUND_OMITTED": "only one of the index's two bounds was generated \u2014 croqtile soundness bug."
    }
   },
-  "never_note": "43 mutant(s) reached outcome=never. Under R-D2 this is NOT a failure provided every one is attributed: 33 unattributed. 10 are out-of-scope or not-assessed-by-construction and 0 are attributable to a hoisting defect plus cost-filter/lower-bound configuration.",
+  "never_note": "22 mutant(s) reached outcome=never. Under R-D2 this is NOT a failure provided every one is attributed: 17 unattributed. 5 are out-of-scope or not-assessed-by-construction and 0 are attributable to a hoisting defect plus cost-filter/lower-bound configuration.",
   "never_mutants": [
-   {
-    "mutant_id": "M1.12.ln1.alt",
-    "class": "M1",
-    "category": "layer_normalization",
-    "detector": "oracle",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
-   {
-    "mutant_id": "M1.12.ln1.idxreuse",
-    "class": "M1",
-    "category": "layer_normalization",
-    "detector": "oracle",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
-   {
-    "mutant_id": "M1.8.mm11.stride2",
-    "class": "M1",
-    "category": "matmul",
-    "detector": "oracle",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
-   {
-    "mutant_id": "M1.14.rl1.load",
-    "class": "M1",
-    "category": "relu",
-    "detector": "crash",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
-   {
-    "mutant_id": "M1.14.rl11.store",
-    "class": "M1",
-    "category": "relu",
-    "detector": "oracle",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
-   {
-    "mutant_id": "M1.8.rl1.stride2",
-    "class": "M1",
-    "category": "relu",
-    "detector": "crash",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
-   {
-    "mutant_id": "M1.9.rl1.baseoff",
-    "class": "M1",
-    "category": "relu",
-    "detector": "crash",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
-   {
-    "mutant_id": "M1.s5.rl1.load",
-    "class": "M1",
-    "category": "relu",
-    "detector": "crash",
-    "manifest": "corrupts",
-    "never_cause": "C4_NOT_ASSESSED",
-    "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-    "note": null
-   },
-   {
-    "mutant_id": "M1.14.sm1.store",
-    "class": "M1",
-    "category": "softmax",
-    "detector": "crash",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
-   {
-    "mutant_id": "M1.14.sm11.store",
-    "class": "M1",
-    "category": "softmax",
-    "detector": "oracle",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
-   {
-    "mutant_id": "M1.8.sm15.stride2",
-    "class": "M1",
-    "category": "softmax",
-    "detector": "crash",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
-   {
-    "mutant_id": "M1.s5.sm1.store",
-    "class": "M1",
-    "category": "softmax",
-    "detector": "crash",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
-   {
-    "mutant_id": "M1.14.tp1.load",
-    "class": "M1",
-    "category": "transpose",
-    "detector": "crash",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
    {
     "mutant_id": "M1.s4.tp1.tile",
     "class": "M1",
     "category": "transpose",
     "detector": "crash",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
-   {
-    "mutant_id": "M1.s5.tp1.load",
-    "class": "M1",
-    "category": "transpose",
-    "detector": "crash",
-    "manifest": "corrupts",
-    "never_cause": "C4_NOT_ASSESSED",
-    "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-    "note": null
-   },
-   {
-    "mutant_id": "M1.s5.tp1.store",
-    "class": "M1",
-    "category": "transpose",
-    "detector": "oracle",
-    "manifest": "corrupts",
-    "never_cause": "C4_NOT_ASSESSED",
-    "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-    "note": null
-   },
-   {
-    "mutant_id": "M2.19.cc11.symdma",
-    "class": "M2",
-    "category": "concat",
-    "detector": "oracle",
     "manifest": "corrupts",
     "never_cause": null,
     "never_cause_reason": null,
@@ -432,16 +254,6 @@
    },
    {
     "mutant_id": "M2.13.mm1.affine",
-    "class": "M2",
-    "category": "matmul",
-    "detector": "oracle",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
-   {
-    "mutant_id": "M2.19.mm11.symdma",
     "class": "M2",
     "category": "matmul",
     "detector": "oracle",
@@ -501,16 +313,6 @@
     "note": null
    },
    {
-    "mutant_id": "M3.s2.cv1.w1",
-    "class": "M3",
-    "category": "conv2d",
-    "detector": "oracle",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
-    "note": null
-   },
-   {
     "mutant_id": "M3.s1.mm1.atom10",
     "class": "M3",
     "category": "matmul",
@@ -528,36 +330,6 @@
     "manifest": "corrupts",
     "never_cause": "C4_NOT_ASSESSED",
     "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-    "note": null
-   },
-   {
-    "mutant_id": "M3.s2.mm1.rhs1",
-    "class": "M3",
-    "category": "matmul",
-    "detector": "oracle",
-    "manifest": "corrupts",
-    "never_cause": "C4_NOT_ASSESSED",
-    "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-    "note": null
-   },
-   {
-    "mutant_id": "M3.s2.mm1.rhs2",
-    "class": "M3",
-    "category": "matmul",
-    "detector": "oracle",
-    "manifest": "corrupts",
-    "never_cause": "C4_NOT_ASSESSED",
-    "never_cause_reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-    "note": null
-   },
-   {
-    "mutant_id": "M1.7.cv4.revbound",
-    "class": "M4",
-    "category": "conv2d",
-    "detector": "crash",
-    "manifest": "corrupts",
-    "never_cause": null,
-    "never_cause_reason": null,
     "note": null
    },
    {
@@ -2332,33 +2104,33 @@
     "n_undecidable": 1
    },
    "rt-check": {
-    "n_admissible": 125,
+    "n_admissible": 127,
     "n_cells": 149,
-    "n_compile": 49,
-    "n_detected": 96,
-    "n_detected_admissible": 90,
-    "n_detected_pct": 72.0,
-    "n_discarded_noop": 5,
-    "n_injected": 136,
-    "n_n/a": 2,
-    "n_never": 38,
-    "n_never_admissible": 33,
-    "n_never_share_of_misses": 94.2857,
-    "n_runtime": 47,
-    "n_undecidable": 8
+    "n_compile": 50,
+    "n_detected": 118,
+    "n_detected_admissible": 109,
+    "n_detected_pct": 85.8268,
+    "n_discarded_noop": 7,
+    "n_injected": 138,
+    "n_n/a": 1,
+    "n_never": 19,
+    "n_never_admissible": 17,
+    "n_never_share_of_misses": 94.4444,
+    "n_runtime": 68,
+    "n_undecidable": 4
    },
    "unchecked": {
     "n_admissible": 10,
     "n_cells": 10,
     "n_compile": 5,
-    "n_detected": 6,
-    "n_detected_admissible": 6,
-    "n_detected_pct": 60.0,
+    "n_detected": 8,
+    "n_detected_admissible": 8,
+    "n_detected_pct": 80.0,
     "n_injected": 10,
-    "n_never": 4,
-    "n_never_admissible": 4,
+    "n_never": 2,
+    "n_never_admissible": 2,
     "n_never_share_of_misses": 100.0,
-    "n_runtime": 1
+    "n_runtime": 3
    }
   },
   "per_spec": {
@@ -2388,11 +2160,11 @@
     "class": "M1",
     "n_admissible": 4,
     "n_cells": 4,
-    "n_detected": 2,
-    "n_detected_admissible": 2,
+    "n_detected": 3,
+    "n_detected_admissible": 3,
     "n_injected": 4,
-    "n_n/a": 2,
-    "n_runtime": 2,
+    "n_n/a": 1,
+    "n_runtime": 3,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -2400,12 +2172,10 @@
     "class": "M1",
     "n_admissible": 8,
     "n_cells": 8,
-    "n_detected": 6,
-    "n_detected_admissible": 6,
+    "n_detected": 8,
+    "n_detected_admissible": 8,
     "n_injected": 8,
-    "n_never": 2,
-    "n_never_admissible": 2,
-    "n_runtime": 6,
+    "n_runtime": 8,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -2424,9 +2194,10 @@
     "class": "M1",
     "n_admissible": 5,
     "n_cells": 5,
+    "n_detected": 5,
+    "n_detected_admissible": 5,
     "n_injected": 5,
-    "n_never": 5,
-    "n_never_admissible": 5,
+    "n_runtime": 5,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -2514,12 +2285,10 @@
     "class": "M1",
     "n_admissible": 7,
     "n_cells": 7,
-    "n_detected": 3,
-    "n_detected_admissible": 3,
+    "n_detected": 7,
+    "n_detected_admissible": 7,
     "n_injected": 7,
-    "n_never": 4,
-    "n_never_admissible": 4,
-    "n_runtime": 3,
+    "n_runtime": 7,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -2535,16 +2304,14 @@
    },
    "M1.7": {
     "class": "M4",
-    "n_admissible": 7,
+    "n_admissible": 6,
     "n_cells": 8,
     "n_compile": 1,
     "n_detected": 6,
     "n_detected_admissible": 6,
-    "n_injected": 7,
-    "n_never": 1,
-    "n_never_admissible": 1,
+    "n_discarded_noop": 2,
+    "n_injected": 6,
     "n_runtime": 5,
-    "n_undecidable": 1,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -2552,12 +2319,10 @@
     "class": "M1",
     "n_admissible": 5,
     "n_cells": 5,
-    "n_detected": 2,
-    "n_detected_admissible": 2,
+    "n_detected": 5,
+    "n_detected_admissible": 5,
     "n_injected": 5,
-    "n_never": 3,
-    "n_never_admissible": 3,
-    "n_runtime": 2,
+    "n_runtime": 5,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -2565,9 +2330,10 @@
     "class": "M1",
     "n_admissible": 1,
     "n_cells": 1,
+    "n_detected": 1,
+    "n_detected_admissible": 1,
     "n_injected": 1,
-    "n_never": 1,
-    "n_never_admissible": 1,
+    "n_runtime": 1,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -2627,13 +2393,12 @@
    },
    "M2.16": {
     "class": "M2",
-    "n_admissible": 1,
+    "n_admissible": 2,
     "n_cells": 2,
-    "n_detected": 1,
-    "n_detected_admissible": 1,
-    "n_injected": 1,
-    "n_runtime": 1,
-    "n_undecidable": 1,
+    "n_detected": 2,
+    "n_detected_admissible": 2,
+    "n_injected": 2,
+    "n_runtime": 2,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -2653,9 +2418,10 @@
     "class": "M2",
     "n_admissible": 2,
     "n_cells": 2,
+    "n_detected": 2,
+    "n_detected_admissible": 2,
     "n_injected": 2,
-    "n_never": 2,
-    "n_never_admissible": 2,
+    "n_runtime": 2,
     "path_class": "unchecked",
     "prohibition": ""
    },
@@ -2853,14 +2619,13 @@
    },
    "M3.28": {
     "class": "M3",
-    "n_admissible": 2,
+    "n_admissible": 3,
     "n_cells": 5,
-    "n_detected": 2,
-    "n_detected_admissible": 2,
+    "n_detected": 3,
+    "n_detected_admissible": 3,
     "n_discarded_noop": 2,
-    "n_injected": 2,
-    "n_runtime": 2,
-    "n_undecidable": 1,
+    "n_injected": 3,
+    "n_runtime": 3,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -2874,8 +2639,9 @@
    "M3.6": {
     "class": "M3",
     "n_cells": 3,
+    "n_detected": 3,
     "n_injected": 3,
-    "n_never": 3,
+    "n_runtime": 3,
     "path_class": "rt-check",
     "prohibition": "absent"
    },
@@ -2942,13 +2708,12 @@
    },
    "M4.6": {
     "class": "M4",
-    "n_admissible": 7,
+    "n_admissible": 8,
     "n_cells": 8,
-    "n_compile": 7,
-    "n_detected": 7,
-    "n_detected_admissible": 7,
-    "n_injected": 7,
-    "n_undecidable": 1,
+    "n_compile": 8,
+    "n_detected": 8,
+    "n_detected_admissible": 8,
+    "n_injected": 8,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -2980,7 +2745,7 @@
    "question": "does each inadmissible spec's DESIGN claim survive the record-level ground truth?",
    "status": "CONTRADICTED",
    "n_inadmissible_specs_with_cells": 5,
-   "n_contradicting": 3,
+   "n_contradicting": 4,
    "rows": [
     {
      "spec_id": "M3.20",
@@ -3001,9 +2766,9 @@
      "prohibition": "absent",
      "desc": "leading dim not aligned to descriptor granularity ON A VECTORIZED ACCESS",
      "n_injected": 3,
-     "n_detected": 0,
-     "n_never": 3,
-     "contradicts_design_claim": false,
+     "n_detected": 3,
+     "n_never": 0,
+     "contradicts_design_claim": true,
      "design_note": "replaces v1 M3 s2: the v1 realization (lhs1/rhs1/w1/i1) is a noop because the reference k_matmul is SCALAR, so an unaligned scalar load is legal. Retained as a named control until the vectorized realization is written."
     },
     {
@@ -3050,39 +2815,39 @@
    "n_cells": 164,
    "n_cells_non_detection": 0,
    "n_cells_compared": 164,
-   "n_injected": 150,
-   "n_discarded_noop": 5,
-   "n_undecidable": 9,
-   "n_never": 43,
-   "n_detected_all_paths": 105,
-   "admissible_injected": 135,
-   "admissible_detected": 96,
-   "admissible_pct": 71.1111,
+   "n_injected": 152,
+   "n_discarded_noop": 7,
+   "n_undecidable": 5,
+   "n_never": 22,
+   "n_detected_all_paths": 129,
+   "admissible_injected": 137,
+   "admissible_detected": 117,
+   "admissible_pct": 85.4015,
    "inadmissible_injected": 15,
-   "inadmissible_detected": 9,
+   "inadmissible_detected": 12,
    "matches_S1S2": true,
-   "interpretation": "S2's headline rate divides by ALL injected cells; the admissible rate divides only by the cells the register says choreo was fair to ask about. Both must be printed: 9 of S2's detections land on cells the register calls inadmissible, so quoting S2's rate as an admissible-denominator rate would overstate it.",
+   "interpretation": "S2's headline rate divides by ALL injected cells; the admissible rate divides only by the cells the register says choreo was fair to ask about. Both must be printed: 12 of S2's detections land on cells the register calls inadmissible, so quoting S2's rate as an admissible-denominator rate would overstate it.",
    "n_cells_unaccounted": 0,
    "checks": {
     "n_injected": {
-     "s14": 150,
-     "s1s2": 150
+     "s14": 152,
+     "s1s2": 152
     },
     "n_discarded_noop": {
+     "s14": 7,
+     "s1s2": 7
+    },
+    "n_undecidable": {
      "s14": 5,
      "s1s2": 5
     },
-    "n_undecidable": {
-     "s14": 9,
-     "s1s2": 9
-    },
     "n_never": {
-     "s14": 43,
-     "s1s2": 43
+     "s14": 22,
+     "s1s2": 22
     },
     "n_detected_all_paths": {
-     "s14": 105,
-     "s1s2": 105
+     "s14": 129,
+     "s1s2": 129
     }
    }
   },
@@ -3151,14 +2916,14 @@
    "steepest_class": "elem",
    "cost_filter_note": "Enabling every obligation costs 1151/675 = 1.71x the default, and the growth is not uniform: elem goes 58 -> 534 while the other classes are flat. That is the thesis's shape, measured from the ledger.",
    "n_detected": {
-    "entry": 105,
+    "entry": 129,
     "low": null,
     "medium": null,
     "high": null,
     "high (rtc=all arm)": 37
    },
    "n_detected_note": "`enabled` is a ledger property and is exact at every level; `n_detected` needs a full E1 run per level, so only `entry` is measured here. The rtc=all arm exists (see rtc_all_arm) and is reported separately rather than interpolated.",
-   "denominator_us": "105/151 at entry (pinned default)",
+   "denominator_us": "129/153 at entry (pinned default)",
    "rtc_all_arm": {
     "source": "choreo/raw/e1_mutant_records_rtc_all.json",
     "pinned_flags": [
@@ -3192,7 +2957,8 @@
    "f08293b4eb9e"
   ],
   "toolchain_version": [
-   "8ae43eabb31cbbf3c2cb8a49faa6fb6f762eb9c5"
+   "36726ef6d35c546ac0d21303f8475952f5e67eb1",
+   "8c7c42cab36376fa8d9b3e9bb00400cba735383f"
   ]
  },
  "not_owned_by_this_lane": {
@@ -3200,6 +2966,5 @@
   "S9": "SOTA remainder (triton/mlir-linalg/mlir-low/iree)",
   "S11": "integrity register (coordinator)",
   "S12": "sanitizer supplement (SOTA toolchains)"
- },
- "toolchain_warning": "binary predates checkout: records say 8ae43eabb31cbbf3c2cb8a49faa6fb6f762eb9c5 (what the binary was built from), checkout HEAD is e4c41795f472bdef605661977f5f276848f915aa. Rebuild and re-run before pinning this version in manifest \u00a75."
+ }
 }

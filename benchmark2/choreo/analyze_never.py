@@ -240,6 +240,21 @@ RE_OBL = re.compile(
     r"The (?P<ord>\w+) index `(?P<idx>.*?)` of element access '(?P<arr>[^']*)' "
     r"should be (?P<bound>.*)$")
 
+# A chunkat tile-coordinate obligation looks like:
+#   "Tile coordinate `anon_1` is out of bounds of the 1st dimension of
+#    chunkat 'output' (valid range is [0, 16))"
+# It is a DISTINCT message shape, and the coordinate is rendered as an
+# anonymous SSA name (`anon_1`) rather than the source index expression, so it
+# cannot be matched against the mutation's index text the way RE_OBL is. Left
+# unparsed it made every chunkat obligation invisible to the cause tests and
+# filed the M1.14 `dma.copy ... output.chunkat(i + 1, ...)` mutants as C4
+# ("choreo generated NO obligation") when the ledger plainly carries a runtime
+# tile-coordinate guard for that exact chunk. Relevance for a chunkat
+# obligation is therefore by ARRAY name only (the loose arm of _is_relevant).
+RE_CHUNKAT = re.compile(
+    r"Tile coordinate `(?P<idx>[^`]*)` is out of bounds of the \w+ dimension "
+    r"of chunkat '(?P<arr>[^']*)'")
+
 UPPER = "less than"
 LOWER = "greater than or equal to 0"
 
@@ -519,14 +534,41 @@ def _is_relevant(m, at_sites, other_sites):
     return arr in other_sites
 
 
+def parse_obligation(message):
+    """Parse an obligation message into (match, kind).
+
+    `kind` is "elem" for an element-access bound (RE_OBL) or "chunkat" for a
+    tile-coordinate guard (RE_CHUNKAT). An unrecognized message gives
+    (None, None). Both shapes must be recognized or the chunkat obligations are
+    invisible to the cause tests (see RE_CHUNKAT).
+    """
+    msg = message.split(", /")[0]
+    m = RE_OBL.search(msg)
+    if m:
+        return m, "elem"
+    m = RE_CHUNKAT.search(msg)
+    if m:
+        return m, "chunkat"
+    return None, None
+
+
 def relevant_runtime(obligations, at_sites, other_sites, enabled):
     """Runtime obligations that are `enabled` (or not) AND concern a mutated surface."""
     out = []
     for o in obligations:
         if o.get("outcome") != "runtime" or o.get("enabled") is not enabled:
             continue
-        m = RE_OBL.search(o.get("message", "").split(", /")[0])
-        if m and _is_relevant(m, at_sites, other_sites):
+        m, kind = parse_obligation(o.get("message", ""))
+        if m is None:
+            continue
+        if kind == "chunkat":
+            # Relevance by ARRAY name only: the coordinate is anonymized
+            # (`anon_N`), so it cannot be matched to the mutation's index text.
+            # This is the loose arm _is_relevant already uses for other non-`.at`
+            # surfaces (dma.copy chunkat destinations, tile counts, extents).
+            if m.group("arr") in other_sites:
+                out.append((o, m))
+        elif _is_relevant(m, at_sites, other_sites):
             out.append((o, m))
     return out
 
@@ -770,9 +812,9 @@ def classify(rec, man, execute=False):
     # only non-`.at` surfaces were mutated (dma.copy destinations, tile counts,
     # output declarations, caller extents).
     arrays_in_ledger = sorted({
-        RE_OBL.search(o.get("message", "").split(", /")[0]).group("arr")
+        parse_obligation(o.get("message", ""))[0].group("arr")
         for o in obligations
-        if RE_OBL.search(o.get("message", "").split(", /")[0])})
+        if parse_obligation(o.get("message", ""))[0] is not None})
     out["arrays_assessed_by_choreo"] = arrays_in_ledger
     wanted = sorted({a for a, _ in at_sites} | set(other_sites))
     out["arrays_mutated"] = wanted

@@ -48,5 +48,5 @@ __co__ auto CONV2D(f32 [32, 128, height, width] i, f32 [256, 128, 3, 3] w, int s
 }
 
 int main() {
-  test_dynamic("CONV2D", CONV2D, {32, 128, 30, 30}, {256, 128, 3, 3}, 1, 1, 1);
+  test_dynamic("CONV2D", CONV2D, {32, 128, 30, 44}, {256, 128, 3, 3}, 1, 1, 1);
 }

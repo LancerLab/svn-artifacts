@@ -25,12 +25,12 @@ __co__ auto CONV2D(f32 [batch_size, 64, 56, 56] i, f32 [128, 64, 3, 3] w, int st
   // plane Y[Ho, Wo] is accumulated in local memory. Shared memory is not used,
   // so the 48 KB safe limit is trivially respected.
   parallel p by 2  {
-    parallel q by 4  {
+    parallel q by 2  {
       foreach {co, n} in [Cout, N / #p / #q] {
-        local f32 [Ho, Wo] Y{0.0f};
+        shared f32 [Ho, Wo] Y{0.0f};
         foreach ci in [Cin] {
-          il = dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, {0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => local;
-          ws = dma.copy w.chunkat(co, ci, _, _) => local;
+          il = dma.pad<{0, 0, padding, padding}, {0, 0, padding, padding}, {0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => shared;
+          ws = dma.copy w.chunkat(co, ci, _, _) => shared;
           foreach {ho, wo} in [Ho, Wo] {
             f32 sum = 0.0f;
             foreach {hw, ww} in [Kh, Kw] {

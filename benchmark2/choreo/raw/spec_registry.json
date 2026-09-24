@@ -17,10 +17,10 @@
    "observation": 3
   },
   "path_counts": {
-   "rt-check": 54,
+   "rt-check": 53,
+   "ct-check": 3,
    "unchecked": 9,
    "avoided": 5,
-   "ct-check": 2,
    "L": 7
   },
   "implemented": [
@@ -280,12 +280,12 @@
   {
    "spec_id": "M1.14",
    "cls": "M1",
-   "path": "rt-check",
+   "path": "ct-check",
    "admissible": true,
    "prohibition": "",
    "status": "implemented",
    "desc": "chunkat tile-coordinate over/underflow while the element index stays in bounds",
-   "note": "load-bearing: the only spec targeting a check the compiler wrote and then disabled (272 chunkat obligations, 0 enabled at -rtc=entry)"
+   "note": "load-bearing: the only spec targeting a check the compiler wrote and then disabled (272 chunkat obligations, 0 enabled at -rtc=entry). Detected at COMPILE time: the chunkat tile-coordinate assessment assesses the coordinate's declared range against the tiling factor, so a coordinate whose bound reaches the tile count folds during semantic checking into a static error (the same treatment element-access subscripts get). No -rtc threshold applies -- the check is not a runtime predicate, so the path is threshold-independent"
   },
   {
    "spec_id": "M1.15",
