@@ -249,9 +249,9 @@ def _perturb(e: Emitter, idx: list[str], st: Structural | None, axis: int) -> li
                                 0 (spec 6, the iteration-validity residue)
 
     The v2.1 additions the memref surface can realise:
-      * `broadcast-index`   -- reuse a different induction variable for this axis
-                               (spec 12, family M1-d). In range at small size, so
-                               the miss is silent rather than an RTV catch.
+      * `broadcast-index`   -- reuse the trailing axis's induction variable for
+                               the outermost axis (spec 12, family M1-d); the
+                               outermost coordinate leaves its extent.
       * `tile-coord`        -- advance the index by a whole tile (spec 14, family
                                M1-e); the in-tile offset is intact, the tile
                                coordinate is one past the tiled extent.
@@ -286,12 +286,13 @@ def _perturb(e: Emitter, idx: list[str], st: Structural | None, axis: int) -> li
             raise NotExpressible("transposed-stride needs at least two axes to swap")
         idx[k], idx[k - 1] = idx[k - 1], idx[k]
     elif st.kind == "broadcast-index":
-        # Reuse the outermost induction variable for this axis (M1.12). The
-        # wrong variable is in range at the small battery size, which is what
-        # makes the defect silent: no bounds check fires.
+        # Wrong loop variable used for a dimension (M1.12): the induction
+        # variable of the trailing axis (whose extent is the larger one) is
+        # reused for the outermost axis, so the read coordinate leaves the
+        # outermost axis's extent -- a genuine out-of-bounds access.
         if k < 1:
             raise NotExpressible("broadcast-index needs a rank >= 2 to reuse an axis")
-        idx[k] = idx[0]
+        idx[0] = idx[k]
     elif st.kind == "tile-coord":
         # Advance by one whole tile (M1.14). `st.tile` is the axis extent, so the
         # tile size comes from the same rule the clean nest uses.

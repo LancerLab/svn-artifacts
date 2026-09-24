@@ -453,7 +453,8 @@ def _m1_structural(case: C.Case, mut: C.Mutation) -> Structural:
                           tile=max(1, extents[last] - 1))
     if mut.spec == 12:
         # Wrong loop variable used for a dimension (family M1-d). The emitter
-        # substitutes a different induction variable for the axis's own index.
+        # reuses the trailing axis's induction variable for the outermost axis,
+        # so the outermost coordinate leaves its extent (out of bounds).
         if last < 1:
             raise KeyError(f"M1.12: {case.category!r} rank < 2, nothing to reuse")
         return Structural(kind="broadcast-index", axis=last)
