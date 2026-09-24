@@ -283,7 +283,8 @@
       "edit": "Pad total preserved, placement differs (sum-only check)",
       "view": false,
       "spec_ids": [
-        "M2.15"
+        "M2.15",
+        "M2.22"
       ]
     },
     "M2-h": {

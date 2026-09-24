@@ -338,7 +338,17 @@ SPEC_REGISTRY = {
                   note="semacheck.cpp:1140-1145 -- emit_error forced false"),
     "M2.21": _spec("M2", "rt-check", "MSB broadcast extent neither 1 nor equal "
                                "(rank-unequal path checks trailing dims only)",
-                  note="semacheck.cpp:466-500"),
+                   note="semacheck.cpp:466-500"),
+    "M2.22": _spec("M2", "rt-check", "padded extent placed on the WRONG AXIS "
+                               "(pad total preserved, placement differs)",
+                   status="implemented",
+                   note="second pad-placement surface: the suite's runtime pad "
+                        "hosts (relu/transpose/layer_normalization "
+                        "*_pad_extent) derive one padded extent per axis, so "
+                        "exchanging the two extents moves the padding without "
+                        "changing its total -- the family was capped at "
+                        "conv2d's two realisations because `dma.pad` appears "
+                        "in no other category"),
 
     # ---- M3 hardware-constraint (16 specs, specs §3) --------------------
     "M3.1": _spec("M3", "rt-check", "contraction extent not divisible by the "
@@ -2500,6 +2510,46 @@ M2 += [
         "{0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => shared;",
         "dma.pad<{0, padding, padding, 0}, {0, padding, padding, 0}, "
         "{0, 0, 0, 0}, 0.0f> i.chunkat(p#q#n, ci, _, _) => shared;")),
+]
+
+# ---- M2.22 padded extent on the WRONG AXIS (runtime pad hosts) -------------
+# `dma.pad` appears in no category but conv2d, so the padding-placement family
+# could only ever reach conv2d's two cells. The runtime pad hosts opened for
+# M4-g (22_pad_extent in relu and transpose, 12_pad_extent in
+# layer_normalization) derive a padded extent per axis at run time. Exchanging
+# the two extents keeps Hpad + Wpad constant while moving every element, which
+# is exactly the sum-blindness M2.15 exploits -- opening three further
+# categories closes M2-g without borrowing a neighbour's instances.
+M2 += [
+    _m("M2.22.rl22.axisswap", "M2", 22, "wrong-shape", "relu",
+       "22_pad_extent_32x512x768_32x512x768",
+       "the two padded extents are exchanged on the definitions: the pad total "
+       "is unchanged, so only the placement differs",
+       ("Hpad = H + 2 * padding;\n  Wpad = W + 2 * padding;",
+        "Hpad = W + 2 * padding;\n  Wpad = H + 2 * padding;")),
+    _m("M2.22.rl22.loopswap", "M2", 22, "wrong-shape", "relu",
+       "22_pad_extent_32x512x768_32x512x768",
+       "the two padded extents are exchanged at their point of use (the loop): "
+       "each axis runs the other axis' padded extent",
+       ("foreach {h, w} in [Hpad, Wpad]", "foreach {h, w} in [Wpad, Hpad]")),
+    _m("M2.22.tp22.axisswap", "M2", 22, "wrong-shape", "transpose",
+       "22_pad_extent_32x512x768_32x768x512",
+       "padded extents exchanged on the definitions (pad total preserved)",
+       ("Hpad = H + 2 * padding;\n  Wpad = W + 2 * padding;",
+        "Hpad = W + 2 * padding;\n  Wpad = H + 2 * padding;")),
+    _m("M2.22.tp22.loopswap", "M2", 22, "wrong-shape", "transpose",
+       "22_pad_extent_32x512x768_32x768x512",
+       "padded extents exchanged at their point of use (the loop)",
+       ("foreach {y, z} in [Hpad, Wpad]", "foreach {y, z} in [Wpad, Hpad]")),
+    _m("M2.22.ln12.axisswap", "M2", 22, "wrong-shape", "layer_normalization",
+       "12_pad_extent_32x512x768_768_768",
+       "padded extents exchanged on the definitions (pad total preserved)",
+       ("Hpad = H + 2 * padding;\n  Wpad = W + 2 * padding;",
+        "Hpad = W + 2 * padding;\n  Wpad = H + 2 * padding;")),
+    _m("M2.22.ln12.loopswap", "M2", 22, "wrong-shape", "layer_normalization",
+       "12_pad_extent_32x512x768_768_768",
+       "padded extents exchanged at their point of use (the loop)",
+       ("foreach {j, k} in [Hpad, Wpad]", "foreach {j, k} in [Wpad, Hpad]")),
 ]
 
 # ---- M2.21 MSB broadcast extent neither 1 nor equal ----------------------

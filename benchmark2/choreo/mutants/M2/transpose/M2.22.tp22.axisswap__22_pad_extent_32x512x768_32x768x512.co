@@ -1,0 +1,45 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+#include <cmath>
+
+/* Mutation-only host (M4-g): the padded extent is derived at run time and used
+   as the loop bound, so a degenerate pad (negative or zero-length) removes the
+   iteration space instead of being rejected. padding=0 leaves the op identical
+   to a plain transpose, which keeps the base oracle usable. */
+__co__ auto transpose_pad(f32 [32, 512, 768] i, int padding) {
+  H = i.span(1);
+  W = i.span(2);
+  Hpad = W + 2 * padding;
+  Wpad = H + 2 * padding;
+  f32 [i.span(0), i.span(2), i.span(1)] o;
+
+  parallel p by 32 : block {
+    foreach {y, z} in [Hpad, Wpad]
+      o.at(p, z, y) = i.at(p, y, z);
+  }
+  return o;
+}
+
+int main() {
+  auto a = choreo::make_spandata<choreo::f32>(32, 512, 768);
+  a.fill_random(-1.0, 1.0);
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto r  = transpose_pad(a.view(), 0);
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+  for (size_t p = 0; p < r.shape()[0]; ++p)
+    for (size_t z = 0; z < r.shape()[1]; ++z)
+      for (size_t y = 0; y < r.shape()[2]; ++y) {
+        float ref = a[p][y][z];
+        if (ref != r[p][z][y]) {
+          std::cout << "transpose mismatch\n";
+          choreo::choreo_assert(false, "values are not equal.");
+        }
+      }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " microseconds\n";
+  return 0;
+}
