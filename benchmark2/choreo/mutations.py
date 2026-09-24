@@ -405,9 +405,11 @@ SPEC_REGISTRY = {
                   status="implemented",
                   note="gpu_adapt.hpp:337 RankLE5 -- the rank in "
                        "dma.transp(not slice nor deslice) must be in [1,5]. "
-                       "Realised on `dma_rank5`/`r5base`: a rank-5 base whose "
-                       "mutation adds a 6th dim and a 6-wide permutation, so "
-                       "the compiler refuses it at compile time (Error1). "
+                       "Realised on a rank-5 `dma.transp` base in four M3 "
+                       "categories (`dma_rank5`/r5base, plus staging hosts "
+                       "`lnr5trans`/`bnr5trans`/`mpr5trans`): the mutation adds "
+                       "a 6th dim and a 6-wide permutation, so the compiler "
+                       "refuses it at compile time (Error1). "
                        "ct-check is assessed, not cost-suppressible, so it "
                        "takes the one-per-cell ceiling rather than the -rtc "
                        "curve"),
@@ -2193,6 +2195,28 @@ M3 += [
        "DMA rank raised to 6: a 6th dim and a 6-wide permutation take the "
        "descriptor outside the assessed [1,5], so the compiler refuses it at "
        "compile time (RankLE5)",
+       ("f32 [2,4,8,16,32] input", "f32 [2,4,8,16,32,2] input", 1),
+       ("f32 [4,8,16,32,2] output", "f32 [4,8,16,32,2,2] output", 1),
+       ("dma.transp<1,2,3,4,0>", "dma.transp<1,2,3,4,5,0>", 1)),
+    _m("M3.8.ln.rank6", "M3", 8, "dim-mismatch", "layer_normalization",
+       "lnr5trans",
+       "rank-5 transpose descriptor raised to rank 6 in a staging host: the "
+       "6th dim and 6-wide permutation fall outside the assessed [1,5], so the "
+       "sm_86 backend refuses it at compile time (RankLE5)",
+       ("f32 [2,4,8,16,32] input", "f32 [2,4,8,16,32,2] input", 1),
+       ("f32 [4,8,16,32,2] output", "f32 [4,8,16,32,2,2] output", 1),
+       ("dma.transp<1,2,3,4,0>", "dma.transp<1,2,3,4,5,0>", 1)),
+    _m("M3.8.bn.rank6", "M3", 8, "dim-mismatch", "batch_norm", "bnr5trans",
+       "rank-5 transpose descriptor raised to rank 6 in a staging host: the "
+       "6th dim and 6-wide permutation fall outside the assessed [1,5], so the "
+       "sm_86 backend refuses it at compile time (RankLE5)",
+       ("f32 [2,4,8,16,32] input", "f32 [2,4,8,16,32,2] input", 1),
+       ("f32 [4,8,16,32,2] output", "f32 [4,8,16,32,2,2] output", 1),
+       ("dma.transp<1,2,3,4,0>", "dma.transp<1,2,3,4,5,0>", 1)),
+    _m("M3.8.mp.rank6", "M3", 8, "dim-mismatch", "max_pool2d", "mpr5trans",
+       "rank-5 transpose descriptor raised to rank 6 in a staging host: the "
+       "6th dim and 6-wide permutation fall outside the assessed [1,5], so the "
+       "sm_86 backend refuses it at compile time (RankLE5)",
        ("f32 [2,4,8,16,32] input", "f32 [2,4,8,16,32,2] input", 1),
        ("f32 [4,8,16,32,2] output", "f32 [4,8,16,32,2,2] output", 1),
        ("dma.transp<1,2,3,4,0>", "dma.transp<1,2,3,4,5,0>", 1)),
