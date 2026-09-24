@@ -10,13 +10,13 @@
  "level2": true,
  "rtc": null,
  "accounting": {
-  "candidates": 332,
-  "selected": 201,
+  "candidates": 333,
+  "selected": 202,
   "attribution": 4,
   "dropped": 127,
   "na": 0,
   "skipped": 0,
-  "emitted": 205
+  "emitted": 206
  },
  "family_depth": {
   "M1-a": 8,
@@ -37,7 +37,7 @@
   "M2-h": 8,
   "M3-a": 4,
   "M3-b": 3,
-  "M3-c": 1,
+  "M3-c": 2,
   "M3-d": 1,
   "M3-e": 4,
   "M3-f": 1,
@@ -56,7 +56,7 @@
   "M1-g": 6,
   "M3-a": 4,
   "M3-b": 5,
-  "M3-c": 7,
+  "M3-c": 6,
   "M3-d": 7,
   "M3-e": 4,
   "M3-f": 7
@@ -77,13 +77,13 @@
   ]
  },
  "registry": {
-  "n_specs": 79,
+  "n_specs": 80,
   "status_counts": {
-   "implemented": 58,
+   "implemented": 59,
    "pending": 21
   },
   "admissible_counts": {
-   "true": 53,
+   "true": 54,
    "false": 26
   },
   "prohibition_counts": {
@@ -93,7 +93,7 @@
   },
   "path_counts": {
    "rt-check": 53,
-   "ct-check": 4,
+   "ct-check": 5,
    "unchecked": 9,
    "avoided": 6,
    "L": 7
@@ -146,6 +146,7 @@
    "M3.27",
    "M3.28",
    "M3.29",
+   "M3.30",
    "M3.4",
    "M3.6",
    "M3.8",
@@ -202,6 +203,7 @@
    "M3.27",
    "M3.28",
    "M3.29",
+   "M3.30",
    "M3.4",
    "M3.8",
    "M3.9",
@@ -302,7 +304,7 @@
   "n_operators": {
    "M1": 81,
    "M2": 103,
-   "M3": 68,
+   "M3": 69,
    "M4": 80
   }
  },
@@ -4931,16 +4933,44 @@
    "level": 1,
    "base_path": "benchmark/choreo/dma_rank5/r5swiz.co",
    "mutant_path": "benchmark2/choreo/mutants/M3/dma_rank5/M3.29.dma5.swizladder__r5swiz.co",
-   "kernel_hash": "d116ba237752",
-   "mutant_hash": "974df3754a83",
+   "kernel_hash": "fd28aa8ba074",
+   "mutant_hash": "e18e8e516b98",
    "settings_hash": "6ba7925e0a5a",
    "local_headers": [
     "common.hpp"
    ],
    "desc": "explicit swizzle width off the legal byte ladder {32,64,128}: the box<->swizzle byte size is not a legal swizzle, so the parser refuses it (SwizMode ladder)",
-   "diff": "--- a/dma_rank5/r5swiz.co\n+++ b/dma_rank5/r5swiz.co\n@@ -8,5 +8,5 @@\n // one that writes an EXPLICIT swizzle mode, so the swizzle-width <-> box\n // relation becomes source-expressible at all. The mode is legal here\n-// (swiz<128>), and on a non-warpgroup target the swizzled write is read back\n+// (swiz<48>), and on a non-warpgroup target the swizzled write is read back\n // as a linear copy, so the identity holds -- the base is a correct program.\n __co__ auto r5swiz(f32 [16, 16] input) {\n@@ -14,5 +14,5 @@\n   parallel p by 1 : block\n     parallel q by 32 : thread {\n-      s = dma.copy.swiz<128> input.chunkat(_, _) => shared;\n+      s = dma.copy.swiz<48> input.chunkat(_, _) => shared;\n       dma.copy s => output.chunkat(_, _);\n     }\n",
+   "diff": "--- a/dma_rank5/r5swiz.co\n+++ b/dma_rank5/r5swiz.co\n@@ -8,5 +8,5 @@\n // one that writes EXPLICIT dma descriptor byte modes, so the box <-> swizzle\n // <-> promote byte relation becomes source-expressible at all. Both modes are\n-// legal here (swiz<128>, promote<128>), and on a non-warpgroup target the\n+// legal here (swiz<48>, promote<128>), and on a non-warpgroup target the\n // swizzled write is read back linearly, so the identity holds -- the base is a\n // correct program. Two byte ladders are exercised: the shared-memory swizzle\n@@ -17,5 +17,5 @@\n   parallel p by 1 : block\n     parallel q by 32 : thread {\n-      s = dma.copy.swiz<128>.promote<128> input.chunkat(_, _) => shared;\n+      s = dma.copy.swiz<48>.promote<128> input.chunkat(_, _) => shared;\n       dma.copy s => output.chunkat(_, _);\n     }\n",
    "spec_version": "v2.1",
    "spec_id": "M3.29",
+   "path_class": "ct-check",
+   "prohibition": "",
+   "admissible": true,
+   "spec_admissible": true,
+   "needs_rtc_curve": false,
+   "attribution_only": null
+  },
+  {
+   "toolchain": "choreo",
+   "class": "M3",
+   "spec": 30,
+   "paper_category": "dim-mismatch",
+   "mutant_id": "M3.30.dma5.promoteladder",
+   "category": "dma_rank5",
+   "case": "r5swiz",
+   "level": 1,
+   "base_path": "benchmark/choreo/dma_rank5/r5swiz.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/dma_rank5/M3.30.dma5.promoteladder__r5swiz.co",
+   "kernel_hash": "fd28aa8ba074",
+   "mutant_hash": "6ef895126745",
+   "settings_hash": "6ba7925e0a5a",
+   "local_headers": [
+    "common.hpp"
+   ],
+   "desc": "L2 promote byte size off the legal ladder {64,128,256}: the DMA descriptor's promote granularity is not a legal L2 sector, so the parser refuses it (promote_value ladder)",
+   "diff": "--- a/dma_rank5/r5swiz.co\n+++ b/dma_rank5/r5swiz.co\n@@ -8,5 +8,5 @@\n // one that writes EXPLICIT dma descriptor byte modes, so the box <-> swizzle\n // <-> promote byte relation becomes source-expressible at all. Both modes are\n-// legal here (swiz<128>, promote<128>), and on a non-warpgroup target the\n+// legal here (swiz<128>, promote<999>), and on a non-warpgroup target the\n // swizzled write is read back linearly, so the identity holds -- the base is a\n // correct program. Two byte ladders are exercised: the shared-memory swizzle\n@@ -17,5 +17,5 @@\n   parallel p by 1 : block\n     parallel q by 32 : thread {\n-      s = dma.copy.swiz<128>.promote<128> input.chunkat(_, _) => shared;\n+      s = dma.copy.swiz<128>.promote<999> input.chunkat(_, _) => shared;\n       dma.copy s => output.chunkat(_, _);\n     }\n",
+   "spec_version": "v2.1",
+   "spec_id": "M3.30",
    "path_class": "ct-check",
    "prohibition": "",
    "admissible": true,

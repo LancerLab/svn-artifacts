@@ -326,7 +326,8 @@
         "M3.3",
         "M3.5",
         "M3.13",
-        "M3.29"
+        "M3.29",
+        "M3.30"
       ]
     },
     "M3-d": {
@@ -561,7 +562,7 @@
     "R_a_definition": "spec_ids in the family with status `implemented` AND admissible is true AND path is not `avoided`",
     "findings": {
       "M3-e": "R_f 2, R_a 1 after M3.16 was re-homed from M3-c. M3.16 `TMA box inner alignment with a SYMBOLIC leading dim` is `unchecked` and admissible, so it is the family's one test; M3.6/M3.7/M3.11 remain `absent`. M3.16 is a box-alignment defect (F3, `gpu_adapt.hpp:640`), which is why it belongs here rather than in M3-c.",
-      "M3-c": "R_f 1, R_a 1. M3.29 (ct-check, the arch-independent swizzle-width ladder on `dma_rank5`/r5swiz) is an admissible member, so the family's `no admissible declaration` debt is paid and its entry removed. M3.3/M3.5/M3.13 remain `absent`: their runtime box<->swizzle relation needs group-4, which the sm_86 runner refuses, and a swizzled write read back linearly is a noop there. The family is real but still far short of N -- the ladder is a single ct-check cell.",
+      "M3-c": "R_f 2, R_a 2. M3.29 and M3.30 (ct-check, the arch-independent swizzle-width and L2-promote byte ladders on `dma_rank5`/r5swiz) are admissible members, so the family's `no admissible declaration` debt is paid and its entry removed. M3.3/M3.5/M3.13 remain `absent`: their runtime box<->swizzle relation needs group-4, which the sm_86 runner refuses, and a swizzled write read back linearly is a noop there. The family is real but still short of N -- the ladders reach one category so far.",
       "M4-d": "R_f 1, R_a 0 by design -- it is the declared noop control, so its instances must be inadmissible for the admissible floor to mean anything.",
       "M3-h": "R_f 2, R_a 2 after the rt-check re-realisations M3.27/M3.28. The declared M3.12 is still `avoided` (compile-time capacity is refused), but a runtime-shaped extent escapes the static check, which is exactly the channel M3-h is about. Before this the family read as unrealisable as declared rather than merely unwritten."
     }

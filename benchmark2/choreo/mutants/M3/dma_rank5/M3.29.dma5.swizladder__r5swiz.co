@@ -5,15 +5,18 @@
 
 // The byte/swizzle-box surface (method family M3-c). Every other case in the
 // suite reaches a shared tile with a plain `dma.copy`; this host is the only
-// one that writes an EXPLICIT swizzle mode, so the swizzle-width <-> box
-// relation becomes source-expressible at all. The mode is legal here
-// (swiz<48>), and on a non-warpgroup target the swizzled write is read back
-// as a linear copy, so the identity holds -- the base is a correct program.
+// one that writes EXPLICIT dma descriptor byte modes, so the box <-> swizzle
+// <-> promote byte relation becomes source-expressible at all. Both modes are
+// legal here (swiz<48>, promote<128>), and on a non-warpgroup target the
+// swizzled write is read back linearly, so the identity holds -- the base is a
+// correct program. Two byte ladders are exercised: the shared-memory swizzle
+// width (parser.yy `swiz_value`) and the L2 promote granularity (parser.yy
+// `promote_value`).
 __co__ auto r5swiz(f32 [16, 16] input) {
   f32 [input.span(0), input.span(1)] output;
   parallel p by 1 : block
     parallel q by 32 : thread {
-      s = dma.copy.swiz<48> input.chunkat(_, _) => shared;
+      s = dma.copy.swiz<48>.promote<128> input.chunkat(_, _) => shared;
       dma.copy s => output.chunkat(_, _);
     }
   return output;

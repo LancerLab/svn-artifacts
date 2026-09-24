@@ -628,6 +628,22 @@ SPEC_REGISTRY = {
                         "swiz<128> onto the off-ladder swiz<48>. ct-check is "
                         "assessed, not cost-suppressible, so it takes the "
                         "one-per-cell ceiling rather than the -rtc curve"),
+    "M3.30": _spec("M3", "ct-check", "L2 promote byte size off the legal "
+                          "ladder {64,128,256} -- the DMA descriptor's promote "
+                          "granularity is not a legal L2 sector size",
+                   status="implemented",
+                   note="M3-c's second arch-independent byte ladder, sibling "
+                        "of M3.29. `dma.copy.promote<W>` is checked at parse "
+                        "time (parser.yy:2286 `promote_value`, \"L2 promote "
+                        "size must be 64, 128, or 256\") before any target "
+                        "check, so an off-ladder width is refused on sm_86 as "
+                        "on sm_90. Realised on `dma_rank5`/`r5swiz`, whose "
+                        "base now carries `swiz<128>.promote<128>`, by moving "
+                        "a legal promote<128> onto the off-ladder "
+                        "promote<999>. Verified: the base passes under both "
+                        "flag sets; the mutant is refused under both with the "
+                        "promote message. ct-check takes the one-per-cell "
+                        "ceiling"),
 }
 
 # The v1 spec integers still carried by every operator (specs v1 §1-§3) map 1:1
@@ -2198,6 +2214,12 @@ M3 += [
        "box<->swizzle byte size is not a legal swizzle, so the parser refuses "
        "it (SwizMode ladder)",
        ("swiz<128>", "swiz<48>"), spec_id="M3.29"),
+    _m("M3.30.dma5.promoteladder", "M3", 30, "dim-mismatch", "dma_rank5",
+       "r5swiz",
+       "L2 promote byte size off the legal ladder {64,128,256}: the DMA "
+       "descriptor's promote granularity is not a legal L2 sector, so the "
+       "parser refuses it (promote_value ladder)",
+       ("promote<128>", "promote<999>"), spec_id="M3.30"),
 ]
 
 # ===========================================================================

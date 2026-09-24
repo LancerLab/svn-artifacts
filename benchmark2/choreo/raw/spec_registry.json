@@ -2,13 +2,13 @@
  "toolchain": "choreo",
  "spec_version": "v2.1",
  "summary": {
-  "n_specs": 79,
+  "n_specs": 80,
   "status_counts": {
-   "implemented": 58,
+   "implemented": 59,
    "pending": 21
   },
   "admissible_counts": {
-   "true": 53,
+   "true": 54,
    "false": 26
   },
   "prohibition_counts": {
@@ -18,7 +18,7 @@
   },
   "path_counts": {
    "rt-check": 53,
-   "ct-check": 4,
+   "ct-check": 5,
    "unchecked": 9,
    "avoided": 6,
    "L": 7
@@ -71,6 +71,7 @@
    "M3.27",
    "M3.28",
    "M3.29",
+   "M3.30",
    "M3.4",
    "M3.6",
    "M3.8",
@@ -127,6 +128,7 @@
    "M3.27",
    "M3.28",
    "M3.29",
+   "M3.30",
    "M3.4",
    "M3.8",
    "M3.9",
@@ -227,7 +229,7 @@
   "n_operators": {
    "M1": 81,
    "M2": 103,
-   "M3": 68,
+   "M3": 69,
    "M4": 80
   }
  },
@@ -881,6 +883,16 @@
    "status": "pending",
    "desc": "TMA box byte-size >= 2^24 after 128-byte ceiling (family B)",
    "note": "family B needs a 128-byte-ceiled row extent >= 2^24, i.e. a row of >= 2^22 f32. Reaching it while preserving ElementCount() is arithmetically impossible (the row would exceed the whole tensor), so every realization either allocates or trips the count check. MISSING SURFACE: a strided view"
+  },
+  {
+   "spec_id": "M3.30",
+   "cls": "M3",
+   "path": "ct-check",
+   "admissible": true,
+   "prohibition": "",
+   "status": "implemented",
+   "desc": "L2 promote byte size off the legal ladder {64,128,256} -- the DMA descriptor's promote granularity is not a legal L2 sector size",
+   "note": "M3-c's second arch-independent byte ladder, sibling of M3.29. `dma.copy.promote<W>` is checked at parse time (parser.yy:2286 `promote_value`, \"L2 promote size must be 64, 128, or 256\") before any target check, so an off-ladder width is refused on sm_86 as on sm_90. Realised on `dma_rank5`/`r5swiz`, whose base now carries `swiz<128>.promote<128>`, by moving a legal promote<128> onto the off-ladder promote<999>. Verified: the base passes under both flag sets; the mutant is refused under both with the promote message. ct-check takes the one-per-cell ceiling"
   },
   {
    "spec_id": "M3.4",
