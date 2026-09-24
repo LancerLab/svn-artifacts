@@ -1464,6 +1464,24 @@ for _cin in (512, 1024):
                  f"shared, over the 48 KB device limit",
                  ("f32 [32, 128, 1, 1] w", f"f32 [32, {_cin}, 1, 1] w")))
 
+# ---- M3.1 atom divisibility on staging hosts in two non-MMA categories -----
+# M3.1 is rt-check, so the (spec, category) ceiling is 2; its four realisations
+# on matmul/conv2d therefore leave M3-a at 4/8. These two hosts carry the SAME
+# 1_bert GEMM body into layer_normalization and batch_norm, adding two further
+# cells. The edit is the atom-divisibility one: the contraction extent passed
+# to k_matmul is replaced by a literal that is not a multiple of 16, so the
+# contraction is numerically wrong (oracle) and the atom obligation is
+# violated on the runtime path.
+for _cat, _fn in (("layer_normalization", "lnmma"), ("batch_norm", "bnmma")):
+    _case = f"{_fn}_32x512x768_768x768_32x512x768"
+    for _k in (6, 10):
+        M3.append(_m(f"M3.s1.{_fn}.atom{_k}", "M3", 1, "dim-mismatch", _cat,
+                     _case,
+                     f"MMA contraction extent {_k} not divisible by the "
+                     f"tensor-core atom (16) on the {_cat} staging host",
+                     (_MM1_CALL, _MM1_CALL.replace("l1_a.span(2));",
+                                                   f"{_k});"))))
+
 # `ALL` is assembled once every class list exists -- see the grouping pass
 # after `M4`. It is deliberately NOT built here, because the class a mutant
 # counts in is `Mut.cls`, not the list it happens to be declared in, and the

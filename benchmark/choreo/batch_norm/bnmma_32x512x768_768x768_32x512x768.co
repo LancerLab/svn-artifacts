@@ -1,0 +1,114 @@
+#include "choreo.h"
+#include <chrono>
+#include <iostream>
+#include <cmath>
+
+#ifndef __CHOREO_TARGET_CUTE__
+__cok__ {
+  __co_device__ inline float v_dot(float* lhs, float* rhs, int elem_count) {
+    // Use TCLE leaptr for vectorized memory access (float4 = 4*4=16 bytes)
+    auto lhs_ptr = tcle::leaptr<__vector float, 1>(lhs, sizeof(__vector float));
+    auto rhs_ptr = tcle::leaptr<__vector float, 1>(rhs, sizeof(__vector float));
+
+    int vector_length = sizeof(__vector float) / sizeof(float);
+    int vector_count = elem_count / vector_length;
+
+    __vector float vresult = (__vector float)0;
+#pragma unroll
+    for (int i = 0; i < vector_count; ++i) {
+      __vector float lhs_vec = lhs_ptr.load<0>();
+      __vector float rhs_vec = rhs_ptr.load<0>();
+      vresult += lhs_vec * rhs_vec;
+    }
+
+    float result = 0;
+    if (vector_count > 0)
+      for (int i = 0; i < vector_length; ++i) result += vresult[i];
+
+    int offset = vector_count * vector_length;
+    for (int i = 0; i < elem_count % vector_length; ++i)
+      result += lhs[offset + i] * rhs[offset + i];
+
+    return result;
+  }
+
+  __co_device__ extern "C" void k_matmul(
+      __private__ float* lhs, __private__ float* rhs, __private__ float* out,
+      int m, int n, int k) {
+    for (int i = 0; i < m; ++i)
+      for (int j = 0; j < n; ++j) {
+        float res = 0;
+#ifndef NO_VRED
+        res = v_dot(&lhs[i * k], &rhs[j * k], k);
+#else
+        for (int z = 0; z < k; ++z) res += lhs[i * k + z] * rhs[j * k + z];
+#endif
+        out[i * n + j] += res;
+      }
+  }
+}
+#else
+// CUDA device path: scalar matmul kernel
+__device__ inline void k_matmul(float* lhs, float* rhs, float* out,
+                                int m, int n, int k) {
+  for (int i = 0; i < m; ++i)
+    for (int j = 0; j < n; ++j) {
+      float res = 0;
+      for (int z = 0; z < k; ++z) res += lhs[i * k + z] * rhs[j * k + z];
+      out[i * n + j] += res;
+    }
+}
+#endif /* __CHOREO_TARGET_CUTE__ */
+
+// Mutation-only staging host (M3-a): the BERT GEMM of matmul/1_bert, placed in
+// a non-MMA category so the atom-divisibility obligation (M3.1) can be
+// realised on a second cell of the (spec, category) grid. The kernel body is
+// the 1_bert body verbatim, so the l1_a/l1_b/k_matmul anchors the M3.1
+// operators name are present unchanged. The reference is sampled (the full
+// GEMM is ~1e10 MACs) so the oracle stay cheap while still catching corruption.
+__co__ auto bnmma(f32 [32, 512, 768] lhs, f32 [768, 768] rhs) {
+  f32 [lhs.span(0), lhs.span(1), rhs.span(1)] output;
+  parallel p by 4, q by 8 {
+    with index = {m_tile, n_tile, k_tile} in [32, 32, 32] {
+      foreach m_tile, n_tile {
+        shared f32[output.span(0)/#p/#q, output.span(1)/#m_tile, output.span(2)/#n_tile] l1_out {0.0f};
+        foreach k_tile {
+          l1_a = dma.copy lhs.chunkat(p#q, m_tile, k_tile) => shared;
+          l1_b = dma.transp<1,0> rhs.chunkat(k_tile, n_tile) => shared;
+          foreach {i} in [l1_out.span(0)] {
+            call k_matmul(l1_a.chunkat(i,_,_), l1_b.data, l1_out, l1_a.span(1), l1_b.span(0), l1_a.span(2));
+          }
+        }
+        dma.copy l1_out => output.chunkat(p#q, m_tile, n_tile);
+      }
+    }
+  }
+  return output;
+}
+
+int main() {
+  auto lhs = choreo::make_spandata<choreo::f32>(32, 512, 768);
+  auto rhs = choreo::make_spandata<choreo::f32>(768, 768);
+  lhs.fill_random(-1.0, 1.0);
+  rhs.fill_random(-1.0, 1.0);
+
+  auto t0 = std::chrono::high_resolution_clock::now();
+  auto r  = bnmma(lhs.view(), rhs.view());
+  auto t1 = std::chrono::high_resolution_clock::now();
+  auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
+
+  for (int c = 0; c < 32; c += 16)
+    for (int h = 0; h < 512; h += 128)
+      for (int w = 0; w < 768; w += 128) {
+        float ref = 0.0f;
+        for (int k = 0; k < 768; ++k) ref += lhs[c][h][k] * rhs[k][w];
+        if (fabs(r[c][h][w] - ref) >= 1e-1f) {
+          std::cout << "bnmma mismatch\n";
+          choreo::choreo_assert(false, "values are not equal.");
+        }
+      }
+
+  std::cout << "Passed.\n";
+  std::cout << "Execution time: " << dur.count() << " microseconds\n";
+  return 0;
+}
