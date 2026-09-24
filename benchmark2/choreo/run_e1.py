@@ -119,6 +119,7 @@ import concurrent.futures as cf
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 import time
@@ -153,7 +154,7 @@ TOOLCHAIN = "choreo"
 # miss. Running the assessor at `-rtc=all` is the fair test of what choreo can
 # detect, and it is what the S2 ceiling figure is measured at. Override with
 # `--rtc <level>`; the level is always replaced, never appended twice.
-COMPILE_FLAGS = ["-gs", "-t", "cute", "-kt", "-rtc=all"]
+COMPILE_FLAGS = ["-gs", "-t", "cute", "-kt", "-fdma-strict", "-rtc=all"]
 ORACLE_FLAGS = ["-gs", "-t", "cute", "-kt", "-rtc=none"]
 
 # Categories whose reference check is compiled out unless -D__CHECK__ is given
@@ -434,18 +435,37 @@ def run(cmd, timeout, logpath, env=None):
     e = dict(os.environ)
     if env:
         e.update(env)
+    # start_new_session makes the child its own process-group leader.
+    # `bash out_sh --execute` does not exec the kernel: it runs stdbuf -> bash ->
+    # (grandchild) __choreo_cute_*.exe. subprocess.run(timeout=) signals only the
+    # direct child, so on timeout the GPU process keeps running -- the observed
+    # 3h+ orphan after an interrupted run. Kill the whole process group instead.
+    p = subprocess.Popen(full, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                         text=True, errors="replace", cwd=REPO, env=e,
+                         start_new_session=True)
     try:
-        p = subprocess.run(full, capture_output=True, text=True,
-                           timeout=timeout, cwd=REPO, errors="replace", env=e)
-        text = (p.stdout or "") + (p.stderr or "")
+        text, _ = p.communicate(timeout=timeout)
         rc = p.returncode
     except subprocess.TimeoutExpired as ex:
-        text = ((ex.stdout or b"").decode("utf-8", "replace") if isinstance(ex.stdout, bytes)
-                else (ex.stdout or "")) + \
-               ((ex.stderr or b"").decode("utf-8", "replace") if isinstance(ex.stderr, bytes)
-                else (ex.stderr or ""))
-        text += "\n[harness] TIMEOUT after %ds\n" % timeout
+        try:
+            os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            p.kill()
+        try:
+            rest, _ = p.communicate()
+        except Exception:
+            rest = ""
+        # On Py3.8 a timed-out communicate() hands back BYTES even under
+        # text=True, so normalize both the partial and the drained tail.
+        text = ex.stdout or ""
+        if isinstance(text, bytes):
+            text = text.decode("utf-8", "replace")
+        rest = rest or ""
+        if isinstance(rest, bytes):
+            rest = rest.decode("utf-8", "replace")
+        text += rest + "\n[harness] TIMEOUT after %ds\n" % timeout
         rc = 124
+    text = text or ""
     with open(logpath, "w") as f:
         f.write(text)
     return rc, text
@@ -885,6 +905,18 @@ def main():
                     choices=("none", "entry", "low", "medium", "high", "all"),
                     help="detector-arm runtime-check level (default: all). The "
                          "oracle arm always uses -rtc=none.")
+    ap.add_argument("--strict-dma-shape", dest="strict_dma_shape",
+                    action="store_true", default=True,
+                    help="detector-arm (DEFAULT ON): require DMA source and "
+                         "destination shapes to be provably equal (-fdma-strict) "
+                         "instead of the one-sided src<=dst relaxation. The "
+                         "oracle arm is unaffected (it stays the permissive "
+                         "reference).")
+    ap.add_argument("--no-strict-dma-shape", dest="strict_dma_shape",
+                    action="store_false",
+                    help="ablation: fall back to the one-sided src<=dst "
+                         "relaxation (extra destination elements are "
+                         "zero-filled).")
     ap.add_argument("--manifest", default=MANIFEST_IN)
     ap.add_argument("--policy", default=ORACLE_POLICY)
     ap.add_argument("--strict-policy", action="store_true",
@@ -913,6 +945,14 @@ def main():
                          "file, leaving every verdict untouched. Use this, not "
                          "--reproject, to make an old record file collectable: "
                          "re-projection can change a verdict, stamping cannot.")
+    ap.add_argument("--restamp", action="store_true",
+                    help="like --stamp-only but OVERWRITE the manifest-sourced "
+                         "v2.1 fields instead of only filling the missing ones. "
+                         "Use after a spec RE-HOME (a mutant moved from spec A "
+                         "to spec B must carry B's path_class): --stamp-only "
+                         "cannot rewrite an existing value, and --reproject "
+                         "copies the old row's meta. Verdicts are still "
+                         "untouched -- no log is read.")
     a = ap.parse_args()
 
     # MUST be absolute: run() executes choreo with cwd=REPO, so a relative
@@ -926,6 +966,12 @@ def main():
     if a.rtc:
         COMPILE_FLAGS = [f for f in COMPILE_FLAGS if not f.startswith("-rtc=")]
         COMPILE_FLAGS = COMPILE_FLAGS + [f"-rtc={a.rtc}"]
+
+    if a.strict_dma_shape:
+        if "-fdma-strict" not in COMPILE_FLAGS:
+            COMPILE_FLAGS = COMPILE_FLAGS + ["-fdma-strict"]
+    else:
+        COMPILE_FLAGS = [f for f in COMPILE_FLAGS if f != "-fdma-strict"]
 
     if not os.path.exists(CHOREO):
         print(f"ERROR: choreo binary not found at {CHOREO}", file=sys.stderr)
@@ -992,6 +1038,36 @@ def main():
                 row["applicable"] = v
         return row
 
+    def restamp(row):
+        """Overwrite every manifest-sourced v2.1 field on an EXISTING record
+        from its manifest row, and re-mint `applicable`.
+
+        `stamp` only fills a field that is None, which is right for a
+        provenance backfill but wrong after a spec RE-HOME: a mutant moved from
+        spec A to spec B already carries A's path_class/prohibition/
+        spec_admissible, and those must become B's. `--reproject` cannot do it
+        either, because `reproject_one` starts from `dict(rec)` and keeps the
+        old meta. Verdicts are not touched -- no log is read."""
+        src = man_by_id.get(row.get("mutant_id"))
+        if src is None:
+            return row
+        for k in V21_FIELDS:
+            if k == "applicable":
+                continue
+            v = src.get(k)
+            if k == "prohibition":
+                v = v or ""
+            if k == "spec_version":
+                v = v or spec_version
+            if v is not None:
+                row[k] = v
+        v = row.get("admissible")
+        if v is None:
+            v = row.get("spec_admissible")
+        if v is not None:
+            row["applicable"] = v
+        return row
+
     os.makedirs(a.workdir, exist_ok=True)
     os.makedirs(os.path.dirname(a.out), exist_ok=True)
 
@@ -1002,9 +1078,10 @@ def main():
     # `n/a`, for one), so re-deriving can silently move rows between outcomes.
     # This mode touches ONLY the fields collect.py requires, leaving every
     # verdict exactly as the run recorded it.
-    if a.stamp_only:
+    if a.stamp_only or a.restamp:
+        mode = "--restamp" if a.restamp else "--stamp-only"
         if not os.path.exists(a.out):
-            print(f"ERROR: --stamp-only needs an existing record file at "
+            print(f"ERROR: {mode} needs an existing record file at "
                   f"{a.out}", file=sys.stderr)
             return 2
         prev = json.load(open(a.out))
@@ -1012,21 +1089,23 @@ def main():
             rows = prev.get("records") or prev.get("results") or []
         else:
             rows = prev
+        apply = restamp if a.restamp else stamp
         n_changed = 0
         for row in rows:
             before = {k: row.get(k) for k in V21_FIELDS}
-            stamp(row)
+            apply(row)
             if any(row.get(k) != before[k] for k in V21_FIELDS):
                 n_changed += 1
         payload = dict(prev) if isinstance(prev, dict) else {}
         payload.pop("results", None)
         payload["records"] = rows
-        payload["stamped"] = True
+        payload["restamped" if a.restamp else "stamped"] = True
         with open(a.out, "w") as f:
             json.dump(payload, f, indent=1)
-        print(f"\n[choreo] stamped {n_changed}/{len(rows)} records with the "
-              f"v2.1 path-class fields -> {os.path.relpath(a.out, REPO)}")
-        print(f"[choreo] verdict fields untouched (stamp-only mode)")
+        print(f"\n[choreo] {'restamped' if a.restamp else 'stamped'} "
+              f"{n_changed}/{len(rows)} records with the v2.1 path-class "
+              f"fields -> {os.path.relpath(a.out, REPO)}")
+        print(f"[choreo] verdict fields untouched ({mode})")
         return 0
     # Print the full identity block (binary sha/mtime vs checkout HEAD) so a
     # stale-binary mismatch is visible in the run log, not just buried in the
