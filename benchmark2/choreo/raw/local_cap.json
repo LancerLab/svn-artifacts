@@ -45,8 +45,8 @@
   "reason": "per-thread local GEMM/output accumulator by design (im2col tile does not fit shared); measured LOCAL footprint"
  },
  "conv2d/21_vit_32x768x14x14_1000x768x7x7_32x1000x7x7_S_P_D": {
-  "cap_bytes": 494720,
-  "reason": "per-thread local GEMM/output accumulator by design (im2col tile does not fit shared); measured LOCAL footprint"
+  "cap_bytes": 1505280,
+  "reason": "per-thread local GEMM/output accumulator by design (im2col tile does not fit shared); re-measured 2026-09-25 (the 494720 entry predated the tiled-GEMM base repair and under-sized the compile budget, so the kernel failed codegen and E2 could not reconcile it)"
  },
  "conv2d/5_dynamic_128xCx112x112_64xCx1x1_128x64x112x112_1_0_1": {
   "cap_bytes": 2000000,

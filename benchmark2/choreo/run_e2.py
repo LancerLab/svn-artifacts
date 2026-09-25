@@ -336,10 +336,28 @@ def resolve_value(name, macros, depth=0, seen=None):
 
 
 def signature_line(text):
-    """The first `__co__` line carrying a `(` — the operator signature."""
-    for line in text.splitlines():
-        if RE_CO_SIG.search(line) and "(" in line:
-            return line.strip()
+    """The `__co__` operator signature, joining wrapped parameter lists.
+
+    The signature can wrap across lines (a long parameter list, e.g.
+    `layer_normalization/12_pad_extent`). Returning only the first line hides
+    every parameter after the wrap -- including bare runtime scalars such as
+    `int padding`, which is exactly what `scalar_params` keys on, so a dynamic
+    kernel is misclassified static and its ledger then "contradicts" the shape
+    class. Accumulate continuation lines until the parentheses balance.
+    """
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if not (RE_CO_SIG.search(line) and "(" in line):
+            continue
+        sig = line.strip()
+        depth = sig.count("(") - sig.count(")")
+        j = i + 1
+        while depth > 0 and j < len(lines):
+            nxt = lines[j].strip()
+            sig += " " + nxt
+            depth += nxt.count("(") - nxt.count(")")
+            j += 1
+        return sig
     return None
 
 
