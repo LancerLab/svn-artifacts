@@ -1,6 +1,6 @@
 {
  "toolchain": "choreo",
- "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+ "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
  "produced_by": "e4",
  "size": "small",
  "gpu_device": "0",
@@ -9,35 +9,35 @@
   "gpus": {
    "0": {
     "index": "0",
-    "name": "NVIDIA H800 PCIe",
-    "utilization.gpu": 0,
-    "memory.used": 14,
-    "memory.total": 81559,
-    "clocks.sm": 345,
-    "clocks.max.sm": 1755,
-    "temperature.gpu": 38,
+    "name": "NVIDIA GeForce RTX 5060 Ti",
+    "utilization.gpu": 26,
+    "memory.used": 392,
+    "memory.total": 16311,
+    "clocks.sm": 952,
+    "clocks.max.sm": 3090,
+    "temperature.gpu": 36,
     "persistence_mode": "Disabled"
    }
   },
   "compute_apps": []
  },
  "host_contended": [],
- "elapsed_s": 1576.2,
+ "elapsed_s": 3478.1,
  "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports.",
  "fe_reps": 5,
  "nvcc_reps": 3,
  "jobs": 1,
- "grand_median_compile_overhead_pct": 0.1255,
+ "grand_median_compile_overhead_pct": 0.124,
  "grand_bucket": "<0.5%",
  "records": [
   {
    "toolchain": "choreo",
    "category": "batch_norm",
-   "compile_overhead_pct": 0.2583,
+   "compile_overhead_pct": 0.2879,
    "bucket": "<0.5%",
    "settings_hash": "45f6e81d94c0",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -45,13 +45,13 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
@@ -59,19 +59,19 @@
    },
    "host_contended": [],
    "n_kernels": 2,
-   "min_pct": 0.2422,
-   "max_pct": 0.2744,
-   "mean_pct": 0.2583,
+   "min_pct": 0.2847,
+   "max_pct": 0.2911,
+   "mean_pct": 0.2879,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   },
   {
    "toolchain": "choreo",
    "category": "concat",
-   "compile_overhead_pct": 0.1296,
+   "compile_overhead_pct": 0.1316,
    "bucket": "<0.5%",
    "settings_hash": "55b2395980bd",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -79,13 +79,13 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
@@ -93,19 +93,19 @@
    },
    "host_contended": [],
    "n_kernels": 2,
-   "min_pct": 0.1079,
-   "max_pct": 0.1513,
-   "mean_pct": 0.1296,
+   "min_pct": 0.1051,
+   "max_pct": 0.158,
+   "mean_pct": 0.1316,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   },
   {
    "toolchain": "choreo",
    "category": "conv2d",
-   "compile_overhead_pct": 0.0052,
+   "compile_overhead_pct": 0.3314,
    "bucket": "<0.5%",
    "settings_hash": "28fee96c8330",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -113,33 +113,67 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
     "compute_apps": []
    },
    "host_contended": [],
-   "n_kernels": 1,
-   "min_pct": 0.0052,
-   "max_pct": 0.0052,
-   "mean_pct": 0.0052,
+   "n_kernels": 2,
+   "min_pct": 0.0031,
+   "max_pct": 0.6597,
+   "mean_pct": 0.3314,
+   "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "dma_rank5",
+   "compile_overhead_pct": 0.16,
+   "bucket": "<0.5%",
+   "settings_hash": "6ba7925e0a5a",
+   "kernel_hash": null,
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
+   "size": "small",
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "gpus": {
+     "0": {
+      "index": "0",
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
+      "persistence_mode": "Disabled"
+     }
+    },
+    "compute_apps": []
+   },
+   "host_contended": [],
+   "n_kernels": 2,
+   "min_pct": 0.1307,
+   "max_pct": 0.1893,
+   "mean_pct": 0.16,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   },
   {
    "toolchain": "choreo",
    "category": "elemwise_add",
-   "compile_overhead_pct": 0.1331,
+   "compile_overhead_pct": 0.1321,
    "bucket": "<0.5%",
    "settings_hash": "8b1728850022",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -147,13 +181,13 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
@@ -161,19 +195,19 @@
    },
    "host_contended": [],
    "n_kernels": 2,
-   "min_pct": 0.1173,
-   "max_pct": 0.1489,
-   "mean_pct": 0.1331,
+   "min_pct": 0.1103,
+   "max_pct": 0.1538,
+   "mean_pct": 0.1321,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   },
   {
    "toolchain": "choreo",
    "category": "embedding",
-   "compile_overhead_pct": 0.0778,
+   "compile_overhead_pct": 0.0711,
    "bucket": "<0.5%",
    "settings_hash": "666bab9695c5",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -181,13 +215,13 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
@@ -195,19 +229,19 @@
    },
    "host_contended": [],
    "n_kernels": 2,
-   "min_pct": 0.0714,
-   "max_pct": 0.0842,
-   "mean_pct": 0.0778,
+   "min_pct": 0.065,
+   "max_pct": 0.0772,
+   "mean_pct": 0.0711,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   },
   {
    "toolchain": "choreo",
    "category": "gelu",
-   "compile_overhead_pct": 0.0999,
+   "compile_overhead_pct": 0.0822,
    "bucket": "<0.5%",
    "settings_hash": "f08293b4eb9e",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -215,13 +249,13 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
@@ -229,19 +263,19 @@
    },
    "host_contended": [],
    "n_kernels": 2,
-   "min_pct": 0.0817,
-   "max_pct": 0.1181,
-   "mean_pct": 0.0999,
+   "min_pct": 0.0769,
+   "max_pct": 0.0875,
+   "mean_pct": 0.0822,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   },
   {
    "toolchain": "choreo",
    "category": "layer_normalization",
-   "compile_overhead_pct": 0.2188,
+   "compile_overhead_pct": 0.2502,
    "bucket": "<0.5%",
    "settings_hash": "8dbff8357c9b",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -249,13 +283,13 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
@@ -263,19 +297,19 @@
    },
    "host_contended": [],
    "n_kernels": 2,
-   "min_pct": 0.2115,
-   "max_pct": 0.226,
-   "mean_pct": 0.2188,
+   "min_pct": 0.2404,
+   "max_pct": 0.26,
+   "mean_pct": 0.2502,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   },
   {
    "toolchain": "choreo",
    "category": "matmul",
-   "compile_overhead_pct": 0.0804,
+   "compile_overhead_pct": 0.0889,
    "bucket": "<0.5%",
    "settings_hash": "ba2aa2b58125",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -283,13 +317,13 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
@@ -297,19 +331,19 @@
    },
    "host_contended": [],
    "n_kernels": 2,
-   "min_pct": 0.0743,
-   "max_pct": 0.0866,
-   "mean_pct": 0.0804,
+   "min_pct": 0.0758,
+   "max_pct": 0.1019,
+   "mean_pct": 0.0889,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   },
   {
    "toolchain": "choreo",
    "category": "max_pool2d",
-   "compile_overhead_pct": 0.2576,
+   "compile_overhead_pct": 0.3566,
    "bucket": "<0.5%",
    "settings_hash": "1f5436bfab1f",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -317,13 +351,13 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
@@ -331,19 +365,19 @@
    },
    "host_contended": [],
    "n_kernels": 2,
-   "min_pct": 0.2389,
-   "max_pct": 0.2764,
-   "mean_pct": 0.2576,
+   "min_pct": 0.343,
+   "max_pct": 0.3702,
+   "mean_pct": 0.3566,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   },
   {
    "toolchain": "choreo",
    "category": "reduce_mean",
-   "compile_overhead_pct": 0.1413,
+   "compile_overhead_pct": 0.124,
    "bucket": "<0.5%",
    "settings_hash": "b4ee0b5faac2",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -351,13 +385,13 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
@@ -365,19 +399,19 @@
    },
    "host_contended": [],
    "n_kernels": 2,
-   "min_pct": 0.1329,
-   "max_pct": 0.1498,
-   "mean_pct": 0.1413,
+   "min_pct": 0.1222,
+   "max_pct": 0.1258,
+   "mean_pct": 0.124,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   },
   {
    "toolchain": "choreo",
    "category": "relu",
-   "compile_overhead_pct": 0.1638,
+   "compile_overhead_pct": 0.1392,
    "bucket": "<0.5%",
    "settings_hash": "7abb8bd6e718",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -385,13 +419,13 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
@@ -399,19 +433,19 @@
    },
    "host_contended": [],
    "n_kernels": 2,
-   "min_pct": 0.1564,
-   "max_pct": 0.1711,
-   "mean_pct": 0.1638,
+   "min_pct": 0.1305,
+   "max_pct": 0.148,
+   "mean_pct": 0.1392,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   },
   {
    "toolchain": "choreo",
    "category": "reshape",
-   "compile_overhead_pct": 0.0782,
+   "compile_overhead_pct": 0.0406,
    "bucket": "<0.5%",
    "settings_hash": "fc1e3097da54",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -419,33 +453,33 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
     "compute_apps": []
    },
    "host_contended": [],
-   "n_kernels": 1,
-   "min_pct": 0.0782,
-   "max_pct": 0.0782,
-   "mean_pct": 0.0782,
+   "n_kernels": 2,
+   "min_pct": 0.0301,
+   "max_pct": 0.0511,
+   "mean_pct": 0.0406,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   },
   {
    "toolchain": "choreo",
    "category": "sigmoid",
-   "compile_overhead_pct": 0.1092,
+   "compile_overhead_pct": 0.1024,
    "bucket": "<0.5%",
    "settings_hash": "cfc639e6ee00",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -453,13 +487,13 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
@@ -467,19 +501,19 @@
    },
    "host_contended": [],
    "n_kernels": 2,
-   "min_pct": 0.1067,
-   "max_pct": 0.1117,
-   "mean_pct": 0.1092,
+   "min_pct": 0.0935,
+   "max_pct": 0.1114,
+   "mean_pct": 0.1024,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   },
   {
    "toolchain": "choreo",
    "category": "softmax",
-   "compile_overhead_pct": 0.2408,
+   "compile_overhead_pct": 0.3167,
    "bucket": "<0.5%",
    "settings_hash": "d59f419be35e",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -487,13 +521,13 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
@@ -501,19 +535,19 @@
    },
    "host_contended": [],
    "n_kernels": 2,
-   "min_pct": 0.1967,
-   "max_pct": 0.2848,
-   "mean_pct": 0.2408,
+   "min_pct": 0.2401,
+   "max_pct": 0.3933,
+   "mean_pct": 0.3167,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   },
   {
    "toolchain": "choreo",
    "category": "transpose",
-   "compile_overhead_pct": 0.0816,
+   "compile_overhead_pct": 0.076,
    "bucket": "<0.5%",
    "settings_hash": "df847a35dd4b",
    "kernel_hash": null,
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "size": "small",
    "gpu_device": "0",
    "exclusive": true,
@@ -521,13 +555,13 @@
     "gpus": {
      "0": {
       "index": "0",
-      "name": "NVIDIA H800 PCIe",
-      "utilization.gpu": 0,
-      "memory.used": 14,
-      "memory.total": 81559,
-      "clocks.sm": 345,
-      "clocks.max.sm": 1755,
-      "temperature.gpu": 38,
+      "name": "NVIDIA GeForce RTX 5060 Ti",
+      "utilization.gpu": 26,
+      "memory.used": 392,
+      "memory.total": 16311,
+      "clocks.sm": 952,
+      "clocks.max.sm": 3090,
+      "temperature.gpu": 36,
       "persistence_mode": "Disabled"
      }
     },
@@ -535,9 +569,9 @@
    },
    "host_contended": [],
    "n_kernels": 2,
-   "min_pct": 0.0794,
-   "max_pct": 0.0838,
-   "mean_pct": 0.0816,
+   "min_pct": 0.0729,
+   "max_pct": 0.0791,
+   "mean_pct": 0.076,
    "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports."
   }
  ],
@@ -551,27 +585,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.02444,
-    0.02369,
-    0.02319,
-    0.02548,
-    0.02485
+    0.04724,
+    0.04812,
+    0.04754,
+    0.05015,
+    0.0494
    ],
    "nvcc_s_samples": [
-    8.881,
-    8.778,
-    9.685
+    16.219,
+    16.484,
+    16.677
    ],
    "ok": true,
-   "frontend_s": 0.02444,
-   "nvcc_s": 8.8812,
-   "total_s": 8.9056,
-   "compile_overhead_pct": 0.2744,
-   "overhead_vs_nvcc_pct": 0.2751,
+   "frontend_s": 0.04812,
+   "nvcc_s": 16.4838,
+   "total_s": 16.5319,
+   "compile_overhead_pct": 0.2911,
+   "overhead_vs_nvcc_pct": 0.2919,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.02319,
-   "nvcc_s_min": 8.7778,
-   "nvcc_s_spread_pct": 10.22
+   "frontend_s_min": 0.04724,
+   "nvcc_s_min": 16.219,
+   "nvcc_s_spread_pct": 2.78
   },
   {
    "toolchain": "choreo",
@@ -582,27 +616,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.02452,
-    0.0248,
-    0.02445,
-    0.02459,
-    0.02458
+    0.04733,
+    0.0477,
+    0.04703,
+    0.04586,
+    0.04664
    ],
    "nvcc_s_samples": [
-    10.122,
-    10.66,
-    9.879
+    16.322,
+    16.471,
+    16.88
    ],
    "ok": true,
-   "frontend_s": 0.02458,
-   "nvcc_s": 10.1222,
-   "total_s": 10.1467,
-   "compile_overhead_pct": 0.2422,
-   "overhead_vs_nvcc_pct": 0.2428,
+   "frontend_s": 0.04703,
+   "nvcc_s": 16.4713,
+   "total_s": 16.5183,
+   "compile_overhead_pct": 0.2847,
+   "overhead_vs_nvcc_pct": 0.2855,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.02445,
-   "nvcc_s_min": 9.879,
-   "nvcc_s_spread_pct": 7.71
+   "frontend_s_min": 0.04586,
+   "nvcc_s_min": 16.3218,
+   "nvcc_s_spread_pct": 3.39
   },
   {
    "toolchain": "choreo",
@@ -613,27 +647,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.01618,
-    0.01677,
-    0.01656,
-    0.01621,
-    0.01661
+    0.0274,
+    0.02983,
+    0.02862,
+    0.02869,
+    0.0295
    ],
    "nvcc_s_samples": [
-    14.781,
-    15.327,
-    15.946
+    27.788,
+    26.225,
+    27.26
    ],
    "ok": true,
-   "frontend_s": 0.01656,
-   "nvcc_s": 15.3268,
-   "total_s": 15.3434,
-   "compile_overhead_pct": 0.1079,
-   "overhead_vs_nvcc_pct": 0.108,
+   "frontend_s": 0.02869,
+   "nvcc_s": 27.2598,
+   "total_s": 27.2885,
+   "compile_overhead_pct": 0.1051,
+   "overhead_vs_nvcc_pct": 0.1052,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.01618,
-   "nvcc_s_min": 14.7807,
-   "nvcc_s_spread_pct": 7.61
+   "frontend_s_min": 0.0274,
+   "nvcc_s_min": 26.2251,
+   "nvcc_s_spread_pct": 5.73
   },
   {
    "toolchain": "choreo",
@@ -644,27 +678,58 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.01586,
-    0.01625,
-    0.0154,
-    0.01528,
-    0.01592
+    0.02607,
+    0.02533,
+    0.02663,
+    0.02691,
+    0.0272
    ],
    "nvcc_s_samples": [
-    10.644,
-    10.469,
-    9.288
+    16.756,
+    16.823,
+    17.144
    ],
    "ok": true,
-   "frontend_s": 0.01586,
-   "nvcc_s": 10.4687,
-   "total_s": 10.4845,
-   "compile_overhead_pct": 0.1513,
-   "overhead_vs_nvcc_pct": 0.1515,
+   "frontend_s": 0.02663,
+   "nvcc_s": 16.8228,
+   "total_s": 16.8494,
+   "compile_overhead_pct": 0.158,
+   "overhead_vs_nvcc_pct": 0.1583,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.01528,
-   "nvcc_s_min": 9.2885,
-   "nvcc_s_spread_pct": 12.95
+   "frontend_s_min": 0.02533,
+   "nvcc_s_min": 16.7556,
+   "nvcc_s_spread_pct": 2.31
+  },
+  {
+   "toolchain": "choreo",
+   "category": "conv2d",
+   "kernel_id": "conv2d/10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
+   "kernel_hash": "b5c3854efe52",
+   "settings_hash": "28fee96c8330",
+   "fe_reps": 5,
+   "nvcc_reps": 3,
+   "frontend_s_samples": [
+    0.13375,
+    0.13027,
+    0.13293,
+    0.1321,
+    0.13359
+   ],
+   "nvcc_s_samples": [
+    20.018,
+    20.025,
+    19.299
+   ],
+   "ok": true,
+   "frontend_s": 0.13293,
+   "nvcc_s": 20.0181,
+   "total_s": 20.151,
+   "compile_overhead_pct": 0.6597,
+   "overhead_vs_nvcc_pct": 0.664,
+   "bucket": "0.5-1%",
+   "frontend_s_min": 0.13027,
+   "nvcc_s_min": 19.2986,
+   "nvcc_s_spread_pct": 3.63
   },
   {
    "toolchain": "choreo",
@@ -675,27 +740,89 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.01093,
-    0.01191,
-    0.01148,
-    0.0117,
-    0.01169
+    0.0179,
+    0.01744,
+    0.01764,
+    0.01685,
+    0.01808
    ],
    "nvcc_s_samples": [
-    225.246,
-    225.112,
-    225.797
+    580.176,
+    572.785,
+    571.19
    ],
    "ok": true,
-   "frontend_s": 0.01169,
-   "nvcc_s": 225.2459,
-   "total_s": 225.2576,
-   "compile_overhead_pct": 0.0052,
-   "overhead_vs_nvcc_pct": 0.0052,
+   "frontend_s": 0.01764,
+   "nvcc_s": 572.7847,
+   "total_s": 572.8023,
+   "compile_overhead_pct": 0.0031,
+   "overhead_vs_nvcc_pct": 0.0031,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.01093,
-   "nvcc_s_min": 225.1123,
-   "nvcc_s_spread_pct": 0.3
+   "frontend_s_min": 0.01685,
+   "nvcc_s_min": 571.1901,
+   "nvcc_s_spread_pct": 1.57
+  },
+  {
+   "toolchain": "choreo",
+   "category": "dma_rank5",
+   "kernel_id": "dma_rank5/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "kernel_hash": "0626417858aa",
+   "settings_hash": "6ba7925e0a5a",
+   "fe_reps": 5,
+   "nvcc_reps": 3,
+   "frontend_s_samples": [
+    0.04053,
+    0.04198,
+    0.04143,
+    0.04132,
+    0.04139
+   ],
+   "nvcc_s_samples": [
+    22.281,
+    21.523,
+    21.828
+   ],
+   "ok": true,
+   "frontend_s": 0.04139,
+   "nvcc_s": 21.8278,
+   "total_s": 21.8692,
+   "compile_overhead_pct": 0.1893,
+   "overhead_vs_nvcc_pct": 0.1896,
+   "bucket": "<0.5%",
+   "frontend_s_min": 0.04053,
+   "nvcc_s_min": 21.5233,
+   "nvcc_s_spread_pct": 3.47
+  },
+  {
+   "toolchain": "choreo",
+   "category": "dma_rank5",
+   "kernel_id": "dma_rank5/r5at",
+   "kernel_hash": "2b02209e7de8",
+   "settings_hash": "6ba7925e0a5a",
+   "fe_reps": 5,
+   "nvcc_reps": 3,
+   "frontend_s_samples": [
+    0.02188,
+    0.02091,
+    0.02172,
+    0.02135,
+    0.02163
+   ],
+   "nvcc_s_samples": [
+    16.819,
+    16.521,
+    16.415
+   ],
+   "ok": true,
+   "frontend_s": 0.02163,
+   "nvcc_s": 16.5209,
+   "total_s": 16.5425,
+   "compile_overhead_pct": 0.1307,
+   "overhead_vs_nvcc_pct": 0.1309,
+   "bucket": "<0.5%",
+   "frontend_s_min": 0.02091,
+   "nvcc_s_min": 16.4152,
+   "nvcc_s_spread_pct": 2.44
   },
   {
    "toolchain": "choreo",
@@ -706,27 +833,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.01449,
-    0.01538,
-    0.01492,
-    0.01418,
-    0.01529
+    0.03164,
+    0.02932,
+    0.02897,
+    0.02832,
+    0.02945
    ],
    "nvcc_s_samples": [
-    10.05,
-    10.005,
-    9.989
+    19.032,
+    19.328,
+    18.947
    ],
    "ok": true,
-   "frontend_s": 0.01492,
-   "nvcc_s": 10.0051,
-   "total_s": 10.02,
-   "compile_overhead_pct": 0.1489,
-   "overhead_vs_nvcc_pct": 0.1491,
+   "frontend_s": 0.02932,
+   "nvcc_s": 19.0325,
+   "total_s": 19.0618,
+   "compile_overhead_pct": 0.1538,
+   "overhead_vs_nvcc_pct": 0.1541,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.01418,
-   "nvcc_s_min": 9.9894,
-   "nvcc_s_spread_pct": 0.61
+   "frontend_s_min": 0.02832,
+   "nvcc_s_min": 18.9474,
+   "nvcc_s_spread_pct": 2.0
   },
   {
    "toolchain": "choreo",
@@ -737,27 +864,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.0136,
-    0.01401,
-    0.0137,
-    0.01388,
-    0.01333
+    0.02328,
+    0.0228,
+    0.02073,
+    0.01996,
+    0.02016
    ],
    "nvcc_s_samples": [
-    11.655,
-    11.715,
-    11.666
+    18.598,
+    19.006,
+    18.775
    ],
    "ok": true,
-   "frontend_s": 0.0137,
-   "nvcc_s": 11.6661,
-   "total_s": 11.6798,
-   "compile_overhead_pct": 0.1173,
-   "overhead_vs_nvcc_pct": 0.1175,
+   "frontend_s": 0.02073,
+   "nvcc_s": 18.7746,
+   "total_s": 18.7953,
+   "compile_overhead_pct": 0.1103,
+   "overhead_vs_nvcc_pct": 0.1104,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.01333,
-   "nvcc_s_min": 11.6548,
-   "nvcc_s_spread_pct": 0.52
+   "frontend_s_min": 0.01996,
+   "nvcc_s_min": 18.5977,
+   "nvcc_s_spread_pct": 2.17
   },
   {
    "toolchain": "choreo",
@@ -768,27 +895,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.00978,
-    0.01051,
-    0.01017,
-    0.01036,
-    0.0095
+    0.01438,
+    0.01471,
+    0.01522,
+    0.01694,
+    0.01637
    ],
    "nvcc_s_samples": [
-    12.111,
-    11.548,
-    12.078
+    19.51,
+    19.943,
+    19.693
    ],
    "ok": true,
-   "frontend_s": 0.01017,
-   "nvcc_s": 12.0784,
-   "total_s": 12.0886,
-   "compile_overhead_pct": 0.0842,
-   "overhead_vs_nvcc_pct": 0.0842,
+   "frontend_s": 0.01522,
+   "nvcc_s": 19.6927,
+   "total_s": 19.7079,
+   "compile_overhead_pct": 0.0772,
+   "overhead_vs_nvcc_pct": 0.0773,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.0095,
-   "nvcc_s_min": 11.5483,
-   "nvcc_s_spread_pct": 4.66
+   "frontend_s_min": 0.01438,
+   "nvcc_s_min": 19.5101,
+   "nvcc_s_spread_pct": 2.2
   },
   {
    "toolchain": "choreo",
@@ -799,27 +926,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.0099,
-    0.01022,
-    0.00974,
-    0.00965,
-    0.00979
+    0.01548,
+    0.01458,
+    0.01495,
+    0.01484,
+    0.01557
    ],
    "nvcc_s_samples": [
-    13.612,
-    13.702,
-    13.731
+    22.457,
+    22.978,
+    22.98
    ],
    "ok": true,
-   "frontend_s": 0.00979,
-   "nvcc_s": 13.7023,
-   "total_s": 13.7121,
-   "compile_overhead_pct": 0.0714,
-   "overhead_vs_nvcc_pct": 0.0715,
+   "frontend_s": 0.01495,
+   "nvcc_s": 22.9779,
+   "total_s": 22.9929,
+   "compile_overhead_pct": 0.065,
+   "overhead_vs_nvcc_pct": 0.065,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.00965,
-   "nvcc_s_min": 13.6121,
-   "nvcc_s_spread_pct": 0.87
+   "frontend_s_min": 0.01458,
+   "nvcc_s_min": 22.4569,
+   "nvcc_s_spread_pct": 2.28
   },
   {
    "toolchain": "choreo",
@@ -830,27 +957,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.01059,
-    0.01122,
-    0.01043,
-    0.01059,
-    0.01056
+    0.01797,
+    0.01471,
+    0.01472,
+    0.01438,
+    0.01375
    ],
    "nvcc_s_samples": [
-    8.969,
-    8.954,
-    8.929
+    16.498,
+    16.797,
+    17.073
    ],
    "ok": true,
-   "frontend_s": 0.01059,
-   "nvcc_s": 8.9541,
-   "total_s": 8.9647,
-   "compile_overhead_pct": 0.1181,
-   "overhead_vs_nvcc_pct": 0.1183,
+   "frontend_s": 0.01471,
+   "nvcc_s": 16.7968,
+   "total_s": 16.8115,
+   "compile_overhead_pct": 0.0875,
+   "overhead_vs_nvcc_pct": 0.0875,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.01043,
-   "nvcc_s_min": 8.9289,
-   "nvcc_s_spread_pct": 0.45
+   "frontend_s_min": 0.01375,
+   "nvcc_s_min": 16.498,
+   "nvcc_s_spread_pct": 3.42
   },
   {
    "toolchain": "choreo",
@@ -861,27 +988,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.00958,
-    0.00994,
-    0.00941,
-    0.00878,
-    0.00956
+    0.01375,
+    0.01548,
+    0.01466,
+    0.01454,
+    0.01421
    ],
    "nvcc_s_samples": [
-    11.72,
-    11.687,
-    11.581
+    18.973,
+    18.462,
+    18.906
    ],
    "ok": true,
-   "frontend_s": 0.00956,
-   "nvcc_s": 11.6873,
-   "total_s": 11.6968,
-   "compile_overhead_pct": 0.0817,
-   "overhead_vs_nvcc_pct": 0.0818,
+   "frontend_s": 0.01454,
+   "nvcc_s": 18.9061,
+   "total_s": 18.9206,
+   "compile_overhead_pct": 0.0769,
+   "overhead_vs_nvcc_pct": 0.0769,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.00878,
-   "nvcc_s_min": 11.5806,
-   "nvcc_s_spread_pct": 1.19
+   "frontend_s_min": 0.01375,
+   "nvcc_s_min": 18.4617,
+   "nvcc_s_spread_pct": 2.71
   },
   {
    "toolchain": "choreo",
@@ -892,27 +1019,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.02275,
-    0.02402,
-    0.02386,
-    0.02344,
-    0.02345
+    0.04245,
+    0.044,
+    0.0425,
+    0.04339,
+    0.04337
    ],
    "nvcc_s_samples": [
-    10.35,
-    10.353,
-    10.351
+    16.9,
+    16.637,
+    16.427
    ],
    "ok": true,
-   "frontend_s": 0.02345,
-   "nvcc_s": 10.3513,
-   "total_s": 10.3748,
-   "compile_overhead_pct": 0.226,
-   "overhead_vs_nvcc_pct": 0.2265,
+   "frontend_s": 0.04337,
+   "nvcc_s": 16.6366,
+   "total_s": 16.6799,
+   "compile_overhead_pct": 0.26,
+   "overhead_vs_nvcc_pct": 0.2607,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.02275,
-   "nvcc_s_min": 10.35,
-   "nvcc_s_spread_pct": 0.03
+   "frontend_s_min": 0.04245,
+   "nvcc_s_min": 16.4275,
+   "nvcc_s_spread_pct": 2.84
   },
   {
    "toolchain": "choreo",
@@ -923,58 +1050,58 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.02206,
-    0.02274,
-    0.02275,
-    0.02167,
-    0.02203
+    0.04076,
+    0.04023,
+    0.04248,
+    0.04044,
+    0.04175
    ],
    "nvcc_s_samples": [
-    10.512,
-    10.194,
-    10.407
+    16.915,
+    17.073,
+    16.347
    ],
    "ok": true,
-   "frontend_s": 0.02206,
-   "nvcc_s": 10.4071,
-   "total_s": 10.4291,
-   "compile_overhead_pct": 0.2115,
-   "overhead_vs_nvcc_pct": 0.212,
+   "frontend_s": 0.04076,
+   "nvcc_s": 16.9148,
+   "total_s": 16.9555,
+   "compile_overhead_pct": 0.2404,
+   "overhead_vs_nvcc_pct": 0.241,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.02167,
-   "nvcc_s_min": 10.1941,
-   "nvcc_s_spread_pct": 3.06
+   "frontend_s_min": 0.04023,
+   "nvcc_s_min": 16.3475,
+   "nvcc_s_spread_pct": 4.29
   },
   {
    "toolchain": "choreo",
    "category": "matmul",
    "kernel_id": "matmul/10_dynamic_128x1280_1280xN_128xN",
-   "kernel_hash": "bc33893a6e95",
+   "kernel_hash": "ae54a1dd52e9",
    "settings_hash": "ba2aa2b58125",
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.00934,
-    0.01058,
-    0.00989,
-    0.00986,
-    0.00913
+    0.01974,
+    0.01883,
+    0.0189,
+    0.01887,
+    0.01893
    ],
    "nvcc_s_samples": [
-    11.445,
-    11.186,
-    11.376
+    18.284,
+    18.678,
+    18.521
    ],
    "ok": true,
-   "frontend_s": 0.00986,
-   "nvcc_s": 11.3759,
-   "total_s": 11.3857,
-   "compile_overhead_pct": 0.0866,
-   "overhead_vs_nvcc_pct": 0.0867,
+   "frontend_s": 0.0189,
+   "nvcc_s": 18.5212,
+   "total_s": 18.5401,
+   "compile_overhead_pct": 0.1019,
+   "overhead_vs_nvcc_pct": 0.102,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.00913,
-   "nvcc_s_min": 11.1862,
-   "nvcc_s_spread_pct": 2.28
+   "frontend_s_min": 0.01883,
+   "nvcc_s_min": 18.2845,
+   "nvcc_s_spread_pct": 2.12
   },
   {
    "toolchain": "choreo",
@@ -985,89 +1112,89 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.00922,
-    0.00967,
-    0.00926,
-    0.00979,
-    0.00974
+    0.01575,
+    0.01454,
+    0.01467,
+    0.01488,
+    0.01505
    ],
    "nvcc_s_samples": [
-    13.689,
-    13.004,
-    12.291
+    19.496,
+    19.883,
+    19.628
    ],
    "ok": true,
-   "frontend_s": 0.00967,
-   "nvcc_s": 13.0045,
-   "total_s": 13.0142,
-   "compile_overhead_pct": 0.0743,
-   "overhead_vs_nvcc_pct": 0.0743,
+   "frontend_s": 0.01488,
+   "nvcc_s": 19.6282,
+   "total_s": 19.6431,
+   "compile_overhead_pct": 0.0758,
+   "overhead_vs_nvcc_pct": 0.0758,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.00922,
-   "nvcc_s_min": 12.2908,
-   "nvcc_s_spread_pct": 10.75
+   "frontend_s_min": 0.01454,
+   "nvcc_s_min": 19.4964,
+   "nvcc_s_spread_pct": 1.97
   },
   {
    "toolchain": "choreo",
    "category": "max_pool2d",
    "kernel_id": "max_pool2d/10_dynamic_32xCxHxW_32xCxHd5xWd5",
-   "kernel_hash": "9bea677e256b",
+   "kernel_hash": "7115790ec5c4",
    "settings_hash": "1f5436bfab1f",
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.02579,
-    0.02662,
-    0.02598,
-    0.02594,
-    0.02606
+    0.07225,
+    0.06588,
+    0.06552,
+    0.06504,
+    0.06686
    ],
    "nvcc_s_samples": [
-    10.911,
-    10.823,
-    10.851
+    17.332,
+    17.728,
+    17.786
    ],
    "ok": true,
-   "frontend_s": 0.02598,
-   "nvcc_s": 10.8511,
-   "total_s": 10.8771,
-   "compile_overhead_pct": 0.2389,
-   "overhead_vs_nvcc_pct": 0.2395,
+   "frontend_s": 0.06588,
+   "nvcc_s": 17.7284,
+   "total_s": 17.7943,
+   "compile_overhead_pct": 0.3702,
+   "overhead_vs_nvcc_pct": 0.3716,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.02579,
-   "nvcc_s_min": 10.8233,
-   "nvcc_s_spread_pct": 0.81
+   "frontend_s_min": 0.06504,
+   "nvcc_s_min": 17.3316,
+   "nvcc_s_spread_pct": 2.56
   },
   {
    "toolchain": "choreo",
    "category": "max_pool2d",
    "kernel_id": "max_pool2d/14_efficientnet_64x1280x14x14_64x1280x7x7",
-   "kernel_hash": "3532bee24440",
+   "kernel_hash": "fead4732ba4a",
    "settings_hash": "1f5436bfab1f",
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.02907,
-    0.02876,
-    0.02904,
-    0.02925,
-    0.02907
+    0.06132,
+    0.06455,
+    0.06282,
+    0.06728,
+    0.06158
    ],
    "nvcc_s_samples": [
-    10.481,
-    10.499,
-    10.487
+    18.757,
+    17.785,
+    18.253
    ],
    "ok": true,
-   "frontend_s": 0.02907,
-   "nvcc_s": 10.4867,
-   "total_s": 10.5158,
-   "compile_overhead_pct": 0.2764,
-   "overhead_vs_nvcc_pct": 0.2772,
+   "frontend_s": 0.06282,
+   "nvcc_s": 18.2528,
+   "total_s": 18.3157,
+   "compile_overhead_pct": 0.343,
+   "overhead_vs_nvcc_pct": 0.3442,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.02876,
-   "nvcc_s_min": 10.4806,
-   "nvcc_s_spread_pct": 0.17
+   "frontend_s_min": 0.06132,
+   "nvcc_s_min": 17.7852,
+   "nvcc_s_spread_pct": 5.33
   },
   {
    "toolchain": "choreo",
@@ -1078,27 +1205,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.01371,
-    0.01435,
-    0.0128,
-    0.01347,
-    0.01367
+    0.02168,
+    0.02099,
+    0.02317,
+    0.0209,
+    0.0213
    ],
    "nvcc_s_samples": [
-    9.114,
-    9.149,
-    9.11
+    17.443,
+    16.942,
+    17.406
    ],
    "ok": true,
-   "frontend_s": 0.01367,
-   "nvcc_s": 9.114,
-   "total_s": 9.1277,
-   "compile_overhead_pct": 0.1498,
-   "overhead_vs_nvcc_pct": 0.15,
+   "frontend_s": 0.0213,
+   "nvcc_s": 17.4064,
+   "total_s": 17.4277,
+   "compile_overhead_pct": 0.1222,
+   "overhead_vs_nvcc_pct": 0.1224,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.0128,
-   "nvcc_s_min": 9.11,
-   "nvcc_s_spread_pct": 0.43
+   "frontend_s_min": 0.0209,
+   "nvcc_s_min": 16.9415,
+   "nvcc_s_spread_pct": 2.88
   },
   {
    "toolchain": "choreo",
@@ -1109,27 +1236,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.01381,
-    0.01472,
-    0.01423,
-    0.01422,
-    0.01424
+    0.02369,
+    0.02253,
+    0.02209,
+    0.02272,
+    0.02233
    ],
    "nvcc_s_samples": [
-    10.677,
-    10.694,
-    10.716
+    17.885,
+    17.982,
+    16.967
    ],
    "ok": true,
-   "frontend_s": 0.01423,
-   "nvcc_s": 10.6935,
-   "total_s": 10.7078,
-   "compile_overhead_pct": 0.1329,
-   "overhead_vs_nvcc_pct": 0.1331,
+   "frontend_s": 0.02253,
+   "nvcc_s": 17.8848,
+   "total_s": 17.9073,
+   "compile_overhead_pct": 0.1258,
+   "overhead_vs_nvcc_pct": 0.126,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.01381,
-   "nvcc_s_min": 10.6774,
-   "nvcc_s_spread_pct": 0.37
+   "frontend_s_min": 0.02209,
+   "nvcc_s_min": 16.9675,
+   "nvcc_s_spread_pct": 5.67
   },
   {
    "toolchain": "choreo",
@@ -1140,27 +1267,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.01731,
-    0.01789,
-    0.01745,
-    0.01733,
-    0.01761
+    0.02665,
+    0.02717,
+    0.02615,
+    0.02654,
+    0.03624
    ],
    "nvcc_s_samples": [
-    11.141,
-    11.144,
-    11.155
+    17.812,
+    18.198,
+    17.984
    ],
    "ok": true,
-   "frontend_s": 0.01745,
-   "nvcc_s": 11.1444,
-   "total_s": 11.1619,
-   "compile_overhead_pct": 0.1564,
-   "overhead_vs_nvcc_pct": 0.1566,
+   "frontend_s": 0.02665,
+   "nvcc_s": 17.9836,
+   "total_s": 18.0102,
+   "compile_overhead_pct": 0.148,
+   "overhead_vs_nvcc_pct": 0.1482,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.01731,
-   "nvcc_s_min": 11.141,
-   "nvcc_s_spread_pct": 0.12
+   "frontend_s_min": 0.02615,
+   "nvcc_s_min": 17.8118,
+   "nvcc_s_spread_pct": 2.15
   },
   {
    "toolchain": "choreo",
@@ -1171,27 +1298,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.0169,
-    0.0171,
-    0.01694,
-    0.0169,
-    0.01731
+    0.02442,
+    0.02462,
+    0.02398,
+    0.0251,
+    0.02547
    ],
    "nvcc_s_samples": [
-    11.281,
-    9.885,
-    9.85
+    18.586,
+    18.849,
+    19.104
    ],
    "ok": true,
-   "frontend_s": 0.01694,
-   "nvcc_s": 9.8847,
-   "total_s": 9.9017,
-   "compile_overhead_pct": 0.1711,
-   "overhead_vs_nvcc_pct": 0.1713,
+   "frontend_s": 0.02462,
+   "nvcc_s": 18.8485,
+   "total_s": 18.8731,
+   "compile_overhead_pct": 0.1305,
+   "overhead_vs_nvcc_pct": 0.1306,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.0169,
-   "nvcc_s_min": 9.8497,
-   "nvcc_s_spread_pct": 14.47
+   "frontend_s_min": 0.02398,
+   "nvcc_s_min": 18.5862,
+   "nvcc_s_spread_pct": 2.74
   },
   {
    "toolchain": "choreo",
@@ -1202,27 +1329,58 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.00682,
-    0.00739,
-    0.0069,
-    0.00681,
-    0.00618
+    0.00835,
+    0.01153,
+    0.0082,
+    0.0084,
+    0.00932
    ],
    "nvcc_s_samples": [
-    8.698,
-    8.742,
-    8.712
+    16.12,
+    16.45,
+    16.93
    ],
    "ok": true,
-   "frontend_s": 0.00682,
-   "nvcc_s": 8.7116,
-   "total_s": 8.7185,
-   "compile_overhead_pct": 0.0782,
-   "overhead_vs_nvcc_pct": 0.0783,
+   "frontend_s": 0.0084,
+   "nvcc_s": 16.4497,
+   "total_s": 16.4581,
+   "compile_overhead_pct": 0.0511,
+   "overhead_vs_nvcc_pct": 0.0511,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.00618,
-   "nvcc_s_min": 8.6977,
-   "nvcc_s_spread_pct": 0.51
+   "frontend_s_min": 0.0082,
+   "nvcc_s_min": 16.1202,
+   "nvcc_s_spread_pct": 4.92
+  },
+  {
+   "toolchain": "choreo",
+   "category": "reshape",
+   "kernel_id": "reshape/14_efficientnet_64x1280x7x7_64x62720",
+   "kernel_hash": "fbf597590d40",
+   "settings_hash": "fc1e3097da54",
+   "fe_reps": 5,
+   "nvcc_reps": 3,
+   "frontend_s_samples": [
+    0.00718,
+    0.00697,
+    0.00813,
+    0.00758,
+    0.0078
+   ],
+   "nvcc_s_samples": [
+    25.201,
+    24.896,
+    25.266
+   ],
+   "ok": true,
+   "frontend_s": 0.00758,
+   "nvcc_s": 25.2006,
+   "total_s": 25.2082,
+   "compile_overhead_pct": 0.0301,
+   "overhead_vs_nvcc_pct": 0.0301,
+   "bucket": "<0.5%",
+   "frontend_s_min": 0.00697,
+   "nvcc_s_min": 24.8956,
+   "nvcc_s_spread_pct": 1.47
   },
   {
    "toolchain": "choreo",
@@ -1233,27 +1391,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.01251,
-    0.01384,
-    0.01303,
-    0.01276,
-    0.01295
+    0.02075,
+    0.01856,
+    0.02284,
+    0.02069,
+    0.02158
    ],
    "nvcc_s_samples": [
-    11.692,
-    11.581,
-    11.001
+    18.556,
+    18.596,
+    18.838
    ],
    "ok": true,
-   "frontend_s": 0.01295,
-   "nvcc_s": 11.5806,
-   "total_s": 11.5935,
-   "compile_overhead_pct": 0.1117,
-   "overhead_vs_nvcc_pct": 0.1118,
+   "frontend_s": 0.02075,
+   "nvcc_s": 18.5964,
+   "total_s": 18.6172,
+   "compile_overhead_pct": 0.1114,
+   "overhead_vs_nvcc_pct": 0.1116,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.01251,
-   "nvcc_s_min": 11.0009,
-   "nvcc_s_spread_pct": 5.97
+   "frontend_s_min": 0.01856,
+   "nvcc_s_min": 18.5557,
+   "nvcc_s_spread_pct": 1.52
   },
   {
    "toolchain": "choreo",
@@ -1264,27 +1422,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.01129,
-    0.01166,
-    0.01151,
-    0.01154,
-    0.0115
+    0.01562,
+    0.01632,
+    0.01635,
+    0.01618,
+    0.01615
    ],
    "nvcc_s_samples": [
-    10.783,
-    10.704,
-    10.778
+    17.732,
+    17.151,
+    17.29
    ],
    "ok": true,
-   "frontend_s": 0.01151,
-   "nvcc_s": 10.7775,
-   "total_s": 10.7891,
-   "compile_overhead_pct": 0.1067,
-   "overhead_vs_nvcc_pct": 0.1068,
+   "frontend_s": 0.01618,
+   "nvcc_s": 17.2903,
+   "total_s": 17.3064,
+   "compile_overhead_pct": 0.0935,
+   "overhead_vs_nvcc_pct": 0.0936,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.01129,
-   "nvcc_s_min": 10.7037,
-   "nvcc_s_spread_pct": 0.74
+   "frontend_s_min": 0.01562,
+   "nvcc_s_min": 17.1511,
+   "nvcc_s_spread_pct": 3.36
   },
   {
    "toolchain": "choreo",
@@ -1295,27 +1453,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.02944,
-    0.03087,
-    0.03094,
-    0.0311,
-    0.03096
+    0.06825,
+    0.06707,
+    0.06866,
+    0.07538,
+    0.07065
    ],
    "nvcc_s_samples": [
-    10.833,
-    10.851,
-    10.771
+    17.719,
+    17.391,
+    17.199
    ],
    "ok": true,
-   "frontend_s": 0.03094,
-   "nvcc_s": 10.8326,
-   "total_s": 10.8635,
-   "compile_overhead_pct": 0.2848,
-   "overhead_vs_nvcc_pct": 0.2856,
+   "frontend_s": 0.06866,
+   "nvcc_s": 17.3913,
+   "total_s": 17.4599,
+   "compile_overhead_pct": 0.3933,
+   "overhead_vs_nvcc_pct": 0.3948,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.02944,
-   "nvcc_s_min": 10.7715,
-   "nvcc_s_spread_pct": 0.74
+   "frontend_s_min": 0.06707,
+   "nvcc_s_min": 17.1992,
+   "nvcc_s_spread_pct": 2.99
   },
   {
    "toolchain": "choreo",
@@ -1326,27 +1484,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.02721,
-    0.02693,
-    0.0268,
-    0.02693,
-    0.02679
+    0.0556,
+    0.05744,
+    0.05604,
+    0.05536,
+    0.05472
    ],
    "nvcc_s_samples": [
-    13.645,
-    13.697,
-    13.662
+    23.446,
+    23.099,
+    22.931
    ],
    "ok": true,
-   "frontend_s": 0.02693,
-   "nvcc_s": 13.6619,
-   "total_s": 13.6888,
-   "compile_overhead_pct": 0.1967,
-   "overhead_vs_nvcc_pct": 0.1971,
+   "frontend_s": 0.0556,
+   "nvcc_s": 23.099,
+   "total_s": 23.1546,
+   "compile_overhead_pct": 0.2401,
+   "overhead_vs_nvcc_pct": 0.2407,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.02679,
-   "nvcc_s_min": 13.6449,
-   "nvcc_s_spread_pct": 0.38
+   "frontend_s_min": 0.05472,
+   "nvcc_s_min": 22.9309,
+   "nvcc_s_spread_pct": 2.23
   },
   {
    "toolchain": "choreo",
@@ -1357,27 +1515,27 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.00861,
-    0.00893,
-    0.00875,
-    0.00781,
-    0.00897
+    0.01358,
+    0.01354,
+    0.01301,
+    0.01267,
+    0.01342
    ],
    "nvcc_s_samples": [
-    10.425,
-    10.434,
-    10.477
+    16.985,
+    16.958,
+    16.448
    ],
    "ok": true,
-   "frontend_s": 0.00875,
-   "nvcc_s": 10.4341,
-   "total_s": 10.4429,
-   "compile_overhead_pct": 0.0838,
-   "overhead_vs_nvcc_pct": 0.0839,
+   "frontend_s": 0.01342,
+   "nvcc_s": 16.9578,
+   "total_s": 16.9712,
+   "compile_overhead_pct": 0.0791,
+   "overhead_vs_nvcc_pct": 0.0791,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.00781,
-   "nvcc_s_min": 10.4253,
-   "nvcc_s_spread_pct": 0.5
+   "frontend_s_min": 0.01267,
+   "nvcc_s_min": 16.4479,
+   "nvcc_s_spread_pct": 3.17
   },
   {
    "toolchain": "choreo",
@@ -1388,71 +1546,28 @@
    "fe_reps": 5,
    "nvcc_reps": 3,
    "frontend_s_samples": [
-    0.00814,
-    0.00897,
-    0.00837,
-    0.00786,
-    0.00859
+    0.01344,
+    0.01301,
+    0.01218,
+    0.01243,
+    0.01238
    ],
    "nvcc_s_samples": [
-    10.488,
-    10.548,
-    10.522
+    16.928,
+    17.046,
+    17.159
    ],
    "ok": true,
-   "frontend_s": 0.00837,
-   "nvcc_s": 10.5219,
-   "total_s": 10.5303,
-   "compile_overhead_pct": 0.0794,
-   "overhead_vs_nvcc_pct": 0.0795,
+   "frontend_s": 0.01243,
+   "nvcc_s": 17.0459,
+   "total_s": 17.0583,
+   "compile_overhead_pct": 0.0729,
+   "overhead_vs_nvcc_pct": 0.0729,
    "bucket": "<0.5%",
-   "frontend_s_min": 0.00786,
-   "nvcc_s_min": 10.4876,
-   "nvcc_s_spread_pct": 0.57
+   "frontend_s_min": 0.01218,
+   "nvcc_s_min": 16.9283,
+   "nvcc_s_spread_pct": 1.35
   }
  ],
- "failures": [
-  {
-   "toolchain": "choreo",
-   "category": "conv2d",
-   "kernel_id": "conv2d/10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
-   "kernel_hash": "d434e35e9aee",
-   "settings_hash": "28fee96c8330",
-   "fe_reps": 5,
-   "nvcc_reps": 3,
-   "frontend_s_samples": [
-    0.05952,
-    0.06002,
-    0.05987,
-    0.06019,
-    0.06042
-   ],
-   "nvcc_s_samples": [
-    3.249
-   ],
-   "ok": false,
-   "error": "nvcc rc=2: t<long long>(stride) + 1LL) < 4294967296LL), \"On SM_86, must satisfy: CeilTo128Byte(bpe * dst dim0) * dim1 * dim2 * dim3 * dim4 < 4GB., /home/garfee/croq-paper-plan/svn/svn-artifacts/benchmark2/choreo/raw/e4_logs/conv2d_10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D/k.co:50.60\");\n  ^\n\n27 errors detected in the compilation of \"/tmp/1788921121027465177_124461997696832/__choreo_cute_k.cu\".\n"
-  },
-  {
-   "toolchain": "choreo",
-   "category": "reshape",
-   "kernel_id": "reshape/14_efficientnet_64x1280x7x7_64x62720",
-   "kernel_hash": "4f3494350bcd",
-   "settings_hash": "fc1e3097da54",
-   "fe_reps": 5,
-   "nvcc_reps": 3,
-   "frontend_s_samples": [
-    0.00545,
-    0.00588,
-    0.00588,
-    0.00565,
-    0.00594
-   ],
-   "nvcc_s_samples": [
-    3.266
-   ],
-   "ok": false,
-   "error": "nvcc rc=2: \n\n/tmp/1788922355113723252_139814884771648/__choreo_cute_k.cu(36): error: explicit type is missing (\"int\" assumed)\n  __syncthreads();\n  ^\n\n/tmp/1788922355113723252_139814884771648/__choreo_cute_k.cu(36): error: cannot overload functions distinguished by return type alone\n  __syncthreads();\n  ^\n\n15 errors detected in the compilation of \"/tmp/1788922355113723252_139814884771648/__choreo_cute_k.cu\".\n"
-  }
- ]
+ "failures": []
 }

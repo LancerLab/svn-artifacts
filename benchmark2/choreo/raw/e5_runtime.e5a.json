@@ -1,6 +1,6 @@
 {
  "toolchain": "choreo",
- "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+ "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
  "produced_by": "e5",
  "partial": "e5a-only",
  "size": "small",
@@ -8,7 +8,7 @@
  "exclusive": true,
  "reps": 5,
  "elapsed_s": {
-  "e5a": 1595.9
+  "e5a": 2785.4
  },
  "host_contended": [],
  "residue_records": [
@@ -17,42 +17,44 @@
    "category": "batch_norm",
    "kernel_id": "batch_norm/10_dynamic_16x512xHxW_512_512_16x512xHxW",
    "checks": "on",
-   "runtime_ms": 344.983,
+   "runtime_ms": 301.785,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 9,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 862,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 8,
+    "mem_used_mib": 433,
+    "temp_c": 38,
     "compute_apps": []
    },
-   "clock_drift_mhz": 1410,
+   "clock_drift_mhz": -210,
    "settings_hash": "45f6e81d94c0",
    "kernel_hash": "9a93c7dbc6fe",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    371.863,
-    347.387,
-    343.578,
-    338.033,
-    344.983
+    321.539,
+    305.409,
+    287.573,
+    294.825,
+    301.785
    ],
-   "spread_pct": 9.81,
+   "spread_pct": 11.26,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 64,
+    "device_body_lines": 54,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 6
+    "host_gated_checks": 8
    },
    "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
   },
@@ -61,37 +63,177 @@
    "category": "batch_norm",
    "kernel_id": "batch_norm/10_dynamic_16x512xHxW_512_512_16x512xHxW",
    "checks": "off",
-   "runtime_ms": 345.214,
+   "runtime_ms": 294.248,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 9,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 862,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 8,
+    "mem_used_mib": 433,
+    "temp_c": 38,
     "compute_apps": []
    },
-   "clock_drift_mhz": 1410,
+   "clock_drift_mhz": -210,
    "settings_hash": "45f6e81d94c0",
    "kernel_hash": "9a93c7dbc6fe",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    374.532,
-    345.214,
-    349.178,
-    343.81,
-    341.468
+    341.176,
+    282.059,
+    281.216,
+    294.248,
+    294.844
    ],
-   "spread_pct": 9.58,
+   "spread_pct": 20.38,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 64,
+    "device_body_lines": 54,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 8
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "concat",
+   "kernel_id": "concat/10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW",
+   "checks": "on",
+   "runtime_ms": 277.281,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 562,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 14,
+    "mem_used_mib": 432,
+    "temp_c": 37,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": -300,
+   "settings_hash": "55b2395980bd",
+   "kernel_hash": "bd91d2c3f228",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    1973.642,
+    293.179,
+    227.426,
+    277.281,
+    272.185
+   ],
+   "spread_pct": 629.76,
+   "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 96,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 8
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "concat",
+   "kernel_id": "concat/10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW",
+   "checks": "off",
+   "runtime_ms": 286.631,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 562,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 14,
+    "mem_used_mib": 432,
+    "temp_c": 37,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": -300,
+   "settings_hash": "55b2395980bd",
+   "kernel_hash": "bd91d2c3f228",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    1900.629,
+    236.321,
+    293.217,
+    286.631,
+    275.062
+   ],
+   "spread_pct": 580.64,
+   "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 96,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 8
+   },
+   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
+  },
+  {
+   "toolchain": "choreo",
+   "category": "dma_rank5",
+   "kernel_id": "dma_rank5/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "checks": "on",
+   "runtime_ms": 1574.051,
+   "gpu_device": "0",
+   "exclusive": true,
+   "gpu_snapshot": {
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 409,
+    "temp_c": 39,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 158,
+   "settings_hash": "6ba7925e0a5a",
+   "kernel_hash": "0626417858aa",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
+   "shape_class": "dynamic",
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "samples_ms": [
+    2461.671,
+    1528.667,
+    1554.02,
+    1574.051,
+    1582.614
+   ],
+   "spread_pct": 59.27,
+   "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 82,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
@@ -102,89 +244,47 @@
   },
   {
    "toolchain": "choreo",
-   "category": "concat",
-   "kernel_id": "concat/10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW",
-   "checks": "on",
-   "runtime_ms": 352.146,
-   "gpu_device": "0",
-   "exclusive": true,
-   "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 6,
-    "mem_used_mib": 14,
-    "temp_c": 39,
-    "compute_apps": []
-   },
-   "clock_drift_mhz": 0,
-   "settings_hash": "55b2395980bd",
-   "kernel_hash": "bd91d2c3f228",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
-   "shape_class": "dynamic",
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "samples_ms": [
-    1382.326,
-    352.146,
-    341.528,
-    345.339,
-    515.24
-   ],
-   "spread_pct": 295.56,
-   "reps": 5,
-   "device_code": {
-    "device_identical": true,
-    "device_body_lines": 103,
-    "device_check_calls": {
-     "runtime_check": 0,
-     "choreo_assert": 0
-    },
-    "host_gated_checks": 8
-   },
-   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
-  },
-  {
-   "toolchain": "choreo",
-   "category": "concat",
-   "kernel_id": "concat/10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW",
+   "category": "dma_rank5",
+   "kernel_id": "dma_rank5/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
    "checks": "off",
-   "runtime_ms": 347.256,
+   "runtime_ms": 1577.903,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 6,
-    "mem_used_mib": 14,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 409,
     "temp_c": 39,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
-   "settings_hash": "55b2395980bd",
-   "kernel_hash": "bd91d2c3f228",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "clock_drift_mhz": 158,
+   "settings_hash": "6ba7925e0a5a",
+   "kernel_hash": "0626417858aa",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    1149.605,
-    344.874,
-    345.359,
-    358.658,
-    347.256
+    2558.986,
+    1577.903,
+    1547.972,
+    1531.097,
+    1579.38
    ],
-   "spread_pct": 231.74,
+   "spread_pct": 65.14,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 103,
+    "device_body_lines": 82,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 8
+    "host_gated_checks": 6
    },
    "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
   },
@@ -193,42 +293,44 @@
    "category": "elemwise_add",
    "kernel_id": "elemwise_add/10_dynamic_16x512xHxW_16x512xHxW_16x512xHxW",
    "checks": "on",
-   "runtime_ms": 1841.816,
+   "runtime_ms": 996.9,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 408,
+    "temp_c": 39,
     "compute_apps": []
    },
-   "clock_drift_mhz": 1410,
+   "clock_drift_mhz": 0,
    "settings_hash": "8b1728850022",
    "kernel_hash": "bd41f0cc2901",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    2013.338,
-    1841.816,
-    1877.338,
-    1785.537,
-    1773.443
+    1094.439,
+    973.86,
+    997.876,
+    996.9,
+    979.772
    ],
-   "spread_pct": 13.02,
+   "spread_pct": 12.1,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 101,
+    "device_body_lines": 95,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 15
+    "host_gated_checks": 14
    },
    "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
   },
@@ -237,42 +339,44 @@
    "category": "elemwise_add",
    "kernel_id": "elemwise_add/10_dynamic_16x512xHxW_16x512xHxW_16x512xHxW",
    "checks": "off",
-   "runtime_ms": 1845.646,
+   "runtime_ms": 1008.493,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 408,
+    "temp_c": 39,
     "compute_apps": []
    },
-   "clock_drift_mhz": 1410,
+   "clock_drift_mhz": 0,
    "settings_hash": "8b1728850022",
    "kernel_hash": "bd41f0cc2901",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    1932.39,
-    1845.646,
-    1894.754,
-    1773.85,
-    1770.154
+    1098.405,
+    1010.839,
+    1008.493,
+    1005.41,
+    983.524
    ],
-   "spread_pct": 8.79,
+   "spread_pct": 11.39,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 101,
+    "device_body_lines": 95,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 15
+    "host_gated_checks": 14
    },
    "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
   },
@@ -281,42 +385,44 @@
    "category": "embedding",
    "kernel_id": "embedding/10_dynamic_32xS_Vx768_32xSx768",
    "checks": "on",
-   "runtime_ms": 411.97,
+   "runtime_ms": 314.992,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 23,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 870,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 20,
+    "mem_used_mib": 408,
+    "temp_c": 38,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": -1875,
    "settings_hash": "666bab9695c5",
    "kernel_hash": "2be858543c6b",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    899.518,
-    534.61,
-    360.515,
-    356.016,
-    411.97
+    1137.851,
+    319.635,
+    306.641,
+    308.011,
+    314.992
    ],
-   "spread_pct": 131.93,
+   "spread_pct": 263.88,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 75,
+    "device_body_lines": 71,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 7
+    "host_gated_checks": 6
    },
    "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
   },
@@ -325,42 +431,44 @@
    "category": "embedding",
    "kernel_id": "embedding/10_dynamic_32xS_Vx768_32xSx768",
    "checks": "off",
-   "runtime_ms": 503.089,
+   "runtime_ms": 307.917,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 23,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 870,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 20,
+    "mem_used_mib": 408,
+    "temp_c": 38,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": -1875,
    "settings_hash": "666bab9695c5",
    "kernel_hash": "2be858543c6b",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    831.834,
-    355.339,
-    517.351,
-    503.089,
-    351.779
+    1156.875,
+    295.089,
+    256.386,
+    317.346,
+    307.917
    ],
-   "spread_pct": 95.42,
+   "spread_pct": 292.45,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 75,
+    "device_body_lines": 71,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 7
+    "host_gated_checks": 6
    },
    "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
   },
@@ -369,37 +477,39 @@
    "category": "gelu",
    "kernel_id": "gelu/10_dynamic_16x512xHxW",
    "checks": "on",
-   "runtime_ms": 898.828,
+   "runtime_ms": 597.642,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 49,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 2190,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 27,
+    "mem_used_mib": 408,
+    "temp_c": 39,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": 1320,
    "settings_hash": "f08293b4eb9e",
    "kernel_hash": "1933492d44d1",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    804.299,
-    833.207,
-    939.934,
-    898.828,
-    913.919
+    630.551,
+    543.087,
+    600.844,
+    597.642,
+    592.793
    ],
-   "spread_pct": 15.09,
+   "spread_pct": 14.63,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 70,
+    "device_body_lines": 66,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
@@ -413,37 +523,39 @@
    "category": "gelu",
    "kernel_id": "gelu/10_dynamic_16x512xHxW",
    "checks": "off",
-   "runtime_ms": 844.572,
+   "runtime_ms": 609.302,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 49,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 2190,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 27,
+    "mem_used_mib": 408,
+    "temp_c": 39,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": 1320,
    "settings_hash": "f08293b4eb9e",
    "kernel_hash": "1933492d44d1",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    982.784,
-    775.757,
-    844.572,
-    773.075,
-    933.578
+    627.455,
+    575.147,
+    589.465,
+    609.631,
+    609.302
    ],
-   "spread_pct": 24.83,
+   "spread_pct": 8.58,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 70,
+    "device_body_lines": 66,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
@@ -457,42 +569,44 @@
    "category": "layer_normalization",
    "kernel_id": "layer_normalization/10_dynamic_16x512xHxW_HxW_HxW",
    "checks": "on",
-   "runtime_ms": 2328.421,
+   "runtime_ms": 2129.981,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 100,
+    "mem_used_mib": 408,
+    "temp_c": 40,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": 555,
    "settings_hash": "8dbff8357c9b",
    "kernel_hash": "555c63559c99",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    2365.671,
-    2194.371,
-    2352.641,
-    2155.833,
-    2328.421
+    2199.036,
+    2137.253,
+    2129.981,
+    2122.846,
+    2128.108
    ],
-   "spread_pct": 9.01,
+   "spread_pct": 3.58,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 76,
+    "device_body_lines": 65,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 12
+    "host_gated_checks": 10
    },
    "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
   },
@@ -501,42 +615,44 @@
    "category": "layer_normalization",
    "kernel_id": "layer_normalization/10_dynamic_16x512xHxW_HxW_HxW",
    "checks": "off",
-   "runtime_ms": 2155.755,
+   "runtime_ms": 2113.275,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 100,
+    "mem_used_mib": 408,
+    "temp_c": 40,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": 555,
    "settings_hash": "8dbff8357c9b",
    "kernel_hash": "555c63559c99",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    2221.967,
-    2218.561,
-    2030.755,
-    2155.755,
-    2146.48
+    2194.143,
+    2101.225,
+    2097.537,
+    2141.353,
+    2113.275
    ],
-   "spread_pct": 8.87,
+   "spread_pct": 4.57,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 76,
+    "device_body_lines": 65,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 12
+    "host_gated_checks": 10
    },
    "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
   },
@@ -545,42 +661,44 @@
    "category": "matmul",
    "kernel_id": "matmul/10_dynamic_128x1280_1280xN_128xN",
    "checks": "on",
-   "runtime_ms": 324.624,
+   "runtime_ms": 275.528,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 952,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 15,
+    "mem_used_mib": 409,
+    "temp_c": 38,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": -1793,
    "settings_hash": "ba2aa2b58125",
-   "kernel_hash": "bc33893a6e95",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "kernel_hash": "ae54a1dd52e9",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    410.545,
-    358.325,
-    324.624,
-    321.166,
-    323.136
+    423.418,
+    275.528,
+    266.859,
+    283.425,
+    267.501
    ],
-   "spread_pct": 27.53,
+   "spread_pct": 56.82,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 68,
+    "device_body_lines": 65,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 9
+    "host_gated_checks": 7
    },
    "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
   },
@@ -589,42 +707,44 @@
    "category": "matmul",
    "kernel_id": "matmul/10_dynamic_128x1280_1280xN_128xN",
    "checks": "off",
-   "runtime_ms": 380.734,
+   "runtime_ms": 291.654,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 952,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 15,
+    "mem_used_mib": 409,
+    "temp_c": 38,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": -1793,
    "settings_hash": "ba2aa2b58125",
-   "kernel_hash": "bc33893a6e95",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "kernel_hash": "ae54a1dd52e9",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    583.665,
-    318.798,
-    380.734,
-    478.701,
-    316.208
+    440.982,
+    283.172,
+    291.654,
+    291.136,
+    308.622
    ],
-   "spread_pct": 70.25,
+   "spread_pct": 54.11,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 68,
+    "device_body_lines": 65,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 9
+    "host_gated_checks": 7
    },
    "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
   },
@@ -633,42 +753,44 @@
    "category": "max_pool2d",
    "kernel_id": "max_pool2d/10_dynamic_32xCxHxW_32xCxHd5xWd5",
    "checks": "on",
-   "runtime_ms": 493.413,
+   "runtime_ms": 292.661,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 1087,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 4,
+    "mem_used_mib": 409,
+    "temp_c": 38,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": 135,
    "settings_hash": "1f5436bfab1f",
-   "kernel_hash": "9bea677e256b",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "kernel_hash": "7115790ec5c4",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    548.685,
-    495.223,
-    493.413,
-    312.803,
-    321.132
+    324.592,
+    292.661,
+    304.581,
+    289.137,
+    286.739
    ],
-   "spread_pct": 47.81,
+   "spread_pct": 12.93,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 85,
+    "device_body_lines": 80,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 17
+    "host_gated_checks": 15
    },
    "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
   },
@@ -677,42 +799,44 @@
    "category": "max_pool2d",
    "kernel_id": "max_pool2d/10_dynamic_32xCxHxW_32xCxHd5xWd5",
    "checks": "off",
-   "runtime_ms": 317.505,
+   "runtime_ms": 289.344,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 1087,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 4,
+    "mem_used_mib": 409,
+    "temp_c": 38,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": 135,
    "settings_hash": "1f5436bfab1f",
-   "kernel_hash": "9bea677e256b",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "kernel_hash": "7115790ec5c4",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    556.134,
-    317.505,
-    315.395,
-    313.594,
-    506.687
+    309.619,
+    289.344,
+    259.079,
+    294.968,
+    286.84
    ],
-   "spread_pct": 76.39,
+   "spread_pct": 17.47,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 85,
+    "device_body_lines": 80,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 17
+    "host_gated_checks": 15
    },
    "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
   },
@@ -721,37 +845,39 @@
    "category": "reduce_mean",
    "kernel_id": "reduce_mean/10_dynamic_32xSx768_32x768",
    "checks": "on",
-   "runtime_ms": 402.487,
+   "runtime_ms": 363.386,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 53,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 2617,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 5,
+    "mem_used_mib": 405,
+    "temp_c": 38,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": 1530,
    "settings_hash": "b4ee0b5faac2",
    "kernel_hash": "4f15e42bf307",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    385.45,
-    402.487,
-    560.805,
-    374.142,
-    549.773
+    375.75,
+    363.386,
+    334.928,
+    367.802,
+    349.23
    ],
-   "spread_pct": 46.38,
+   "spread_pct": 11.23,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 42,
+    "device_body_lines": 38,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
@@ -765,37 +891,39 @@
    "category": "reduce_mean",
    "kernel_id": "reduce_mean/10_dynamic_32xSx768_32x768",
    "checks": "off",
-   "runtime_ms": 373.932,
+   "runtime_ms": 357.357,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 53,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 2617,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 5,
+    "mem_used_mib": 405,
+    "temp_c": 38,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": 1530,
    "settings_hash": "b4ee0b5faac2",
    "kernel_hash": "4f15e42bf307",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    389.703,
-    368.575,
-    373.932,
-    558.433,
-    370.518
+    358.632,
+    367.552,
+    351.082,
+    357.357,
+    295.119
    ],
-   "spread_pct": 50.77,
+   "spread_pct": 20.27,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 42,
+    "device_body_lines": 38,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
@@ -809,37 +937,39 @@
    "category": "relu",
    "kernel_id": "relu/10_dynamic_16x512xHxW_16x512xHxW",
    "checks": "on",
-   "runtime_ms": 324.496,
+   "runtime_ms": 289.7,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 855,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 16,
+    "mem_used_mib": 406,
+    "temp_c": 37,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": -1762,
    "settings_hash": "7abb8bd6e718",
    "kernel_hash": "fece1067451b",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    536.193,
-    324.496,
-    501.802,
-    246.407,
-    248.913
+    362.055,
+    286.68,
+    297.339,
+    275.99,
+    289.7
    ],
-   "spread_pct": 89.3,
+   "spread_pct": 29.71,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 70,
+    "device_body_lines": 67,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
@@ -853,37 +983,39 @@
    "category": "relu",
    "kernel_id": "relu/10_dynamic_16x512xHxW_16x512xHxW",
    "checks": "off",
-   "runtime_ms": 325.746,
+   "runtime_ms": 297.305,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 855,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 16,
+    "mem_used_mib": 406,
+    "temp_c": 37,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": -1762,
    "settings_hash": "7abb8bd6e718",
    "kernel_hash": "fece1067451b",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    359.11,
-    325.746,
-    333.883,
-    325.55,
-    322.905
+    339.844,
+    300.186,
+    297.305,
+    265.863,
+    282.028
    ],
-   "spread_pct": 11.11,
+   "spread_pct": 24.88,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 70,
+    "device_body_lines": 67,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
@@ -897,34 +1029,36 @@
    "category": "reshape",
    "kernel_id": "reshape/10_dynamic_64x128xHxW_64x128HW",
    "checks": "on",
-   "runtime_ms": 651.02,
+   "runtime_ms": 672.676,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 100,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 35,
+    "mem_used_mib": 406,
+    "temp_c": 39,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": 1890,
    "settings_hash": "fc1e3097da54",
    "kernel_hash": "6397fb64f039",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    665.298,
-    663.092,
-    572.151,
-    651.02,
-    648.477
+    693.837,
+    654.641,
+    672.676,
+    695.777,
+    664.197
    ],
-   "spread_pct": 14.31,
+   "spread_pct": 6.12,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
     "device_body_lines": 16,
@@ -941,34 +1075,36 @@
    "category": "reshape",
    "kernel_id": "reshape/10_dynamic_64x128xHxW_64x128HW",
    "checks": "off",
-   "runtime_ms": 665.471,
+   "runtime_ms": 674.408,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 100,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 35,
+    "mem_used_mib": 406,
+    "temp_c": 39,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": 1890,
    "settings_hash": "fc1e3097da54",
    "kernel_hash": "6397fb64f039",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    700.508,
-    668.644,
-    645.645,
-    665.471,
-    579.111
+    676.099,
+    674.408,
+    683.124,
+    666.471,
+    669.621
    ],
-   "spread_pct": 18.24,
+   "spread_pct": 2.47,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
     "device_body_lines": 16,
@@ -985,37 +1121,39 @@
    "category": "sigmoid",
    "kernel_id": "sigmoid/10_dynamic_16x512xHxW",
    "checks": "on",
-   "runtime_ms": 514.384,
+   "runtime_ms": 305.874,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 18,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 907,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 15,
+    "mem_used_mib": 406,
+    "temp_c": 37,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": -1838,
    "settings_hash": "cfc639e6ee00",
    "kernel_hash": "5ca9a8745707",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    666.071,
-    373.696,
-    347.245,
-    717.032,
-    514.384
+    352.216,
+    303.656,
+    304.051,
+    305.874,
+    306.999
    ],
-   "spread_pct": 71.89,
+   "spread_pct": 15.88,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 72,
+    "device_body_lines": 69,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
@@ -1029,37 +1167,39 @@
    "category": "sigmoid",
    "kernel_id": "sigmoid/10_dynamic_16x512xHxW",
    "checks": "off",
-   "runtime_ms": 346.373,
+   "runtime_ms": 306.829,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 18,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 907,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 15,
+    "mem_used_mib": 406,
+    "temp_c": 37,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": -1838,
    "settings_hash": "cfc639e6ee00",
    "kernel_hash": "5ca9a8745707",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    563.036,
-    346.373,
-    273.937,
-    376.15,
-    345.53
+    325.779,
+    297.753,
+    334.66,
+    300.951,
+    306.829
    ],
-   "spread_pct": 83.46,
+   "spread_pct": 12.03,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 72,
+    "device_body_lines": 69,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
@@ -1070,133 +1210,47 @@
   },
   {
    "toolchain": "choreo",
-   "category": "softmax",
-   "kernel_id": "softmax/10_dynamic_16x512xHxW_16x512xHxW",
-   "checks": "on",
-   "runtime_ms": 492.828,
-   "gpu_device": "0",
-   "exclusive": true,
-   "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 2,
-    "mem_used_mib": 14,
-    "temp_c": 41,
-    "compute_apps": []
-   },
-   "clock_drift_mhz": 0,
-   "settings_hash": "d59f419be35e",
-   "kernel_hash": "f4f5e7ad52da",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
-   "shape_class": "dynamic",
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "samples_ms": [
-    456.923,
-    492.828,
-    603.437,
-    593.273,
-    410.591
-   ],
-   "spread_pct": 39.13,
-   "reps": 5,
-   "device_code": {
-    "device_identical": true,
-    "device_body_lines": 98,
-    "device_check_calls": {
-     "runtime_check": 0,
-     "choreo_assert": 0
-    },
-    "host_gated_checks": 13
-   },
-   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
-  },
-  {
-   "toolchain": "choreo",
-   "category": "softmax",
-   "kernel_id": "softmax/10_dynamic_16x512xHxW_16x512xHxW",
-   "checks": "off",
-   "runtime_ms": 372.052,
-   "gpu_device": "0",
-   "exclusive": true,
-   "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 2,
-    "mem_used_mib": 14,
-    "temp_c": 41,
-    "compute_apps": []
-   },
-   "clock_drift_mhz": 0,
-   "settings_hash": "d59f419be35e",
-   "kernel_hash": "f4f5e7ad52da",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
-   "shape_class": "dynamic",
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "samples_ms": [
-    422.005,
-    372.052,
-    371.331,
-    418.771,
-    368.746
-   ],
-   "spread_pct": 14.31,
-   "reps": 5,
-   "device_code": {
-    "device_identical": true,
-    "device_body_lines": 98,
-    "device_check_calls": {
-     "runtime_check": 0,
-     "choreo_assert": 0
-    },
-    "host_gated_checks": 13
-   },
-   "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
-  },
-  {
-   "toolchain": "choreo",
    "category": "transpose",
    "kernel_id": "transpose/10_dynamic_16x512xHxW_16xHxWx512",
    "checks": "on",
-   "runtime_ms": 692.708,
+   "runtime_ms": 481.754,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 405,
+    "temp_c": 39,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": 1725,
    "settings_hash": "df847a35dd4b",
    "kernel_hash": "de367c3c459c",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    696.204,
-    427.804,
-    757.641,
-    508.664,
-    692.708
+    508.204,
+    464.329,
+    474.261,
+    483.032,
+    481.754
    ],
-   "spread_pct": 47.62,
+   "spread_pct": 9.11,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 22,
+    "device_body_lines": 19,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 4
+    "host_gated_checks": 6
    },
    "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
   },
@@ -1205,42 +1259,44 @@
    "category": "transpose",
    "kernel_id": "transpose/10_dynamic_16x512xHxW_16xHxWx512",
    "checks": "off",
-   "runtime_ms": 547.03,
+   "runtime_ms": 478.74,
    "gpu_device": "0",
    "exclusive": true,
    "gpu_snapshot": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 405,
+    "temp_c": 39,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
+   "clock_drift_mhz": 1725,
    "settings_hash": "df847a35dd4b",
    "kernel_hash": "de367c3c459c",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "shape_class": "dynamic",
    "timing_source": [
     "kernel-marker"
    ],
    "samples_ms": [
-    569.992,
-    511.068,
-    547.03,
-    697.852,
-    512.711
+    514.128,
+    488.039,
+    478.74,
+    470.106,
+    477.716
    ],
-   "spread_pct": 34.15,
+   "spread_pct": 9.2,
    "reps": 5,
+   "launch_ok": true,
+   "launch_reps_ok": 5,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 22,
+    "device_body_lines": 19,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 4
+    "host_gated_checks": 6
    },
    "definition": "residue A/B: same kernel compiled twice, checks-on = choreo default (measured byte-identical to -rtc=entry and -rtc=low) vs checks-off = --disable-runtime-check (the plan's `--runtime-checks off`, manifest \u00a73; byte-identical to -rtc=none, and preferred over -zero-cost which also drops the unrelated CUDA env check). runtime_ms from the kernel's own `Execution time` marker where present, else process wall-clock; see timing_source."
   }
@@ -1253,74 +1309,79 @@
    "shape_class": "dynamic",
    "settings_hash": "45f6e81d94c0",
    "kernel_hash": "9a93c7dbc6fe",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "gpu_device": "0",
    "exclusive": true,
    "reps": 5,
    "gpu_snapshot_before": {
-    "sm_clock_mhz": 345,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 39,
+    "sm_clock_mhz": 1072,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 3,
+    "mem_used_mib": 433,
+    "temp_c": 38,
     "compute_apps": []
    },
    "gpu_snapshot_after": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 9,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 862,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 8,
+    "mem_used_mib": 433,
+    "temp_c": 38,
     "compute_apps": []
    },
-   "clock_drift_mhz": 1410,
-   "ok": true,
-   "checks_on": {
-    "runtime_ms": 344.983,
-    "samples_ms": [
-     371.863,
-     347.387,
-     343.578,
-     338.033,
-     344.983
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 9.81
-   },
-   "checks_off": {
-    "runtime_ms": 345.214,
-    "samples_ms": [
-     374.532,
-     345.214,
-     349.178,
-     343.81,
-     341.468
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 9.58
-   },
-   "delta_ms": -0.231,
-   "delta_pct": -0.067,
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "delta_within_noise": true,
-   "arm_spread_pct": 9.81,
+   "clock_drift_mhz": -210,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 64,
+    "device_body_lines": 54,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 6
-   }
+    "host_gated_checks": 8
+   },
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 301.785,
+    "samples_ms": [
+     321.539,
+     305.409,
+     287.573,
+     294.825,
+     301.785
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 11.26
+   },
+   "checks_off": {
+    "runtime_ms": 294.248,
+    "samples_ms": [
+     341.176,
+     282.059,
+     281.216,
+     294.248,
+     294.844
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 20.38
+   },
+   "delta_ms": 7.537,
+   "delta_pct": 2.561,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 20.38,
+   "launch_ok": true
   },
   {
    "toolchain": "choreo",
@@ -1329,74 +1390,160 @@
    "shape_class": "dynamic",
    "settings_hash": "55b2395980bd",
    "kernel_hash": "bd91d2c3f228",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "gpu_device": "0",
    "exclusive": true,
    "reps": 5,
    "gpu_snapshot_before": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 9,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 862,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 8,
+    "mem_used_mib": 433,
+    "temp_c": 38,
     "compute_apps": []
    },
    "gpu_snapshot_after": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 6,
-    "mem_used_mib": 14,
-    "temp_c": 39,
+    "sm_clock_mhz": 562,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 14,
+    "mem_used_mib": 432,
+    "temp_c": 37,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
-   "ok": true,
-   "checks_on": {
-    "runtime_ms": 352.146,
-    "samples_ms": [
-     1382.326,
-     352.146,
-     341.528,
-     345.339,
-     515.24
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 295.56
-   },
-   "checks_off": {
-    "runtime_ms": 347.256,
-    "samples_ms": [
-     1149.605,
-     344.874,
-     345.359,
-     358.658,
-     347.256
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 231.74
-   },
-   "delta_ms": 4.89,
-   "delta_pct": 1.408,
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "delta_within_noise": true,
-   "arm_spread_pct": 295.56,
+   "clock_drift_mhz": -300,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 103,
+    "device_body_lines": 96,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
     "host_gated_checks": 8
-   }
+   },
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 277.281,
+    "samples_ms": [
+     1973.642,
+     293.179,
+     227.426,
+     277.281,
+     272.185
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 629.76
+   },
+   "checks_off": {
+    "runtime_ms": 286.631,
+    "samples_ms": [
+     1900.629,
+     236.321,
+     293.217,
+     286.631,
+     275.062
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 580.64
+   },
+   "delta_ms": -9.35,
+   "delta_pct": -3.262,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 629.76,
+   "launch_ok": true
+  },
+  {
+   "toolchain": "choreo",
+   "category": "dma_rank5",
+   "kernel_id": "dma_rank5/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "shape_class": "dynamic",
+   "settings_hash": "6ba7925e0a5a",
+   "kernel_hash": "0626417858aa",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "gpu_snapshot_before": {
+    "sm_clock_mhz": 2587,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 43,
+    "mem_used_mib": 432,
+    "temp_c": 39,
+    "compute_apps": []
+   },
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 409,
+    "temp_c": 39,
+    "compute_apps": []
+   },
+   "clock_drift_mhz": 158,
+   "device_code": {
+    "device_identical": true,
+    "device_body_lines": 82,
+    "device_check_calls": {
+     "runtime_check": 0,
+     "choreo_assert": 0
+    },
+    "host_gated_checks": 6
+   },
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 1574.051,
+    "samples_ms": [
+     2461.671,
+     1528.667,
+     1554.02,
+     1574.051,
+     1582.614
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 59.27
+   },
+   "checks_off": {
+    "runtime_ms": 1577.903,
+    "samples_ms": [
+     2558.986,
+     1577.903,
+     1547.972,
+     1531.097,
+     1579.38
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 65.14
+   },
+   "delta_ms": -3.852,
+   "delta_pct": -0.244,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 65.14,
+   "launch_ok": true
   },
   {
    "toolchain": "choreo",
@@ -1405,74 +1552,79 @@
    "shape_class": "dynamic",
    "settings_hash": "8b1728850022",
    "kernel_hash": "bd41f0cc2901",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "gpu_device": "0",
    "exclusive": true,
    "reps": 5,
    "gpu_snapshot_before": {
-    "sm_clock_mhz": 345,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 409,
     "temp_c": 39,
     "compute_apps": []
    },
    "gpu_snapshot_after": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 408,
+    "temp_c": 39,
     "compute_apps": []
    },
-   "clock_drift_mhz": 1410,
-   "ok": true,
-   "checks_on": {
-    "runtime_ms": 1841.816,
-    "samples_ms": [
-     2013.338,
-     1841.816,
-     1877.338,
-     1785.537,
-     1773.443
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 13.02
-   },
-   "checks_off": {
-    "runtime_ms": 1845.646,
-    "samples_ms": [
-     1932.39,
-     1845.646,
-     1894.754,
-     1773.85,
-     1770.154
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 8.79
-   },
-   "delta_ms": -3.83,
-   "delta_pct": -0.208,
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "delta_within_noise": true,
-   "arm_spread_pct": 13.02,
+   "clock_drift_mhz": 0,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 101,
+    "device_body_lines": 95,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 15
-   }
+    "host_gated_checks": 14
+   },
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 996.9,
+    "samples_ms": [
+     1094.439,
+     973.86,
+     997.876,
+     996.9,
+     979.772
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 12.1
+   },
+   "checks_off": {
+    "runtime_ms": 1008.493,
+    "samples_ms": [
+     1098.405,
+     1010.839,
+     1008.493,
+     1005.41,
+     983.524
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 11.39
+   },
+   "delta_ms": -11.593,
+   "delta_pct": -1.15,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 12.1,
+   "launch_ok": true
   },
   {
    "toolchain": "choreo",
@@ -1481,74 +1633,79 @@
    "shape_class": "dynamic",
    "settings_hash": "666bab9695c5",
    "kernel_hash": "2be858543c6b",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "gpu_device": "0",
    "exclusive": true,
    "reps": 5,
    "gpu_snapshot_before": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 408,
+    "temp_c": 39,
     "compute_apps": []
    },
    "gpu_snapshot_after": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 23,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 870,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 20,
+    "mem_used_mib": 408,
+    "temp_c": 38,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
-   "ok": true,
-   "checks_on": {
-    "runtime_ms": 411.97,
-    "samples_ms": [
-     899.518,
-     534.61,
-     360.515,
-     356.016,
-     411.97
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 131.93
-   },
-   "checks_off": {
-    "runtime_ms": 503.089,
-    "samples_ms": [
-     831.834,
-     355.339,
-     517.351,
-     503.089,
-     351.779
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 95.42
-   },
-   "delta_ms": -91.119,
-   "delta_pct": -18.112,
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "delta_within_noise": true,
-   "arm_spread_pct": 131.93,
+   "clock_drift_mhz": -1875,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 75,
+    "device_body_lines": 71,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 7
-   }
+    "host_gated_checks": 6
+   },
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 314.992,
+    "samples_ms": [
+     1137.851,
+     319.635,
+     306.641,
+     308.011,
+     314.992
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 263.88
+   },
+   "checks_off": {
+    "runtime_ms": 307.917,
+    "samples_ms": [
+     1156.875,
+     295.089,
+     256.386,
+     317.346,
+     307.917
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 292.45
+   },
+   "delta_ms": 7.075,
+   "delta_pct": 2.298,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 292.45,
+   "launch_ok": true
   },
   {
    "toolchain": "choreo",
@@ -1557,74 +1714,79 @@
    "shape_class": "dynamic",
    "settings_hash": "f08293b4eb9e",
    "kernel_hash": "1933492d44d1",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "gpu_device": "0",
    "exclusive": true,
    "reps": 5,
    "gpu_snapshot_before": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 23,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 870,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 20,
+    "mem_used_mib": 408,
+    "temp_c": 38,
     "compute_apps": []
    },
    "gpu_snapshot_after": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 49,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 2190,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 27,
+    "mem_used_mib": 408,
+    "temp_c": 39,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
-   "ok": true,
-   "checks_on": {
-    "runtime_ms": 898.828,
-    "samples_ms": [
-     804.299,
-     833.207,
-     939.934,
-     898.828,
-     913.919
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 15.09
-   },
-   "checks_off": {
-    "runtime_ms": 844.572,
-    "samples_ms": [
-     982.784,
-     775.757,
-     844.572,
-     773.075,
-     933.578
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 24.83
-   },
-   "delta_ms": 54.256,
-   "delta_pct": 6.424,
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "delta_within_noise": true,
-   "arm_spread_pct": 24.83,
+   "clock_drift_mhz": 1320,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 70,
+    "device_body_lines": 66,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
     "host_gated_checks": 4
-   }
+   },
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 597.642,
+    "samples_ms": [
+     630.551,
+     543.087,
+     600.844,
+     597.642,
+     592.793
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 14.63
+   },
+   "checks_off": {
+    "runtime_ms": 609.302,
+    "samples_ms": [
+     627.455,
+     575.147,
+     589.465,
+     609.631,
+     609.302
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 8.58
+   },
+   "delta_ms": -11.66,
+   "delta_pct": -1.914,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 14.63,
+   "launch_ok": true
   },
   {
    "toolchain": "choreo",
@@ -1633,74 +1795,79 @@
    "shape_class": "dynamic",
    "settings_hash": "8dbff8357c9b",
    "kernel_hash": "555c63559c99",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "gpu_device": "0",
    "exclusive": true,
    "reps": 5,
    "gpu_snapshot_before": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 49,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 2190,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 27,
+    "mem_used_mib": 408,
+    "temp_c": 39,
     "compute_apps": []
    },
    "gpu_snapshot_after": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 100,
+    "mem_used_mib": 408,
+    "temp_c": 40,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
-   "ok": true,
-   "checks_on": {
-    "runtime_ms": 2328.421,
-    "samples_ms": [
-     2365.671,
-     2194.371,
-     2352.641,
-     2155.833,
-     2328.421
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 9.01
-   },
-   "checks_off": {
-    "runtime_ms": 2155.755,
-    "samples_ms": [
-     2221.967,
-     2218.561,
-     2030.755,
-     2155.755,
-     2146.48
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 8.87
-   },
-   "delta_ms": 172.666,
-   "delta_pct": 8.01,
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "delta_within_noise": true,
-   "arm_spread_pct": 9.01,
+   "clock_drift_mhz": 555,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 76,
+    "device_body_lines": 65,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 12
-   }
+    "host_gated_checks": 10
+   },
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 2129.981,
+    "samples_ms": [
+     2199.036,
+     2137.253,
+     2129.981,
+     2122.846,
+     2128.108
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 3.58
+   },
+   "checks_off": {
+    "runtime_ms": 2113.275,
+    "samples_ms": [
+     2194.143,
+     2101.225,
+     2097.537,
+     2141.353,
+     2113.275
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 4.57
+   },
+   "delta_ms": 16.706,
+   "delta_pct": 0.791,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 4.57,
+   "launch_ok": true
   },
   {
    "toolchain": "choreo",
@@ -1708,75 +1875,80 @@
    "kernel_id": "matmul/10_dynamic_128x1280_1280xN_128xN",
    "shape_class": "dynamic",
    "settings_hash": "ba2aa2b58125",
-   "kernel_hash": "bc33893a6e95",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "kernel_hash": "ae54a1dd52e9",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "gpu_device": "0",
    "exclusive": true,
    "reps": 5,
    "gpu_snapshot_before": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 41,
-    "compute_apps": []
-   },
-   "gpu_snapshot_after": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 100,
+    "mem_used_mib": 408,
     "temp_c": 40,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
-   "ok": true,
-   "checks_on": {
-    "runtime_ms": 324.624,
-    "samples_ms": [
-     410.545,
-     358.325,
-     324.624,
-     321.166,
-     323.136
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 27.53
+   "gpu_snapshot_after": {
+    "sm_clock_mhz": 952,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 15,
+    "mem_used_mib": 409,
+    "temp_c": 38,
+    "compute_apps": []
    },
-   "checks_off": {
-    "runtime_ms": 380.734,
-    "samples_ms": [
-     583.665,
-     318.798,
-     380.734,
-     478.701,
-     316.208
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 70.25
-   },
-   "delta_ms": -56.11,
-   "delta_pct": -14.737,
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "delta_within_noise": true,
-   "arm_spread_pct": 70.25,
+   "clock_drift_mhz": -1793,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 68,
+    "device_body_lines": 65,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 9
-   }
+    "host_gated_checks": 7
+   },
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 275.528,
+    "samples_ms": [
+     423.418,
+     275.528,
+     266.859,
+     283.425,
+     267.501
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 56.82
+   },
+   "checks_off": {
+    "runtime_ms": 291.654,
+    "samples_ms": [
+     440.982,
+     283.172,
+     291.654,
+     291.136,
+     308.622
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 54.11
+   },
+   "delta_ms": -16.126,
+   "delta_pct": -5.529,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 56.82,
+   "launch_ok": true
   },
   {
    "toolchain": "choreo",
@@ -1784,75 +1956,80 @@
    "kernel_id": "max_pool2d/10_dynamic_32xCxHxW_32xCxHd5xWd5",
    "shape_class": "dynamic",
    "settings_hash": "1f5436bfab1f",
-   "kernel_hash": "9bea677e256b",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "kernel_hash": "7115790ec5c4",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "gpu_device": "0",
    "exclusive": true,
    "reps": 5,
    "gpu_snapshot_before": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 952,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 15,
+    "mem_used_mib": 409,
+    "temp_c": 38,
     "compute_apps": []
    },
    "gpu_snapshot_after": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 1087,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 4,
+    "mem_used_mib": 409,
+    "temp_c": 38,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
-   "ok": true,
-   "checks_on": {
-    "runtime_ms": 493.413,
-    "samples_ms": [
-     548.685,
-     495.223,
-     493.413,
-     312.803,
-     321.132
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 47.81
-   },
-   "checks_off": {
-    "runtime_ms": 317.505,
-    "samples_ms": [
-     556.134,
-     317.505,
-     315.395,
-     313.594,
-     506.687
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 76.39
-   },
-   "delta_ms": 175.908,
-   "delta_pct": 55.403,
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "delta_within_noise": true,
-   "arm_spread_pct": 76.39,
+   "clock_drift_mhz": 135,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 85,
+    "device_body_lines": 80,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 17
-   }
+    "host_gated_checks": 15
+   },
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 292.661,
+    "samples_ms": [
+     324.592,
+     292.661,
+     304.581,
+     289.137,
+     286.739
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 12.93
+   },
+   "checks_off": {
+    "runtime_ms": 289.344,
+    "samples_ms": [
+     309.619,
+     289.344,
+     259.079,
+     294.968,
+     286.84
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 17.47
+   },
+   "delta_ms": 3.317,
+   "delta_pct": 1.146,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 17.47,
+   "launch_ok": true
   },
   {
    "toolchain": "choreo",
@@ -1861,74 +2038,79 @@
    "shape_class": "dynamic",
    "settings_hash": "b4ee0b5faac2",
    "kernel_hash": "4f15e42bf307",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "gpu_device": "0",
    "exclusive": true,
    "reps": 5,
    "gpu_snapshot_before": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 2,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 1087,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 4,
+    "mem_used_mib": 409,
+    "temp_c": 38,
     "compute_apps": []
    },
    "gpu_snapshot_after": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 53,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 2617,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 5,
+    "mem_used_mib": 405,
+    "temp_c": 38,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
-   "ok": true,
-   "checks_on": {
-    "runtime_ms": 402.487,
-    "samples_ms": [
-     385.45,
-     402.487,
-     560.805,
-     374.142,
-     549.773
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 46.38
-   },
-   "checks_off": {
-    "runtime_ms": 373.932,
-    "samples_ms": [
-     389.703,
-     368.575,
-     373.932,
-     558.433,
-     370.518
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 50.77
-   },
-   "delta_ms": 28.555,
-   "delta_pct": 7.636,
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "delta_within_noise": true,
-   "arm_spread_pct": 50.77,
+   "clock_drift_mhz": 1530,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 42,
+    "device_body_lines": 38,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
     "host_gated_checks": 4
-   }
+   },
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 363.386,
+    "samples_ms": [
+     375.75,
+     363.386,
+     334.928,
+     367.802,
+     349.23
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 11.23
+   },
+   "checks_off": {
+    "runtime_ms": 357.357,
+    "samples_ms": [
+     358.632,
+     367.552,
+     351.082,
+     357.357,
+     295.119
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 20.27
+   },
+   "delta_ms": 6.029,
+   "delta_pct": 1.687,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 20.27,
+   "launch_ok": true
   },
   {
    "toolchain": "choreo",
@@ -1937,74 +2119,79 @@
    "shape_class": "dynamic",
    "settings_hash": "7abb8bd6e718",
    "kernel_hash": "fece1067451b",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "gpu_device": "0",
    "exclusive": true,
    "reps": 5,
    "gpu_snapshot_before": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 1,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 2617,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 5,
+    "mem_used_mib": 405,
+    "temp_c": 38,
     "compute_apps": []
    },
    "gpu_snapshot_after": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 40,
+    "sm_clock_mhz": 855,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 16,
+    "mem_used_mib": 406,
+    "temp_c": 37,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
-   "ok": true,
-   "checks_on": {
-    "runtime_ms": 324.496,
-    "samples_ms": [
-     536.193,
-     324.496,
-     501.802,
-     246.407,
-     248.913
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 89.3
-   },
-   "checks_off": {
-    "runtime_ms": 325.746,
-    "samples_ms": [
-     359.11,
-     325.746,
-     333.883,
-     325.55,
-     322.905
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 11.11
-   },
-   "delta_ms": -1.25,
-   "delta_pct": -0.384,
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "delta_within_noise": true,
-   "arm_spread_pct": 89.3,
+   "clock_drift_mhz": -1762,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 70,
+    "device_body_lines": 67,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
     "host_gated_checks": 7
-   }
+   },
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 289.7,
+    "samples_ms": [
+     362.055,
+     286.68,
+     297.339,
+     275.99,
+     289.7
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 29.71
+   },
+   "checks_off": {
+    "runtime_ms": 297.305,
+    "samples_ms": [
+     339.844,
+     300.186,
+     297.305,
+     265.863,
+     282.028
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 24.88
+   },
+   "delta_ms": -7.605,
+   "delta_pct": -2.558,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 29.71,
+   "launch_ok": true
   },
   {
    "toolchain": "choreo",
@@ -2013,65 +2200,27 @@
    "shape_class": "dynamic",
    "settings_hash": "fc1e3097da54",
    "kernel_hash": "6397fb64f039",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "gpu_device": "0",
    "exclusive": true,
    "reps": 5,
    "gpu_snapshot_before": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 5,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 855,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 16,
+    "mem_used_mib": 406,
+    "temp_c": 37,
     "compute_apps": []
    },
    "gpu_snapshot_after": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 100,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 35,
+    "mem_used_mib": 406,
+    "temp_c": 39,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
-   "ok": true,
-   "checks_on": {
-    "runtime_ms": 651.02,
-    "samples_ms": [
-     665.298,
-     663.092,
-     572.151,
-     651.02,
-     648.477
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 14.31
-   },
-   "checks_off": {
-    "runtime_ms": 665.471,
-    "samples_ms": [
-     700.508,
-     668.644,
-     645.645,
-     665.471,
-     579.111
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 18.24
-   },
-   "delta_ms": -14.451,
-   "delta_pct": -2.172,
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "delta_within_noise": true,
-   "arm_spread_pct": 18.24,
+   "clock_drift_mhz": 1890,
    "device_code": {
     "device_identical": true,
     "device_body_lines": 16,
@@ -2080,7 +2229,50 @@
      "choreo_assert": 0
     },
     "host_gated_checks": 2
-   }
+   },
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 672.676,
+    "samples_ms": [
+     693.837,
+     654.641,
+     672.676,
+     695.777,
+     664.197
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 6.12
+   },
+   "checks_off": {
+    "runtime_ms": 674.408,
+    "samples_ms": [
+     676.099,
+     674.408,
+     683.124,
+     666.471,
+     669.621
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 2.47
+   },
+   "delta_ms": -1.732,
+   "delta_pct": -0.257,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 6.12,
+   "launch_ok": true
   },
   {
    "toolchain": "choreo",
@@ -2089,150 +2281,79 @@
    "shape_class": "dynamic",
    "settings_hash": "cfc639e6ee00",
    "kernel_hash": "5ca9a8745707",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "gpu_device": "0",
    "exclusive": true,
    "reps": 5,
    "gpu_snapshot_before": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 100,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 35,
+    "mem_used_mib": 406,
+    "temp_c": 39,
     "compute_apps": []
    },
    "gpu_snapshot_after": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 18,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 907,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 15,
+    "mem_used_mib": 406,
+    "temp_c": 37,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
-   "ok": true,
-   "checks_on": {
-    "runtime_ms": 514.384,
-    "samples_ms": [
-     666.071,
-     373.696,
-     347.245,
-     717.032,
-     514.384
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 71.89
-   },
-   "checks_off": {
-    "runtime_ms": 346.373,
-    "samples_ms": [
-     563.036,
-     346.373,
-     273.937,
-     376.15,
-     345.53
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 83.46
-   },
-   "delta_ms": 168.011,
-   "delta_pct": 48.506,
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "delta_within_noise": true,
-   "arm_spread_pct": 83.46,
+   "clock_drift_mhz": -1838,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 72,
+    "device_body_lines": 69,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
     "host_gated_checks": 7
-   }
-  },
-  {
-   "toolchain": "choreo",
-   "category": "softmax",
-   "kernel_id": "softmax/10_dynamic_16x512xHxW_16x512xHxW",
-   "shape_class": "dynamic",
-   "settings_hash": "d59f419be35e",
-   "kernel_hash": "f4f5e7ad52da",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
-   "gpu_device": "0",
-   "exclusive": true,
-   "reps": 5,
-   "gpu_snapshot_before": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 18,
-    "mem_used_mib": 14,
-    "temp_c": 41,
-    "compute_apps": []
    },
-   "gpu_snapshot_after": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 2,
-    "mem_used_mib": 14,
-    "temp_c": 41,
-    "compute_apps": []
-   },
-   "clock_drift_mhz": 0,
    "ok": true,
    "checks_on": {
-    "runtime_ms": 492.828,
+    "runtime_ms": 305.874,
     "samples_ms": [
-     456.923,
-     492.828,
-     603.437,
-     593.273,
-     410.591
+     352.216,
+     303.656,
+     304.051,
+     305.874,
+     306.999
     ],
     "timing_source": [
      "kernel-marker"
     ],
     "rc": 0,
-    "spread_pct": 39.13
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 15.88
    },
    "checks_off": {
-    "runtime_ms": 372.052,
+    "runtime_ms": 306.829,
     "samples_ms": [
-     422.005,
-     372.052,
-     371.331,
-     418.771,
-     368.746
+     325.779,
+     297.753,
+     334.66,
+     300.951,
+     306.829
     ],
     "timing_source": [
      "kernel-marker"
     ],
     "rc": 0,
-    "spread_pct": 14.31
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 12.03
    },
-   "delta_ms": 120.776,
-   "delta_pct": 32.462,
+   "delta_ms": -0.955,
+   "delta_pct": -0.311,
    "timing_source": [
     "kernel-marker"
    ],
    "delta_within_noise": true,
-   "arm_spread_pct": 39.13,
-   "device_code": {
-    "device_identical": true,
-    "device_body_lines": 98,
-    "device_check_calls": {
-     "runtime_check": 0,
-     "choreo_assert": 0
-    },
-    "host_gated_checks": 13
-   }
+   "arm_spread_pct": 15.88,
+   "launch_ok": true
   },
   {
    "toolchain": "choreo",
@@ -2241,74 +2362,79 @@
    "shape_class": "dynamic",
    "settings_hash": "df847a35dd4b",
    "kernel_hash": "de367c3c459c",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "gpu_device": "0",
    "exclusive": true,
    "reps": 5,
    "gpu_snapshot_before": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 2,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 1020,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 14,
+    "mem_used_mib": 405,
+    "temp_c": 38,
     "compute_apps": []
    },
    "gpu_snapshot_after": {
-    "sm_clock_mhz": 1755,
-    "sm_clock_max_mhz": 1755,
-    "gpu_util_pct": 0,
-    "mem_used_mib": 14,
-    "temp_c": 41,
+    "sm_clock_mhz": 2745,
+    "sm_clock_max_mhz": 3090,
+    "gpu_util_pct": 2,
+    "mem_used_mib": 405,
+    "temp_c": 39,
     "compute_apps": []
    },
-   "clock_drift_mhz": 0,
-   "ok": true,
-   "checks_on": {
-    "runtime_ms": 692.708,
-    "samples_ms": [
-     696.204,
-     427.804,
-     757.641,
-     508.664,
-     692.708
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 47.62
-   },
-   "checks_off": {
-    "runtime_ms": 547.03,
-    "samples_ms": [
-     569.992,
-     511.068,
-     547.03,
-     697.852,
-     512.711
-    ],
-    "timing_source": [
-     "kernel-marker"
-    ],
-    "rc": 0,
-    "spread_pct": 34.15
-   },
-   "delta_ms": 145.678,
-   "delta_pct": 26.631,
-   "timing_source": [
-    "kernel-marker"
-   ],
-   "delta_within_noise": true,
-   "arm_spread_pct": 47.62,
+   "clock_drift_mhz": 1725,
    "device_code": {
     "device_identical": true,
-    "device_body_lines": 22,
+    "device_body_lines": 19,
     "device_check_calls": {
      "runtime_check": 0,
      "choreo_assert": 0
     },
-    "host_gated_checks": 4
-   }
+    "host_gated_checks": 6
+   },
+   "ok": true,
+   "checks_on": {
+    "runtime_ms": 481.754,
+    "samples_ms": [
+     508.204,
+     464.329,
+     474.261,
+     483.032,
+     481.754
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 9.11
+   },
+   "checks_off": {
+    "runtime_ms": 478.74,
+    "samples_ms": [
+     514.128,
+     488.039,
+     478.74,
+     470.106,
+     477.716
+    ],
+    "timing_source": [
+     "kernel-marker"
+    ],
+    "rc": 0,
+    "launch_ok": true,
+    "launch_reps_ok": 5,
+    "spread_pct": 9.2
+   },
+   "delta_ms": 3.014,
+   "delta_pct": 0.63,
+   "timing_source": [
+    "kernel-marker"
+   ],
+   "delta_within_noise": true,
+   "arm_spread_pct": 9.2,
+   "launch_ok": true
   }
  ],
  "e5a_failures": [
@@ -2318,13 +2444,50 @@
    "kernel_id": "conv2d/10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
    "shape_class": "dynamic",
    "settings_hash": "28fee96c8330",
-   "kernel_hash": "d434e35e9aee",
-   "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+   "kernel_hash": "b5c3854efe52",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
    "gpu_device": "0",
    "exclusive": true,
    "reps": 5,
    "ok": false,
-   "error": "execute[on] rc=127: nchmark2/choreo/raw/e5_logs/conv2d_10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D/k_on.sh: line 8345: /tmp/1788932824816562987_125220099098432/__choreo_cute_k.exe: No such file or directory\n"
+   "launch_verdicts": {
+    "on": [
+     {
+      "rc": 134,
+      "kernel_end_marker": false,
+      "rejection_text": null,
+      "reason": "nonzero-rc"
+     }
+    ],
+    "off": []
+   },
+   "error": "execute[on] rc=134 (nonzero-rc): w/e5_logs/conv2d_10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D/k_on.sh: line 8339: 619188 Aborted                 (core dumped) /tmp/1790329351001014917_140170425026496/__choreo_cute_k.exe\n"
+  },
+  {
+   "toolchain": "choreo",
+   "category": "softmax",
+   "kernel_id": "softmax/10_dynamic_16x512xHxW_16x512xHxW",
+   "shape_class": "dynamic",
+   "settings_hash": "d59f419be35e",
+   "kernel_hash": "f4f5e7ad52da",
+   "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
+   "gpu_device": "0",
+   "exclusive": true,
+   "reps": 5,
+   "ok": false,
+   "launch_verdicts": {
+    "on": [
+     {
+      "rc": 134,
+      "kernel_end_marker": false,
+      "rejection_text": null,
+      "reason": "nonzero-rc"
+     }
+    ],
+    "off": []
+   },
+   "error": "execute[on] rc=134 (nonzero-rc): ts/benchmark2/choreo/raw/e5_logs/softmax_10_dynamic_16x512xHxW_16x512xHxW/k_on.sh: line 8330: 629337 Aborted                 (core dumped) /tmp/1790331486646752343_140458466224064/__choreo_cute_k.exe\n"
   }
- ]
+ ],
+ "e5a_launch_rejected": []
 }

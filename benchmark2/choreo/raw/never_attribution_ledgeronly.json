@@ -1,16 +1,16 @@
 {
  "toolchain": "choreo",
- "toolchain_version": "680533f50d5340346ea1587c116278916f902bc2",
+ "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
  "produced_by": "analyze_never.py",
- "n_never_analysed": 37,
- "population": "`manifest=corrupts` only (the admissible population; `noop` mutants are discarded per specs \u00a711.1)",
+ "n_never_analysed": 36,
+ "population": "admissible `manifest=corrupts` only (per-mutant `admissible`/`applicable` verdict, matching E1's denominator; inadmissible rows and `noop` mutants are discarded per specs \u00a711.1)",
  "execute_probe": false,
  "probe_raw_dir": null,
  "cause_counts": {
   "C1_COST_FILTER_SUPPRESSED": 8,
-  "C5_OUT_OF_SCOPE": 6,
-  "C3_LOWER_BOUND_OMITTED": 4,
-  "C4_NOT_ASSESSED": 19
+  "C5_OUT_OF_SCOPE": 5,
+  "UNRESOLVED": 5,
+  "C4_NOT_ASSESSED": 18
  },
  "cause_meaning": {
   "C1_COST_FILTER_SUPPRESSED": "assessor was RIGHT; the cost filter suppressed the guard (emission policy)",
@@ -23,188 +23,96 @@
  },
  "results": [
   {
-   "mutant_id": "M1.s1.ln3.mask",
+   "mutant_id": "M1.11.gl1.alias",
    "class": "M1",
-   "spec": 1,
-   "category": "layer_normalization",
-   "case": "3_attention_32xNx512x64_64_64",
-   "paper_category": "oob",
-   "desc": "dropped boundary guard: advance a dynamic loop index past its extent",
+   "spec": 11,
+   "category": "gelu",
+   "case": "1_bert_32x512x768",
+   "paper_category": "stride",
+   "desc": "read-after-write aliasing: the `parallel q by 64` write index folds modulo the tile extent (`q % 32`), so thread pairs (q, q+32) concurrently write the same live slot",
    "detector_at_default": "crash",
-   "mutant_path": "benchmark2/choreo/mutants/M1/layer_normalization/M1.s1.ln3.mask__3_attention_32xNx512x64_64_64.co",
+   "mutant_path": "benchmark2/choreo/mutants/M1/gelu/M1.11.gl1.alias__1_bert_32x512x768.co",
    "mutated_at_sites": [
-    "lhs.at(j + 1)",
-    "lhs.at(j + 1)",
-    "lhs.at(j + 1)"
+    "os.at(q % 32)"
    ],
    "mutated_other_sites": [],
    "ledger": {
-    "n_obligations": 72,
+    "n_obligations": 35,
     "outcomes": {
-     "runtime": 5,
-     "static-true": 67
+     "static-true": 33,
+     "runtime": 2
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 2,
+    "relevant_runtime_suppressed": 2,
+    "relevant_runtime_enabled": 0
+   },
+   "cause": "C1_COST_FILTER_SUPPRESSED",
+   "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
+   "suppressed_obligations": [
+    {
+     "message": "The 3rd index ` (q % 32) ` of element access 'os' should be greater than or equal to 0",
+     "cost": "high",
+     "mechanism": "canonical",
+     "usage": "elem-access"
+    },
+    {
+     "message": "The 3rd index ` (q % 32) ` of element access 'os' should be less than 64",
+     "cost": "high",
+     "mechanism": "canonical",
+     "usage": "elem-access"
+    }
+   ],
+   "suppressed_but_not_about_this_mutation": [],
+   "forced_all": {
+    "status": "untested",
+    "reason": "pass --execute to test C2 on this mutant"
+   }
+  },
+  {
+   "mutant_id": "M1.11.gl11.alias",
+   "class": "M1",
+   "spec": 11,
+   "category": "gelu",
+   "case": "11_dynamic_32xSx768",
+   "paper_category": "stride",
+   "desc": "read-after-write aliasing in the GELU tail: the fan-out index folds modulo the tile extent so thread pairs collide",
+   "detector_at_default": "crash",
+   "mutant_path": "benchmark2/choreo/mutants/M1/gelu/M1.11.gl11.alias__11_dynamic_32xSx768.co",
+   "mutated_at_sites": [
+    "os.at(q % 32)"
+   ],
+   "mutated_other_sites": [],
+   "ledger": {
+    "n_obligations": 38,
+    "outcomes": {
+     "static-true": 33,
+     "runtime": 5
     },
     "runtime_enabled": 1,
     "runtime_suppressed": 4,
-    "stats_disabled_by_cost_filter": 4,
-    "relevant_runtime_suppressed": 3,
+    "relevant_runtime_suppressed": 2,
     "relevant_runtime_enabled": 0
    },
    "cause": "C1_COST_FILTER_SUPPRESSED",
    "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
    "suppressed_obligations": [
     {
-     "message": "The 2nd index ` (j + 1) ` of element access 'lhs' should be less than ::layer_norm::N0",
-     "cost": "medium",
+     "message": "The 3rd index ` (q % 32) ` of element access 'os' should be greater than or equal to 0",
+     "cost": "high",
      "mechanism": "canonical",
      "usage": "elem-access"
     },
     {
-     "message": "The 2nd index ` (j + 1) ` of element access 'lhs' should be less than ::layer_norm::N0",
-     "cost": "medium",
-     "mechanism": "canonical",
-     "usage": "elem-access"
-    },
-    {
-     "message": "The 2nd index ` (j + 1) ` of element access 'lhs' should be less than ::layer_norm::N0",
-     "cost": "medium",
-     "mechanism": "canonical",
-     "usage": "elem-access"
-    }
-   ],
-   "suppressed_but_not_about_this_mutation": [
-    "The 2nd index `j` of element access 'out' should be less than ::layer_norm::N0"
-   ],
-   "forced_all": {
-    "status": "untested",
-    "reason": "pass --execute to test C2 on this mutant"
-   }
-  },
-  {
-   "mutant_id": "M1.s2.ln1.out",
-   "class": "M1",
-   "spec": 2,
-   "category": "layer_normalization",
-   "case": "1_bert_32x512x768_768_768",
-   "paper_category": "oob",
-   "desc": "off-by-one on the output write index",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M1/layer_normalization/M1.s2.ln1.out__1_bert_32x512x768_768_768.co",
-   "mutated_at_sites": [
-    "out.at(k + 1)"
-   ],
-   "mutated_other_sites": [],
-   "ledger": {
-    "n_obligations": 68,
-    "outcomes": {
-     "static-true": 67,
-     "runtime": 1
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 1,
-    "stats_disabled_by_cost_filter": 1,
-    "relevant_runtime_suppressed": 1,
-    "relevant_runtime_enabled": 0
-   },
-   "cause": "C1_COST_FILTER_SUPPRESSED",
-   "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
-   "suppressed_obligations": [
-    {
-     "message": "The 3rd index ` (k + 1) ` of element access 'out' should be less than 768",
-     "cost": "medium",
-     "mechanism": "canonical",
-     "usage": "elem-access"
-    }
-   ],
-   "suppressed_but_not_about_this_mutation": [],
-   "forced_all": {
-    "status": "untested",
-    "reason": "pass --execute to test C2 on this mutant"
-   }
-  },
-  {
-   "mutant_id": "M1.s2.ln1.scale",
-   "class": "M1",
-   "spec": 2,
-   "category": "layer_normalization",
-   "case": "1_bert_32x512x768_768_768",
-   "paper_category": "oob",
-   "desc": "off-by-one on the secondary operand index: scale.at(k+1) is OOB at k == K-1",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M1/layer_normalization/M1.s2.ln1.scale__1_bert_32x512x768_768_768.co",
-   "mutated_at_sites": [
-    "scale.at(k + 1)"
-   ],
-   "mutated_other_sites": [],
-   "ledger": {
-    "n_obligations": 68,
-    "outcomes": {
-     "static-true": 67,
-     "runtime": 1
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 1,
-    "stats_disabled_by_cost_filter": 1,
-    "relevant_runtime_suppressed": 1,
-    "relevant_runtime_enabled": 0
-   },
-   "cause": "C1_COST_FILTER_SUPPRESSED",
-   "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
-   "suppressed_obligations": [
-    {
-     "message": "The 1st index ` (k + 1) ` of element access 'scale' should be less than 768",
-     "cost": "medium",
-     "mechanism": "canonical",
-     "usage": "elem-access"
-    }
-   ],
-   "suppressed_but_not_about_this_mutation": [],
-   "forced_all": {
-    "status": "untested",
-    "reason": "pass --execute to test C2 on this mutant"
-   }
-  },
-  {
-   "mutant_id": "M1.s2.ln3.scale",
-   "class": "M1",
-   "spec": 2,
-   "category": "layer_normalization",
-   "case": "3_attention_32xNx512x64_64_64",
-   "paper_category": "oob",
-   "desc": "off-by-one on the secondary operand index (dynamic extent L)",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M1/layer_normalization/M1.s2.ln3.scale__3_attention_32xNx512x64_64_64.co",
-   "mutated_at_sites": [
-    "scale.at(l + 1)"
-   ],
-   "mutated_other_sites": [],
-   "ledger": {
-    "n_obligations": 73,
-    "outcomes": {
-     "runtime": 6,
-     "static-true": 67
-    },
-    "runtime_enabled": 1,
-    "runtime_suppressed": 5,
-    "stats_disabled_by_cost_filter": 5,
-    "relevant_runtime_suppressed": 1,
-    "relevant_runtime_enabled": 0
-   },
-   "cause": "C1_COST_FILTER_SUPPRESSED",
-   "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
-   "suppressed_obligations": [
-    {
-     "message": "The 1st index ` (l + 1) ` of element access 'scale' should be less than 64",
+     "message": "The 3rd index ` (q % 32) ` of element access 'os' should be less than 64",
      "cost": "high",
      "mechanism": "canonical",
      "usage": "elem-access"
     }
    ],
    "suppressed_but_not_about_this_mutation": [
-    "The 2nd index `j` of element access 'lhs' should be less than ::layer_norm::N0",
-    "The 2nd index `j` of element access 'lhs' should be less than ::layer_norm::N0",
-    "The 2nd index `j` of element access 'out' should be less than ::layer_norm::N0",
-    "The 2nd index `j` of element access 'lhs' should be less than ::layer_norm::N0"
+    "Tile coordinate `__iv_sl` is out of bounds of the 2nd dimension of chunkat 'i' (valid range is [0, ::GELU::seq_len))",
+    "Tile coordinate `__iv_sl` is out of bounds of the 2nd dimension of chunkat 'o' (valid range is [0, ::GELU::seq_len))"
    ],
    "forced_all": {
     "status": "untested",
@@ -212,599 +120,295 @@
    }
   },
   {
-   "mutant_id": "M1.s3.ln1.bias",
+   "mutant_id": "M1.11.rl1.alias",
    "class": "M1",
-   "spec": 3,
-   "category": "layer_normalization",
-   "case": "1_bert_32x512x768_768_768",
-   "paper_category": "oob",
-   "desc": "negative index: bias.at(k-1) underflows at k == 0",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M1/layer_normalization/M1.s3.ln1.bias__1_bert_32x512x768_768_768.co",
-   "mutated_at_sites": [
-    "bias.at(k - 1)"
-   ],
-   "mutated_other_sites": [],
-   "ledger": {
-    "n_obligations": 68,
-    "outcomes": {
-     "static-true": 67,
-     "runtime": 1
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 1,
-    "stats_disabled_by_cost_filter": 1,
-    "relevant_runtime_suppressed": 1,
-    "relevant_runtime_enabled": 0
-   },
-   "cause": "C1_COST_FILTER_SUPPRESSED",
-   "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
-   "suppressed_obligations": [
-    {
-     "message": "The 1st index ` (k - 1) ` of element access 'bias' should be greater than or equal to 0",
-     "cost": "medium",
-     "mechanism": "canonical",
-     "usage": "elem-access"
-    }
-   ],
-   "suppressed_but_not_about_this_mutation": [],
-   "forced_all": {
-    "status": "untested",
-    "reason": "pass --execute to test C2 on this mutant"
-   }
-  },
-  {
-   "mutant_id": "M1.s3.ln3.bias",
-   "class": "M1",
-   "spec": 3,
-   "category": "layer_normalization",
-   "case": "3_attention_32xNx512x64_64_64",
-   "paper_category": "oob",
-   "desc": "negative index on the secondary operand",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M1/layer_normalization/M1.s3.ln3.bias__3_attention_32xNx512x64_64_64.co",
-   "mutated_at_sites": [
-    "bias.at(l - 1)"
-   ],
-   "mutated_other_sites": [],
-   "ledger": {
-    "n_obligations": 73,
-    "outcomes": {
-     "runtime": 6,
-     "static-true": 67
-    },
-    "runtime_enabled": 1,
-    "runtime_suppressed": 5,
-    "stats_disabled_by_cost_filter": 5,
-    "relevant_runtime_suppressed": 1,
-    "relevant_runtime_enabled": 0
-   },
-   "cause": "C1_COST_FILTER_SUPPRESSED",
-   "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
-   "suppressed_obligations": [
-    {
-     "message": "The 1st index ` (l - 1) ` of element access 'bias' should be greater than or equal to 0",
-     "cost": "high",
-     "mechanism": "canonical",
-     "usage": "elem-access"
-    }
-   ],
-   "suppressed_but_not_about_this_mutation": [
-    "The 2nd index `j` of element access 'lhs' should be less than ::layer_norm::N0",
-    "The 2nd index `j` of element access 'lhs' should be less than ::layer_norm::N0",
-    "The 2nd index `j` of element access 'out' should be less than ::layer_norm::N0",
-    "The 2nd index `j` of element access 'lhs' should be less than ::layer_norm::N0"
-   ],
-   "forced_all": {
-    "status": "untested",
-    "reason": "pass --execute to test C2 on this mutant"
-   }
-  },
-  {
-   "mutant_id": "M1.s5.ln1.chunk",
-   "class": "M1",
-   "spec": 5,
-   "category": "layer_normalization",
-   "case": "1_bert_32x512x768_768_768",
-   "paper_category": "oob",
-   "desc": "offset view: advance the chunked parallel index past the last block",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M1/layer_normalization/M1.s5.ln1.chunk__1_bert_32x512x768_768_768.co",
-   "mutated_at_sites": [
-    "lhs.at(p#n + 1)",
-    "lhs.at(p#n + 1)",
-    "lhs.at(p#n + 1)"
-   ],
-   "mutated_other_sites": [],
-   "ledger": {
-    "n_obligations": 68,
-    "outcomes": {
-     "static-true": 65,
-     "runtime": 3
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 3,
-    "stats_disabled_by_cost_filter": 3,
-    "relevant_runtime_suppressed": 3,
-    "relevant_runtime_enabled": 0
-   },
-   "cause": "C1_COST_FILTER_SUPPRESSED",
-   "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
-   "suppressed_obligations": [
-    {
-     "message": "The 1st index ` ( (p # n)  + 1) ` of element access 'lhs' should be less than 32",
-     "cost": "low",
-     "mechanism": "canonical",
-     "usage": "elem-access"
-    },
-    {
-     "message": "The 1st index ` ( (p # n)  + 1) ` of element access 'lhs' should be less than 32",
-     "cost": "low",
-     "mechanism": "canonical",
-     "usage": "elem-access"
-    },
-    {
-     "message": "The 1st index ` ( (p # n)  + 1) ` of element access 'lhs' should be less than 32",
-     "cost": "low",
-     "mechanism": "canonical",
-     "usage": "elem-access"
-    }
-   ],
-   "suppressed_but_not_about_this_mutation": [],
-   "forced_all": {
-    "status": "untested",
-    "reason": "pass --execute to test C2 on this mutant"
-   }
-  },
-  {
-   "mutant_id": "M1.s6.ln1.zerostride",
-   "class": "M1",
-   "spec": 6,
-   "category": "layer_normalization",
-   "case": "1_bert_32x512x768_768_768",
+   "spec": 11,
+   "category": "relu",
+   "case": "1_bert_32x512x768_32x512x768",
    "paper_category": "stride",
-   "desc": "zero-stride access: collapse the varying k index to a constant",
+   "desc": "read-after-write aliasing: the `parallel q by 64` write index folds modulo the tile extent (`q % 32`), so thread pairs (q, q+32) concurrently write the same live slot; the index stays statically in range, so the front end cannot reject it (unlike the tile shrink)",
    "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M1/layer_normalization/M1.s6.ln1.zerostride__1_bert_32x512x768_768_768.co",
+   "mutant_path": "benchmark2/choreo/mutants/M1/relu/M1.11.rl1.alias__1_bert_32x512x768_32x512x768.co",
    "mutated_at_sites": [
-    "lhs.at(0)",
-    "lhs.at(0)",
-    "lhs.at(0)"
+    "out_s.at(q % 32)"
    ],
    "mutated_other_sites": [],
    "ledger": {
-    "n_obligations": 68,
+    "n_obligations": 54,
     "outcomes": {
-     "static-true": 68
+     "static-true": 52,
+     "runtime": 2
     },
     "runtime_enabled": 0,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
+    "runtime_suppressed": 2,
+    "relevant_runtime_suppressed": 2,
     "relevant_runtime_enabled": 0
    },
-   "cause": "C5_OUT_OF_SCOPE",
-   "reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
-   "changed_indices": [
-    "0",
-    "0",
-    "0"
-   ],
-   "changed_surfaces": []
-  },
-  {
-   "mutant_id": "M1.s3.rl1.write",
-   "class": "M1",
-   "spec": 3,
-   "category": "relu",
-   "case": "1_bert_32x512x768_32x512x768",
-   "paper_category": "oob",
-   "desc": "negative index on the shared output tile",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M1/relu/M1.s3.rl1.write__1_bert_32x512x768_32x512x768.co",
-   "mutated_at_sites": [
-    "out_s.at(q - 1)"
-   ],
-   "mutated_other_sites": [],
-   "ledger": {
-    "n_obligations": 37,
-    "outcomes": {
-     "static-true": 37
+   "cause": "C1_COST_FILTER_SUPPRESSED",
+   "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
+   "suppressed_obligations": [
+    {
+     "message": "The 3rd index ` (q % 32) ` of element access 'out_s' should be greater than or equal to 0",
+     "cost": "high",
+     "mechanism": "canonical",
+     "usage": "elem-access"
     },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
-    "relevant_runtime_enabled": 0
-   },
-   "assessed_mutated_indices": [
     {
-     "array": "out_s",
-     "index": "q - 1",
-     "bounds_generated": [
-      "upper"
-     ],
-     "outcomes": [
-      "static-true"
-     ],
-     "n_obligations": 1
+     "message": "The 3rd index ` (q % 32) ` of element access 'out_s' should be less than 64",
+     "cost": "high",
+     "mechanism": "canonical",
+     "usage": "elem-access"
     }
    ],
-   "cause": "C3_LOWER_BOUND_OMITTED",
-   "reason": "choreo assessed the mutated index but generated only ONE of its two bounds. Every literal index in the same kernel gets both (`>= 0` and `< N`); the mutated expression gets one. When the mutation moves the index in the direction of the missing bound (q-1 at q==0) nothing can fire. A croqtile obligation-generation bug.",
-   "incomplete_indices": [
-    {
-     "array": "out_s",
-     "index": "q - 1",
-     "bounds_generated": [
-      "upper"
-     ],
-     "outcomes": [
-      "static-true"
-     ],
-     "n_obligations": 1
-    }
-   ]
+   "suppressed_but_not_about_this_mutation": [],
+   "forced_all": {
+    "status": "untested",
+    "reason": "pass --execute to test C2 on this mutant"
+   }
   },
   {
-   "mutant_id": "M1.s3.rl11.write",
+   "mutant_id": "M1.11.rl1.alt",
    "class": "M1",
-   "spec": 3,
+   "spec": 11,
    "category": "relu",
    "case": "11_dynamic_32xSx768_32xSx768",
-   "paper_category": "oob",
-   "desc": "negative index on the shared output tile",
+   "paper_category": "stride",
+   "desc": "read-after-write aliasing: the `parallel q by 64` write index folds modulo the tile extent (`q % 32`), so thread pairs (q, q+32) concurrently write the same live slot; the index stays statically in range, so the front end cannot reject it (unlike the tile shrink)",
    "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M1/relu/M1.s3.rl11.write__11_dynamic_32xSx768_32xSx768.co",
+   "mutant_path": "benchmark2/choreo/mutants/M1/relu/M1.11.rl1.alt__11_dynamic_32xSx768_32xSx768.co",
    "mutated_at_sites": [
-    "out_s.at(q - 1)"
+    "out_s.at(q % 32)"
    ],
    "mutated_other_sites": [],
    "ledger": {
-    "n_obligations": 40,
+    "n_obligations": 57,
     "outcomes": {
-     "static-true": 39,
-     "runtime": 1
+     "static-true": 52,
+     "runtime": 5
     },
     "runtime_enabled": 1,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
+    "runtime_suppressed": 4,
+    "relevant_runtime_suppressed": 2,
     "relevant_runtime_enabled": 0
    },
-   "assessed_mutated_indices": [
+   "cause": "C1_COST_FILTER_SUPPRESSED",
+   "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
+   "suppressed_obligations": [
     {
-     "array": "out_s",
-     "index": "q - 1",
-     "bounds_generated": [
-      "upper"
-     ],
-     "outcomes": [
-      "static-true"
-     ],
-     "n_obligations": 1
+     "message": "The 3rd index ` (q % 32) ` of element access 'out_s' should be greater than or equal to 0",
+     "cost": "high",
+     "mechanism": "canonical",
+     "usage": "elem-access"
+    },
+    {
+     "message": "The 3rd index ` (q % 32) ` of element access 'out_s' should be less than 64",
+     "cost": "high",
+     "mechanism": "canonical",
+     "usage": "elem-access"
     }
    ],
-   "cause": "C3_LOWER_BOUND_OMITTED",
-   "reason": "choreo assessed the mutated index but generated only ONE of its two bounds. Every literal index in the same kernel gets both (`>= 0` and `< N`); the mutated expression gets one. When the mutation moves the index in the direction of the missing bound (q-1 at q==0) nothing can fire. A croqtile obligation-generation bug.",
-   "incomplete_indices": [
+   "suppressed_but_not_about_this_mutation": [
+    "Tile coordinate `__iv_j` is out of bounds of the 2nd dimension of chunkat 'inp' (valid range is [0, ::ele_relu::num_heads))",
+    "Tile coordinate `__iv_j` is out of bounds of the 2nd dimension of chunkat 'out' (valid range is [0, ::ele_relu::num_heads))"
+   ],
+   "forced_all": {
+    "status": "untested",
+    "reason": "pass --execute to test C2 on this mutant"
+   }
+  },
+  {
+   "mutant_id": "M1.11.sg1.alias",
+   "class": "M1",
+   "spec": 11,
+   "category": "sigmoid",
+   "case": "1_bert_32x512x768",
+   "paper_category": "stride",
+   "desc": "read-after-write aliasing: the `parallel q by 64` write index folds modulo the tile extent (`q % 32`), so thread pairs (q, q+32) concurrently write the same live slot",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M1/sigmoid/M1.11.sg1.alias__1_bert_32x512x768.co",
+   "mutated_at_sites": [
+    "out_s.at(q % 32)"
+   ],
+   "mutated_other_sites": [],
+   "ledger": {
+    "n_obligations": 35,
+    "outcomes": {
+     "static-true": 33,
+     "runtime": 2
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 2,
+    "relevant_runtime_suppressed": 2,
+    "relevant_runtime_enabled": 0
+   },
+   "cause": "C1_COST_FILTER_SUPPRESSED",
+   "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
+   "suppressed_obligations": [
     {
-     "array": "out_s",
-     "index": "q - 1",
-     "bounds_generated": [
-      "upper"
-     ],
-     "outcomes": [
-      "static-true"
-     ],
-     "n_obligations": 1
+     "message": "The 3rd index ` (q % 32) ` of element access 'out_s' should be greater than or equal to 0",
+     "cost": "high",
+     "mechanism": "canonical",
+     "usage": "elem-access"
+    },
+    {
+     "message": "The 3rd index ` (q % 32) ` of element access 'out_s' should be less than 64",
+     "cost": "high",
+     "mechanism": "canonical",
+     "usage": "elem-access"
     }
-   ]
+   ],
+   "suppressed_but_not_about_this_mutation": [],
+   "forced_all": {
+    "status": "untested",
+    "reason": "pass --execute to test C2 on this mutant"
+   }
   },
   {
-   "mutant_id": "M1.s5.rl1.load",
+   "mutant_id": "M1.11.sg11.alias",
    "class": "M1",
-   "spec": 5,
-   "category": "relu",
-   "case": "1_bert_32x512x768_32x512x768",
-   "paper_category": "oob",
-   "desc": "offset async DMA source chunk overruns the input",
-   "detector_at_default": "crash",
-   "mutant_path": "benchmark2/choreo/mutants/M1/relu/M1.s5.rl1.load__1_bert_32x512x768_32x512x768.co",
-   "mutated_at_sites": [],
-   "mutated_other_sites": [
-    "inp"
-   ],
-   "ledger": {
-    "n_obligations": 37,
-    "outcomes": {
-     "static-true": 37
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
-    "relevant_runtime_enabled": 0
-   },
-   "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [
-    "inp_s",
-    "out_s"
-   ],
-   "arrays_mutated": [
-    "inp"
-   ],
-   "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "inp"
-   ]
-  },
-  {
-   "mutant_id": "M1.s5.rl1.store",
-   "class": "M1",
-   "spec": 5,
-   "category": "relu",
-   "case": "1_bert_32x512x768_32x512x768",
-   "paper_category": "oob",
-   "desc": "offset DMA destination chunk overruns the output",
+   "spec": 11,
+   "category": "sigmoid",
+   "case": "11_dynamic_32xSx768",
+   "paper_category": "stride",
+   "desc": "read-after-write aliasing in the sigmoid tail: the fan-out index folds modulo the tile extent so thread pairs collide",
    "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M1/relu/M1.s5.rl1.store__1_bert_32x512x768_32x512x768.co",
-   "mutated_at_sites": [],
-   "mutated_other_sites": [
-    "out"
+   "mutant_path": "benchmark2/choreo/mutants/M1/sigmoid/M1.11.sg11.alias__11_dynamic_32xSx768.co",
+   "mutated_at_sites": [
+    "out_s.at(q % 32)"
    ],
+   "mutated_other_sites": [],
    "ledger": {
-    "n_obligations": 37,
+    "n_obligations": 38,
     "outcomes": {
-     "static-true": 37
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
-    "relevant_runtime_enabled": 0
-   },
-   "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [
-    "inp_s",
-    "out_s"
-   ],
-   "arrays_mutated": [
-    "out"
-   ],
-   "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "out"
-   ]
-  },
-  {
-   "mutant_id": "M1.s5.rl11.load",
-   "class": "M1",
-   "spec": 5,
-   "category": "relu",
-   "case": "11_dynamic_32xSx768_32xSx768",
-   "paper_category": "oob",
-   "desc": "offset async DMA source chunk overruns the input",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M1/relu/M1.s5.rl11.load__11_dynamic_32xSx768_32xSx768.co",
-   "mutated_at_sites": [],
-   "mutated_other_sites": [
-    "inp"
-   ],
-   "ledger": {
-    "n_obligations": 40,
-    "outcomes": {
-     "static-true": 39,
-     "runtime": 1
+     "static-true": 33,
+     "runtime": 5
     },
     "runtime_enabled": 1,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
+    "runtime_suppressed": 4,
+    "relevant_runtime_suppressed": 2,
     "relevant_runtime_enabled": 0
    },
-   "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [
-    "inp_s",
-    "out_s"
+   "cause": "C1_COST_FILTER_SUPPRESSED",
+   "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
+   "suppressed_obligations": [
+    {
+     "message": "The 3rd index ` (q % 32) ` of element access 'out_s' should be greater than or equal to 0",
+     "cost": "high",
+     "mechanism": "canonical",
+     "usage": "elem-access"
+    },
+    {
+     "message": "The 3rd index ` (q % 32) ` of element access 'out_s' should be less than 64",
+     "cost": "high",
+     "mechanism": "canonical",
+     "usage": "elem-access"
+    }
    ],
-   "arrays_mutated": [
-    "inp"
+   "suppressed_but_not_about_this_mutation": [
+    "Tile coordinate `__iv_j` is out of bounds of the 2nd dimension of chunkat 'lhs' (valid range is [0, ::sigmoid::N))",
+    "Tile coordinate `__iv_j` is out of bounds of the 2nd dimension of chunkat 'out' (valid range is [0, ::sigmoid::N))"
    ],
-   "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "inp"
-   ]
+   "forced_all": {
+    "status": "untested",
+    "reason": "pass --execute to test C2 on this mutant"
+   }
   },
   {
-   "mutant_id": "M1.s3.tp1.write",
+   "mutant_id": "M1.11.tp1.alias",
    "class": "M1",
-   "spec": 3,
+   "spec": 11,
    "category": "transpose",
    "case": "1_bert_32x512x768_32x768x512",
-   "paper_category": "oob",
-   "desc": "negative index on the shared destination tile",
+   "paper_category": "stride",
+   "desc": "read-after-write aliasing on the transpose destination tile: the fan-out index folds modulo the tile extent so thread pairs collide",
    "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M1/transpose/M1.s3.tp1.write__1_bert_32x512x768_32x768x512.co",
+   "mutant_path": "benchmark2/choreo/mutants/M1/transpose/M1.11.tp1.alias__1_bert_32x512x768_32x768x512.co",
    "mutated_at_sites": [
-    "os.at(q - 1)"
+    "os.at(q % 32)"
    ],
    "mutated_other_sites": [],
    "ledger": {
-    "n_obligations": 22,
+    "n_obligations": 35,
     "outcomes": {
-     "static-true": 22
+     "static-true": 33,
+     "runtime": 2
     },
     "runtime_enabled": 0,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
+    "runtime_suppressed": 2,
+    "relevant_runtime_suppressed": 2,
     "relevant_runtime_enabled": 0
    },
-   "assessed_mutated_indices": [
+   "cause": "C1_COST_FILTER_SUPPRESSED",
+   "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
+   "suppressed_obligations": [
     {
-     "array": "os",
-     "index": "q - 1",
-     "bounds_generated": [
-      "upper"
-     ],
-     "outcomes": [
-      "static-true"
-     ],
-     "n_obligations": 1
+     "message": "The 2nd index ` (q % 32) ` of element access 'os' should be greater than or equal to 0",
+     "cost": "high",
+     "mechanism": "canonical",
+     "usage": "elem-access"
+    },
+    {
+     "message": "The 2nd index ` (q % 32) ` of element access 'os' should be less than 64",
+     "cost": "high",
+     "mechanism": "canonical",
+     "usage": "elem-access"
     }
    ],
-   "cause": "C3_LOWER_BOUND_OMITTED",
-   "reason": "choreo assessed the mutated index but generated only ONE of its two bounds. Every literal index in the same kernel gets both (`>= 0` and `< N`); the mutated expression gets one. When the mutation moves the index in the direction of the missing bound (q-1 at q==0) nothing can fire. A croqtile obligation-generation bug.",
-   "incomplete_indices": [
-    {
-     "array": "os",
-     "index": "q - 1",
-     "bounds_generated": [
-      "upper"
-     ],
-     "outcomes": [
-      "static-true"
-     ],
-     "n_obligations": 1
-    }
-   ]
+   "suppressed_but_not_about_this_mutation": [],
+   "forced_all": {
+    "status": "untested",
+    "reason": "pass --execute to test C2 on this mutant"
+   }
   },
   {
-   "mutant_id": "M1.s3.tp11.write",
+   "mutant_id": "M1.11.tp1.alt",
    "class": "M1",
-   "spec": 3,
+   "spec": 11,
    "category": "transpose",
    "case": "11_dynamic_32xSx768_32x768xS",
-   "paper_category": "oob",
-   "desc": "negative index on the shared destination tile",
+   "paper_category": "stride",
+   "desc": "read-after-write aliasing on the transpose destination tile: the fan-out index folds modulo the tile extent so thread pairs collide",
    "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M1/transpose/M1.s3.tp11.write__11_dynamic_32xSx768_32x768xS.co",
+   "mutant_path": "benchmark2/choreo/mutants/M1/transpose/M1.11.tp1.alt__11_dynamic_32xSx768_32x768xS.co",
    "mutated_at_sites": [
-    "os.at(q - 1)"
+    "os.at(q % 32)"
    ],
    "mutated_other_sites": [],
    "ledger": {
-    "n_obligations": 24,
+    "n_obligations": 37,
     "outcomes": {
-     "runtime": 1,
-     "static-true": 23
+     "runtime": 5,
+     "static-true": 32
     },
     "runtime_enabled": 1,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
+    "runtime_suppressed": 4,
+    "relevant_runtime_suppressed": 2,
     "relevant_runtime_enabled": 0
    },
-   "assessed_mutated_indices": [
+   "cause": "C1_COST_FILTER_SUPPRESSED",
+   "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
+   "suppressed_obligations": [
     {
-     "array": "os",
-     "index": "q - 1",
-     "bounds_generated": [
-      "upper"
-     ],
-     "outcomes": [
-      "static-true"
-     ],
-     "n_obligations": 1
+     "message": "The 2nd index ` (q % 32) ` of element access 'os' should be greater than or equal to 0",
+     "cost": "high",
+     "mechanism": "canonical",
+     "usage": "elem-access"
+    },
+    {
+     "message": "The 2nd index ` (q % 32) ` of element access 'os' should be less than 64",
+     "cost": "high",
+     "mechanism": "canonical",
+     "usage": "elem-access"
     }
    ],
-   "cause": "C3_LOWER_BOUND_OMITTED",
-   "reason": "choreo assessed the mutated index but generated only ONE of its two bounds. Every literal index in the same kernel gets both (`>= 0` and `< N`); the mutated expression gets one. When the mutation moves the index in the direction of the missing bound (q-1 at q==0) nothing can fire. A croqtile obligation-generation bug.",
-   "incomplete_indices": [
-    {
-     "array": "os",
-     "index": "q - 1",
-     "bounds_generated": [
-      "upper"
-     ],
-     "outcomes": [
-      "static-true"
-     ],
-     "n_obligations": 1
-    }
-   ]
-  },
-  {
-   "mutant_id": "M1.s5.tp1.load",
-   "class": "M1",
-   "spec": 5,
-   "category": "transpose",
-   "case": "1_bert_32x512x768_32x768x512",
-   "paper_category": "oob",
-   "desc": "offset async DMA source chunk overruns the input",
-   "detector_at_default": "crash",
-   "mutant_path": "benchmark2/choreo/mutants/M1/transpose/M1.s5.tp1.load__1_bert_32x512x768_32x768x512.co",
-   "mutated_at_sites": [],
-   "mutated_other_sites": [
-    "i"
+   "suppressed_but_not_about_this_mutation": [
+    "Tile coordinate `__iv_y` is out of bounds of the 2nd dimension of chunkat 'i' (valid range is [0, ::TRANSPOSE::seq_len))",
+    "Tile coordinate `__iv_y` is out of bounds of the 3rd dimension of chunkat 'o' (valid range is [0, ::TRANSPOSE::seq_len))"
    ],
-   "ledger": {
-    "n_obligations": 22,
-    "outcomes": {
-     "static-true": 22
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
-    "relevant_runtime_enabled": 0
-   },
-   "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [
-    "is",
-    "os"
-   ],
-   "arrays_mutated": [
-    "i"
-   ],
-   "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "i"
-   ]
-  },
-  {
-   "mutant_id": "M1.s5.tp1.store",
-   "class": "M1",
-   "spec": 5,
-   "category": "transpose",
-   "case": "1_bert_32x512x768_32x768x512",
-   "paper_category": "oob",
-   "desc": "offset DMA destination chunk overruns the output",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M1/transpose/M1.s5.tp1.store__1_bert_32x512x768_32x768x512.co",
-   "mutated_at_sites": [],
-   "mutated_other_sites": [
-    "o"
-   ],
-   "ledger": {
-    "n_obligations": 22,
-    "outcomes": {
-     "static-true": 22
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
-    "relevant_runtime_enabled": 0
-   },
-   "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [
-    "is",
-    "os"
-   ],
-   "arrays_mutated": [
-    "o"
-   ],
-   "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "o"
-   ]
+   "forced_all": {
+    "status": "untested",
+    "reason": "pass --execute to test C2 on this mutant"
+   }
   },
   {
    "mutant_id": "M2.s5.cc1.dup",
@@ -821,13 +425,12 @@
    ],
    "mutated_other_sites": [],
    "ledger": {
-    "n_obligations": 52,
+    "n_obligations": 80,
     "outcomes": {
-     "static-true": 52
+     "static-true": 80
     },
     "runtime_enabled": 0,
     "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
     "relevant_runtime_suppressed": 0,
     "relevant_runtime_enabled": 0
    },
@@ -853,13 +456,12 @@
     "loop-bound"
    ],
    "ledger": {
-    "n_obligations": 53,
+    "n_obligations": 80,
     "outcomes": {
-     "static-true": 53
+     "static-true": 80
     },
     "runtime_enabled": 0,
     "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
     "relevant_runtime_suppressed": 0,
     "relevant_runtime_enabled": 0
    },
@@ -871,307 +473,752 @@
    ]
   },
   {
-   "mutant_id": "M2.s5.cc11.dup",
+   "mutant_id": "M2.15.cv10.padswap",
    "class": "M2",
-   "spec": 5,
-   "category": "concat",
-   "case": "11_dynamic_32xS1x768_32xS2x768_32xS1pS2x768",
+   "spec": 15,
+   "category": "conv2d",
+   "case": "10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D",
    "paper_category": "wrong-shape",
-   "desc": "duplicate write: second half overwrites the first",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M2/concat/M2.s5.cc11.dup__11_dynamic_32xS1x768_32xS2x768_32xS1pS2x768.co",
-   "mutated_at_sites": [
-    "os.at(q)"
-   ],
+   "desc": "pad_low and pad_high swapped per axis: the padded length is unchanged, so the sum-based check cannot see it, but every element moves",
+   "detector_at_default": "crash",
+   "mutant_path": "benchmark2/choreo/mutants/M2/conv2d/M2.15.cv10.padswap__10_dynamic_32x128x112x112_256x128x3x3_32x256x56x56_S_P_D.co",
+   "mutated_at_sites": [],
    "mutated_other_sites": [],
    "ledger": {
-    "n_obligations": 52,
+    "n_obligations": 62,
     "outcomes": {
-     "static-true": 52
+     "static-true": 47,
+     "runtime": 15
+    },
+    "runtime_enabled": 4,
+    "runtime_suppressed": 11,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "cause": "UNRESOLVED",
+   "reason": "the diff parser found no mutated access surface; the diff needs manual reading"
+  },
+  {
+   "mutant_id": "M2.15.cv4.padswap",
+   "class": "M2",
+   "spec": 15,
+   "category": "conv2d",
+   "case": "4_dynamic_32x128xHxW_256x128x3x3_32x256xHxW_S_P_D",
+   "paper_category": "wrong-shape",
+   "desc": "pad_low and pad_high swapped on the per-thread padded tile",
+   "detector_at_default": "crash",
+   "mutant_path": "benchmark2/choreo/mutants/M2/conv2d/M2.15.cv4.padswap__4_dynamic_32x128xHxW_256x128x3x3_32x256xHxW_S_P_D.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [],
+   "ledger": {
+    "n_obligations": 62,
+    "outcomes": {
+     "static-true": 47,
+     "runtime": 15
+    },
+    "runtime_enabled": 7,
+    "runtime_suppressed": 8,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "cause": "UNRESOLVED",
+   "reason": "the diff parser found no mutated access surface; the diff needs manual reading"
+  },
+  {
+   "mutant_id": "M2.13.mm1.affine",
+   "class": "M2",
+   "spec": 13,
+   "category": "matmul",
+   "case": "1_bert_32x512x768_768x768_32x512x768",
+   "paper_category": "wrong-shape",
+   "desc": "shape-equal / layout-unequal: the rhs tile coordinates are exchanged on a SQUARE operand, so no extent disagrees",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M2/matmul/M2.13.mm1.affine__1_bert_32x512x768_768x768_32x512x768.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [
+    "rhs"
+   ],
+   "ledger": {
+    "n_obligations": 35,
+    "outcomes": {
+     "static-true": 35
     },
     "runtime_enabled": 0,
     "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "assessed_mutated_indices": [],
+   "arrays_assessed_by_choreo": [
+    "lhs",
+    "output",
+    "rhs"
+   ],
+   "arrays_mutated": [
+    "rhs"
+   ],
+   "cause": "C4_NOT_ASSESSED",
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": []
+  },
+  {
+   "mutant_id": "M2.6.mm1.alt",
+   "class": "M2",
+   "spec": 6,
+   "category": "matmul",
+   "case": "11_dynamic_32xSx768_768x768_32xSx768",
+   "paper_category": "dim-mismatch",
+   "desc": "two leading extents transposed in the output declaration on matmul (second cell: the same defect on another kernel of the family)",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M2/matmul/M2.6.mm1.alt__11_dynamic_32xSx768_768x768_32xSx768.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [
+    "output",
+    "span-extent"
+   ],
+   "ledger": {
+    "n_obligations": 36,
+    "outcomes": {
+     "static-true": 31,
+     "runtime": 5
+    },
+    "runtime_enabled": 2,
+    "runtime_suppressed": 3,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "assessed_mutated_indices": [],
+   "arrays_assessed_by_choreo": [
+    "lhs",
+    "output",
+    "rhs"
+   ],
+   "arrays_mutated": [
+    "output",
+    "span-extent"
+   ],
+   "cause": "C4_NOT_ASSESSED",
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": [
+    "span-extent"
+   ]
+  },
+  {
+   "mutant_id": "M2.10.rl24.square",
+   "class": "M2",
+   "spec": 10,
+   "category": "relu",
+   "case": "24_dma_transp_square_4x4x16x16",
+   "paper_category": "wrong-shape",
+   "desc": "square transpose permutation feeding an elementwise op: extents agree, the values are transposed",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M2/relu/M2.10.rl24.square__24_dma_transp_square_4x4x16x16.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [],
+   "ledger": {
+    "n_obligations": 36,
+    "outcomes": {
+     "static-true": 36
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 0,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "cause": "UNRESOLVED",
+   "reason": "the diff parser found no mutated access surface; the diff needs manual reading"
+  },
+  {
+   "mutant_id": "M2.13.rl24.affine",
+   "class": "M2",
+   "spec": 13,
+   "category": "relu",
+   "case": "24_dma_transp_square_4x4x16x16",
+   "paper_category": "wrong-shape",
+   "desc": "shape-equal / layout-unequal: the equal outer extents are exchanged, every extent still agrees",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M2/relu/M2.13.rl24.affine__24_dma_transp_square_4x4x16x16.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [
+    "inp"
+   ],
+   "ledger": {
+    "n_obligations": 36,
+    "outcomes": {
+     "static-true": 36
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 0,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "assessed_mutated_indices": [],
+   "arrays_assessed_by_choreo": [
+    "inp",
+    "l.data",
+    "out"
+   ],
+   "arrays_mutated": [
+    "inp"
+   ],
+   "cause": "C4_NOT_ASSESSED",
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": []
+  },
+  {
+   "mutant_id": "M2.5.rl1.dup",
+   "class": "M2",
+   "spec": 5,
+   "category": "relu",
+   "case": "1_bert_32x512x768_32x512x768",
+   "paper_category": "wrong-shape",
+   "desc": "duplicate write: every lane of the parallel fan-in overwrites the first shared staging slot on relu (second cell: the same defect on another kernel of the family)",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M2/relu/M2.5.rl1.dup__1_bert_32x512x768_32x512x768.co",
+   "mutated_at_sites": [
+    "out_s.at(0)"
+   ],
+   "mutated_other_sites": [],
+   "ledger": {
+    "n_obligations": 54,
+    "outcomes": {
+     "static-true": 54
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 0,
     "relevant_runtime_suppressed": 0,
     "relevant_runtime_enabled": 0
    },
    "cause": "C5_OUT_OF_SCOPE",
    "reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
    "changed_indices": [
-    "q"
+    "0"
    ],
    "changed_surfaces": []
   },
   {
-   "mutant_id": "M2.s5.cc11.partial",
+   "mutant_id": "M2.10.sg23.square",
    "class": "M2",
-   "spec": 5,
-   "category": "concat",
-   "case": "11_dynamic_32xS1x768_32xS2x768_32xS1pS2x768",
+   "spec": 10,
+   "category": "sigmoid",
+   "case": "23_dma_transp_square_4x4x16x16",
    "paper_category": "wrong-shape",
-   "desc": "partial write: omitted tail element of the concatenation",
+   "desc": "square transpose permutation feeding an elementwise op: extents agree, the values are transposed",
    "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M2/concat/M2.s5.cc11.partial__11_dynamic_32xS1x768_32xS2x768_32xS1pS2x768.co",
+   "mutant_path": "benchmark2/choreo/mutants/M2/sigmoid/M2.10.sg23.square__23_dma_transp_square_4x4x16x16.co",
    "mutated_at_sites": [],
-   "mutated_other_sites": [
-    "loop-bound"
-   ],
+   "mutated_other_sites": [],
    "ledger": {
-    "n_obligations": 53,
+    "n_obligations": 36,
     "outcomes": {
-     "static-true": 53
+     "static-true": 36
     },
     "runtime_enabled": 0,
     "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
     "relevant_runtime_suppressed": 0,
     "relevant_runtime_enabled": 0
    },
-   "cause": "C5_OUT_OF_SCOPE",
-   "reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
-   "changed_indices": [],
-   "changed_surfaces": [
-    "loop-bound"
-   ]
+   "cause": "UNRESOLVED",
+   "reason": "the diff parser found no mutated access surface; the diff needs manual reading"
   },
   {
-   "mutant_id": "M2.s3.ln3.reduce",
+   "mutant_id": "M2.13.sg23.affine",
    "class": "M2",
-   "spec": 3,
-   "category": "layer_normalization",
-   "case": "3_attention_32xNx512x64_64_64",
-   "paper_category": "dim-mismatch",
-   "desc": "reduction divisor disagrees with the reduced extent",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M2/layer_normalization/M2.s3.ln3.reduce__3_attention_32xNx512x64_64_64.co",
-   "mutated_at_sites": [],
-   "mutated_other_sites": [
-    "span-extent"
-   ],
-   "ledger": {
-    "n_obligations": 72,
-    "outcomes": {
-     "runtime": 5,
-     "static-true": 67
-    },
-    "runtime_enabled": 1,
-    "runtime_suppressed": 4,
-    "stats_disabled_by_cost_filter": 4,
-    "relevant_runtime_suppressed": 0,
-    "relevant_runtime_enabled": 0
-   },
-   "cause": "C5_OUT_OF_SCOPE",
-   "reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
-   "changed_indices": [],
-   "changed_surfaces": [
-    "span-extent"
-   ]
-  },
-  {
-   "mutant_id": "M2.s4.ln1.caller.out",
-   "class": "M2",
-   "spec": 4,
-   "category": "layer_normalization",
-   "case": "1_bert_32x512x768_768_768",
+   "spec": 13,
+   "category": "sigmoid",
+   "case": "23_dma_transp_square_4x4x16x16",
    "paper_category": "wrong-shape",
-   "desc": "reference output buffer declared with a wrong extent",
+   "desc": "shape-equal / layout-unequal: the equal outer extents are exchanged, every extent still agrees",
    "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M2/layer_normalization/M2.s4.ln1.caller.out__1_bert_32x512x768_768_768.co",
+   "mutant_path": "benchmark2/choreo/mutants/M2/sigmoid/M2.13.sg23.affine__23_dma_transp_square_4x4x16x16.co",
    "mutated_at_sites": [],
    "mutated_other_sites": [
-    "caller"
+    "inp"
    ],
    "ledger": {
-    "n_obligations": 68,
+    "n_obligations": 36,
     "outcomes": {
-     "static-true": 68
+     "static-true": 36
     },
     "runtime_enabled": 0,
     "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
     "relevant_runtime_suppressed": 0,
     "relevant_runtime_enabled": 0
    },
    "assessed_mutated_indices": [],
    "arrays_assessed_by_choreo": [
-    "bias",
-    "df",
-    "lhs",
-    "out",
-    "s_mean",
-    "s_std",
-    "s_var",
-    "scale"
-   ],
-   "arrays_mutated": [
-    "caller"
-   ],
-   "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "caller"
-   ]
-  },
-  {
-   "mutant_id": "M2.s4.ln1.out",
-   "class": "M2",
-   "spec": 4,
-   "category": "layer_normalization",
-   "case": "1_bert_32x512x768_768_768",
-   "paper_category": "wrong-shape",
-   "desc": "output tensor declared with a wrong trailing extent",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M2/layer_normalization/M2.s4.ln1.out__1_bert_32x512x768_768_768.co",
-   "mutated_at_sites": [],
-   "mutated_other_sites": [
+    "inp",
+    "l.data",
     "out"
    ],
-   "ledger": {
-    "n_obligations": 68,
-    "outcomes": {
-     "static-true": 67,
-     "runtime": 1
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 1,
-    "stats_disabled_by_cost_filter": 1,
-    "relevant_runtime_suppressed": 1,
-    "relevant_runtime_enabled": 0
-   },
-   "cause": "C1_COST_FILTER_SUPPRESSED",
-   "reason": "the assessor produced a `runtime` obligation for the mutated access, but its cost tier exceeds the default -rtc level (measured: default == entry == low), so the cost filter dropped the guard. An EMISSION POLICY, not a soundness gap.",
-   "suppressed_obligations": [
-    {
-     "message": "The 3rd index `k` of element access 'out' should be less than 767",
-     "cost": "medium",
-     "mechanism": "canonical",
-     "usage": "elem-access"
-    }
+   "arrays_mutated": [
+    "inp"
    ],
-   "suppressed_but_not_about_this_mutation": [],
-   "forced_all": {
-    "status": "untested",
-    "reason": "pass --execute to test C2 on this mutant"
-   }
+   "cause": "C4_NOT_ASSESSED",
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": []
   },
   {
-   "mutant_id": "M2.s4.ln3.caller.out",
+   "mutant_id": "M2.5.sm1.partial",
    "class": "M2",
-   "spec": 4,
-   "category": "layer_normalization",
-   "case": "3_attention_32xNx512x64_64_64",
+   "spec": 5,
+   "category": "softmax",
+   "case": "1_bert_32x512x768_32x512x768",
    "paper_category": "wrong-shape",
-   "desc": "reference output buffer declared with a wrong extent",
+   "desc": "partial write: the last row of the batch is never staged on softmax (second cell: the same defect on another kernel of the family)",
    "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M2/layer_normalization/M2.s4.ln3.caller.out__3_attention_32xNx512x64_64_64.co",
+   "mutant_path": "benchmark2/choreo/mutants/M2/softmax/M2.5.sm1.partial__1_bert_32x512x768_32x512x768.co",
    "mutated_at_sites": [],
    "mutated_other_sites": [
-    "caller"
+    "span-extent"
    ],
    "ledger": {
     "n_obligations": 72,
     "outcomes": {
-     "runtime": 5,
-     "static-true": 67
+     "static-true": 72
     },
-    "runtime_enabled": 1,
-    "runtime_suppressed": 4,
-    "stats_disabled_by_cost_filter": 4,
+    "runtime_enabled": 0,
+    "runtime_suppressed": 0,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "cause": "C5_OUT_OF_SCOPE",
+   "reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
+   "changed_indices": [],
+   "changed_surfaces": [
+    "span-extent"
+   ]
+  },
+  {
+   "mutant_id": "M2.10.tp24.square",
+   "class": "M2",
+   "spec": 10,
+   "category": "transpose",
+   "case": "24_dma_transp_square_4x4x16x16",
+   "paper_category": "wrong-shape",
+   "desc": "square transpose permutation on a non-matmul operand: the two equal spatial axes are exchanged, so every extent agrees and only the memory order is wrong",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M2/transpose/M2.10.tp24.square__24_dma_transp_square_4x4x16x16.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [],
+   "ledger": {
+    "n_obligations": 36,
+    "outcomes": {
+     "static-true": 36
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 0,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "cause": "UNRESOLVED",
+   "reason": "the diff parser found no mutated access surface; the diff needs manual reading"
+  },
+  {
+   "mutant_id": "M2.13.tp24.affine",
+   "class": "M2",
+   "spec": 13,
+   "category": "transpose",
+   "case": "24_dma_transp_square_4x4x16x16",
+   "paper_category": "wrong-shape",
+   "desc": "shape-equal / layout-unequal on a non-matmul view: two equal outer extents are exchanged, so no extent disagrees",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M2/transpose/M2.13.tp24.affine__24_dma_transp_square_4x4x16x16.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [
+    "inp"
+   ],
+   "ledger": {
+    "n_obligations": 36,
+    "outcomes": {
+     "static-true": 36
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 0,
     "relevant_runtime_suppressed": 0,
     "relevant_runtime_enabled": 0
    },
    "assessed_mutated_indices": [],
    "arrays_assessed_by_choreo": [
-    "bias",
-    "df",
-    "lhs",
-    "out",
-    "s_mean",
-    "s_std",
-    "s_var",
-    "scale"
+    "inp",
+    "l.data",
+    "out"
    ],
    "arrays_mutated": [
-    "caller"
+    "inp"
    ],
    "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "caller"
-   ]
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": []
   },
   {
-   "mutant_id": "M2.s2.mm1.tiles",
+   "mutant_id": "M2.5.tp1.dup",
    "class": "M2",
-   "spec": 2,
-   "category": "matmul",
-   "case": "1_bert_32x512x768_768x768_32x512x768",
-   "paper_category": "dim-mismatch",
-   "desc": "tile count disagrees with the tiled extent on the k dimension",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M2/matmul/M2.s2.mm1.tiles__1_bert_32x512x768_768x768_32x512x768.co",
-   "mutated_at_sites": [],
-   "mutated_other_sites": [
-    "tile-count"
-   ],
-   "ledger": {
-    "n_obligations": 19,
-    "outcomes": {
-     "static-true": 19
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
-    "relevant_runtime_enabled": 0
-   },
-   "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [],
-   "arrays_mutated": [
-    "tile-count"
-   ],
-   "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "tile-count"
-   ]
-  },
-  {
-   "mutant_id": "M2.s4.mm1.out",
-   "class": "M2",
-   "spec": 4,
-   "category": "matmul",
-   "case": "1_bert_32x512x768_768x768_32x512x768",
+   "spec": 5,
+   "category": "transpose",
+   "case": "1_bert_32x512x768_32x768x512",
    "paper_category": "wrong-shape",
-   "desc": "output declared with a wrong trailing extent",
+   "desc": "duplicate write: every lane of the parallel fan-in overwrites the first shared staging slot on transpose (second cell: the same defect on another kernel of the family)",
    "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M2/matmul/M2.s4.mm1.out__1_bert_32x512x768_768x768_32x512x768.co",
-   "mutated_at_sites": [],
-   "mutated_other_sites": [
-    "output",
-    "span-extent"
+   "mutant_path": "benchmark2/choreo/mutants/M2/transpose/M2.5.tp1.dup__1_bert_32x512x768_32x768x512.co",
+   "mutated_at_sites": [
+    "os.at(0)"
    ],
+   "mutated_other_sites": [],
    "ledger": {
-    "n_obligations": 19,
+    "n_obligations": 35,
     "outcomes": {
-     "static-true": 19
+     "static-true": 35
     },
     "runtime_enabled": 0,
     "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "cause": "C5_OUT_OF_SCOPE",
+   "reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
+   "changed_indices": [
+    "0"
+   ],
+   "changed_surfaces": []
+  },
+  {
+   "mutant_id": "M3.16.bn1.symbox",
+   "class": "M3",
+   "spec": 16,
+   "category": "batch_norm",
+   "case": "conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "paper_category": "dim-mismatch",
+   "desc": "TMA box inner alignment with a symbolic leading dim: the assessment was never emitted, so no threshold reaches it",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M3/batch_norm/M3.16.bn1.symbox__conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [
+    "i"
+   ],
+   "ledger": {
+    "n_obligations": 57,
+    "outcomes": {
+     "static-true": 57
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 0,
     "relevant_runtime_suppressed": 0,
     "relevant_runtime_enabled": 0
    },
    "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [],
+   "arrays_assessed_by_choreo": [
+    "B_tile",
+    "i",
+    "l1_A",
+    "l1_Y",
+    "o",
+    "w"
+   ],
    "arrays_mutated": [
+    "i"
+   ],
+   "cause": "C4_NOT_ASSESSED",
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": []
+  },
+  {
+   "mutant_id": "M3.s1.bnmma.atom10",
+   "class": "M3",
+   "spec": 1,
+   "category": "batch_norm",
+   "case": "bnmma_32x512x768_768x768_32x512x768",
+   "paper_category": "dim-mismatch",
+   "desc": "MMA contraction extent 10 not divisible by the tensor-core atom (16) on the batch_norm staging host",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M3/batch_norm/M3.s1.bnmma.atom10__bnmma_32x512x768_768x768_32x512x768.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [
+    "call-arg",
+    "l1_a",
+    "span-extent"
+   ],
+   "ledger": {
+    "n_obligations": 35,
+    "outcomes": {
+     "static-true": 35
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 0,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "assessed_mutated_indices": [],
+   "arrays_assessed_by_choreo": [
+    "lhs",
     "output",
+    "rhs"
+   ],
+   "arrays_mutated": [
+    "call-arg",
+    "l1_a",
     "span-extent"
    ],
    "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
    "arrays_with_no_obligation": [
+    "call-arg",
+    "l1_a",
+    "span-extent"
+   ]
+  },
+  {
+   "mutant_id": "M3.s1.bnmma.atom6",
+   "class": "M3",
+   "spec": 1,
+   "category": "batch_norm",
+   "case": "bnmma_32x512x768_768x768_32x512x768",
+   "paper_category": "dim-mismatch",
+   "desc": "MMA contraction extent 6 not divisible by the tensor-core atom (16) on the batch_norm staging host",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M3/batch_norm/M3.s1.bnmma.atom6__bnmma_32x512x768_768x768_32x512x768.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [
+    "call-arg",
+    "l1_a",
+    "span-extent"
+   ],
+   "ledger": {
+    "n_obligations": 35,
+    "outcomes": {
+     "static-true": 35
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 0,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "assessed_mutated_indices": [],
+   "arrays_assessed_by_choreo": [
+    "lhs",
     "output",
+    "rhs"
+   ],
+   "arrays_mutated": [
+    "call-arg",
+    "l1_a",
+    "span-extent"
+   ],
+   "cause": "C4_NOT_ASSESSED",
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": [
+    "call-arg",
+    "l1_a",
+    "span-extent"
+   ]
+  },
+  {
+   "mutant_id": "M3.16.cv1.symbox",
+   "class": "M3",
+   "spec": 16,
+   "category": "conv2d",
+   "case": "1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "paper_category": "dim-mismatch",
+   "desc": "TMA box inner alignment with a symbolic leading dim: the assessment was never emitted, so no threshold reaches it",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M3/conv2d/M3.16.cv1.symbox__1_attention_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [
+    "i"
+   ],
+   "ledger": {
+    "n_obligations": 57,
+    "outcomes": {
+     "static-true": 57
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 0,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "assessed_mutated_indices": [],
+   "arrays_assessed_by_choreo": [
+    "B_tile",
+    "i",
+    "l1_A",
+    "l1_Y",
+    "o",
+    "w"
+   ],
+   "arrays_mutated": [
+    "i"
+   ],
+   "cause": "C4_NOT_ASSESSED",
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": []
+  },
+  {
+   "mutant_id": "M3.16.r51.symbox",
+   "class": "M3",
+   "spec": 16,
+   "category": "dma_rank5",
+   "case": "conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "paper_category": "dim-mismatch",
+   "desc": "TMA box inner alignment with a symbolic leading dim: the assessment was never emitted, so no threshold reaches it",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M3/dma_rank5/M3.16.r51.symbox__conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [
+    "i"
+   ],
+   "ledger": {
+    "n_obligations": 57,
+    "outcomes": {
+     "static-true": 57
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 0,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "assessed_mutated_indices": [],
+   "arrays_assessed_by_choreo": [
+    "B_tile",
+    "i",
+    "l1_A",
+    "l1_Y",
+    "o",
+    "w"
+   ],
+   "arrays_mutated": [
+    "i"
+   ],
+   "cause": "C4_NOT_ASSESSED",
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": []
+  },
+  {
+   "mutant_id": "M3.16.ln1.symbox",
+   "class": "M3",
+   "spec": 16,
+   "category": "layer_normalization",
+   "case": "conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "paper_category": "dim-mismatch",
+   "desc": "TMA box inner alignment with a symbolic leading dim: the assessment was never emitted, so no threshold reaches it",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M3/layer_normalization/M3.16.ln1.symbox__conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [
+    "i"
+   ],
+   "ledger": {
+    "n_obligations": 57,
+    "outcomes": {
+     "static-true": 57
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 0,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "assessed_mutated_indices": [],
+   "arrays_assessed_by_choreo": [
+    "B_tile",
+    "i",
+    "l1_A",
+    "l1_Y",
+    "o",
+    "w"
+   ],
+   "arrays_mutated": [
+    "i"
+   ],
+   "cause": "C4_NOT_ASSESSED",
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": []
+  },
+  {
+   "mutant_id": "M3.s1.lnmma.atom10",
+   "class": "M3",
+   "spec": 1,
+   "category": "layer_normalization",
+   "case": "lnmma_32x512x768_768x768_32x512x768",
+   "paper_category": "dim-mismatch",
+   "desc": "MMA contraction extent 10 not divisible by the tensor-core atom (16) on the layer_normalization staging host",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M3/layer_normalization/M3.s1.lnmma.atom10__lnmma_32x512x768_768x768_32x512x768.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [
+    "call-arg",
+    "l1_a",
+    "span-extent"
+   ],
+   "ledger": {
+    "n_obligations": 35,
+    "outcomes": {
+     "static-true": 35
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 0,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "assessed_mutated_indices": [],
+   "arrays_assessed_by_choreo": [
+    "lhs",
+    "output",
+    "rhs"
+   ],
+   "arrays_mutated": [
+    "call-arg",
+    "l1_a",
+    "span-extent"
+   ],
+   "cause": "C4_NOT_ASSESSED",
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": [
+    "call-arg",
+    "l1_a",
+    "span-extent"
+   ]
+  },
+  {
+   "mutant_id": "M3.s1.lnmma.atom6",
+   "class": "M3",
+   "spec": 1,
+   "category": "layer_normalization",
+   "case": "lnmma_32x512x768_768x768_32x512x768",
+   "paper_category": "dim-mismatch",
+   "desc": "MMA contraction extent 6 not divisible by the tensor-core atom (16) on the layer_normalization staging host",
+   "detector_at_default": "oracle",
+   "mutant_path": "benchmark2/choreo/mutants/M3/layer_normalization/M3.s1.lnmma.atom6__lnmma_32x512x768_768x768_32x512x768.co",
+   "mutated_at_sites": [],
+   "mutated_other_sites": [
+    "call-arg",
+    "l1_a",
+    "span-extent"
+   ],
+   "ledger": {
+    "n_obligations": 35,
+    "outcomes": {
+     "static-true": 35
+    },
+    "runtime_enabled": 0,
+    "runtime_suppressed": 0,
+    "relevant_runtime_suppressed": 0,
+    "relevant_runtime_enabled": 0
+   },
+   "assessed_mutated_indices": [],
+   "arrays_assessed_by_choreo": [
+    "lhs",
+    "output",
+    "rhs"
+   ],
+   "arrays_mutated": [
+    "call-arg",
+    "l1_a",
+    "span-extent"
+   ],
+   "cause": "C4_NOT_ASSESSED",
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": [
+    "call-arg",
+    "l1_a",
     "span-extent"
    ]
   },
@@ -1192,151 +1239,28 @@
     "span-extent"
    ],
    "ledger": {
-    "n_obligations": 19,
+    "n_obligations": 35,
     "outcomes": {
-     "static-true": 19
+     "static-true": 35
     },
     "runtime_enabled": 0,
     "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
     "relevant_runtime_suppressed": 0,
     "relevant_runtime_enabled": 0
    },
    "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [],
+   "arrays_assessed_by_choreo": [
+    "lhs",
+    "output",
+    "rhs"
+   ],
    "arrays_mutated": [
     "call-arg",
     "l1_a",
     "span-extent"
    ],
    "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "call-arg",
-    "l1_a",
-    "span-extent"
-   ]
-  },
-  {
-   "mutant_id": "M3.s1.mm1.atom12",
-   "class": "M3",
-   "spec": 1,
-   "category": "matmul",
-   "case": "1_bert_32x512x768_768x768_32x512x768",
-   "paper_category": "dim-mismatch",
-   "desc": "MMA contraction extent 12 not divisible by the tensor-core atom (16)",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M3/matmul/M3.s1.mm1.atom12__1_bert_32x512x768_768x768_32x512x768.co",
-   "mutated_at_sites": [],
-   "mutated_other_sites": [
-    "call-arg",
-    "l1_a",
-    "span-extent"
-   ],
-   "ledger": {
-    "n_obligations": 19,
-    "outcomes": {
-     "static-true": 19
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
-    "relevant_runtime_enabled": 0
-   },
-   "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [],
-   "arrays_mutated": [
-    "call-arg",
-    "l1_a",
-    "span-extent"
-   ],
-   "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "call-arg",
-    "l1_a",
-    "span-extent"
-   ]
-  },
-  {
-   "mutant_id": "M3.s1.mm1.atom20",
-   "class": "M3",
-   "spec": 1,
-   "category": "matmul",
-   "case": "1_bert_32x512x768_768x768_32x512x768",
-   "paper_category": "dim-mismatch",
-   "desc": "MMA contraction extent 20 not divisible by the tensor-core atom (16)",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M3/matmul/M3.s1.mm1.atom20__1_bert_32x512x768_768x768_32x512x768.co",
-   "mutated_at_sites": [],
-   "mutated_other_sites": [
-    "call-arg",
-    "l1_a",
-    "span-extent"
-   ],
-   "ledger": {
-    "n_obligations": 19,
-    "outcomes": {
-     "static-true": 19
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
-    "relevant_runtime_enabled": 0
-   },
-   "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [],
-   "arrays_mutated": [
-    "call-arg",
-    "l1_a",
-    "span-extent"
-   ],
-   "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "call-arg",
-    "l1_a",
-    "span-extent"
-   ]
-  },
-  {
-   "mutant_id": "M3.s1.mm1.atom24",
-   "class": "M3",
-   "spec": 1,
-   "category": "matmul",
-   "case": "1_bert_32x512x768_768x768_32x512x768",
-   "paper_category": "dim-mismatch",
-   "desc": "MMA contraction extent 24 not divisible by the tensor-core atom (16)",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M3/matmul/M3.s1.mm1.atom24__1_bert_32x512x768_768x768_32x512x768.co",
-   "mutated_at_sites": [],
-   "mutated_other_sites": [
-    "call-arg",
-    "l1_a",
-    "span-extent"
-   ],
-   "ledger": {
-    "n_obligations": 19,
-    "outcomes": {
-     "static-true": 19
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
-    "relevant_runtime_enabled": 0
-   },
-   "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [],
-   "arrays_mutated": [
-    "call-arg",
-    "l1_a",
-    "span-extent"
-   ],
-   "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
    "arrays_with_no_obligation": [
     "call-arg",
     "l1_a",
@@ -1360,25 +1284,28 @@
     "span-extent"
    ],
    "ledger": {
-    "n_obligations": 19,
+    "n_obligations": 35,
     "outcomes": {
-     "static-true": 19
+     "static-true": 35
     },
     "runtime_enabled": 0,
     "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
     "relevant_runtime_suppressed": 0,
     "relevant_runtime_enabled": 0
    },
    "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [],
+   "arrays_assessed_by_choreo": [
+    "lhs",
+    "output",
+    "rhs"
+   ],
    "arrays_mutated": [
     "call-arg",
     "l1_a",
     "span-extent"
    ],
    "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
    "arrays_with_no_obligation": [
     "call-arg",
     "l1_a",
@@ -1386,184 +1313,124 @@
    ]
   },
   {
-   "mutant_id": "M3.s1.mm1.ktile7",
+   "mutant_id": "M3.16.mp1.symbox",
    "class": "M3",
-   "spec": 1,
-   "category": "matmul",
-   "case": "1_bert_32x512x768_768x768_32x512x768",
+   "spec": 16,
+   "category": "max_pool2d",
+   "case": "conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
    "paper_category": "dim-mismatch",
-   "desc": "k-tile count 7 yields a contraction tile that is not atom-divisible",
+   "desc": "TMA box inner alignment with a symbolic leading dim: the assessment was never emitted, so no threshold reaches it",
    "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M3/matmul/M3.s1.mm1.ktile7__1_bert_32x512x768_768x768_32x512x768.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/max_pool2d/M3.16.mp1.symbox__conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
    "mutated_at_sites": [],
    "mutated_other_sites": [
-    "tile-count"
+    "i"
    ],
    "ledger": {
-    "n_obligations": 19,
+    "n_obligations": 57,
     "outcomes": {
-     "static-true": 19
+     "static-true": 57
     },
     "runtime_enabled": 0,
     "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
     "relevant_runtime_suppressed": 0,
     "relevant_runtime_enabled": 0
    },
    "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [],
+   "arrays_assessed_by_choreo": [
+    "B_tile",
+    "i",
+    "l1_A",
+    "l1_Y",
+    "o",
+    "w"
+   ],
    "arrays_mutated": [
-    "tile-count"
+    "i"
    ],
    "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "tile-count"
-   ]
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": []
   },
   {
-   "mutant_id": "M3.s1.mm1.ktile9",
+   "mutant_id": "M3.16.rl1.symbox",
    "class": "M3",
-   "spec": 1,
-   "category": "matmul",
-   "case": "1_bert_32x512x768_768x768_32x512x768",
+   "spec": 16,
+   "category": "relu",
+   "case": "conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
    "paper_category": "dim-mismatch",
-   "desc": "k-tile count 9 yields a contraction tile that is not atom-divisible",
+   "desc": "TMA box inner alignment with a symbolic leading dim: the assessment was never emitted, so no threshold reaches it",
    "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M3/matmul/M3.s1.mm1.ktile9__1_bert_32x512x768_768x768_32x512x768.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/relu/M3.16.rl1.symbox__conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
    "mutated_at_sites": [],
    "mutated_other_sites": [
-    "tile-count"
+    "i"
    ],
    "ledger": {
-    "n_obligations": 19,
+    "n_obligations": 57,
     "outcomes": {
-     "static-true": 19
+     "static-true": 57
     },
     "runtime_enabled": 0,
     "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
     "relevant_runtime_suppressed": 0,
     "relevant_runtime_enabled": 0
    },
    "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [],
+   "arrays_assessed_by_choreo": [
+    "B_tile",
+    "i",
+    "l1_A",
+    "l1_Y",
+    "o",
+    "w"
+   ],
    "arrays_mutated": [
-    "tile-count"
+    "i"
    ],
    "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "tile-count"
-   ]
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": []
   },
   {
-   "mutant_id": "M3.s2.mm1.lhs1",
+   "mutant_id": "M3.16.tp1.symbox",
    "class": "M3",
-   "spec": 2,
-   "category": "matmul",
-   "case": "1_bert_32x512x768_768x768_32x512x768",
-   "paper_category": "stride",
-   "desc": "misaligned DMA base: lhs chunk offset on the contraction tile",
+   "spec": 16,
+   "category": "transpose",
+   "case": "conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+   "paper_category": "dim-mismatch",
+   "desc": "TMA box inner alignment with a symbolic leading dim: the assessment was never emitted, so no threshold reaches it",
    "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M3/matmul/M3.s2.mm1.lhs1__1_bert_32x512x768_768x768_32x512x768.co",
+   "mutant_path": "benchmark2/choreo/mutants/M3/transpose/M3.16.tp1.symbox__conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1.co",
    "mutated_at_sites": [],
    "mutated_other_sites": [
-    "lhs"
+    "i"
    ],
    "ledger": {
-    "n_obligations": 19,
+    "n_obligations": 57,
     "outcomes": {
-     "static-true": 19
+     "static-true": 57
     },
     "runtime_enabled": 0,
     "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
     "relevant_runtime_suppressed": 0,
     "relevant_runtime_enabled": 0
    },
    "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [],
+   "arrays_assessed_by_choreo": [
+    "B_tile",
+    "i",
+    "l1_A",
+    "l1_Y",
+    "o",
+    "w"
+   ],
    "arrays_mutated": [
-    "lhs"
+    "i"
    ],
    "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "lhs"
-   ]
-  },
-  {
-   "mutant_id": "M3.s2.mm1.rhs1",
-   "class": "M3",
-   "spec": 2,
-   "category": "matmul",
-   "case": "1_bert_32x512x768_768x768_32x512x768",
-   "paper_category": "stride",
-   "desc": "misaligned tensor-core base: rhs DMA chunk offset by 1",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M3/matmul/M3.s2.mm1.rhs1__1_bert_32x512x768_768x768_32x512x768.co",
-   "mutated_at_sites": [],
-   "mutated_other_sites": [
-    "rhs"
-   ],
-   "ledger": {
-    "n_obligations": 19,
-    "outcomes": {
-     "static-true": 19
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
-    "relevant_runtime_enabled": 0
-   },
-   "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [],
-   "arrays_mutated": [
-    "rhs"
-   ],
-   "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "rhs"
-   ]
-  },
-  {
-   "mutant_id": "M3.s2.mm1.rhs2",
-   "class": "M3",
-   "spec": 2,
-   "category": "matmul",
-   "case": "1_bert_32x512x768_768x768_32x512x768",
-   "paper_category": "stride",
-   "desc": "misaligned tensor-core base: rhs DMA chunk offset by 2",
-   "detector_at_default": "oracle",
-   "mutant_path": "benchmark2/choreo/mutants/M3/matmul/M3.s2.mm1.rhs2__1_bert_32x512x768_768x768_32x512x768.co",
-   "mutated_at_sites": [],
-   "mutated_other_sites": [
-    "rhs"
-   ],
-   "ledger": {
-    "n_obligations": 19,
-    "outcomes": {
-     "static-true": 19
-    },
-    "runtime_enabled": 0,
-    "runtime_suppressed": 0,
-    "stats_disabled_by_cost_filter": 0,
-    "relevant_runtime_suppressed": 0,
-    "relevant_runtime_enabled": 0
-   },
-   "assessed_mutated_indices": [],
-   "arrays_assessed_by_choreo": [],
-   "arrays_mutated": [
-    "rhs"
-   ],
-   "cause": "C4_NOT_ASSESSED",
-   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents) \u2014 not a lost verdict.",
-   "arrays_with_no_obligation": [
-    "rhs"
-   ]
+   "reason": "choreo generated NO obligation for the mutated access, so there was nothing to suppress and nothing to hoist. A coverage gap in the assessor's model of these surfaces (dma.copy chunk destinations, `with index` tile counts, output declarations, caller-side extents, host-side scalar extents such as `Hpad`) \u2014 not a lost verdict.",
+   "arrays_with_no_obligation": []
   }
  ]
 }
