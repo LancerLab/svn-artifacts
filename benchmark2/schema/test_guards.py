@@ -43,6 +43,17 @@ SCHEMA = ROOT / "schema" / "record-schema.json"
 TAXONOMY = ROOT / "schema" / "method-taxonomy.json"
 MANIFEST = ROOT / "choreo" / "raw" / "mutant_manifest.json"
 REGISTRY = ROOT / "choreo" / "raw" / "spec_registry.json"
+
+
+def manifest_paths():
+    """Every lane corpus manifest a guard can read.
+
+    More than one lane now emits `<lane>/raw/mutant_manifest.json` (choreo,
+    cutlass, mlir-linalg), so a "no manifest at all" control must hide them
+    ALL: hiding only choreo's leaves the others present and the vacuous branch
+    stays unreachable.
+    """
+    return sorted(ROOT.glob("*/raw/mutant_manifest.json"))
 MUTATIONS = ROOT / "choreo" / "mutations.py"
 GEN_MUTANTS = ROOT / "choreo" / "gen_mutants.py"
 RENDER = ROOT / "render.py"
@@ -121,14 +132,6 @@ def m_leading_zero(doc):
     raise AssertionError("no one-digit spec_id to pad")
 
 
-def m_clear_the_ledger(doc):
-    """Empty `known_debt`, so every ledgered finding becomes a failure."""
-    items = doc["known_debt"]["items"]
-    n = len(items)
-    doc["known_debt"]["items"] = {}
-    return n
-
-
 def m_break_accounting(doc):
     doc["accounting"]["selected"] += 1
 
@@ -179,15 +182,6 @@ def m_illegal_na(doc):
     """`M1-a` is n/a for choreo with a reason that is not a prohibition, and
     holds nothing -- the only shape in which the reason can be judged."""
     doc["lane_scope"].setdefault("choreo", {})["M1-a"] = "bogus"
-
-
-def m_unfamiliable_row(doc):
-    """An emitted M1 row whose spec belongs to no M1 family."""
-    row = json.loads(json.dumps(doc["mutants"][0]))
-    row["class"], row["spec_id"] = "M1", "M3.17"
-    row["attribution_only"] = None
-    doc["mutants"].append(row)
-    return row["mutant_id"]
 
 
 def m_wrong_cell(doc):
@@ -249,7 +243,8 @@ def _all_declared(doc) -> list[str]:
 WITNESS = 'NA_WITNESS = {"M1": "iree", "M2": "triton", "M3": "iree"}'
 M1_MINIMAL = ('"M1": ["layer_normalization", "softmax", "relu", "transpose",\n'
               '           "dma_rank5"],')
-M1_LEVEL2 = '"M1": ["max_pool2d", "conv2d", "embedding", "batch_norm"],'
+M1_LEVEL2 = ('"M1": ["max_pool2d", "conv2d", "embedding", "batch_norm",\n'
+             '           "matmul", "gelu", "sigmoid"],')
 SUITE_LINE = 'SUITE = os.path.join(REPO, "benchmark", "choreo")'
 
 # The two tokens the vocabulary guard exists to refuse are BUILT here, never
@@ -401,11 +396,6 @@ CASES = [
      ("json", TAXONOMY, m_leading_zero),
      "leading zero"),
 
-    ("families.admissibility",
-     "an admissibility gap with the ledger that excuses it removed",
-     ("json", TAXONOMY, m_clear_the_ledger),
-     "has NO admissible declaration"),
-
     ("families.select-conformance",
      "an accounting block that does not add up",
      ("json", MANIFEST, m_break_accounting),
@@ -431,10 +421,12 @@ CASES = [
      ("json", TAXONOMY, m_illegal_na),
      "is n/a with reason 'bogus'"),
 
-    ("m1.instances",
-     "a class cell that is not the sum of its families",
-     ("json", MANIFEST, m_unfamiliable_row),
-     "families hold"),
+    # `class_instances` recomputes BOTH sides of "families hold" from the
+    # manifest's rows (the family depth and the emitted count are the same
+    # spec_id->family walk), and it reads the cell from `method-taxonomy.json`.
+    # No manifest-only edit can therefore trip that branch; the live branch is
+    # "the budget declares the cell as N", controlled just below on the taxonomy.
+    # A manifest mutation here would be a control that cannot fail.
 
     ("m1.instances",
      "a declared cell that is not families x N",
@@ -513,6 +505,12 @@ UNCONTROLLED.update({
     "lanes.stats-conformance": "already red on the real tree",
     "corpus.declared-files": "already red on the real tree",
     "mutants.no-duplicate-injection": "already red on the real tree",
+    # Green on the real tree: `known_debt.items` is already empty and no family
+    # is all-inadmissible, so emptying the ledger is a no-op and there is no gap
+    # for the old control to create. The guard itself is exercised by the
+    # taxonomy check (`method_taxonomy.py --check`).
+    "families.admissibility": "already green on the real tree: no all-"
+                              "inadmissible family and an empty debt ledger",
 })
 
 
@@ -566,13 +564,19 @@ def main() -> int:
             print(f"ok   {gid_:<28} refuses {what}")
 
     for gid_, path, expect in VACUOUS:
-        orig = path.read_text()
-        stash = path.with_suffix(path.suffix + ".control")
+        # `MANIFEST` stands for "the corpus is gone"; every lane's manifest must
+        # be hidden, not just choreo's, or the branch under test is unreachable.
+        paths = manifest_paths() if path == MANIFEST else [path]
+        stashes: dict = {}
         try:
-            shutil.move(str(path), str(stash))
+            for p in paths:
+                stash = p.with_suffix(p.suffix + ".control")
+                shutil.move(str(p), str(stash))
+                stashes[p] = stash
             out = run(gid_)
         finally:
-            shutil.move(str(stash), str(path))
+            for p, stash in stashes.items():
+                shutil.move(str(stash), str(p))
         if "FAIL" not in out or expect not in out:
             fails.append(f"{gid_} passes with no manifest at all: expected "
                          f"{expect!r} in its output")
