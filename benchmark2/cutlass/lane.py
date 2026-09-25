@@ -24,15 +24,39 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-CUDA = "/usr/local/cuda-12.9/bin/nvcc"
+
+
+def _resolve_nvcc() -> str:
+    """Locate nvcc: `NVCC` wins, else the standard toolkit locations, else PATH.
+
+    The lane previously hard-coded `/usr/local/cuda-12.9/bin/nvcc`, which does
+    not exist on hosts that ship only CUDA 13 (this one). nvcc is discovered
+    rather than pinned so the lane runs on any correctly-provisioned host.
+    """
+    env = os.environ.get("NVCC")
+    if env:
+        return env
+    for c in ("/usr/local/cuda/bin/nvcc",
+              "/usr/local/cuda-13.0/bin/nvcc",
+              "/usr/local/cuda-12.9/bin/nvcc"):
+        if os.path.exists(c):
+            return c
+    return shutil.which("nvcc") or "/usr/local/cuda/bin/nvcc"
+
+
+CUDA = _resolve_nvcc()
 CUTLASS = os.path.abspath(os.path.join(
     ROOT, "..", "..", "croqtile", "extern", "cutlass"))
-ARCH = "sm_86"
+# Compiled target. Default sm_86 preserves the committed corpus (the lane is an
+# sm_86 vertical slice); the resulting PTX JITs forward onto newer parts, so the
+# same corpus is runnable on an sm_120 host. Override with CUTLASS_ARCH.
+ARCH = os.environ.get("CUTLASS_ARCH", "sm_86")
 INCLUDES = ["-I", os.path.join(CUTLASS, "include"),
             "-I", os.path.join(CUTLASS, "tools", "util", "include"),
             "-I", os.path.join(ROOT, "kernels")]
@@ -92,8 +116,12 @@ def shape_flags(cat, shape):
 def build(cat, shape, mut, outbin):
     flags = dict(shape_flags(cat, shape))
     flags.update({k: str(v) for k, v in (mut or {}).items()})
+    # Resolve the source against ROOT: run.sh/Makefile invoke this from
+    # benchmark2/, not from the lane directory, so a bare `kernels/...` path
+    # does not resolve.
+    src = os.path.join(ROOT, SRC[cat])
     cmd = [CUDA, "-std=c++17", f"-arch={ARCH}", "-O2"] + INCLUDES + \
-          [f"-D{k}={v}" for k, v in flags.items()] + [SRC[cat], "-o", outbin]
+          [f"-D{k}={v}" for k, v in flags.items()] + [src, "-o", outbin]
     p = subprocess.run(cmd, capture_output=True, text=True)
     return p.returncode, p.stderr
 

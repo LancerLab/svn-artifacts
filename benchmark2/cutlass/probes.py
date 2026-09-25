@@ -16,6 +16,7 @@ recorded as `unchecked` (compile-time) with the caveat in the note.
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 
@@ -23,7 +24,21 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, ROOT)
 import mutrec                                                   # noqa: E402
 
-CUDA = "/usr/local/cuda-12.9/bin/nvcc"
+
+def _resolve_nvcc() -> str:
+    """Locate nvcc: `NVCC` wins, else standard toolkit locations, else PATH."""
+    env = os.environ.get("NVCC")
+    if env:
+        return env
+    for c in ("/usr/local/cuda/bin/nvcc",
+              "/usr/local/cuda-13.0/bin/nvcc",
+              "/usr/local/cuda-12.9/bin/nvcc"):
+        if os.path.exists(c):
+            return c
+    return shutil.which("nvcc") or "/usr/local/cuda/bin/nvcc"
+
+
+CUDA = _resolve_nvcc()
 CUTLASS = os.path.abspath(os.path.join(
     ROOT, "..", "..", "croqtile", "extern", "cutlass"))
 INCLUDES = ["-I", os.path.join(CUTLASS, "include"),

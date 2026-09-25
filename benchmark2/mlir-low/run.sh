@@ -33,7 +33,14 @@ DEVICE="${DEVICE:-cpu}"
 
 # Pinned toolchain (manifest.md §5.1). Override with MLIR_LLVM_ROOT to point at
 # a different LLVM build; mlirbench.py resolves every binary from it.
-MLIR_LLVM_ROOT="${MLIR_LLVM_ROOT:-$HOME/dev/croqtile/extern/llvm-project}"
+if [[ -z "${MLIR_LLVM_ROOT:-}" ]]; then
+  for _c in "$ROOT/../croqtile/extern/llvm-project" \
+            "$HOME/dev/croqtile/extern/llvm-project" \
+            "/home/garfee/dev/croqtile/extern/llvm-project"; do
+    [[ -x "$_c/bin/mlir-opt" ]] && { MLIR_LLVM_ROOT="$_c"; break; }
+  done
+  MLIR_LLVM_ROOT="${MLIR_LLVM_ROOT:-$ROOT/../croqtile/extern/llvm-project}"
+fi
 export MLIR_LLVM_ROOT
 
 # M1.1 (dropped boundary mask) injects undefined behavior, so each (mutant, RTV

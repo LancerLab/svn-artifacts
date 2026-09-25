@@ -118,6 +118,8 @@ def main():
     ap.add_argument("--out", default=OUT)
     ap.add_argument("--size", default="small", choices=["small", "full"])
     ap.add_argument("--device", default=os.environ.get("CUDA_VISIBLE_DEVICES", "0"))
+    ap.add_argument("--jobs", default="1",
+                    help="accepted for harness compatibility; E3 is serial")
     a = ap.parse_args()
 
     a.e2 = os.path.abspath(a.e2)

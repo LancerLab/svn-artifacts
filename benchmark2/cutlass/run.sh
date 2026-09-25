@@ -12,10 +12,15 @@ HERE="$ROOT/$TOOLCHAIN"
 RAW="$HERE/raw"
 RECORDS="$HERE/records.jsonl"
 RESULTS="$ROOT/results/$TOOLCHAIN"
-NVCC="${NVCC:-/usr/local/cuda-12.9/bin/nvcc}"
+if [[ -z "${NVCC:-}" ]]; then
+  for _c in /usr/local/cuda/bin/nvcc /usr/local/cuda-13.0/bin/nvcc \
+            /usr/local/cuda-12.9/bin/nvcc; do
+    [[ -x "$_c" ]] && { NVCC="$_c"; break; }
+  done
+  NVCC="${NVCC:-$(command -v nvcc || echo /usr/local/cuda/bin/nvcc)}"
+fi
 CUTLASS="${CUTLASS_ROOT:-$ROOT/../croqtile/extern/cutlass}"
-PY="${PY:-/home/gxf/.tools/iree-dev-20260908-venv/bin/python}"
-export IREE_CUDA_TARGET=sm_86 IREE_CUDA_FEATURES=""
+PY="${PY:-python3}"
 
 die() { echo "ERROR: $*" >&2; exit 1; }
 

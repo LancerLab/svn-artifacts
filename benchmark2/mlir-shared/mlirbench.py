@@ -54,9 +54,32 @@ from schema import records as _records                         # noqa: E402
 # Toolchain (pinned in benchmark2/manifest.md §5.1)
 # --------------------------------------------------------------------------
 
-LLVM_ROOT = Path(
-    os.environ.get("MLIR_LLVM_ROOT", "/home/garfee/dev/croqtile/extern/llvm-project")
-)
+def _resolve_llvm_root() -> Path:
+    """Locate the pinned LLVM/MLIR 21.1.0 tree.
+
+    `MLIR_LLVM_ROOT` wins when set. Otherwise try, in order: the in-repo
+    croqtile `extern/` tree (`svn-artifacts/croqtile/extern/llvm-project`, the
+    one the committed `raw/setup.json` records and the one a clean checkout
+    actually has), then the historical reference-host paths. The first
+    candidate that carries `bin/mlir-opt` is used; if none exists the in-repo
+    path is returned so the toolchain check reports it rather than an unrelated
+    absolute path.
+    """
+    env = os.environ.get("MLIR_LLVM_ROOT")
+    if env:
+        return Path(env).resolve()
+    candidates = [
+        _B2.parent / "croqtile" / "extern" / "llvm-project",
+        Path("/home/garfee/dev/croqtile/extern/llvm-project"),
+        Path.home() / "dev" / "croqtile" / "extern" / "llvm-project",
+    ]
+    for c in candidates:
+        if (c / "bin" / "mlir-opt").exists():
+            return c.resolve()
+    return candidates[0].resolve()
+
+
+LLVM_ROOT = _resolve_llvm_root()
 LLVM_BIN = LLVM_ROOT / "bin"
 LLVM_LIB = LLVM_ROOT / "lib"
 
@@ -464,6 +487,38 @@ def _run(cmd: list[str], timeout: int = 300) -> ProcResult:
         return ProcResult(-2, "", f"[mlirbench] binary not found: {e}")
 
 
+def _run_pg(cmd: list[str], timeout: int = 300,
+            env: dict | None = None) -> ProcResult:
+    """Run `cmd` in its own session, killing the WHOLE process group on timeout.
+
+    `subprocess.run(timeout=...)` kills only the direct child. The GPU sanitizer
+    is `compute-sanitizer`, which re-parents the `mlir-runner` grandchild under a
+    `TreeLauncherSubreaper`; a timed-out run -- the M4.5 zero-step mutants never
+    terminate -- therefore leaves an orphan holding GPU memory that the next
+    lane (choreo's exclusive timing run) cannot reclaim. A new session plus
+    `killpg` reaps the tree.
+    """
+    import signal
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         text=True, env=env, start_new_session=True)
+    try:
+        out, err = p.communicate(timeout=timeout)
+        return ProcResult(p.returncode, out or "", err or "")
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
+        try:
+            out, err = p.communicate(timeout=30)
+        except subprocess.TimeoutExpired:
+            out, err = "", ""
+        return ProcResult(
+            EXIT_TIMEOUT, out or "",
+            (err or "") + f"\n[mlirbench] TIMEOUT after {timeout}s (group killed)",
+        )
+
+
 def run_mlir_opt(pipeline_str: str, src: Path, dst: Path | None = None) -> ProcResult:
     """Run `mlir-opt` with an explicit pass pipeline.
 
@@ -813,11 +868,9 @@ def run_sanitizer_gpu(
     env = {**os.environ}
     env["LD_LIBRARY_PATH"] = str(LLVM_LIB) + os.pathsep + env.get("LD_LIBRARY_PATH", "")
     try:
-        p = subprocess.run(cmd, capture_output=True, text=True,
-                           timeout=timeout, env=env)
-        run = ProcResult(p.returncode, p.stdout, p.stderr)
-    except subprocess.TimeoutExpired as e:
-        run = ProcResult(EXIT_TIMEOUT, _as_text(e.stdout), _as_text(e.stderr))
+        # Group-kill on timeout: compute-sanitizer's grandchild survives a plain
+        # child kill and would leak GPU memory (see `_run_pg`).
+        run = _run_pg(cmd, timeout=timeout, env=env)
     except FileNotFoundError as e:
         return AsanResult(False, "run", instrumented, False, "none", False, -2,
                           f"compute-sanitizer not found: {e}")
