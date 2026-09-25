@@ -10,10 +10,10 @@
   "checkout_dirty_source_files": [],
   "binary": "croqtile/build-release/choreo",
   "binary_sha1_12": "0d5212d07aa9",
-  "binary_mtime": 1790316215.6443305,
-  "binary_stale_vs_checkout": true,
+  "binary_mtime": 1790336090.3227763,
+  "binary_stale_vs_checkout": false,
   "binary_stale_basis": "source-mtime",
-  "binary_predates_source": true,
+  "binary_predates_source": false,
   "binary_newest_source_mtime": 1790318118.053199,
   "version_label_disagrees_with_head": false
  },
@@ -3701,6 +3701,5 @@
   "S9": "SOTA remainder (triton/mlir-linalg/mlir-low/iree)",
   "S11": "integrity register (coordinator)",
   "S12": "sanitizer supplement (SOTA toolchains)"
- },
- "toolchain_warning": "binary predates checkout: records say 55ccea5e04f21dfaeeb767b72e35f5ddf6190696 (what the binary was built from), checkout HEAD is 55ccea5e04f21dfaeeb767b72e35f5ddf6190696. Rebuild and re-run before pinning this version in manifest \u00a75."
+ }
 }
