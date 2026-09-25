@@ -314,15 +314,41 @@ def run_exe(script, env_extra=None, timeout=T_EXECUTE):
     if env_extra:
         env.update(env_extra)
     t = time.perf_counter()
-    try:
-        p = subprocess.run(["stdbuf", "-o0", "-e0", "bash", script, "--execute"],
-                           capture_output=True, timeout=timeout, cwd=REPO, env=env)
-        rc = p.returncode
-        so = p.stdout.decode("utf8", "replace")
-        se = p.stderr.decode("utf8", "replace")
-    except subprocess.TimeoutExpired:
-        rc, so, se = -1, "", "TIMEOUT"
+    # `bash` is the direct child and the executable is its grandchild, so the
+    # group-kill path is required here too: a hung kernel must not outlive the
+    # timeout holding the pipe open. See `_run_capture`.
+    rc, so, se = _run_capture(["stdbuf", "-o0", "-e0", "bash", script, "--execute"],
+                              timeout=timeout, env=env)
     return rc, so, se, time.perf_counter() - t
+
+
+def _run_capture(cmd, timeout, env=None):
+    """Run `cmd` in its own session; kill the WHOLE group on timeout.
+
+    `compute-sanitizer` wraps the executable as a grandchild. Killing only the
+    direct child leaves the executable running, and because that grandchild
+    inherits the stdout/stderr pipes, `subprocess.run`'s reaping `communicate()`
+    blocks forever waiting for EOF -- the 900 s timeout fires and the lane still
+    hangs. A new session plus `killpg` reaps the tree, so a hung mutant costs one
+    `T_EXECUTE` rather than the whole lane. Returns `(rc, stdout, stderr)`;
+    `rc == -1` is the timeout sentinel (matching the old TimeoutExpired path).
+    """
+    import signal
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         text=True, cwd=REPO, env=env, start_new_session=True)
+    try:
+        out, err = p.communicate(timeout=timeout)
+        return p.returncode, out or "", err or ""
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+        except (ProcessLookupError, PermissionError):
+            pass
+        try:
+            out, err = p.communicate(timeout=30)
+        except subprocess.TimeoutExpired:
+            out, err = "", ""
+        return -1, out or "", (err or "") + "\nTIMEOUT"
 
 
 def compile_then_run(d, script, env_extra=None):
@@ -1136,33 +1162,18 @@ def e5b_one(mut, workdir, device, excl, manifest_paths=None):
     else:
         # Re-run under the sanitizer. This is the measured arm.
         t = time.perf_counter()
-        try:
-            q = subprocess.run(
-                ["stdbuf", "-o0", "-e0", SANITIZER,
-                 "--tool", "memcheck", "--launch-timeout", "120", exe],
-                capture_output=True, timeout=T_EXECUTE, cwd=REPO,
-                env=dict(os.environ, CUDA_VISIBLE_DEVICES=str(device)))
-            swall = time.perf_counter() - t
-            sso = q.stdout.decode("utf8", "replace")
-            sse = q.stderr.decode("utf8", "replace")
-            src_ = sse + sso
-            # "did the tool print a report-prefixed line" -- NOT "did it find a
-            # fault". See sanitizer_verdict() for why the distinction matters.
-            report_line_seen = bool(RE_SANITIZER.search(src_))
-            # The sanitizer arm's OWN exit code. This used to be discarded --
-            # `q` went out of scope and only `baseline_rc` (the un-instrumented
-            # run) was persisted, so every record showed rc=None. That matters
-            # because the detection rule is "exit with no fault report AND
-            # rc!=0 -> confounded": without this field the rule cannot be
-            # evaluated from the artifact at all, and a reader cannot tell a
-            # clean zero-error run (rc=0, body completed, nothing found) from a
-            # run that died (rc!=0, no report because it never got there).
-            # Those are DIFFERENT claims and only rc separates them.
-            src_rc = q.returncode
-        except subprocess.TimeoutExpired:
-            swall, sso, sse = time.perf_counter() - t, "", "TIMEOUT"
-            report_line_seen = False
-            src_rc = -1
+        # Group-killed on timeout (see `_run_capture`): a hung mutant must cost
+        # one T_EXECUTE, not hang the lane on a pipe held open by the
+        # sanitizer's surviving grandchild.
+        src_rc, sso, sse = _run_capture(
+            ["stdbuf", "-o0", "-e0", SANITIZER,
+             "--tool", "memcheck", "--launch-timeout", "120", exe],
+            timeout=T_EXECUTE,
+            env=dict(os.environ, CUDA_VISIBLE_DEVICES=str(device)))
+        swall = time.perf_counter() - t
+        # "did the tool print a report-prefixed line" -- NOT "did it find a
+        # fault". See sanitizer_verdict() for why the distinction matters.
+        report_line_seen = bool(RE_SANITIZER.search(sse + sso))
         first = ""
         for line in (sse + "\n" + sso).splitlines():
             if RE_SANITIZER.search(line):
@@ -1600,11 +1611,15 @@ def main():
             # detection on 4 of 16 arms, which is exactly the reading that
             # produced the void 472x headline. The operator watches this line
             # for ~27 min; it must say what the guard concluded.
+            # `check_loc`/`verdict` can be present with value None (a run that
+            # never reached the check), and `dict.get(k, default)` does NOT
+            # substitute for a present-None key -- formatting None with a width
+            # spec raised TypeError and aborted E5b on its third mutant.
             print(f"  [{i:>3}/{len(cand)}] {rec['mutant_id'][:46]:<48} "
-                  f"choreo={ce.get('check_loc','-'):<9}"
+                  f"choreo={(ce.get('check_loc') or '-'):<9}"
                   f"{'Y' if ce.get('detected') else 'n'} "
                   f"san={'Y' if sn.get('detected') else 'n'} "
-                  f"{sn.get('verdict','')}")
+                  f"{sn.get('verdict') or ''}")
             if not a.keep_logs:
                 subprocess.run(["rm", "-rf",
                                 os.path.join(a.workdir,

@@ -420,6 +420,11 @@ cmd_stats() {
 }
 
 cmd_all() {
+  # `all` must reproduce the COMMITTED census, which is level-2 (`--level2`):
+  # the frozen corpus carries operators on level-2 categories, and a level-1
+  # regeneration silently shrinks it (252 -> 210 mutants) and grows `make
+  # guards`. Mirrors `mlir-linalg`'s `cmd_all`. Bare `minimal` stays level-1.
+  LEVEL2=1
   cmd_minimal
   cmd_e2
   cmd_e3

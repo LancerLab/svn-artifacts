@@ -518,15 +518,23 @@ def compose(level2=False, n_per_family=N_PER_FAMILY,
     for cls in sorted(M.ALL):
         cands = list(M.transforms_for(cls))
         covered = set(M.categories_for(cls, level2=level2))
-        missing = sorted({c.category for c in cands} - covered)
+        # An operator is only illegitimate if its category is in NEITHER the
+        # level-1 nor the level-2 declared set. Operators on level-2 categories
+        # are legitimate and must not fail a level-1 screen; they are simply
+        # filtered out below, because `select()` is level-agnostic and would
+        # otherwise pick a level-2 operator into a level-1 run.
+        declared = set(M.categories_for(cls, level2=True))
+        missing = sorted({c.category for c in cands} - declared)
         if missing:
-            # A registered operator on an uncovered category would be dropped
+            # A registered operator on an undeclared category would be dropped
             # by selection without saying so -- refuse instead.
             raise ValueError(
                 "class %s declares operators on categories outside the "
-                "level-%d coverage set: %s (add them to MINIMAL_SET/LEVEL2_SET "
-                "in mutations.py or drop the operator)"
-                % (cls, 2 if level2 else 1, ", ".join(missing)))
+                "declared (level-1 + level-2) coverage set: %s (add them to "
+                "MINIMAL_SET/LEVEL2_SET in mutations.py or drop the operator)"
+                % (cls, ", ".join(missing)))
+        if not level2:
+            cands = [c for c in cands if c.category in covered]
         gen = [c for c in cands if not c.is_na]
         na = [c for c in cands if c.is_na]
         chosen, dropped, attribution = select(
