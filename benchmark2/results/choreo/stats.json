@@ -1,33 +1,30 @@
 {
  "toolchain": "choreo",
- "toolchain_version": "caa19da943a70ae43f0ee0244519379436d2594e",
+ "toolchain_version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
  "toolchain_identity": {
   "toolchain": "choreo",
-  "version": "caa19da943a70ae43f0ee0244519379436d2594e",
+  "version": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
   "version_basis": "binary-newer-than-head",
-  "checkout_head": "caa19da943a70ae43f0ee0244519379436d2594e",
+  "checkout_head": "55ccea5e04f21dfaeeb767b72e35f5ddf6190696",
   "checkout_branch": "ledger-artifacts",
-  "checkout_dirty_source_files": [
-   "ib/Target/GPU/gpu_adapt.hpp",
-   "lib/semacheck.cpp"
-  ],
+  "checkout_dirty_source_files": [],
   "binary": "croqtile/build-release/choreo",
-  "binary_sha1_12": "7745d2da0dbc",
-  "binary_mtime": 1790279278.2401524,
-  "binary_stale_vs_checkout": false,
+  "binary_sha1_12": "0d5212d07aa9",
+  "binary_mtime": 1790316215.6443305,
+  "binary_stale_vs_checkout": true,
   "binary_stale_basis": "source-mtime",
-  "binary_predates_source": false,
-  "binary_newest_source_mtime": 1790279277.3681223,
+  "binary_predates_source": true,
+  "binary_newest_source_mtime": 1790318118.053199,
   "version_label_disagrees_with_head": false
  },
  "produced_by": "stats.py",
  "inputs": {
-  "cost": 15,
+  "cost": 16,
   "expressibility": 0,
-  "kernel": 310,
-  "latency": 32,
+  "kernel": 355,
+  "latency": 84,
   "mutant": 252,
-  "obligation": 17353,
+  "obligation": 22496,
   "remainder": 0,
   "residue": 28,
   "sanitizer": 0,
@@ -61,8 +58,8 @@
    "M2": {
     "n_compile": 37,
     "n_injected": 64,
-    "n_never": 13,
-    "n_runtime": 14,
+    "n_never": 15,
+    "n_runtime": 12,
     "stage_compile": 37,
     "stage_runtime": 27,
     "n_n/a": 0
@@ -93,8 +90,8 @@
    "n_discarded_noop": 4,
    "n_injected": 245,
    "n_n/a": 0,
-   "n_never": 41,
-   "n_runtime": 51,
+   "n_never": 43,
+   "n_runtime": 49,
    "n_undecidable": 3,
    "stage_compile": 153,
    "stage_runtime": 92
@@ -121,27 +118,27 @@
    "fc1e3097da54"
   ],
   "toolchain_version": [
-   "caa19da943a70ae43f0ee0244519379436d2594e"
+   "55ccea5e04f21dfaeeb767b72e35f5ddf6190696"
   ]
  },
  "S2_before_device": {
   "status": "ok",
   "feeds": "E1 detection matrix (\u00a75.2 \u00b62) \u2014 the \"210/210\" headline is DROPPED (R-D2); criterion is now \"no unattributed never\"",
   "n_injected": 245,
-  "n_before_device": 204,
+  "n_before_device": 202,
   "n_compile": 153,
-  "n_runtime": 51,
-  "n_never": 41,
+  "n_runtime": 49,
+  "n_never": 43,
   "n_na": 0,
   "n_discarded_noop": 4,
   "n_undecidable": 3,
   "undecidable_means": "the unmutated base fails its own reference check, so no manifest verdict exists for this cell. Excluded from n_injected like a noop, but NOT evidence that the mutation does not corrupt output -- it is unmeasured. Never add it to n_discarded_noop: that would report a measurement failure as a clean negative.",
-  "pct_before_device": 83.2653,
+  "pct_before_device": 82.449,
   "never_is_zero": false,
   "never_is_zero_status": "RETIRED (R-D2, 2026-09-10) \u2014 a non-zero `never` is no longer a failure; an UNATTRIBUTED one is. Do not report this as pass/fail.",
   "per_class_before_device": {
    "M1": 56,
-   "M2": 51,
+   "M2": 49,
    "M3": 50,
    "M4": 47
   },
@@ -149,8 +146,8 @@
    "M4"
   ],
   "n_injected_excluding_control": 192,
-  "n_before_device_excluding_control": 157,
-  "pct_before_device_excluding_control": 81.7708,
+  "n_before_device_excluding_control": 155,
+  "pct_before_device_excluding_control": 80.7292,
   "settings_hash": [
    "1f5436bfab1f",
    "28fee96c8330",
@@ -167,15 +164,17 @@
    "fc1e3097da54"
   ],
   "toolchain_version": [
-   "caa19da943a70ae43f0ee0244519379436d2594e"
+   "55ccea5e04f21dfaeeb767b72e35f5ddf6190696"
   ],
   "never_attribution": {
    "criterion": "no unattributed `never` (R-D2, 2026-09-10; replaces the retired `never = 0`)",
    "no_unattributed_never": false,
-   "n_unattributed": 13,
+   "n_unattributed": 15,
    "unattributed_mutants": [
     "M1.s6.ln1.zerostride",
     "M1.s6.sm1.zerostride",
+    "M2.15.cv10.padswap",
+    "M2.15.cv4.padswap",
     "M3.16.bn1.symbox",
     "M3.16.ln1.symbox",
     "M3.16.mp1.symbox",
@@ -198,7 +197,7 @@
    "n_toolchain_or_config": 14,
    "flag_matrix_ablation": {
     "status": "R-D2b \u2014 report as sensitivity, pinned default is the headline",
-    "at_pinned_default": "204/245 = 83.2653%",
+    "at_pinned_default": "202/245 = 82.449%",
     "with_rtc_all_and_hoist_disabled": "43/72 = 59.72%",
     "recovered_by_flags": 8,
     "source": "raw/c2_probe_groundtruth.json (s2_implication)"
@@ -208,7 +207,7 @@
     "C3_LOWER_BOUND_OMITTED": "only one of the index's two bounds was generated \u2014 croqtile soundness bug."
    }
   },
-  "never_note": "41 mutant(s) reached outcome=never. Under R-D2 this is NOT a failure provided every one is attributed: 13 unattributed. 11 are out-of-scope or not-assessed-by-construction and 14 are attributable to a hoisting defect plus cost-filter/lower-bound configuration.",
+  "never_note": "43 mutant(s) reached outcome=never. Under R-D2 this is NOT a failure provided every one is attributed: 15 unattributed. 11 are out-of-scope or not-assessed-by-construction and 14 are attributable to a hoisting defect plus cost-filter/lower-bound configuration.",
   "never_mutants": [
    {
     "mutant_id": "M1.11.gl1.alias",
@@ -308,6 +307,26 @@
     "manifest": "corrupts",
     "never_cause": "C5_OUT_OF_SCOPE",
     "never_cause_reason": "the mutation cannot move an index out of bounds (constant collapse / in-range variable substitution / shortened loop / wrong extent query): a VALUE error, which specs \u00a74 puts out of scope. `never` is the correct verdict.",
+    "note": null
+   },
+   {
+    "mutant_id": "M2.15.cv10.padswap",
+    "class": "M2",
+    "category": "conv2d",
+    "detector": "crash",
+    "manifest": "corrupts",
+    "never_cause": null,
+    "never_cause_reason": null,
+    "note": null
+   },
+   {
+    "mutant_id": "M2.15.cv4.padswap",
+    "class": "M2",
+    "category": "conv2d",
+    "detector": "crash",
+    "manifest": "corrupts",
+    "never_cause": null,
+    "never_cause_reason": null,
     "note": null
    },
    {
@@ -564,7 +583,7 @@
     "mutant_id": "M4.5.cv10.zerostep",
     "class": "M4",
     "category": "conv2d",
-    "detector": "oracle",
+    "detector": "crash",
     "manifest": "corrupts",
     "never_cause": "C5_OUT_OF_SCOPE",
     "never_cause_reason": "C1's premise is refuted by the probe: at -rtc=all with hoisting ON no assessment guard fires (probe verdict `passed-no-detection`), so the suppressed runtime obligation was NOT about this mutated access (the chunkat relevance arm matches on array name alone, so it also admits the base kernel's own dynamic-shape guards). The mutation is a constant collapse / value change -- no bound guard can catch it -- which specs \u00a74 puts out of scope, so `never` is the CORRECT verdict, not a detection gap.",
@@ -625,119 +644,126 @@
  "S3_generation_totals": {
   "status": "ok",
   "feeds": "E2 generation completeness (\u00a75.3 \u00b61; tab:gen-capability, abstract \"17,353\" \u2014 R-D5 re-registered from 17,717)",
-  "grand_total": 17353,
+  "grand_total": 22496,
   "per_class": {
-   "elem": 9073,
-   "shape": 4477,
-   "loop": 326,
-   "hw": 3477
+   "elem": 13486,
+   "shape": 4955,
+   "loop": 342,
+   "hw": 3713
   },
   "per_category": {
-   "batch_norm": 1575,
-   "concat": 1539,
-   "conv2d": 1406,
-   "elemwise_add": 1187,
-   "embedding": 610,
-   "gelu": 842,
-   "layer_normalization": 1825,
-   "matmul": 1029,
-   "max_pool2d": 2077,
-   "reduce_mean": 697,
-   "relu": 1102,
-   "sigmoid": 833,
-   "softmax": 1913,
-   "transpose": 718
+   "batch_norm": 1890,
+   "concat": 2087,
+   "conv2d": 1936,
+   "dma_rank5": 166,
+   "elemwise_add": 1648,
+   "embedding": 822,
+   "gelu": 1191,
+   "layer_normalization": 2027,
+   "matmul": 1348,
+   "max_pool2d": 2425,
+   "reduce_mean": 782,
+   "relu": 1705,
+   "sigmoid": 1249,
+   "softmax": 2115,
+   "transpose": 1105
   },
   "per_category_per_class": {
    "batch_norm": {
-    "elem": 1434,
-    "shape": 117,
+    "elem": 1629,
+    "shape": 185,
     "loop": 24,
-    "hw": 0
+    "hw": 52
    },
    "concat": {
-    "elem": 591,
+    "elem": 1139,
     "shape": 443,
     "loop": 19,
     "hw": 486
    },
    "conv2d": {
-    "elem": 262,
-    "shape": 783,
+    "elem": 866,
+    "shape": 710,
     "loop": 24,
-    "hw": 337
+    "hw": 336
+   },
+   "dma_rank5": {
+    "elem": 71,
+    "shape": 49,
+    "loop": 0,
+    "hw": 46
    },
    "elemwise_add": {
-    "elem": 362,
-    "shape": 409,
+    "elem": 772,
+    "shape": 460,
     "loop": 10,
     "hw": 406
    },
    "embedding": {
-    "elem": 100,
+    "elem": 312,
     "shape": 380,
     "loop": 10,
     "hw": 120
    },
    "gelu": {
-    "elem": 260,
-    "shape": 260,
+    "elem": 578,
+    "shape": 291,
     "loop": 26,
     "hw": 296
    },
    "layer_normalization": {
-    "elem": 1652,
-    "shape": 103,
-    "loop": 70,
-    "hw": 0
+    "elem": 1720,
+    "shape": 181,
+    "loop": 74,
+    "hw": 52
    },
    "matmul": {
-    "elem": 204,
-    "shape": 496,
-    "loop": 2,
-    "hw": 327
+    "elem": 533,
+    "shape": 483,
+    "loop": 6,
+    "hw": 326
    },
    "max_pool2d": {
-    "elem": 1424,
-    "shape": 303,
+    "elem": 1693,
+    "shape": 347,
     "loop": 30,
-    "hw": 320
+    "hw": 355
    },
    "reduce_mean": {
-    "elem": 475,
-    "shape": 125,
+    "elem": 556,
+    "shape": 129,
     "loop": 13,
     "hw": 84
    },
    "relu": {
-    "elem": 447,
-    "shape": 291,
-    "loop": 28,
-    "hw": 336
+    "elem": 915,
+    "shape": 400,
+    "loop": 32,
+    "hw": 358
    },
    "sigmoid": {
-    "elem": 256,
-    "shape": 261,
+    "elem": 597,
+    "shape": 327,
     "loop": 20,
-    "hw": 296
+    "hw": 305
    },
    "softmax": {
-    "elem": 1279,
-    "shape": 329,
+    "elem": 1480,
+    "shape": 330,
     "loop": 25,
     "hw": 280
    },
    "transpose": {
-    "elem": 327,
-    "shape": 177,
-    "loop": 25,
-    "hw": 189
+    "elem": 625,
+    "shape": 240,
+    "loop": 29,
+    "hw": 211
    }
   },
   "unmapped_class_values": {},
   "paper_reference": {
    "grand_total": 17717,
-   "delta": -364
+   "delta": 4779
   },
   "settings_hash": [
    "1f5436bfab1f",
@@ -745,6 +771,7 @@
    "45f6e81d94c0",
    "55b2395980bd",
    "666bab9695c5",
+   "6ba7925e0a5a",
    "7abb8bd6e718",
    "8b1728850022",
    "8dbff8357c9b",
@@ -756,7 +783,7 @@
    "f08293b4eb9e"
   ],
   "toolchain_version": [
-   "680533f50d5340346ea1587c116278916f902bc2"
+   "caa19da943a70ae43f0ee0244519379436d2594e"
   ]
  },
  "S4_per_operator": {
@@ -764,310 +791,332 @@
   "feeds": "E2 generation completeness (\u00a75.3 \u00b61; the worked per-operator counts that anchor the running example)",
   "per_category": {
    "batch_norm": {
-    "expressed": 1575,
-    "discharged": 1439,
-    "proven": 1439,
+    "expressed": 1890,
+    "discharged": 1752,
+    "proven": 1752,
     "refuted": 0,
-    "runtime": 48,
-    "budgeted": 88,
-    "remainder": 136,
+    "runtime": 33,
+    "budgeted": 105,
+    "remainder": 138,
     "dropped": 0,
     "unmapped_outcome": 0,
-    "discharge_pct": 91.3651,
+    "discharge_pct": 92.6984,
     "mechanism": {
-     "canonical": 1076,
-     "interval": 352,
-     "direct": 147
+     "canonical": 1083,
+     "interval": 587,
+     "direct": 220
     },
     "shape_class": {
-     "dynamic": 912,
-     "static": 663
+     "dynamic": 1044,
+     "static": 846
     },
     "zero_obligation_kernels": []
    },
    "concat": {
-    "expressed": 1539,
-    "discharged": 1508,
-    "proven": 1508,
+    "expressed": 2087,
+    "discharged": 2020,
+    "proven": 2020,
     "refuted": 0,
-    "runtime": 19,
-    "budgeted": 12,
-    "remainder": 31,
+    "runtime": 17,
+    "budgeted": 50,
+    "remainder": 67,
     "dropped": 0,
     "unmapped_outcome": 0,
-    "discharge_pct": 97.9857,
+    "discharge_pct": 96.7897,
     "mechanism": {
-     "canonical": 1062,
-     "interval": 44,
+     "canonical": 1486,
+     "interval": 168,
      "direct": 433
     },
     "shape_class": {
-     "dynamic": 674,
-     "static": 865
+     "dynamic": 908,
+     "static": 1179
     },
     "zero_obligation_kernels": []
    },
    "conv2d": {
-    "expressed": 1406,
-    "discharged": 1259,
-    "proven": 1259,
+    "expressed": 1936,
+    "discharged": 1777,
+    "proven": 1777,
     "refuted": 0,
-    "runtime": 114,
-    "budgeted": 33,
-    "remainder": 147,
+    "runtime": 50,
+    "budgeted": 109,
+    "remainder": 159,
     "dropped": 0,
     "unmapped_outcome": 0,
-    "discharge_pct": 89.5448,
+    "discharge_pct": 91.7872,
     "mechanism": {
-     "canonical": 474,
-     "interval": 32,
-     "direct": 900
+     "canonical": 1049,
+     "interval": 68,
+     "direct": 819
     },
     "shape_class": {
-     "dynamic": 1084,
-     "static": 322
+     "dynamic": 1380,
+     "static": 556
+    },
+    "zero_obligation_kernels": []
+   },
+   "dma_rank5": {
+    "expressed": 166,
+    "discharged": 160,
+    "proven": 160,
+    "refuted": 0,
+    "runtime": 5,
+    "budgeted": 1,
+    "remainder": 6,
+    "dropped": 0,
+    "unmapped_outcome": 0,
+    "discharge_pct": 96.3855,
+    "mechanism": {
+     "canonical": 89,
+     "interval": 36,
+     "direct": 41
+    },
+    "shape_class": {
+     "dynamic": 125,
+     "static": 41
     },
     "zero_obligation_kernels": []
    },
    "elemwise_add": {
-    "expressed": 1187,
-    "discharged": 1124,
-    "proven": 1124,
+    "expressed": 1648,
+    "discharged": 1554,
+    "proven": 1554,
     "refuted": 0,
-    "runtime": 51,
-    "budgeted": 12,
-    "remainder": 63,
+    "runtime": 33,
+    "budgeted": 61,
+    "remainder": 94,
     "dropped": 0,
     "unmapped_outcome": 0,
-    "discharge_pct": 94.6925,
+    "discharge_pct": 94.2961,
     "mechanism": {
-     "canonical": 793,
-     "interval": 6,
+     "canonical": 1242,
+     "interval": 18,
      "direct": 388
     },
     "shape_class": {
-     "dynamic": 577,
-     "static": 610
+     "dynamic": 822,
+     "static": 826
     },
     "zero_obligation_kernels": []
    },
    "embedding": {
-    "expressed": 610,
-    "discharged": 572,
-    "proven": 572,
+    "expressed": 822,
+    "discharged": 768,
+    "proven": 768,
     "refuted": 0,
-    "runtime": 38,
-    "budgeted": 0,
-    "remainder": 38,
+    "runtime": 27,
+    "budgeted": 27,
+    "remainder": 54,
     "dropped": 0,
     "unmapped_outcome": 0,
-    "discharge_pct": 93.7705,
+    "discharge_pct": 93.4307,
     "mechanism": {
-     "canonical": 150,
-     "interval": 0,
+     "canonical": 338,
+     "interval": 24,
      "direct": 460
     },
     "shape_class": {
-     "dynamic": 310,
-     "static": 300
+     "dynamic": 412,
+     "static": 410
     },
     "zero_obligation_kernels": []
    },
    "gelu": {
-    "expressed": 842,
-    "discharged": 818,
-    "proven": 818,
+    "expressed": 1191,
+    "discharged": 1140,
+    "proven": 1140,
     "refuted": 0,
     "runtime": 24,
-    "budgeted": 0,
-    "remainder": 24,
+    "budgeted": 27,
+    "remainder": 51,
     "dropped": 0,
     "unmapped_outcome": 0,
-    "discharge_pct": 97.1496,
+    "discharge_pct": 95.7179,
     "mechanism": {
-     "canonical": 588,
-     "interval": 0,
-     "direct": 254
+     "canonical": 914,
+     "interval": 22,
+     "direct": 255
     },
     "shape_class": {
-     "dynamic": 462,
-     "static": 380
+     "dynamic": 648,
+     "static": 543
     },
     "zero_obligation_kernels": []
    },
    "layer_normalization": {
-    "expressed": 1825,
-    "discharged": 1682,
-    "proven": 1682,
+    "expressed": 2027,
+    "discharged": 1865,
+    "proven": 1865,
     "refuted": 0,
     "runtime": 39,
-    "budgeted": 104,
-    "remainder": 143,
+    "budgeted": 123,
+    "remainder": 162,
     "dropped": 0,
     "unmapped_outcome": 0,
-    "discharge_pct": 92.1644,
+    "discharge_pct": 92.0079,
     "mechanism": {
-     "canonical": 1020,
-     "interval": 618,
-     "direct": 187
+     "canonical": 1151,
+     "interval": 602,
+     "direct": 274
     },
     "shape_class": {
-     "dynamic": 995,
-     "static": 830
+     "dynamic": 1039,
+     "static": 988
     },
     "zero_obligation_kernels": []
    },
    "matmul": {
-    "expressed": 1029,
-    "discharged": 976,
-    "proven": 976,
+    "expressed": 1348,
+    "discharged": 1291,
+    "proven": 1291,
     "refuted": 0,
-    "runtime": 49,
-    "budgeted": 4,
-    "remainder": 53,
+    "runtime": 24,
+    "budgeted": 33,
+    "remainder": 57,
     "dropped": 0,
     "unmapped_outcome": 0,
-    "discharge_pct": 94.8494,
+    "discharge_pct": 95.7715,
     "mechanism": {
-     "canonical": 373,
-     "interval": 16,
-     "direct": 640
+     "canonical": 685,
+     "interval": 32,
+     "direct": 631
     },
     "shape_class": {
-     "dynamic": 523,
-     "static": 506
+     "dynamic": 694,
+     "static": 654
     },
     "zero_obligation_kernels": []
    },
    "max_pool2d": {
-    "expressed": 2077,
-    "discharged": 1810,
-    "proven": 1810,
+    "expressed": 2425,
+    "discharged": 2155,
+    "proven": 2155,
     "refuted": 0,
-    "runtime": 115,
-    "budgeted": 152,
-    "remainder": 267,
+    "runtime": 110,
+    "budgeted": 160,
+    "remainder": 270,
     "dropped": 0,
     "unmapped_outcome": 0,
-    "discharge_pct": 87.1449,
+    "discharge_pct": 88.866,
     "mechanism": {
-     "canonical": 502,
-     "interval": 1032,
-     "direct": 543
+     "canonical": 895,
+     "interval": 946,
+     "direct": 584
     },
     "shape_class": {
-     "dynamic": 1007,
-     "static": 1070
+     "dynamic": 1131,
+     "static": 1294
     },
     "zero_obligation_kernels": []
    },
    "reduce_mean": {
-    "expressed": 697,
-    "discharged": 665,
-    "proven": 665,
+    "expressed": 782,
+    "discharged": 750,
+    "proven": 750,
     "refuted": 0,
-    "runtime": 23,
-    "budgeted": 9,
+    "runtime": 32,
+    "budgeted": 0,
     "remainder": 32,
     "dropped": 0,
     "unmapped_outcome": 0,
-    "discharge_pct": 95.4089,
+    "discharge_pct": 95.9079,
     "mechanism": {
-     "canonical": 465,
-     "interval": 107,
+     "canonical": 547,
+     "interval": 110,
      "direct": 125
     },
     "shape_class": {
-     "dynamic": 351,
-     "static": 346
+     "dynamic": 386,
+     "static": 396
     },
     "zero_obligation_kernels": []
    },
    "relu": {
-    "expressed": 1102,
-    "discharged": 1074,
-    "proven": 1074,
+    "expressed": 1705,
+    "discharged": 1636,
+    "proven": 1636,
     "refuted": 0,
-    "runtime": 28,
-    "budgeted": 0,
-    "remainder": 28,
+    "runtime": 37,
+    "budgeted": 32,
+    "remainder": 69,
     "dropped": 0,
     "unmapped_outcome": 0,
-    "discharge_pct": 97.4592,
+    "discharge_pct": 95.9531,
     "mechanism": {
-     "canonical": 819,
-     "interval": 0,
-     "direct": 283
+     "canonical": 1314,
+     "interval": 50,
+     "direct": 341
     },
     "shape_class": {
-     "dynamic": 596,
-     "static": 506
+     "dynamic": 971,
+     "static": 734
     },
     "zero_obligation_kernels": []
    },
    "sigmoid": {
-    "expressed": 833,
-    "discharged": 810,
-    "proven": 810,
+    "expressed": 1249,
+    "discharged": 1208,
+    "proven": 1208,
     "refuted": 0,
     "runtime": 23,
-    "budgeted": 0,
-    "remainder": 23,
+    "budgeted": 18,
+    "remainder": 41,
     "dropped": 0,
     "unmapped_outcome": 0,
-    "discharge_pct": 97.2389,
+    "discharge_pct": 96.7174,
     "mechanism": {
-     "canonical": 580,
-     "interval": 0,
-     "direct": 253
+     "canonical": 954,
+     "interval": 32,
+     "direct": 263
     },
     "shape_class": {
-     "dynamic": 344,
-     "static": 489
+     "dynamic": 512,
+     "static": 737
     },
     "zero_obligation_kernels": []
    },
    "softmax": {
-    "expressed": 1913,
-    "discharged": 1732,
-    "proven": 1732,
+    "expressed": 2115,
+    "discharged": 1930,
+    "proven": 1930,
     "refuted": 0,
-    "runtime": 82,
-    "budgeted": 99,
-    "remainder": 181,
+    "runtime": 46,
+    "budgeted": 139,
+    "remainder": 185,
     "dropped": 0,
     "unmapped_outcome": 0,
-    "discharge_pct": 90.5384,
+    "discharge_pct": 91.253,
     "mechanism": {
-     "canonical": 780,
-     "interval": 645,
-     "direct": 488
+     "canonical": 1060,
+     "interval": 568,
+     "direct": 487
     },
     "shape_class": {
-     "dynamic": 1074,
-     "static": 839
+     "dynamic": 1129,
+     "static": 986
     },
     "zero_obligation_kernels": []
    },
    "transpose": {
-    "expressed": 718,
-    "discharged": 676,
-    "proven": 676,
+    "expressed": 1105,
+    "discharged": 1046,
+    "proven": 1046,
     "refuted": 0,
-    "runtime": 22,
-    "budgeted": 20,
-    "remainder": 42,
+    "runtime": 37,
+    "budgeted": 22,
+    "remainder": 59,
     "dropped": 0,
     "unmapped_outcome": 0,
-    "discharge_pct": 94.1504,
+    "discharge_pct": 94.6606,
     "mechanism": {
-     "canonical": 398,
-     "interval": 68,
-     "direct": 252
+     "canonical": 686,
+     "interval": 106,
+     "direct": 313
     },
     "shape_class": {
-     "dynamic": 288,
-     "static": 430
+     "dynamic": 457,
+     "static": 648
     },
     "zero_obligation_kernels": []
    },
@@ -1108,17 +1157,17 @@
    }
   },
   "totals": {
-   "expressed": 17353,
-   "discharged": 16145,
-   "proven": 16145,
+   "expressed": 22496,
+   "discharged": 21052,
+   "proven": 21052,
    "refuted": 0,
-   "runtime": 675,
-   "budgeted": 533,
-   "remainder": 1208,
+   "runtime": 537,
+   "budgeted": 907,
+   "remainder": 1444,
    "dropped": 0,
    "unmapped_outcome": 0
   },
-  "n_kernels_with_obligations": 289,
+  "n_kernels_with_obligations": 334,
   "n_zero_obligation_kernels": 21,
   "zero_obligation_kernel_ids": [
    "reshape/10_dynamic_64x128xHxW_64x128HW",
@@ -1145,22 +1194,14 @@
   ],
   "dropped_is_zero_everywhere": true,
   "layer_norm_criterion": {
-   "kernel_id": "layer_normalization/3_attention_32xNx512x64_64_64",
-   "grain": "per-kernel (79 is one kernel's obligation count, not the category's 1825)",
+   "status": "not_found",
+   "reason": "no layer_norm kernel has exactly 79 obligations",
    "expected": {
     "expressed": 79,
     "discharged": 74,
     "runtime": 5,
     "dropped": 0
-   },
-   "measured": {
-    "expressed": 79,
-    "discharged": 74,
-    "runtime": 5,
-    "dropped": 0
-   },
-   "runtime_field_is_remainder": "runtime+budgeted = 1+4 = 5",
-   "matches": true
+   }
   },
   "settings_hash": [
    "1f5436bfab1f",
@@ -1168,6 +1209,7 @@
    "45f6e81d94c0",
    "55b2395980bd",
    "666bab9695c5",
+   "6ba7925e0a5a",
    "7abb8bd6e718",
    "8b1728850022",
    "8dbff8357c9b",
@@ -1179,32 +1221,32 @@
    "f08293b4eb9e"
   ],
   "toolchain_version": [
-   "680533f50d5340346ea1587c116278916f902bc2"
+   "caa19da943a70ae43f0ee0244519379436d2594e"
   ]
  },
  "S5_discharge_rate": {
   "status": "ok",
   "feeds": "E3 discharge strength (\u00a75.4 \u00b61; RQ1 \"93.04%\", \"100.0%/86.87%\", residue 1,208 \u2014 R-D5 re-registered from 93.2%/99.2%/87.9%/1,199)",
   "static": {
-   "kernels": 151,
-   "expressed": 8156,
-   "discharged": 8156,
-   "remainder": 0,
-   "discharge_pct": 100.0
+   "kernels": 181,
+   "expressed": 10838,
+   "discharged": 10822,
+   "remainder": 16,
+   "discharge_pct": 99.8524
   },
   "dynamic": {
-   "kernels": 159,
-   "expressed": 9197,
-   "discharged": 7989,
-   "remainder": 1208,
-   "discharge_pct": 86.8653
+   "kernels": 174,
+   "expressed": 11658,
+   "discharged": 10230,
+   "remainder": 1428,
+   "discharge_pct": 87.7509
   },
   "all": {
-   "kernels": 310,
-   "expressed": 17353,
-   "discharged": 16145,
-   "remainder": 1208,
-   "discharge_pct": 93.0387
+   "kernels": 355,
+   "expressed": 22496,
+   "discharged": 21052,
+   "remainder": 1444,
+   "discharge_pct": 93.5811
   },
   "paper_reference": {
    "all_pct": 93.2,
@@ -1217,6 +1259,7 @@
    "45f6e81d94c0",
    "55b2395980bd",
    "666bab9695c5",
+   "6ba7925e0a5a",
    "7abb8bd6e718",
    "8b1728850022",
    "8dbff8357c9b",
@@ -1228,7 +1271,7 @@
    "f08293b4eb9e"
   ],
   "toolchain_version": [
-   "680533f50d5340346ea1587c116278916f902bc2"
+   "caa19da943a70ae43f0ee0244519379436d2594e"
   ]
  },
  "S6_mechanism_split": {
@@ -1236,10 +1279,10 @@
   "feeds": "E3 mechanism-attribution \u00b6 (\u00a75.4 \u00b63, prose only \u2014 tab:rq6-mechanism and fig:mechanism CUT)",
   "per_outcome": {
    "proven": {
-    "canonical": 7872,
-    "interval": 2920,
-    "direct": 5353,
-    "total": 16145
+    "canonical": 12049,
+    "interval": 3369,
+    "direct": 5634,
+    "total": 21052
    },
    "refuted": {
     "canonical": 0,
@@ -1248,22 +1291,22 @@
     "total": 0
    },
    "runtime": {
-    "canonical": 675,
+    "canonical": 537,
     "interval": 0,
     "direct": 0,
-    "total": 675
+    "total": 537
    },
    "budgeted": {
-    "canonical": 533,
+    "canonical": 907,
     "interval": 0,
     "direct": 0,
-    "total": 533
+    "total": 907
    }
   },
   "totals": {
-   "canonical": 9080,
-   "interval": 2920,
-   "direct": 5353
+   "canonical": 13493,
+   "interval": 3369,
+   "direct": 5634
   },
   "unmapped_mechanism_values": {},
   "settings_hash": [
@@ -1272,6 +1315,7 @@
    "45f6e81d94c0",
    "55b2395980bd",
    "666bab9695c5",
+   "6ba7925e0a5a",
    "7abb8bd6e718",
    "8b1728850022",
    "8dbff8357c9b",
@@ -1283,7 +1327,7 @@
    "f08293b4eb9e"
   ],
   "toolchain_version": [
-   "680533f50d5340346ea1587c116278916f902bc2"
+   "caa19da943a70ae43f0ee0244519379436d2594e"
   ]
  },
  "S7_no_interval_counterfactual": {
@@ -1295,14 +1339,15 @@
    "without_interval_pct": 77.2
   },
   "what_would_be_needed": "a build flag that disables interval/bounded-type reasoning in the assessor while leaving canonical normalization on. No such flag exists at this commit; -rtc/--disable-runtime-check/-zero-cost all produce a byte-identical ledger.",
-  "interval_discharged_upper_bound": 2920,
-  "interval_pct_of_all": 16.8271,
+  "interval_discharged_upper_bound": 3369,
+  "interval_pct_of_all": 14.976,
   "settings_hash": [
    "1f5436bfab1f",
    "28fee96c8330",
    "45f6e81d94c0",
    "55b2395980bd",
    "666bab9695c5",
+   "6ba7925e0a5a",
    "7abb8bd6e718",
    "8b1728850022",
    "8dbff8357c9b",
@@ -1314,153 +1359,162 @@
    "f08293b4eb9e"
   ],
   "toolchain_version": [
-   "680533f50d5340346ea1587c116278916f902bc2"
+   "caa19da943a70ae43f0ee0244519379436d2594e"
   ]
  },
  "S10_compile_cost": {
   "status": "ok",
   "feeds": "E4 compile-time cost (\u00a75.5 \u00b61; RQ4) \u2014 median front-end-vs-nvcc compile-link %, NOT checks-on/off (R-D4); abstract's 0.6% -> 0.13%",
-  "grand_median_pct": 0.1296,
-  "n_categories": 15,
+  "grand_median_pct": 0.1353,
+  "n_categories": 16,
   "per_category": {
    "batch_norm": {
-    "median_pct": 0.2583,
+    "median_pct": 0.2782,
     "n_kernels": 2,
-    "min_pct": 0.2422,
-    "max_pct": 0.2744,
-    "mean_pct": 0.2583,
+    "min_pct": 0.2724,
+    "max_pct": 0.284,
+    "mean_pct": 0.2782,
     "bucket": "<0.5%",
     "exclusive": true
    },
    "concat": {
-    "median_pct": 0.1296,
+    "median_pct": 0.1359,
     "n_kernels": 2,
-    "min_pct": 0.1079,
-    "max_pct": 0.1513,
-    "mean_pct": 0.1296,
+    "min_pct": 0.1133,
+    "max_pct": 0.1586,
+    "mean_pct": 0.1359,
     "bucket": "<0.5%",
     "exclusive": true
    },
    "conv2d": {
-    "median_pct": 0.0052,
-    "n_kernels": 1,
-    "min_pct": 0.0052,
-    "max_pct": 0.0052,
-    "mean_pct": 0.0052,
+    "median_pct": 0.3364,
+    "n_kernels": 2,
+    "min_pct": 0.0032,
+    "max_pct": 0.6696,
+    "mean_pct": 0.3364,
+    "bucket": "<0.5%",
+    "exclusive": true
+   },
+   "dma_rank5": {
+    "median_pct": 0.1612,
+    "n_kernels": 2,
+    "min_pct": 0.1371,
+    "max_pct": 0.1852,
+    "mean_pct": 0.1612,
     "bucket": "<0.5%",
     "exclusive": true
    },
    "elemwise_add": {
-    "median_pct": 0.1331,
+    "median_pct": 0.1348,
     "n_kernels": 2,
-    "min_pct": 0.1173,
-    "max_pct": 0.1489,
-    "mean_pct": 0.1331,
+    "min_pct": 0.1118,
+    "max_pct": 0.1577,
+    "mean_pct": 0.1348,
     "bucket": "<0.5%",
     "exclusive": true
    },
    "embedding": {
-    "median_pct": 0.0778,
+    "median_pct": 0.0705,
     "n_kernels": 2,
-    "min_pct": 0.0714,
-    "max_pct": 0.0842,
-    "mean_pct": 0.0778,
+    "min_pct": 0.063,
+    "max_pct": 0.078,
+    "mean_pct": 0.0705,
     "bucket": "<0.5%",
     "exclusive": true
    },
    "gelu": {
-    "median_pct": 0.0999,
+    "median_pct": 0.0898,
     "n_kernels": 2,
-    "min_pct": 0.0817,
-    "max_pct": 0.1181,
-    "mean_pct": 0.0999,
+    "min_pct": 0.0751,
+    "max_pct": 0.1046,
+    "mean_pct": 0.0898,
     "bucket": "<0.5%",
     "exclusive": true
    },
    "layer_normalization": {
-    "median_pct": 0.2188,
+    "median_pct": 0.207,
     "n_kernels": 2,
-    "min_pct": 0.2115,
-    "max_pct": 0.226,
-    "mean_pct": 0.2188,
+    "min_pct": 0.1586,
+    "max_pct": 0.2553,
+    "mean_pct": 0.207,
     "bucket": "<0.5%",
     "exclusive": true
    },
    "matmul": {
-    "median_pct": 0.0804,
+    "median_pct": 0.0858,
     "n_kernels": 2,
-    "min_pct": 0.0743,
-    "max_pct": 0.0866,
-    "mean_pct": 0.0804,
+    "min_pct": 0.0725,
+    "max_pct": 0.0991,
+    "mean_pct": 0.0858,
     "bucket": "<0.5%",
     "exclusive": true
    },
    "max_pool2d": {
-    "median_pct": 0.2576,
+    "median_pct": 0.3737,
     "n_kernels": 2,
-    "min_pct": 0.2389,
-    "max_pct": 0.2764,
-    "mean_pct": 0.2576,
+    "min_pct": 0.3557,
+    "max_pct": 0.3916,
+    "mean_pct": 0.3737,
     "bucket": "<0.5%",
     "exclusive": true
    },
    "reduce_mean": {
-    "median_pct": 0.1413,
+    "median_pct": 0.1223,
     "n_kernels": 2,
-    "min_pct": 0.1329,
-    "max_pct": 0.1498,
-    "mean_pct": 0.1413,
+    "min_pct": 0.1186,
+    "max_pct": 0.126,
+    "mean_pct": 0.1223,
     "bucket": "<0.5%",
     "exclusive": true
    },
    "relu": {
-    "median_pct": 0.1638,
+    "median_pct": 0.1442,
     "n_kernels": 2,
-    "min_pct": 0.1564,
-    "max_pct": 0.1711,
-    "mean_pct": 0.1638,
+    "min_pct": 0.1345,
+    "max_pct": 0.154,
+    "mean_pct": 0.1442,
     "bucket": "<0.5%",
     "exclusive": true
    },
    "reshape": {
-    "median_pct": 0.0782,
-    "n_kernels": 1,
-    "min_pct": 0.0782,
-    "max_pct": 0.0782,
-    "mean_pct": 0.0782,
+    "median_pct": 0.0399,
+    "n_kernels": 2,
+    "min_pct": 0.031,
+    "max_pct": 0.0488,
+    "mean_pct": 0.0399,
     "bucket": "<0.5%",
     "exclusive": true
    },
    "sigmoid": {
-    "median_pct": 0.1092,
+    "median_pct": 0.1011,
     "n_kernels": 2,
-    "min_pct": 0.1067,
-    "max_pct": 0.1117,
-    "mean_pct": 0.1092,
+    "min_pct": 0.0944,
+    "max_pct": 0.1077,
+    "mean_pct": 0.1011,
     "bucket": "<0.5%",
     "exclusive": true
    },
    "softmax": {
-    "median_pct": 0.2408,
+    "median_pct": 0.316,
     "n_kernels": 2,
-    "min_pct": 0.1967,
-    "max_pct": 0.2848,
-    "mean_pct": 0.2408,
+    "min_pct": 0.242,
+    "max_pct": 0.3899,
+    "mean_pct": 0.316,
     "bucket": "<0.5%",
     "exclusive": true
    },
    "transpose": {
-    "median_pct": 0.0816,
+    "median_pct": 0.0819,
     "n_kernels": 2,
-    "min_pct": 0.0794,
-    "max_pct": 0.0838,
-    "mean_pct": 0.0816,
+    "min_pct": 0.0786,
+    "max_pct": 0.0851,
+    "mean_pct": 0.0819,
     "bucket": "<0.5%",
     "exclusive": true
    }
   },
   "bucket_distribution": {
-   "<0.5%": 15
+   "<0.5%": 16
   },
   "definition": "compile_overhead_pct = 100 * t_choreo_frontend / (t_choreo_frontend + t_nvcc_compile_link); frontend = choreo -gs -t cute -kt <k> -es (parse + assess + emit CUDA, nvcc skipped); nvcc = the generated script's own --compile-link path with choreo's exact flags. The assessor cannot be disabled on this build (-rtc only gates emitted assertions; -rtc=none/-zero-cost/--disable-runtime-check give a byte-identical ledger), so a checks-on/checks-off delta is not obtainable and is NOT what this number reports.",
   "paper_reference": {
@@ -1474,6 +1528,7 @@
    "45f6e81d94c0",
    "55b2395980bd",
    "666bab9695c5",
+   "6ba7925e0a5a",
    "7abb8bd6e718",
    "8b1728850022",
    "8dbff8357c9b",
@@ -1486,10 +1541,10 @@
    "fc1e3097da54"
   ],
   "toolchain_version": [
-   "680533f50d5340346ea1587c116278916f902bc2"
+   "caa19da943a70ae43f0ee0244519379436d2594e"
   ],
   "reproduces_rq4": false,
-  "rq4_note": "measured grand median 0.1296% vs RQ4's 0.6%. These are NOT the same quantity: the assessor cannot be disabled on this build, so what is separable is choreo's front end against nvcc, not checks-on against checks-off. No measured category lands in RQ4's 0.5-1% bucket. See `definition`. The coordinator decides which number the paper carries; this lane does not silently substitute one for the other."
+  "rq4_note": "measured grand median 0.1353% vs RQ4's 0.6%. These are NOT the same quantity: the assessor cannot be disabled on this build, so what is separable is choreo's front end against nvcc, not checks-on against checks-off. No measured category lands in RQ4's 0.5-1% bucket. See `definition`. The coordinator decides which number the paper carries; this lane does not silently substitute one for the other."
  },
  "S13_runtime_and_latency": {
   "status": "ok",
@@ -1499,82 +1554,63 @@
    "n_cases": 14,
    "n_unpaired": 0,
    "unpaired": [],
-   "median_delta_pct": 3.9162,
-   "median_delta_ms": 16.7225,
+   "median_delta_pct": -0.6111,
+   "median_delta_ms": -1.5975,
    "n_delta_within_noise": 14,
-   "n_negative_delta": 6,
+   "n_negative_delta": 8,
    "negative_delta_cases": [
     {
-     "kernel_id": "batch_norm/10_dynamic_16x512xHxW_512_512_16x512xHxW",
-     "delta_pct": -0.0669
+     "kernel_id": "concat/10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW",
+     "delta_pct": -3.1653
     },
     {
-     "kernel_id": "elemwise_add/10_dynamic_16x512xHxW_16x512xHxW_16x512xHxW",
-     "delta_pct": -0.2075
+     "kernel_id": "dma_rank5/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+     "delta_pct": -0.0266
     },
     {
-     "kernel_id": "embedding/10_dynamic_32xS_Vx768_32xSx768",
-     "delta_pct": -18.1119
+     "kernel_id": "gelu/10_dynamic_16x512xHxW",
+     "delta_pct": -5.5648
     },
     {
      "kernel_id": "matmul/10_dynamic_128x1280_1280xN_128xN",
-     "delta_pct": -14.7373
+     "delta_pct": -9.4832
+    },
+    {
+     "kernel_id": "max_pool2d/10_dynamic_32xCxHxW_32xCxHd5xWd5",
+     "delta_pct": -16.8159
+    },
+    {
+     "kernel_id": "reduce_mean/10_dynamic_32xSx768_32x768",
+     "delta_pct": -1.7108
     },
     {
      "kernel_id": "relu/10_dynamic_16x512xHxW_16x512xHxW",
-     "delta_pct": -0.3837
+     "delta_pct": -1.1956
     },
     {
-     "kernel_id": "reshape/10_dynamic_64x128xHxW_64x128HW",
-     "delta_pct": -2.1715
+     "kernel_id": "transpose/10_dynamic_16x512xHxW_16xHxWx512",
+     "delta_pct": -5.8218
     }
    ],
-   "n_with_clock_drift": 2,
+   "n_with_clock_drift": 12,
    "per_case": [
     {
      "category": "batch_norm",
      "kernel_id": "batch_norm/10_dynamic_16x512xHxW_512_512_16x512xHxW",
-     "checks_on_ms": 344.983,
-     "checks_off_ms": 345.214,
-     "delta_ms": -0.231,
-     "delta_pct": -0.0669,
+     "checks_on_ms": 246.396,
+     "checks_off_ms": 244.357,
+     "delta_ms": 2.039,
+     "delta_pct": 0.8344,
      "shape_class": "dynamic",
      "timing_source": [
       "kernel-marker"
      ],
      "delta_within_noise": true,
-     "clock_drift_mhz": 1410,
+     "clock_drift_mhz": 1057,
      "exclusive": "true",
-     "arm_spread_pct": 9.81,
+     "arm_spread_pct": 24.33,
      "device_code": {
-      "device_body_lines": 64,
-      "device_check_calls": {
-       "choreo_assert": 0,
-       "runtime_check": 0
-      },
-      "device_identical": true,
-      "host_gated_checks": 6
-     },
-     "launch_ok": true,
-     "launch_asserted": false
-    },
-    {
-     "category": "concat",
-     "kernel_id": "concat/10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW",
-     "checks_on_ms": 352.146,
-     "checks_off_ms": 347.256,
-     "delta_ms": 4.89,
-     "delta_pct": 1.4082,
-     "shape_class": "dynamic",
-     "timing_source": [
-      "kernel-marker"
-     ],
-     "delta_within_noise": true,
-     "clock_drift_mhz": 0,
-     "exclusive": "true",
-     "arm_spread_pct": 295.56,
-     "device_code": {
-      "device_body_lines": 103,
+      "device_body_lines": 54,
       "device_check_calls": {
        "choreo_assert": 0,
        "runtime_check": 0
@@ -1583,25 +1619,214 @@
       "host_gated_checks": 8
      },
      "launch_ok": true,
-     "launch_asserted": false
+     "launch_asserted": true
     },
     {
-     "category": "elemwise_add",
-     "kernel_id": "elemwise_add/10_dynamic_16x512xHxW_16x512xHxW_16x512xHxW",
-     "checks_on_ms": 1841.816,
-     "checks_off_ms": 1845.646,
-     "delta_ms": -3.83,
-     "delta_pct": -0.2075,
+     "category": "concat",
+     "kernel_id": "concat/10_dynamic_16x512xHxW_16x512xHxW_16x1024xHxW",
+     "checks_on_ms": 235.377,
+     "checks_off_ms": 243.071,
+     "delta_ms": -7.694,
+     "delta_pct": -3.1653,
      "shape_class": "dynamic",
      "timing_source": [
       "kernel-marker"
      ],
      "delta_within_noise": true,
-     "clock_drift_mhz": 1410,
+     "clock_drift_mhz": -1080,
      "exclusive": "true",
-     "arm_spread_pct": 13.02,
+     "arm_spread_pct": 699.91,
      "device_code": {
-      "device_body_lines": 101,
+      "device_body_lines": 96,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 8
+     },
+     "launch_ok": true,
+     "launch_asserted": true
+    },
+    {
+     "category": "dma_rank5",
+     "kernel_id": "dma_rank5/conv1s_32x512xHxW_1024x512x1x1_32x1024xHxW_1_0_1",
+     "checks_on_ms": 1548.573,
+     "checks_off_ms": 1548.985,
+     "delta_ms": -0.412,
+     "delta_pct": -0.0266,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 758,
+     "exclusive": "true",
+     "arm_spread_pct": 62.75,
+     "device_code": {
+      "device_body_lines": 82,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 6
+     },
+     "launch_ok": true,
+     "launch_asserted": true
+    },
+    {
+     "category": "elemwise_add",
+     "kernel_id": "elemwise_add/10_dynamic_16x512xHxW_16x512xHxW_16x512xHxW",
+     "checks_on_ms": 957.783,
+     "checks_off_ms": 956.36,
+     "delta_ms": 1.423,
+     "delta_pct": 0.1488,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 0,
+     "exclusive": "true",
+     "arm_spread_pct": 9.59,
+     "device_code": {
+      "device_body_lines": 95,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 14
+     },
+     "launch_ok": true,
+     "launch_asserted": true
+    },
+    {
+     "category": "embedding",
+     "kernel_id": "embedding/10_dynamic_32xS_Vx768_32xSx768",
+     "checks_on_ms": 294.916,
+     "checks_off_ms": 256.481,
+     "delta_ms": 38.435,
+     "delta_pct": 14.9855,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": -1905,
+     "exclusive": "true",
+     "arm_spread_pct": 319.2,
+     "device_code": {
+      "device_body_lines": 71,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 6
+     },
+     "launch_ok": true,
+     "launch_asserted": true
+    },
+    {
+     "category": "gelu",
+     "kernel_id": "gelu/10_dynamic_16x512xHxW",
+     "checks_on_ms": 551.597,
+     "checks_off_ms": 584.101,
+     "delta_ms": -32.504,
+     "delta_pct": -5.5648,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 945,
+     "exclusive": "true",
+     "arm_spread_pct": 9.65,
+     "device_code": {
+      "device_body_lines": 66,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 4
+     },
+     "launch_ok": true,
+     "launch_asserted": true
+    },
+    {
+     "category": "layer_normalization",
+     "kernel_id": "layer_normalization/10_dynamic_16x512xHxW_HxW_HxW",
+     "checks_on_ms": 2124.563,
+     "checks_off_ms": 2113.364,
+     "delta_ms": 11.199,
+     "delta_pct": 0.5299,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": 0,
+     "exclusive": "true",
+     "arm_spread_pct": 2.3,
+     "device_code": {
+      "device_body_lines": 65,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 10
+     },
+     "launch_ok": true,
+     "launch_asserted": true
+    },
+    {
+     "category": "matmul",
+     "kernel_id": "matmul/10_dynamic_128x1280_1280xN_128xN",
+     "checks_on_ms": 236.019,
+     "checks_off_ms": 260.746,
+     "delta_ms": -24.727,
+     "delta_pct": -9.4832,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": -1673,
+     "exclusive": "true",
+     "arm_spread_pct": 78.55,
+     "device_code": {
+      "device_body_lines": 65,
+      "device_check_calls": {
+       "choreo_assert": 0,
+       "runtime_check": 0
+      },
+      "device_identical": true,
+      "host_gated_checks": 7
+     },
+     "launch_ok": true,
+     "launch_asserted": true
+    },
+    {
+     "category": "max_pool2d",
+     "kernel_id": "max_pool2d/10_dynamic_32xCxHxW_32xCxHd5xWd5",
+     "checks_on_ms": 233.506,
+     "checks_off_ms": 280.71,
+     "delta_ms": -47.204,
+     "delta_pct": -16.8159,
+     "shape_class": "dynamic",
+     "timing_source": [
+      "kernel-marker"
+     ],
+     "delta_within_noise": true,
+     "clock_drift_mhz": -157,
+     "exclusive": "true",
+     "arm_spread_pct": 44.59,
+     "device_code": {
+      "device_body_lines": 80,
       "device_check_calls": {
        "choreo_assert": 0,
        "runtime_check": 0
@@ -1610,160 +1835,25 @@
       "host_gated_checks": 15
      },
      "launch_ok": true,
-     "launch_asserted": false
-    },
-    {
-     "category": "embedding",
-     "kernel_id": "embedding/10_dynamic_32xS_Vx768_32xSx768",
-     "checks_on_ms": 411.97,
-     "checks_off_ms": 503.089,
-     "delta_ms": -91.119,
-     "delta_pct": -18.1119,
-     "shape_class": "dynamic",
-     "timing_source": [
-      "kernel-marker"
-     ],
-     "delta_within_noise": true,
-     "clock_drift_mhz": 0,
-     "exclusive": "true",
-     "arm_spread_pct": 131.93,
-     "device_code": {
-      "device_body_lines": 75,
-      "device_check_calls": {
-       "choreo_assert": 0,
-       "runtime_check": 0
-      },
-      "device_identical": true,
-      "host_gated_checks": 7
-     },
-     "launch_ok": true,
-     "launch_asserted": false
-    },
-    {
-     "category": "gelu",
-     "kernel_id": "gelu/10_dynamic_16x512xHxW",
-     "checks_on_ms": 898.828,
-     "checks_off_ms": 844.572,
-     "delta_ms": 54.256,
-     "delta_pct": 6.4241,
-     "shape_class": "dynamic",
-     "timing_source": [
-      "kernel-marker"
-     ],
-     "delta_within_noise": true,
-     "clock_drift_mhz": 0,
-     "exclusive": "true",
-     "arm_spread_pct": 24.83,
-     "device_code": {
-      "device_body_lines": 70,
-      "device_check_calls": {
-       "choreo_assert": 0,
-       "runtime_check": 0
-      },
-      "device_identical": true,
-      "host_gated_checks": 4
-     },
-     "launch_ok": true,
-     "launch_asserted": false
-    },
-    {
-     "category": "layer_normalization",
-     "kernel_id": "layer_normalization/10_dynamic_16x512xHxW_HxW_HxW",
-     "checks_on_ms": 2328.421,
-     "checks_off_ms": 2155.755,
-     "delta_ms": 172.666,
-     "delta_pct": 8.0095,
-     "shape_class": "dynamic",
-     "timing_source": [
-      "kernel-marker"
-     ],
-     "delta_within_noise": true,
-     "clock_drift_mhz": 0,
-     "exclusive": "true",
-     "arm_spread_pct": 9.01,
-     "device_code": {
-      "device_body_lines": 76,
-      "device_check_calls": {
-       "choreo_assert": 0,
-       "runtime_check": 0
-      },
-      "device_identical": true,
-      "host_gated_checks": 12
-     },
-     "launch_ok": true,
-     "launch_asserted": false
-    },
-    {
-     "category": "matmul",
-     "kernel_id": "matmul/10_dynamic_128x1280_1280xN_128xN",
-     "checks_on_ms": 324.624,
-     "checks_off_ms": 380.734,
-     "delta_ms": -56.11,
-     "delta_pct": -14.7373,
-     "shape_class": "dynamic",
-     "timing_source": [
-      "kernel-marker"
-     ],
-     "delta_within_noise": true,
-     "clock_drift_mhz": 0,
-     "exclusive": "true",
-     "arm_spread_pct": 70.25,
-     "device_code": {
-      "device_body_lines": 68,
-      "device_check_calls": {
-       "choreo_assert": 0,
-       "runtime_check": 0
-      },
-      "device_identical": true,
-      "host_gated_checks": 9
-     },
-     "launch_ok": true,
-     "launch_asserted": false
-    },
-    {
-     "category": "max_pool2d",
-     "kernel_id": "max_pool2d/10_dynamic_32xCxHxW_32xCxHd5xWd5",
-     "checks_on_ms": 493.413,
-     "checks_off_ms": 317.505,
-     "delta_ms": 175.908,
-     "delta_pct": 55.4032,
-     "shape_class": "dynamic",
-     "timing_source": [
-      "kernel-marker"
-     ],
-     "delta_within_noise": true,
-     "clock_drift_mhz": 0,
-     "exclusive": "true",
-     "arm_spread_pct": 76.39,
-     "device_code": {
-      "device_body_lines": 85,
-      "device_check_calls": {
-       "choreo_assert": 0,
-       "runtime_check": 0
-      },
-      "device_identical": true,
-      "host_gated_checks": 17
-     },
-     "launch_ok": true,
-     "launch_asserted": false
+     "launch_asserted": true
     },
     {
      "category": "reduce_mean",
      "kernel_id": "reduce_mean/10_dynamic_32xSx768_32x768",
-     "checks_on_ms": 402.487,
-     "checks_off_ms": 373.932,
-     "delta_ms": 28.555,
-     "delta_pct": 7.6364,
+     "checks_on_ms": 299.433,
+     "checks_off_ms": 304.645,
+     "delta_ms": -5.212,
+     "delta_pct": -1.7108,
      "shape_class": "dynamic",
      "timing_source": [
       "kernel-marker"
      ],
      "delta_within_noise": true,
-     "clock_drift_mhz": 0,
+     "clock_drift_mhz": 1537,
      "exclusive": "true",
-     "arm_spread_pct": 50.77,
+     "arm_spread_pct": 24.86,
      "device_code": {
-      "device_body_lines": 42,
+      "device_body_lines": 38,
       "device_check_calls": {
        "choreo_assert": 0,
        "runtime_check": 0
@@ -1772,25 +1862,25 @@
       "host_gated_checks": 4
      },
      "launch_ok": true,
-     "launch_asserted": false
+     "launch_asserted": true
     },
     {
      "category": "relu",
      "kernel_id": "relu/10_dynamic_16x512xHxW_16x512xHxW",
-     "checks_on_ms": 324.496,
-     "checks_off_ms": 325.746,
-     "delta_ms": -1.25,
-     "delta_pct": -0.3837,
+     "checks_on_ms": 229.992,
+     "checks_off_ms": 232.775,
+     "delta_ms": -2.783,
+     "delta_pct": -1.1956,
      "shape_class": "dynamic",
      "timing_source": [
       "kernel-marker"
      ],
      "delta_within_noise": true,
-     "clock_drift_mhz": 0,
+     "clock_drift_mhz": -1875,
      "exclusive": "true",
-     "arm_spread_pct": 89.3,
+     "arm_spread_pct": 53.38,
      "device_code": {
-      "device_body_lines": 70,
+      "device_body_lines": 67,
       "device_check_calls": {
        "choreo_assert": 0,
        "runtime_check": 0
@@ -1799,23 +1889,23 @@
       "host_gated_checks": 7
      },
      "launch_ok": true,
-     "launch_asserted": false
+     "launch_asserted": true
     },
     {
      "category": "reshape",
      "kernel_id": "reshape/10_dynamic_64x128xHxW_64x128HW",
-     "checks_on_ms": 651.02,
-     "checks_off_ms": 665.471,
-     "delta_ms": -14.451,
-     "delta_pct": -2.1715,
+     "checks_on_ms": 630.127,
+     "checks_off_ms": 622.483,
+     "delta_ms": 7.644,
+     "delta_pct": 1.228,
      "shape_class": "dynamic",
      "timing_source": [
       "kernel-marker"
      ],
      "delta_within_noise": true,
-     "clock_drift_mhz": 0,
+     "clock_drift_mhz": 2145,
      "exclusive": "true",
-     "arm_spread_pct": 18.24,
+     "arm_spread_pct": 10.22,
      "device_code": {
       "device_body_lines": 16,
       "device_check_calls": {
@@ -1826,25 +1916,25 @@
       "host_gated_checks": 2
      },
      "launch_ok": true,
-     "launch_asserted": false
+     "launch_asserted": true
     },
     {
      "category": "sigmoid",
      "kernel_id": "sigmoid/10_dynamic_16x512xHxW",
-     "checks_on_ms": 514.384,
-     "checks_off_ms": 346.373,
-     "delta_ms": 168.011,
-     "delta_pct": 48.5058,
+     "checks_on_ms": 283.478,
+     "checks_off_ms": 249.52,
+     "delta_ms": 33.958,
+     "delta_pct": 13.6093,
      "shape_class": "dynamic",
      "timing_source": [
       "kernel-marker"
      ],
      "delta_within_noise": true,
-     "clock_drift_mhz": 0,
+     "clock_drift_mhz": -1755,
      "exclusive": "true",
-     "arm_spread_pct": 83.46,
+     "arm_spread_pct": 20.98,
      "device_code": {
-      "device_body_lines": 72,
+      "device_body_lines": 69,
       "device_check_calls": {
        "choreo_assert": 0,
        "runtime_check": 0
@@ -1853,61 +1943,34 @@
       "host_gated_checks": 7
      },
      "launch_ok": true,
-     "launch_asserted": false
-    },
-    {
-     "category": "softmax",
-     "kernel_id": "softmax/10_dynamic_16x512xHxW_16x512xHxW",
-     "checks_on_ms": 492.828,
-     "checks_off_ms": 372.052,
-     "delta_ms": 120.776,
-     "delta_pct": 32.4621,
-     "shape_class": "dynamic",
-     "timing_source": [
-      "kernel-marker"
-     ],
-     "delta_within_noise": true,
-     "clock_drift_mhz": 0,
-     "exclusive": "true",
-     "arm_spread_pct": 39.13,
-     "device_code": {
-      "device_body_lines": 98,
-      "device_check_calls": {
-       "choreo_assert": 0,
-       "runtime_check": 0
-      },
-      "device_identical": true,
-      "host_gated_checks": 13
-     },
-     "launch_ok": true,
-     "launch_asserted": false
+     "launch_asserted": true
     },
     {
      "category": "transpose",
      "kernel_id": "transpose/10_dynamic_16x512xHxW_16xHxWx512",
-     "checks_on_ms": 692.708,
-     "checks_off_ms": 547.03,
-     "delta_ms": 145.678,
-     "delta_pct": 26.6307,
+     "checks_on_ms": 445.093,
+     "checks_off_ms": 472.607,
+     "delta_ms": -27.514,
+     "delta_pct": -5.8218,
      "shape_class": "dynamic",
      "timing_source": [
       "kernel-marker"
      ],
      "delta_within_noise": true,
-     "clock_drift_mhz": 0,
+     "clock_drift_mhz": 1680,
      "exclusive": "true",
-     "arm_spread_pct": 47.62,
+     "arm_spread_pct": 12.91,
      "device_code": {
-      "device_body_lines": 22,
+      "device_body_lines": 19,
       "device_check_calls": {
        "choreo_assert": 0,
        "runtime_check": 0
       },
       "device_identical": true,
-      "host_gated_checks": 4
+      "host_gated_checks": 6
      },
      "launch_ok": true,
-     "launch_asserted": false
+     "launch_asserted": true
     }
    ],
    "static_cases_measured": 0,
@@ -1915,7 +1978,7 @@
     "n_launch_rejected": 0,
     "n_timed": 14,
     "n_selected": 14,
-    "n_arms_launch_unasserted": 28,
+    "n_arms_launch_unasserted": 0,
     "excluded_launch_rejected": [],
     "definition": "launch-rejected = the driver refused cudaLaunchKernel, so no device work happened and the millisecond value is not a measurement. Excluded from every median below; listed by name in `excluded_launch_rejected`. n_arms_launch_unasserted counts arms whose record predates the guard and therefore carries NO launch assertion either way -- those are admitted (voiding them would discard every existing record) but they are counted here so the absence of an assertion is visible rather than implied by ok=True."
    },
@@ -1924,256 +1987,483 @@
     "45f6e81d94c0",
     "55b2395980bd",
     "666bab9695c5",
+    "6ba7925e0a5a",
     "7abb8bd6e718",
     "8b1728850022",
     "8dbff8357c9b",
     "b4ee0b5faac2",
     "ba2aa2b58125",
     "cfc639e6ee00",
-    "d59f419be35e",
     "df847a35dd4b",
     "f08293b4eb9e",
     "fc1e3097da54"
    ],
    "toolchain_version": [
-    "680533f50d5340346ea1587c116278916f902bc2"
+    "caa19da943a70ae43f0ee0244519379436d2594e"
    ],
-   "launch_unasserted_note": "28 E5a arm record(s) carry NO launch assertion: they were written by a run_e5.py that predates the launch guard, so nothing in the record says whether the kernel reached the device. They are admitted to the median because voiding them would discard the whole existing E5a, but this is an UNASSERTED launch, not a verified one. Measured exposure on this exact data (diag_launch_reject.py, rebuilt on the post-fix binary): 3 of the 14 -- matmul/10_dynamic, max_pool2d/10_dynamic, softmax/10_dynamic -- were silently launch-rejected and recorded ok=True with 324-493 ms timings that measured no device work. RE-MEASURE E5a before quoting any residue number from records carrying this note.",
    "device_code_evidence": {
     "n_rows_reporting": 28,
     "n_device_identical": 28,
     "total_device_side_check_calls": 0,
     "host_gated_checks_min": 2,
-    "host_gated_checks_max": 17,
+    "host_gated_checks_max": 15,
     "interpretation": "All gated checks are HOST-side entry guards on shape metadata, executed once per launch; the generated device kernel is byte-identical between the checks-on and checks-off arms and contains no check calls. Runtime residue on the device is therefore structurally zero, and the host-side entry cost is a handful of integer comparisons against a multi-second launch."
    },
-   "negative_delta_note": "6 case(s) show checks-on FASTER than checks-off. A handful of entry guards cannot make a kernel faster, so these are drift or contention, not overhead. Check `clock_drift_mhz` and `exclusive` on those rows before quoting any E5a number. Both devices idle at 345 MHz with persistence_mode Disabled (max 1755 MHz), so a clock ramp alone can produce this -- measured drift here reached 1410 MHz.",
+   "negative_delta_note": "8 case(s) show checks-on FASTER than checks-off. A handful of entry guards cannot make a kernel faster, so these are drift or contention, not overhead. Check `clock_drift_mhz` and `exclusive` on those rows before quoting any E5a number. Both devices idle at 345 MHz with persistence_mode Disabled (max 1755 MHz), so a clock ramp alone can produce this -- measured drift here reached 2145 MHz.",
    "noise_note": "14/14 deltas are INSIDE the arms' own rep-to-rep spread. This is the EXPECTED result, not a failed measurement: the generated device kernel is byte-identical between the two arms and contains zero check calls, so `--disable-runtime-check` removes only HOST-side entry guards (integer comparisons on shape metadata, run once per launch). There is no device-side cost for this host's clock ramp to resolve. The honest RQ3 statement is that runtime residue is structurally zero on the device and below the measurement floor on the host."
   },
   "E5b": {
    "status": "ok",
-   "n_records": 32,
+   "n_records": 84,
    "per_detector_and_check_loc": {
     "choreo-entry/entry": {
-     "n": 16,
-     "median_us": 506611.4,
-     "min_us": 205098.9,
-     "max_us": 752561.3
+     "n": 41,
+     "median_us": 425959.8,
+     "min_us": 274318.0,
+     "max_us": 746825.4
     },
     "compute-sanitizer/interior": {
-     "n": 4,
-     "median_us": 60162261.9,
-     "min_us": 1568263.5,
-     "max_us": 119101742.7
+     "n": 14,
+     "median_us": 1220726.75,
+     "min_us": 800270.6,
+     "max_us": 5556918.1
     }
    },
    "ratio": {
-    "n_pairs": 4,
-    "median_ratio": 84.45,
-    "min_ratio": 2.58,
-    "max_ratio": 204.39,
-    "n_pairs_oracle_slower": 4,
+    "n_pairs": 14,
+    "median_ratio": 3.48,
+    "min_ratio": 2.34,
+    "max_ratio": 19.82,
+    "n_pairs_oracle_slower": 14,
     "per_pair": [
      {
-      "mutant_id": "M2.s1.ln1.scale",
-      "choreo_entry_us": 506663.2,
-      "sanitizer_us": 2234967.2,
-      "ratio_sanitizer_over_choreo": 4.41
+      "mutant_id": "M1.12.ln1.alt",
+      "choreo_entry_us": 325214.8,
+      "sanitizer_us": 2380046.5,
+      "ratio_sanitizer_over_choreo": 7.32
      },
      {
-      "mutant_id": "M2.s1.ln3.lhs",
-      "choreo_entry_us": 577770.2,
-      "sanitizer_us": 118089556.6,
-      "ratio_sanitizer_over_choreo": 204.39
-     },
-     {
-      "mutant_id": "M2.s1.ln3.scale",
-      "choreo_entry_us": 607069.4,
-      "sanitizer_us": 1568263.5,
+      "mutant_id": "M1.12.sm1.alt",
+      "choreo_entry_us": 348096.1,
+      "sanitizer_us": 898984.7,
       "ratio_sanitizer_over_choreo": 2.58
      },
      {
-      "mutant_id": "M2.s4.ln3.out",
-      "choreo_entry_us": 724081.9,
-      "sanitizer_us": 119101742.7,
-      "ratio_sanitizer_over_choreo": 164.49
+      "mutant_id": "M1.7.cv3.revbound",
+      "choreo_entry_us": 366457.7,
+      "sanitizer_us": 917445.9,
+      "ratio_sanitizer_over_choreo": 2.5
+     },
+     {
+      "mutant_id": "M1.7.cv4.revbound",
+      "choreo_entry_us": 357737.8,
+      "sanitizer_us": 901121.5,
+      "ratio_sanitizer_over_choreo": 2.52
+     },
+     {
+      "mutant_id": "M1.7.ln11.revbound",
+      "choreo_entry_us": 279388.4,
+      "sanitizer_us": 2389633.1,
+      "ratio_sanitizer_over_choreo": 8.55
+     },
+     {
+      "mutant_id": "M1.8.ln1.alt",
+      "choreo_entry_us": 280300.5,
+      "sanitizer_us": 5556918.1,
+      "ratio_sanitizer_over_choreo": 19.82
+     },
+     {
+      "mutant_id": "M2.17.cv2.rtshaped",
+      "choreo_entry_us": 360774.2,
+      "sanitizer_us": 892239.6,
+      "ratio_sanitizer_over_choreo": 2.47
+     },
+     {
+      "mutant_id": "M2.22.ln12.axisswap",
+      "choreo_entry_us": 329477.1,
+      "sanitizer_us": 1976268.2,
+      "ratio_sanitizer_over_choreo": 6.0
+     },
+     {
+      "mutant_id": "M2.22.ln12.loopswap",
+      "choreo_entry_us": 279715.1,
+      "sanitizer_us": 1993606.4,
+      "ratio_sanitizer_over_choreo": 7.13
+     },
+     {
+      "mutant_id": "M2.22.rl22.axisswap",
+      "choreo_entry_us": 423510.9,
+      "sanitizer_us": 1646477.5,
+      "ratio_sanitizer_over_choreo": 3.89
+     },
+     {
+      "mutant_id": "M2.22.rl22.loopswap",
+      "choreo_entry_us": 382905.3,
+      "sanitizer_us": 1524007.6,
+      "ratio_sanitizer_over_choreo": 3.98
+     },
+     {
+      "mutant_id": "M3.28.cv1.symlocal",
+      "choreo_entry_us": 328118.0,
+      "sanitizer_us": 800270.6,
+      "ratio_sanitizer_over_choreo": 2.44
+     },
+     {
+      "mutant_id": "M3.28.mm12.symlocal",
+      "choreo_entry_us": 352791.9,
+      "sanitizer_us": 825984.6,
+      "ratio_sanitizer_over_choreo": 2.34
+     },
+     {
+      "mutant_id": "M3.28.mp10.symlocal",
+      "choreo_entry_us": 275793.9,
+      "sanitizer_us": 849950.0,
+      "ratio_sanitizer_over_choreo": 3.08
      }
     ],
-    "n_confounded": 12,
+    "n_confounded": 27,
     "confounded_pairs": [
      {
-      "mutant_id": "M1.s2.rl1.read",
+      "mutant_id": "M1.13.tp11.symbound",
       "reason": "process-abort",
-      "choreo_entry_us": 438228.7,
-      "sanitizer_us": 1249425.3,
-      "ratio_sanitizer_over_choreo": 2.85,
+      "choreo_entry_us": 505084.1,
+      "sanitizer_us": 857485.3,
+      "ratio_sanitizer_over_choreo": 1.7,
       "note": [
        "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
       ]
      },
      {
-      "mutant_id": "M1.s2.rl11.read",
+      "mutant_id": "M1.7.tp11.revbound",
       "reason": "process-abort",
-      "choreo_entry_us": 311918.4,
-      "sanitizer_us": 695342.8,
-      "ratio_sanitizer_over_choreo": 2.23,
+      "choreo_entry_us": 507041.7,
+      "sanitizer_us": 981756.8,
+      "ratio_sanitizer_over_choreo": 1.94,
       "note": [
        "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
       ]
      },
      {
-      "mutant_id": "M1.s2.tp1.read",
+      "mutant_id": "M2.17.ln3.rtshaped",
       "reason": "process-abort",
-      "choreo_entry_us": 532724.5,
-      "sanitizer_us": 838069.4,
-      "ratio_sanitizer_over_choreo": 1.57,
+      "choreo_entry_us": 588949.9,
+      "sanitizer_us": 88159382.6,
+      "ratio_sanitizer_over_choreo": 149.69,
       "note": [
        "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
       ]
      },
      {
-      "mutant_id": "M1.s2.tp11.read",
-      "reason": "process-abort",
-      "choreo_entry_us": 517975.2,
-      "sanitizer_us": 1348473.9,
-      "ratio_sanitizer_over_choreo": 2.6,
-      "note": [
-       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
-      ]
-     },
-     {
-      "mutant_id": "M2.s1.ln1.bias",
+      "mutant_id": "M2.17.mm11.rtshaped",
       "reason": "no-fault-reported",
-      "choreo_entry_us": 205098.9,
-      "sanitizer_us": 96833725.8,
-      "ratio_sanitizer_over_choreo": 472.13,
+      "choreo_entry_us": 385158.2,
+      "sanitizer_us": 521605958.4,
+      "ratio_sanitizer_over_choreo": 1354.26,
       "note": [
        "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: compute-sanitizer ran the body to completion and reported `ERROR SUMMARY: 0 errors` -- no fault, so there is no report to time. The wall time measures a full instrumented run that found nothing, which INFLATES the ratio. E1 corroborates: this mutant's oracle arm also recorded oracle_caught=none / oracle_run_rc=0."
       ]
      },
      {
-      "mutant_id": "M2.s1.ln1.caller.bias",
-      "reason": "no-fault-reported",
-      "choreo_entry_us": 438268.9,
-      "sanitizer_us": 83413574.4,
-      "ratio_sanitizer_over_choreo": 190.33,
-      "note": [
-       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: compute-sanitizer ran the body to completion and reported `ERROR SUMMARY: 0 errors` -- no fault, so there is no report to time. The wall time measures a full instrumented run that found nothing, which INFLATES the ratio. E1 corroborates: this mutant's oracle arm also recorded oracle_caught=none / oracle_run_rc=0."
-      ]
-     },
-     {
-      "mutant_id": "M2.s1.ln1.caller.scale",
+      "mutant_id": "M2.8.ln1.caller.bcast1",
       "reason": "process-abort",
-      "choreo_entry_us": 421943.3,
-      "sanitizer_us": 52280278.9,
-      "ratio_sanitizer_over_choreo": 123.9,
+      "choreo_entry_us": 393456.9,
+      "sanitizer_us": 39600446.5,
+      "ratio_sanitizer_over_choreo": 100.65,
       "note": [
        "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
       ]
      },
      {
-      "mutant_id": "M2.s1.ln3.bias",
-      "reason": "no-fault-reported",
-      "choreo_entry_us": 752561.3,
-      "sanitizer_us": 162275729.6,
-      "ratio_sanitizer_over_choreo": 215.63,
-      "note": [
-       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: compute-sanitizer ran the body to completion and reported `ERROR SUMMARY: 0 errors` -- no fault, so there is no report to time. The wall time measures a full instrumented run that found nothing, which INFLATES the ratio. E1 corroborates: this mutant's oracle arm also recorded oracle_caught=none / oracle_run_rc=0."
-      ]
-     },
-     {
-      "mutant_id": "M2.s1.ln3.caller.scale",
+      "mutant_id": "M2.9.ln1.alt",
       "reason": "process-abort",
-      "choreo_entry_us": 506559.6,
-      "sanitizer_us": 118409208.5,
-      "ratio_sanitizer_over_choreo": 233.75,
+      "choreo_entry_us": 746825.4,
+      "sanitizer_us": 1044916.8,
+      "ratio_sanitizer_over_choreo": 1.4,
       "note": [
        "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
       ]
      },
      {
-      "mutant_id": "M2.s1.mm1.rhs",
-      "reason": "no-fault-reported",
-      "choreo_entry_us": 420830.1,
-      "sanitizer_us": 68240808.3,
-      "ratio_sanitizer_over_choreo": 162.16,
+      "mutant_id": "M2.9.ln11.batchswap",
+      "reason": "process-abort",
+      "choreo_entry_us": 287380.3,
+      "sanitizer_us": 3048548.3,
+      "ratio_sanitizer_over_choreo": 10.61,
       "note": [
-       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: compute-sanitizer ran the body to completion and reported `ERROR SUMMARY: 0 errors` -- no fault, so there is no report to time. The wall time measures a full instrumented run that found nothing, which INFLATES the ratio. E1 corroborates: this mutant's oracle arm also recorded oracle_caught=none / oracle_run_rc=0."
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
       ]
      },
      {
-      "mutant_id": "M2.s1.mm11.rhs",
+      "mutant_id": "M3.15.cv10.pad2p24",
       "reason": "launch-rejected",
-      "choreo_entry_us": 545117.4,
-      "sanitizer_us": 885008.6,
-      "ratio_sanitizer_over_choreo": 1.62,
+      "choreo_entry_us": 434066.0,
+      "sanitizer_us": 433765.6,
+      "ratio_sanitizer_over_choreo": 1.0,
       "note": [
        "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the driver refused cudaLaunchKernel, so the instrumented body never ran and the wall time measures a refusal. This DEPRESSES the ratio."
       ]
      },
      {
-      "mutant_id": "M3.s3.cv1.local8",
+      "mutant_id": "M3.15.ln13.pad2p24",
       "reason": "launch-rejected",
-      "choreo_entry_us": 375310.9,
-      "sanitizer_us": 870602.9,
-      "ratio_sanitizer_over_choreo": 2.32,
+      "choreo_entry_us": 422931.3,
+      "sanitizer_us": 569819.1,
+      "ratio_sanitizer_over_choreo": 1.35,
       "note": [
        "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the driver refused cudaLaunchKernel, so the instrumented body never ran and the wall time measures a refusal. This DEPRESSES the ratio."
+      ]
+     },
+     {
+      "mutant_id": "M3.28.ln10.symlocal",
+      "reason": "no-fault-reported",
+      "choreo_entry_us": 724598.6,
+      "sanitizer_us": 89322284.8,
+      "ratio_sanitizer_over_choreo": 123.27,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: compute-sanitizer ran the body to completion and reported `ERROR SUMMARY: 0 errors` -- no fault, so there is no report to time. The wall time measures a full instrumented run that found nothing, which INFLATES the ratio. E1 corroborates: this mutant's oracle arm also recorded oracle_caught=none / oracle_run_rc=0."
+      ]
+     },
+     {
+      "mutant_id": "M3.4.bn.r5fp.extent",
+      "reason": "process-abort",
+      "choreo_entry_us": 589730.3,
+      "sanitizer_us": 75824281.2,
+      "ratio_sanitizer_over_choreo": 128.57,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M3.4.bn.r5fp.layout",
+      "reason": "process-abort",
+      "choreo_entry_us": 615197.9,
+      "sanitizer_us": 73926491.0,
+      "ratio_sanitizer_over_choreo": 120.17,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M3.4.dma5.r5fp.layout",
+      "reason": "process-abort",
+      "choreo_entry_us": 589227.5,
+      "sanitizer_us": 74001469.8,
+      "ratio_sanitizer_over_choreo": 125.59,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M3.4.dma5dyn.footprint",
+      "reason": "process-abort",
+      "choreo_entry_us": 584231.5,
+      "sanitizer_us": 75830700.0,
+      "ratio_sanitizer_over_choreo": 129.8,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M3.4.ln.r5fp.extent",
+      "reason": "process-abort",
+      "choreo_entry_us": 616420.5,
+      "sanitizer_us": 75743313.3,
+      "ratio_sanitizer_over_choreo": 122.88,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M3.4.ln.r5fp.layout",
+      "reason": "process-abort",
+      "choreo_entry_us": 587044.3,
+      "sanitizer_us": 73852931.5,
+      "ratio_sanitizer_over_choreo": 125.8,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M3.4.mp.r5fp.extent",
+      "reason": "process-abort",
+      "choreo_entry_us": 676912.2,
+      "sanitizer_us": 75795664.7,
+      "ratio_sanitizer_over_choreo": 111.97,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M3.4.mp.r5fp.layout",
+      "reason": "process-abort",
+      "choreo_entry_us": 579222.1,
+      "sanitizer_us": 73925632.3,
+      "ratio_sanitizer_over_choreo": 127.63,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M3.9.cv10.padlow",
+      "reason": "launch-rejected",
+      "choreo_entry_us": 470063.9,
+      "sanitizer_us": 484514.8,
+      "ratio_sanitizer_over_choreo": 1.03,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the driver refused cudaLaunchKernel, so the instrumented body never ran and the wall time measures a refusal. This DEPRESSES the ratio."
+      ]
+     },
+     {
+      "mutant_id": "M3.9.cv10.padloww",
+      "reason": "launch-rejected",
+      "choreo_entry_us": 486566.8,
+      "sanitizer_us": 489464.5,
+      "ratio_sanitizer_over_choreo": 1.01,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the driver refused cudaLaunchKernel, so the instrumented body never ran and the wall time measures a refusal. This DEPRESSES the ratio."
+      ]
+     },
+     {
+      "mutant_id": "M3.9.ln13.padlowh",
+      "reason": "launch-rejected",
+      "choreo_entry_us": 427102.0,
+      "sanitizer_us": 575202.9,
+      "ratio_sanitizer_over_choreo": 1.35,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the driver refused cudaLaunchKernel, so the instrumented body never ran and the wall time measures a refusal. This DEPRESSES the ratio."
+      ]
+     },
+     {
+      "mutant_id": "M3.9.ln13.padloww",
+      "reason": "launch-rejected",
+      "choreo_entry_us": 425959.8,
+      "sanitizer_us": 525634.4,
+      "ratio_sanitizer_over_choreo": 1.23,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the driver refused cudaLaunchKernel, so the instrumented body never ran and the wall time measures a refusal. This DEPRESSES the ratio."
+      ]
+     },
+     {
+      "mutant_id": "M4.5.cv1.alt",
+      "reason": "launch-rejected",
+      "choreo_entry_us": 599945.2,
+      "sanitizer_us": 837096.1,
+      "ratio_sanitizer_over_choreo": 1.4,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the driver refused cudaLaunchKernel, so the instrumented body never ran and the wall time measures a refusal. This DEPRESSES the ratio."
+      ]
+     },
+     {
+      "mutant_id": "M4.7.cv10.negpad",
+      "reason": "process-abort",
+      "choreo_entry_us": 274318.0,
+      "sanitizer_us": 474405.3,
+      "ratio_sanitizer_over_choreo": 1.73,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M4.7.ln12.negpad",
+      "reason": "process-abort",
+      "choreo_entry_us": 284212.3,
+      "sanitizer_us": 426858.8,
+      "ratio_sanitizer_over_choreo": 1.5,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M4.7.rl22.negpad",
+      "reason": "process-abort",
+      "choreo_entry_us": 469477.3,
+      "sanitizer_us": 570493.8,
+      "ratio_sanitizer_over_choreo": 1.22,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
+      ]
+     },
+     {
+      "mutant_id": "M4.7.tp22.negpad",
+      "reason": "process-abort",
+      "choreo_entry_us": 463325.2,
+      "sanitizer_us": 617828.4,
+      "ratio_sanitizer_over_choreo": 1.33,
+      "note": [
+       "EXCLUDED, not averaged in. The sanitizer arm did not produce a time-to-report for this mutant: the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) and memcheck reported `ERROR SUMMARY: 0 errors`. Verified by running the same executable with NO sanitizer present: it aborts identically (baseline_rc=-6). So this arm's wall clock measured choreo, not the oracle, and the ratio would compare choreo against choreo. See detection_asymmetry."
       ]
      }
     ],
-    "n_pairs_before_guard": 16,
+    "n_pairs_before_guard": 41,
     "definition": "sanitizer time_to_report_us / choreo-entry time_to_report_us, PAIRED on mutant_id. >1 means the dynamic oracle took longer to report the same fault. Pairs where EITHER arm was quarantined by the launch / detection guard are held out and listed in `confounded_pairs`; `n_pairs` is the CLEAN count.",
     "unguarded_all_pairs": {
-     "n_pairs": 16,
-     "median_ratio": 64.16,
-     "min_ratio": 1.57,
-     "max_ratio": 472.13,
-     "note": "NOT QUOTABLE. Retained so the guard's effect is auditable: this is what the statistic said before the launch/detection guard excluded 12 confounded pair(s)."
+     "n_pairs": 41,
+     "median_ratio": 3.08,
+     "min_ratio": 1.0,
+     "max_ratio": 1354.26,
+     "note": "NOT QUOTABLE. Retained so the guard's effect is auditable: this is what the statistic said before the launch/detection guard excluded 27 confounded pair(s)."
     }
    },
    "detection_asymmetry": {
-    "n_oracle_blind": 4,
-    "n_oracle_never_executed": 2,
+    "n_oracle_blind": 2,
+    "n_oracle_never_executed": 7,
     "n_oracle_died_no_report": 0,
-    "n_oracle_aborted_by_choreo_own_ungated_check": 6,
-    "n_both_detected": 4,
-    "n_pairs_compared": 16,
+    "n_oracle_aborted_by_choreo_own_ungated_check": 18,
+    "n_both_detected": 14,
+    "n_pairs_compared": 41,
     "oracle_blind_mutants": [
      {
-      "mutant_id": "M2.s1.ln1.bias",
-      "choreo_entry": "detected",
-      "compute_sanitizer": "no-fault-reported",
-      "category": "layer_normalization"
-     },
-     {
-      "mutant_id": "M2.s1.ln1.caller.bias",
-      "choreo_entry": "detected",
-      "compute_sanitizer": "no-fault-reported",
-      "category": "layer_normalization"
-     },
-     {
-      "mutant_id": "M2.s1.ln3.bias",
-      "choreo_entry": "detected",
-      "compute_sanitizer": "no-fault-reported",
-      "category": "layer_normalization"
-     },
-     {
-      "mutant_id": "M2.s1.mm1.rhs",
+      "mutant_id": "M2.17.mm11.rtshaped",
       "choreo_entry": "detected",
       "compute_sanitizer": "no-fault-reported",
       "category": "matmul"
+     },
+     {
+      "mutant_id": "M3.28.ln10.symlocal",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "no-fault-reported",
+      "category": "layer_normalization"
      }
     ],
     "oracle_never_executed_mutants": [
      {
-      "mutant_id": "M2.s1.mm11.rhs",
+      "mutant_id": "M3.15.cv10.pad2p24",
       "choreo_entry": "detected",
       "compute_sanitizer": "launch-rejected",
-      "category": "matmul"
+      "category": "conv2d"
      },
      {
-      "mutant_id": "M3.s3.cv1.local8",
+      "mutant_id": "M3.15.ln13.pad2p24",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "launch-rejected",
+      "category": "layer_normalization"
+     },
+     {
+      "mutant_id": "M3.9.cv10.padlow",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "launch-rejected",
+      "category": "conv2d"
+     },
+     {
+      "mutant_id": "M3.9.cv10.padloww",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "launch-rejected",
+      "category": "conv2d"
+     },
+     {
+      "mutant_id": "M3.9.ln13.padlowh",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "launch-rejected",
+      "category": "layer_normalization"
+     },
+     {
+      "mutant_id": "M3.9.ln13.padloww",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "launch-rejected",
+      "category": "layer_normalization"
+     },
+     {
+      "mutant_id": "M4.5.cv1.alt",
       "choreo_entry": "detected",
       "compute_sanitizer": "launch-rejected",
       "category": "conv2d"
@@ -2182,60 +2472,136 @@
     "oracle_died_mutants": [],
     "oracle_aborted_by_choreo_mutants": [
      {
-      "mutant_id": "M1.s2.rl1.read",
-      "choreo_entry": "detected",
-      "compute_sanitizer": "process-abort",
-      "category": "relu"
-     },
-     {
-      "mutant_id": "M1.s2.rl11.read",
-      "choreo_entry": "detected",
-      "compute_sanitizer": "process-abort",
-      "category": "relu"
-     },
-     {
-      "mutant_id": "M1.s2.tp1.read",
+      "mutant_id": "M1.13.tp11.symbound",
       "choreo_entry": "detected",
       "compute_sanitizer": "process-abort",
       "category": "transpose"
      },
      {
-      "mutant_id": "M1.s2.tp11.read",
+      "mutant_id": "M1.7.tp11.revbound",
       "choreo_entry": "detected",
       "compute_sanitizer": "process-abort",
       "category": "transpose"
      },
      {
-      "mutant_id": "M2.s1.ln1.caller.scale",
+      "mutant_id": "M2.17.ln3.rtshaped",
       "choreo_entry": "detected",
       "compute_sanitizer": "process-abort",
       "category": "layer_normalization"
      },
      {
-      "mutant_id": "M2.s1.ln3.caller.scale",
+      "mutant_id": "M2.8.ln1.caller.bcast1",
       "choreo_entry": "detected",
       "compute_sanitizer": "process-abort",
       "category": "layer_normalization"
+     },
+     {
+      "mutant_id": "M2.9.ln1.alt",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "layer_normalization"
+     },
+     {
+      "mutant_id": "M2.9.ln11.batchswap",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "layer_normalization"
+     },
+     {
+      "mutant_id": "M3.4.bn.r5fp.extent",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "batch_norm"
+     },
+     {
+      "mutant_id": "M3.4.bn.r5fp.layout",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "batch_norm"
+     },
+     {
+      "mutant_id": "M3.4.dma5.r5fp.layout",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "dma_rank5"
+     },
+     {
+      "mutant_id": "M3.4.dma5dyn.footprint",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "dma_rank5"
+     },
+     {
+      "mutant_id": "M3.4.ln.r5fp.extent",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "layer_normalization"
+     },
+     {
+      "mutant_id": "M3.4.ln.r5fp.layout",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "layer_normalization"
+     },
+     {
+      "mutant_id": "M3.4.mp.r5fp.extent",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "max_pool2d"
+     },
+     {
+      "mutant_id": "M3.4.mp.r5fp.layout",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "max_pool2d"
+     },
+     {
+      "mutant_id": "M4.7.cv10.negpad",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "conv2d"
+     },
+     {
+      "mutant_id": "M4.7.ln12.negpad",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "layer_normalization"
+     },
+     {
+      "mutant_id": "M4.7.rl22.negpad",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "relu"
+     },
+     {
+      "mutant_id": "M4.7.tp22.negpad",
+      "choreo_entry": "detected",
+      "compute_sanitizer": "process-abort",
+      "category": "transpose"
      }
     ],
     "definition": "oracle-blind = choreo's entry check reported the fault while compute-sanitizer RAN the instrumented body to completion and reported `ERROR SUMMARY: 0 errors`. oracle-never-executed = the driver refused cudaLaunchKernel on the sanitizer arm, so the oracle never ran the body at all; that is a launch-level refusal, NOT a detection judgement. oracle-died-no-report = the sanitizer arm exited non-zero with no fault line, so it neither completed nor refused. oracle-aborted-by-choreo = the wrapped process died on choreo's OWN UNGATED assertion (choreo.h:221 choreo_assert / choreo.h:886 ArrayProxy::operator[]) while memcheck reported zero errors; verified by running the same executable with NO sanitizer present and observing the identical abort, so the kill is choreo's and not the oracle's. Only the first is a coverage result; the others are counted separately so the coverage claim is not inflated by arms that never got to judge anything. All four are EXCLUDED from the latency ratio above (none produces an oracle report to time) and reported here instead of being silently dropped.",
-    "note": "4 of 8 mutant(s) where the oracle actually executed to completion were caught by choreo's entry check and MISSED entirely by compute-sanitizer. A further 2 never reached execution (launch refused), 0 exited without reporting, and 6 were killed by choreo's own ungated assertion before memcheck could judge; no group is counted as a miss, because in none of them did the oracle render a verdict. The oracle's silence on the 4 is not a latency advantage -- it produced no report at all. This is coverage, not speed.",
-    "premise_violation_note": "6 of the sanitizer arms were built with --disable-runtime-check on the stated premise that the sanitizer would then be the SOLE detector. That premise is FALSE: the flag gates only source A (host runtime_check and device choreo_assert at the HOIST/USE sites), while source B (ArrayProxy::operator[] bounds check) and source C (the user assert BIF) are ungated by construction. On these arms choreo's own ungated check aborted the process, memcheck reported `ERROR SUMMARY: 0 errors`, and the recorded wall clock measured choreo rather than the oracle -- so the ratio would have compared choreo against choreo. Evidence: diag_abort_attribution.py, which runs each executable both with and without compute-sanitizer. This is a DATA problem in the experiment's construction, reported rather than designed around; suppressing sources B and C needs a toolchain flag that may not exist."
+    "note": "2 of 16 mutant(s) where the oracle actually executed to completion were caught by choreo's entry check and MISSED entirely by compute-sanitizer. A further 7 never reached execution (launch refused), 0 exited without reporting, and 18 were killed by choreo's own ungated assertion before memcheck could judge; no group is counted as a miss, because in none of them did the oracle render a verdict. The oracle's silence on the 2 is not a latency advantage -- it produced no report at all. This is coverage, not speed.",
+    "premise_violation_note": "18 of the sanitizer arms were built with --disable-runtime-check on the stated premise that the sanitizer would then be the SOLE detector. That premise is FALSE: the flag gates only source A (host runtime_check and device choreo_assert at the HOIST/USE sites), while source B (ArrayProxy::operator[] bounds check) and source C (the user assert BIF) are ungated by construction. On these arms choreo's own ungated check aborted the process, memcheck reported `ERROR SUMMARY: 0 errors`, and the recorded wall clock measured choreo rather than the oracle -- so the ratio would have compared choreo against choreo. Evidence: diag_abort_attribution.py, which runs each executable both with and without compute-sanitizer. This is a DATA problem in the experiment's construction, reported rather than designed around; suppressing sources B and C needs a toolchain flag that may not exist."
    },
-   "absolute_latency_note": "The ABSOLUTE time_to_report_us is dominated by a shared process-startup + CUDA-context-init constant (~507 ms median on the choreo-entry arm), NOT by the check itself. Do not describe choreo's entry check as \"\u00b5s-scale\" on this evidence. What the data supports: choreo's latency is INPUT-INDEPENDENT (spread 3.7x across 16 distinct faults, because it aborts at launch before touching the data) while the oracle's is DATA-DEPENDENT (spread 76x, because it must run the instrumented body to the fault); hence the oracle is slower on every pair. Both arms time the executable only -- nvcc compile is excluded from both (run_e5.py SYMMETRY FIX, 2026-09-09). An earlier cut of this statistic timed nvcc+run on the choreo arm and run-only on the sanitizer arm, which produced a 0.2x ratio and INVERTED the claim; that number is void.",
+   "absolute_latency_note": "The ABSOLUTE time_to_report_us is dominated by a shared process-startup + CUDA-context-init constant (~426 ms median on the choreo-entry arm), NOT by the check itself. Do not describe choreo's entry check as \"\u00b5s-scale\" on this evidence. What the data supports: choreo's latency is INPUT-INDEPENDENT (spread 2.7x across 41 distinct faults, because it aborts at launch before touching the data) while the oracle's is DATA-DEPENDENT (spread 7x, because it must run the instrumented body to the fault); hence the oracle is slower on every pair. Both arms time the executable only -- nvcc compile is excluded from both (run_e5.py SYMMETRY FIX, 2026-09-09). An earlier cut of this statistic timed nvcc+run on the choreo arm and run-only on the sanitizer arm, which produced a 0.2x ratio and INVERTED the claim; that number is void.",
    "check_loc_is_measured_not_assumed": [
     "entry",
     "interior"
    ],
    "settings_hash": [
+    "1f5436bfab1f",
     "28fee96c8330",
+    "45f6e81d94c0",
+    "6ba7925e0a5a",
     "7abb8bd6e718",
     "8dbff8357c9b",
     "ba2aa2b58125",
+    "d59f419be35e",
     "df847a35dd4b"
    ],
    "toolchain_version": [
-    "f2f238fbf380e6121caf361d359ef1cf7d568ee8"
+    "caa19da943a70ae43f0ee0244519379436d2594e"
    ]
   }
  },
@@ -2299,15 +2665,15 @@
     "n_admissible": 153,
     "n_cells": 174,
     "n_compile": 103,
-    "n_detected": 147,
-    "n_detected_admissible": 139,
-    "n_detected_pct": 90.8497,
+    "n_detected": 145,
+    "n_detected_admissible": 137,
+    "n_detected_pct": 89.5425,
     "n_discarded_noop": 4,
     "n_injected": 167,
-    "n_never": 20,
-    "n_never_admissible": 14,
+    "n_never": 22,
+    "n_never_admissible": 16,
     "n_never_share_of_misses": 100.0,
-    "n_runtime": 44,
+    "n_runtime": 42,
     "n_undecidable": 3
    },
    "unchecked": {
@@ -2573,10 +2939,9 @@
     "class": "M2",
     "n_admissible": 2,
     "n_cells": 2,
-    "n_detected": 2,
-    "n_detected_admissible": 2,
     "n_injected": 2,
-    "n_runtime": 2,
+    "n_never": 2,
+    "n_never_admissible": 2,
     "path_class": "rt-check",
     "prohibition": ""
    },
@@ -3080,11 +3445,11 @@
    "n_injected": 245,
    "n_discarded_noop": 4,
    "n_undecidable": 3,
-   "n_never": 41,
-   "n_detected_all_paths": 204,
+   "n_never": 43,
+   "n_detected_all_paths": 202,
    "admissible_injected": 227,
-   "admissible_detected": 193,
-   "admissible_pct": 85.022,
+   "admissible_detected": 191,
+   "admissible_pct": 84.141,
    "inadmissible_injected": 18,
    "inadmissible_detected": 11,
    "matches_S1S2": true,
@@ -3104,12 +3469,12 @@
      "s1s2": 3
     },
     "n_never": {
-     "s14": 41,
-     "s1s2": 41
+     "s14": 43,
+     "s1s2": 43
     },
     "n_detected_all_paths": {
-     "s14": 204,
-     "s1s2": 204
+     "s14": 202,
+     "s1s2": 202
     }
    }
   },
@@ -3122,43 +3487,43 @@
     "medium",
     "high"
    ],
-   "n_obligations": 1151,
+   "n_obligations": 1387,
    "n_obligations_enabled": {
-    "entry": 675,
-    "low": 855,
-    "medium": 936,
-    "high": 1151
+    "entry": 1138,
+    "low": 1138,
+    "medium": 1142,
+    "high": 1387
    },
    "delta_vs_entry": {
     "entry": 0,
-    "low": 180,
-    "medium": 261,
-    "high": 476
+    "low": 0,
+    "medium": 4,
+    "high": 249
    },
    "by_class": {
     "elem": {
-     "entry": 58,
-     "low": 238,
-     "medium": 319,
-     "high": 534
+     "entry": 477,
+     "low": 477,
+     "medium": 481,
+     "high": 726
     },
     "hw": {
-     "entry": 359,
-     "low": 359,
-     "medium": 359,
-     "high": 359
+     "entry": 364,
+     "low": 364,
+     "medium": 364,
+     "high": 364
     },
     "loop": {
-     "entry": 223,
-     "low": 223,
-     "medium": 223,
-     "high": 223
+     "entry": 236,
+     "low": 236,
+     "medium": 236,
+     "high": 236
     },
     "shape": {
-     "entry": 35,
-     "low": 35,
-     "medium": 35,
-     "high": 35
+     "entry": 61,
+     "low": 61,
+     "medium": 61,
+     "high": 61
     }
    },
    "paper_reference": {
@@ -3176,16 +3541,16 @@
     "note": "PREDICTION, recorded on a different population. The ledger below is the measurement; report the ledger."
    },
    "steepest_class": "elem",
-   "cost_filter_note": "Enabling every obligation costs 1151/675 = 1.71x the default, and the growth is not uniform: elem goes 58 -> 534 while the other classes are flat. That is the thesis's shape, measured from the ledger.",
+   "cost_filter_note": "Enabling every obligation costs 1387/1138 = 1.22x the default, and the growth is not uniform: elem goes 477 -> 726 while the other classes are flat. That is the thesis's shape, measured from the ledger.",
    "n_detected": {
-    "entry": 203,
+    "entry": 201,
     "low": null,
     "medium": null,
     "high": null,
     "high (rtc=all arm)": 37
    },
    "n_detected_note": "`enabled` is a ledger property and is exact at every level; `n_detected` needs a full E1 run per level, so only `entry` is measured here. The rtc=all arm exists (see rtc_all_arm) and is reported separately rather than interpolated.",
-   "denominator_us": "203/244 at entry (pinned default)",
+   "denominator_us": "201/244 at entry (pinned default)",
    "rtc_all_arm": {
     "source": "choreo/raw/e1_mutant_records_rtc_all.json",
     "pinned_flags": [
@@ -3220,7 +3585,7 @@
    "fc1e3097da54"
   ],
   "toolchain_version": [
-   "caa19da943a70ae43f0ee0244519379436d2594e"
+   "55ccea5e04f21dfaeeb767b72e35f5ddf6190696"
   ]
  },
  "not_owned_by_this_lane": {
@@ -3228,5 +3593,6 @@
   "S9": "SOTA remainder (triton/mlir-linalg/mlir-low/iree)",
   "S11": "integrity register (coordinator)",
   "S12": "sanitizer supplement (SOTA toolchains)"
- }
+ },
+ "toolchain_warning": "binary predates checkout: records say 55ccea5e04f21dfaeeb767b72e35f5ddf6190696 (what the binary was built from), checkout HEAD is 55ccea5e04f21dfaeeb767b72e35f5ddf6190696. Rebuild and re-run before pinning this version in manifest \u00a75."
 }
